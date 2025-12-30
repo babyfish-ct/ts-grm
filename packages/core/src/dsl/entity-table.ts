@@ -1,6 +1,7 @@
 import { CtorMembers, Model, ModelCtor } from "@/schema/model";
 import { EmbeddedProp, NullityType, ReferenceProp, ScalarProp } from "@/schema/prop";
 import { ExpressionType } from "./expression";
+import { FilterNever, Prettify } from "@/utils";
 
 export type EntityTable<TModel extends Model<any, any>> = 
     DslMembers<CtorMembers<ModelCtor<TModel>>, "NONNULL">;
@@ -26,6 +27,3 @@ type CombinedNullity<
         ? "NULLABLE"
     : "NONNULL";
 
-type FilterNever<T> = {
-  [K in keyof T as T[K] extends never ? never : K]: T[K]
-}

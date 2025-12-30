@@ -1,5 +1,6 @@
 import { Model, ModelMembers, ModelName, OrderedKeys } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
+import { Prettify } from "@/utils";
 
 export const dto = {
     view<TModel extends Model<any, any>, X>(
@@ -168,9 +169,3 @@ export class View<TName extends string, T> {
 
 export type ReferenceFetchType = "LOAD" | "JOIN";
 
-type Prettify<T> = 
-    T extends Array<infer U>
-        ? Prettify<U>[]
-        : T extends object
-            ? { [K in keyof T]: Prettify<T[K]> }
-            : T;
