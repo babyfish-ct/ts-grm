@@ -1,5 +1,5 @@
-import { JoinColumn, Order } from "./options";
-import { MappedByKeys, Model, OrderedKeys } from "./model";
+import { JoinColumn, Order } from "@/schema/options";
+import { MappedByKeys, Model } from "@/schema/model";
 
 export const prop = {
 
@@ -485,7 +485,7 @@ class UnconfiguredManyToManyProp<
 
 type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_MANY";
 
-type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
+export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
 
 type DirectionType = "OWNING" | "INVERSE";
 

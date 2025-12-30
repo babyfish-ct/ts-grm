@@ -1,4 +1,4 @@
-import { Model, OrderedKeys } from "./model";
+import { Model, OrderedKeys } from "@/schema/model";
 
 export type JoinColumn = {
     columnName?: string,

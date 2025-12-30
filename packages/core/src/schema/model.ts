@@ -1,4 +1,4 @@
-import { AssociatedProp, EmbeddedProp, ManyToOneProp, OneToOneProp, ScalarProp } from "./prop";
+import { AssociatedProp, EmbeddedProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 
 export function model<TName extends string, TCtor extends Ctor>(
     name: TName,

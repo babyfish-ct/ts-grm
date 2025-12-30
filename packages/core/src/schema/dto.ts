@@ -1,5 +1,5 @@
-import { Model, ModelMembers, ModelName, OrderedKeys } from "./model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, ScalarProp } from "./prop";
+import { Model, ModelMembers, ModelName, OrderedKeys } from "@/schema/model";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
 
 export const dto = {
     view<TModel extends Model<any, any>, X>(
