@@ -1,0 +1,31 @@
+{
+  "name": "@ts-grm/core",
+  "main": "index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui --coverage",
+    "test:coverage": "vitest run --coverage",
+    "test:typecheck": "vitest typecheck tests/**/*.test-d.ts --ui",
+    "type-check": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "prepublishOnly": "yarn build && yarn test && yarn type-check"
+  },
+  "files": [
+    "dist"
+  ]
+}
