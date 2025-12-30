@@ -5,16 +5,17 @@ import { ExpressionType } from "./expression";
 export type EntityTable<TModel extends Model<any, any>> = 
     DslMembers<CtorMembers<ModelCtor<TModel>>, "NONNULL">;
 
-type DslMembers<TMembers, TNullity extends NullityType> = {
-    [K in keyof TMembers]: 
-        TMembers[K] extends ScalarProp<infer R, infer Nullity>
-            ? ExpressionType<R, CombinedNullity<TNullity, Nullity>> 
-        : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
-            ? DslMembers<R, CombinedNullity<TNullity, Nullity>>
-        : TMembers[K] extends ReferenceProp<infer R, infer Nullity>
-            ? DslMembers<R, CombinedNullity<TNullity, Nullity>>
-        : never
-};
+type DslMembers<TMembers, TNullity extends NullityType> = 
+    FilterNever<{
+        [K in keyof TMembers]: 
+            TMembers[K] extends ScalarProp<infer R, infer Nullity>
+                ? ExpressionType<R, CombinedNullity<TNullity, Nullity>> 
+            : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
+                ? DslMembers<R, CombinedNullity<TNullity, Nullity>>
+            : TMembers[K] extends ReferenceProp<infer R, infer Nullity>
+                ? DslMembers<CtorMembers<ModelCtor<R>>, CombinedNullity<TNullity, Nullity>>
+            : never
+    }>;
 
 type CombinedNullity<
     TNullity1 extends NullityType, 
@@ -24,3 +25,7 @@ type CombinedNullity<
     : TNullity2 extends "NULLABLE"
         ? "NULLABLE"
     : "NONNULL";
+
+type FilterNever<T> = {
+  [K in keyof T as T[K] extends never ? never : K]: T[K]
+}
