@@ -50,9 +50,12 @@ export type ModelMembers<TModel extends Model<any, any>> =
 export type CtorMembers<TCtor extends Ctor> =
     TCtor["prototype"];
 
-export type FlattenMembers<TCtor extends Ctor> = {
-    [K in keyof CtorMembers<TCtor>]: CtorMembers<TCtor>[K]
-} & UnionToIntersection<DeepMembers<CtorMembers<TCtor>>>;
+export type FlattenMembers<TCtor extends Ctor> = 
+    TCtor extends object
+        ? {
+            [K in keyof CtorMembers<TCtor>]: CtorMembers<TCtor>[K]
+        } & UnionToIntersection<DeepMembers<CtorMembers<TCtor>>>
+        : never;
 
 type DeepMembers<TCtorMembers, TPrefix extends string = ""> = 
     TCtorMembers extends object
@@ -75,33 +78,42 @@ export type MappedByKeys<TModel extends Model<any, any>> =
         ? MappedByKeysImpl<CtorMembers<R>> & string :
         never;
 
-type MappedByKeysImpl<TModelMembers> = { 
-    [K in keyof TModelMembers]: 
-        TModelMembers[K] extends AssociatedProp<any, any, "OWNING">
-            ? K
-            : never
-}[keyof TModelMembers];
+type MappedByKeysImpl<TModelMembers> = 
+    TModelMembers extends object 
+        ? { 
+            [K in keyof TModelMembers]: 
+                TModelMembers[K] extends AssociatedProp<any, any, "OWNING">
+                    ? K
+                    : never
+        }[keyof TModelMembers] :
+        never;
 
 export type UniqueKeys<TCtor extends Ctor> =
     UniqueKeysImpl<FlattenMembers<TCtor>>;
 
-type UniqueKeysImpl<TFlattenCtorMembers> = { 
-    [K in keyof TFlattenCtorMembers]: 
-        TFlattenCtorMembers[K] extends (
-            ScalarProp<any, any> 
-            | OneToOneProp<any, any, "OWNING", "REAL">
-            | ManyToOneProp<any, any, "OWNING", "REAL">
-        )
-            ? K
-            : never
-}[keyof TFlattenCtorMembers];
+type UniqueKeysImpl<TFlattenCtorMembers> = 
+    TFlattenCtorMembers extends object
+        ? { 
+            [K in keyof TFlattenCtorMembers]: 
+                TFlattenCtorMembers[K] extends (
+                    ScalarProp<any, any> 
+                    | OneToOneProp<any, any, "OWNING", "REAL">
+                    | ManyToOneProp<any, any, "OWNING", "REAL">
+                )
+                    ? K
+                    : never
+        }[keyof TFlattenCtorMembers]
+        : never;
 
 export type OrderedKeys<TModel extends Model<any, any>> =
     OrderedKeysImpl<FlattenMembers<ModelCtor<TModel>>>;
 
-type OrderedKeysImpl<TFlattenCtorMembers> = { 
-    [K in keyof TFlattenCtorMembers]: 
-        TFlattenCtorMembers[K] extends ScalarProp<any, any>
-            ? K
-            : never
-}[keyof TFlattenCtorMembers];
+type OrderedKeysImpl<TFlattenCtorMembers> = 
+    TFlattenCtorMembers extends object
+        ? { 
+            [K in keyof TFlattenCtorMembers]: 
+                TFlattenCtorMembers[K] extends ScalarProp<any, any>
+                    ? K
+                    : never
+        }[keyof TFlattenCtorMembers]
+        : never;
