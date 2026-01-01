@@ -3,7 +3,7 @@ import { CollectionProp, EmbeddedProp, NullityType, ReferenceProp, ScalarProp } 
 import { ExpressionType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 
-export type EntityTable<TModel extends Model<any, any>> = 
+export type EntityTable<TModel extends Model<any, any, any>> = 
     DslMembers<CtorMembers<ModelCtor<TModel>>, "NONNULL", false>;
 
 type DslMembers<TMembers, TNullity extends NullityType, TRiskAccepted extends boolean> = 
@@ -14,7 +14,7 @@ type DslMembers<TMembers, TNullity extends NullityType, TRiskAccepted extends bo
                     ? ExpressionType<R, CombinedNullity<TNullity, Nullity>>
                 : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
                     ? () => DslMembers<R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
-                : TMembers[K] extends ReferenceProp<infer R, infer Nullity>
+                : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any>
                     ? Nullity extends "NONNULL" 
                         ? NonNullReferenceJoinAction<CtorMembers<ModelCtor<R>>, TRiskAccepted>
                         : ReferenceJoinAction<CtorMembers<ModelCtor<R>>, TRiskAccepted>

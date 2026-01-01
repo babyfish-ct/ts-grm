@@ -3,7 +3,7 @@ import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, S
 import { Prettify } from "@/utils";
 
 export const dto = {
-    view<TModel extends Model<any, any>, X>(
+    view<TModel extends Model<any, any, any>, X>(
         model: TModel,
         fn: (
             builder: ViewBuilder<ModelMembers<TModel>, {}, any, any>
@@ -31,7 +31,7 @@ type ViewBuilder<TMembers, TCurrent, TLastProp, TLastName extends string> = {
                     TMembers[K],
                     K & string
                 >
-        : TMembers[K] extends ReferenceProp<infer R, infer Nullity>
+        : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any>
             ? <X>(
                 fn: (
                     builder: ViewBuilder<ModelMembers<R>, {}, any, any>
@@ -95,7 +95,7 @@ type As<TMembers, TCurrent, TLastProp, TLastName extends string> =
         };
 
 type ReferenceFetch<TMembers, TCurrent, TLastProp, TLastName extends string> =
-    TLastProp extends ReferenceProp<any, any>
+    TLastProp extends ReferenceProp<any, any, any>
         ? {
             $fetch(
                 fetchType: ReferenceFetchType
@@ -132,7 +132,7 @@ type Flat<TMembers, TCurrent> =
 
 type FlatKeys<TMembers> = {
     [K in keyof TMembers]: 
-        TMembers[K] extends ReferenceProp<any, any> 
+        TMembers[K] extends ReferenceProp<any, any, any> 
             ? K
             : TMembers[K] extends EmbeddedProp<any, any>
                 ? K

@@ -48,11 +48,12 @@ interface NonNullCmpExpression<T> extends AbstractCmpExpression<T>, NonNullAnyEx
 interface NullableCmpExpression<T> extends AbstractCmpExpression<T>, NullableAnyExpression<T> {}
 
 interface NonNullNumExpression extends NonNullCmpExpression<number> {
-    plus(value: number | NonNullNumExpression): NullableNumExpression;
+    plus(value: number | NonNullNumExpression): NonNullNumExpression;
+    plus(expr: NullableNumExpression): NullableNumExpression;
 }
 
 interface NullableNumExpression extends NullableCmpExpression<number> {
-    plus(value: number | NonNullNumExpression): NullableNumExpression;
+    plus(value: number | NonNullNumExpression | NullableNumExpression): NullableNumExpression;
 }
 
 interface AbstractStrExpression extends AbstractCmpExpression<string> {
@@ -74,8 +75,14 @@ interface AbstractStrExpression extends AbstractCmpExpression<string> {
     ): Predicate | null | undefined;
 }
 
-interface NonNullStrExpression extends AbstractStrExpression {}
+interface NonNullStrExpression extends AbstractStrExpression {
+    upper(): NonNullStrExpression;
+    lower(): NonNullStrExpression;
+}
 
-interface NullableStrExpression extends AbstractStrExpression {}
+interface NullableStrExpression extends AbstractStrExpression {
+    upper(): NullableStrExpression;
+    lower(): NullableStrExpression;
+}
 
 export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";

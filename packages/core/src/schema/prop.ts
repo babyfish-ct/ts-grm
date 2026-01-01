@@ -1,5 +1,5 @@
 import { JoinColumn, Order } from "@/schema/options";
-import { MappedByKeys, Model } from "@/schema/model";
+import { ManyToManyMappedByKeys, Model, OneToManyMappedByKeys, OneToOneMappedByKeys } from "@/schema/model";
 
 export const prop = {
 
@@ -45,7 +45,7 @@ export const prop = {
         return new EmbeddedProp({...EMPTY_PROP_DEFINTION_DATA, props});
     },
 
-    o2o<TModel extends Model<any, any>>(
+    o2o<TModel extends Model<any, any, any>>(
         targetModel: TModel
     ): UnconfiguredOneToOneProp<TModel> {
         return new UnconfiguredOneToOneProp({
@@ -55,7 +55,7 @@ export const prop = {
         });
     },
 
-    m2o<TModel extends Model<any, any>>(
+    m2o<TModel extends Model<any, any, any>>(
         targetModel: TModel
     ): UnconfiguredManyToOneProp<TModel> {
         return new UnconfiguredManyToOneProp({
@@ -65,7 +65,7 @@ export const prop = {
         });
     },
 
-    o2m<TModel extends Model<any, any>>(
+    o2m<TModel extends Model<any, any, any>>(
         targetModel: TModel
     ): UnconfiguredOneToManyProp<TModel> {
         return new UnconfiguredOneToManyProp({
@@ -75,7 +75,7 @@ export const prop = {
         });
     },
 
-    m2m<TModel extends Model<any, any>>(
+    m2m<TModel extends Model<any, any, any>>(
         targetModel: TModel
     ): UnconfiguredManyToManyProp<TModel> {
         return new UnconfiguredManyToManyProp({
@@ -145,7 +145,7 @@ export class EmbeddedProp<
 } 
 
 export abstract class AssociatedProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends Prop<TModel, TNullity> {
@@ -211,16 +211,19 @@ export abstract class AssociatedProp<
 }
 
 export interface ReferenceProp<
-    TModel extends Model<any, any>, 
-    TNullity extends NullityType
-> {
+    TModel extends Model<any, any, any>, 
+    TNullity extends NullityType,
+    TDirection extends DirectionType
+> extends AssociatedProp<TModel, TNullity, TDirection> {
     $type(): {
-        referenceProp: [TModel, TNullity] | undefined
+        prop: [TModel, TNullity]  | undefined,
+        associatedProp: [TModel, TNullity, TDirection] | undefined
+        referenceProp: [TModel, TNullity, TDirection] | undefined
     };
 }
 
 export interface CollectionProp<
-    TModel extends Model<any, any>
+    TModel extends Model<any, any, any>
 > {
     $type(): {
         collectionProp: TModel | undefined
@@ -228,17 +231,17 @@ export interface CollectionProp<
 }
 
 export class OneToOneProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReference extends ReferenceType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
-implements ReferenceProp<TModel, TNullity> {
+implements ReferenceProp<TModel, TNullity, TDirection> {
 
     override $type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity] | undefined,
+        referenceProp: [TModel, TNullity, TDirection] | undefined,
         oneToOneProp: [TModel, TNullity, TDirection, TReference] | undefined
     } {
         return { 
@@ -261,7 +264,7 @@ implements ReferenceProp<TModel, TNullity> {
 }
 
 class UnconfiguredOneToOneProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TReference extends ReferenceType = "REAL"
@@ -275,7 +278,7 @@ class UnconfiguredOneToOneProp<
         return new UnconfiguredOneToOneProp({...this.$data, nullity: "NULLABLE"});
     }
 
-    mappedBy(mappedBy: MappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", "VIRTUAL"> {
+    mappedBy(mappedBy: OneToOneMappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", "VIRTUAL"> {
         return new OneToOneProp({...this.$data, mappedBy, nullity: "NULLABLE"});
     }
 
@@ -295,17 +298,17 @@ class UnconfiguredOneToOneProp<
 }
 
 export class ManyToOneProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReference extends ReferenceType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
-implements ReferenceProp<TModel, TNullity> {
+implements ReferenceProp<TModel, TNullity, TDirection> {
 
     override $type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity] | undefined,
+        referenceProp: [TModel, TNullity, TDirection] | undefined,
         manyToOneProp: [TModel, TNullity, TDirection, TReference] | undefined
     } {
         return { 
@@ -328,7 +331,7 @@ implements ReferenceProp<TModel, TNullity> {
 }
 
 class UnconfiguredManyToOneProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TReference extends ReferenceType = "REAL"
@@ -340,10 +343,6 @@ class UnconfiguredManyToOneProp<
 
     nullable(): UnconfiguredManyToOneProp<TModel, "NULLABLE", TDirection, TReference> {
         return new UnconfiguredManyToOneProp({...this.$data, nullity: "NULLABLE"});
-    }
-
-    mappedBy(mappedBy: MappedByKeys<TModel>): ManyToOneProp<TModel, "NULLABLE", "INVERSE", "VIRTUAL"> {
-        return new ManyToOneProp({...this.$data, mappedBy, nullity: "NULLABLE"});
     }
 
     joinColumns(
@@ -362,7 +361,7 @@ class UnconfiguredManyToOneProp<
 }
 
 export class OneToManyProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
@@ -396,7 +395,7 @@ implements CollectionProp<TModel> {
 }
 
 class UnconfiguredOneToManyProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING"
 > extends OneToManyProp<TModel, TNullity, TDirection> {
@@ -405,7 +404,7 @@ class UnconfiguredOneToManyProp<
         super(data);
     }
 
-    mappedBy(mappedBy: MappedByKeys<TModel>): OneToManyProp<TModel, TNullity, "INVERSE"> {
+    mappedBy(mappedBy: OneToManyMappedByKeys<TModel>): OneToManyProp<TModel, TNullity, "INVERSE"> {
         return new OneToManyProp({...this.$data, mappedBy});
     }
 
@@ -419,7 +418,7 @@ class UnconfiguredOneToManyProp<
 }
 
 export class ManyToManyProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
@@ -453,7 +452,7 @@ implements CollectionProp<TModel> {
 }
 
 class UnconfiguredManyToManyProp<
-    TModel extends Model<any, any>,
+    TModel extends Model<any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING"
 > extends ManyToManyProp<TModel, TNullity, TDirection> {
@@ -462,7 +461,7 @@ class UnconfiguredManyToManyProp<
         super(data);
     }
 
-    mappedBy(mappedBy: MappedByKeys<TModel>): ManyToManyProp<TModel, TNullity, "INVERSE"> {
+    mappedBy(mappedBy: ManyToManyMappedByKeys<TModel>): ManyToManyProp<TModel, TNullity, "INVERSE"> {
         return new ManyToManyProp({...this.$data, mappedBy});
     }
 
@@ -501,7 +500,7 @@ type PropData = {
     readonly nullity: NullityType,
     readonly scalarType: string | undefined,
     readonly props: Record<string, Prop<any, any>> | undefined,
-    readonly targetModel: Model<any, any> | undefined,
+    readonly targetModel: Model<any, any, any> | undefined,
     readonly associationType: AssociationType | undefined,
     readonly columnName: string | undefined,
     readonly joinColumns: ReadonlyArray<JoinColumn> | undefined,

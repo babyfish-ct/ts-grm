@@ -1,7 +1,7 @@
 import { model } from "@/schema/model";
 import { prop } from "@/schema/prop";
 
-export const bookStoreModel = model("BookStore", class {
+export const bookStoreModel = model("BookStore", "id", class {
     id = prop.i64()
     name = prop.str()
     version = prop.i32()
@@ -10,7 +10,7 @@ export const bookStoreModel = model("BookStore", class {
         .orderBy("name", { path: "edition", desc: true })
 });
 
-export const bookModel = model("Book", class {
+export const bookModel = model("Book", "id", class {
     id = prop.i64()
     name = prop.str()
     edition = prop.i32()
@@ -24,7 +24,7 @@ export const bookModel = model("Book", class {
     })
 });
 
-export const authorModel = model("Author", class {
+export const authorModel = model("Author", "id", class {
     id = prop.i64()
     name = prop.embedded({
         firstName: prop.str(),
@@ -32,3 +32,4 @@ export const authorModel = model("Author", class {
     })
     books = prop.m2m(bookModel).mappedBy("authors");
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
+

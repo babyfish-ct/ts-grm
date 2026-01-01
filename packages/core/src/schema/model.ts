@@ -1,20 +1,33 @@
-import { AssociatedProp, EmbeddedProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
+import { AssociatedProp, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, Prop, ReferenceProp, ScalarProp } from "@/schema/prop";
 
-export function model<TName extends string, TCtor extends Ctor>(
+export function model<
+    TName extends string, 
+    TIdKey extends keyof CtorMembers<TCtor>,
+    TCtor extends Ctor
+>(
     name: TName,
+    idKey: TIdKey,
     ctor: TCtor,
     configurer?: (ctx: ModelContext<TCtor>) => void
 ) {
-    return new Model(name, ctor);
+    return new Model(name, idKey, ctor);
 }
 
-export class Model<TName extends string, TCtor extends Ctor> {
+export class Model<
+    TName extends string, 
+    TIdKey extends keyof CtorMembers<TCtor>,
+    TCtor extends Ctor
+> {
 
     readonly $type: {
-        model: [TName, TCtor] | undefined 
+        model: [TName, TIdKey, TCtor] | undefined 
     } = { model: undefined };
     
-    constructor(readonly name: TName, readonly ctor: TCtor) {}
+    constructor(
+        readonly name: TName, 
+        readonly idKey: TIdKey,
+        readonly ctor: TCtor
+    ) {}
 }
 
 export class ModelContext<TCtor extends Ctor> {
@@ -30,20 +43,25 @@ export class ModelContext<TCtor extends Ctor> {
     }
 }
 
-export type Ctor = (new() => any) & { prototype: any };
+interface Ctor {
+    new (): any;
+    readonly prototype: {
+        readonly [key: string]: any 
+    };
+}
 
-export type ModelName<TModel extends Model<any, any>> =
-    TModel extends Model<infer TName, any>
+export type ModelName<TModel extends Model<any, any, any>> =
+    TModel extends Model<infer TName, any, any>
         ? TName
         : never;
 
-export type ModelCtor<TModel extends Model<any, any>> =
-    TModel extends Model<any, infer TCtor>
+export type ModelCtor<TModel extends Model<any, any, any>> =
+    TModel extends Model<any, any, infer TCtor>
         ? TCtor
         : never;
 
-export type ModelMembers<TModel extends Model<any, any>> =
-    TModel extends Model<any, infer R>
+export type ModelMembers<TModel extends Model<any, any, any>> =
+    TModel extends Model<any, any, infer R>
         ? CtorMembers<R>
         : never;
 
@@ -73,16 +91,35 @@ type DeepMembers<TCtorMembers, TPrefix extends string = ""> =
 type UnionToIntersection<U> = 
     (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 
-export type MappedByKeys<TModel extends Model<any, any>> =
-    TModel extends Model<any, infer R>
-        ? MappedByKeysImpl<CtorMembers<R>> & string :
+export type OneToOneMappedByKeys<TModel extends Model<any, any, any>> =
+    TModel extends Model<any, any, infer R>
+        ? MappedByKeysImpl<
+            CtorMembers<R>, 
+            OneToOneProp<any, any, "OWNING", any>
+        > & string :
         never;
 
-type MappedByKeysImpl<TModelMembers> = 
+export type OneToManyMappedByKeys<TModel extends Model<any, any, any>> =
+    TModel extends Model<any, any, infer R>
+        ? MappedByKeysImpl<
+            CtorMembers<R>, 
+            ManyToOneProp<any, any, "OWNING", any>
+        > & string :
+        never;
+
+export type ManyToManyMappedByKeys<TModel extends Model<any, any, any>> =
+    TModel extends Model<any, any, infer R>
+        ? MappedByKeysImpl<
+            CtorMembers<R>, 
+            ManyToManyProp<any, any, "OWNING">
+        > & string :
+        never;
+
+type MappedByKeysImpl<TModelMembers, TExpectedProp extends AssociatedProp<any, any, "OWNING">> = 
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends AssociatedProp<any, any, "OWNING">
+                TModelMembers[K] extends TExpectedProp
                     ? K
                     : never
         }[keyof TModelMembers] :
@@ -105,7 +142,7 @@ type UniqueKeysImpl<TFlattenCtorMembers> =
         }[keyof TFlattenCtorMembers]
         : never;
 
-export type OrderedKeys<TModel extends Model<any, any>> =
+export type OrderedKeys<TModel extends Model<any, any, any>> =
     OrderedKeysImpl<FlattenMembers<ModelCtor<TModel>>>;
 
 type OrderedKeysImpl<TFlattenCtorMembers> = 
