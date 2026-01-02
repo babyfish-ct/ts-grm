@@ -1,4 +1,4 @@
-import { model } from "@/schema/model";
+import { model, ModelSuperNames } from "@/schema/model";
 import { prop } from "@/schema/prop";
 
 export const bookStoreModel = model("BookStore", "id", class {
@@ -49,4 +49,5 @@ export const authorModel = model("Author", "id", class {
     })
     books = prop.m2m(bookModel).mappedBy("authors");
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
+
 

@@ -13,12 +13,12 @@ function modelImpl(): ModelCreator {
         idKey: TIdKey,
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
-    ): Model<TName, TIdKey, TCtor, undefined> {
+    ): Model<TName, TIdKey, TCtor, undefined, never> {
         return new Model(name, idKey, ctor, undefined);
     }
 
     function ext<
-        TSuperModel extends Model<any, any, any, any>
+        TSuperModel extends Model<any, any, any, any, any>
     >(
         superModel: TSuperModel
     ): InheritanceModelCreator<TSuperModel> {
@@ -29,7 +29,13 @@ function modelImpl(): ModelCreator {
             name: TName,
             ctor: TCtor,
             configurer?: (ctx: ModelContext<TCtor>) => void
-        ): Model<TName, SuperIdKey<TSuperModel>, TCtor, TSuperModel> =>
+        ): Model<
+            TName, 
+            SuperIdKey<TSuperModel>, 
+            TCtor, 
+            TSuperModel, 
+            ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+        > =>
             new Model(name, superModel.idKey, ctor, superModel);
     }
     create.extends = ext;
@@ -47,35 +53,50 @@ type ModelCreator = {
         idKey: TIdKey,
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
-    ): Model<TName, TIdKey, TCtor, undefined>;
+    ): Model<TName, TIdKey, TCtor, undefined, never>;
 
     extends<
-        TSuperModel extends Model<any, any, any, any>
+        TSuperModel extends Model<any, any, any, any, any>
     >(
         superModel: TSuperModel
     ): InheritanceModelCreator<TSuperModel>;
 };
 
 type InheritanceModelCreator<
-    TSuperModel extends Model<any, any, any, any>
+    TSuperModel extends Model<any, any, any, any, any>
 > = {
     
-    <TName extends string, TCtor extends Ctor>(
-        name: TName,
+    <
+        TName extends string, 
+        TCtor extends Ctor
+    >(
+        name: OtherString<TName, ModelName<TSuperModel> | ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
-    ): Model<TName, SuperIdKey<TSuperModel>, TCtor, TSuperModel>;
+    ): Model<
+        TName, 
+        SuperIdKey<TSuperModel>, 
+        TCtor, 
+        TSuperModel,
+        ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+    >;
 };
+
+type OtherString<T extends string, X extends string> =
+    T extends X
+        ? never
+        : T;
 
 export class Model<
     TName extends string, 
     TIdKey extends keyof CtorMembers<TCtor>,
     TCtor extends Ctor,
-    TSuperModel extends Model<any, any, any, any> | undefined
+    TSuperModel extends Model<any, any, any, any, any> | undefined,
+    TSuperNames extends string | never
 > {
 
     readonly $type: {
-        model: [TName, TIdKey, TCtor, TSuperModel] | undefined 
+        model: [TName, TIdKey, TCtor, TSuperModel, TSuperNames] | undefined 
     } = { model: undefined };
     
     constructor(
@@ -99,13 +120,13 @@ export class ModelContext<TCtor extends Ctor> {
     }
 }
 
-type Inheritance<TSuperModel extends Model<any, any, any, any>> = {
+type Inheritance<TSuperModel extends Model<any, any, any, any, any>> = {
     superModel: TSuperModel;
     discriminatorColumnName: string;
 };
 
-type SuperIdKey<TSuperModel extends Model<any, any, any, any>> =
-    TSuperModel extends Model<any, infer R, any, any>
+type SuperIdKey<TSuperModel extends Model<any, any, any, any, any>> =
+    TSuperModel extends Model<any, infer R, any, any, any>
         ? R
         : never;
 
@@ -116,18 +137,23 @@ interface Ctor {
     };
 }
 
-export type ModelName<TModel extends Model<any, any, any, any>> =
-    TModel extends Model<infer TName, any, any, any>
+export type ModelName<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<infer TName, any, any, any, any>
         ? TName
         : never;
 
-export type ModelCtor<TModel extends Model<any, any, any, any>> =
-    TModel extends Model<any, any, infer TCtor, any>
+export type ModelSuperNames<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, any, any, infer R>
+        ? R
+        : never;
+
+export type ModelCtor<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, infer TCtor, any, any>
         ? TCtor
         : never;
 
-export type ModelMembers<TModel extends Model<any, any, any, any>> =
-    TModel extends Model<any, any, infer R, any>
+export type ModelMembers<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, infer R, any, any>
         ? CtorMembers<R>
         : never;
 
@@ -157,24 +183,24 @@ type DeepMembers<TCtorMembers, TPrefix extends string = ""> =
 type UnionToIntersection<U> = 
     (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 
-export type OneToOneMappedByKeys<TModel extends Model<any, any, any, any>> =
-    TModel extends Model<any, any, infer R, any>
+export type OneToOneMappedByKeys<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, infer R, any, any>
         ? MappedByKeysImpl<
             CtorMembers<R>, 
             OneToOneProp<any, any, "OWNING", any>
         > & string :
         never;
 
-export type OneToManyMappedByKeys<TModel extends Model<any, any, any, any>> =
-    TModel extends Model<any, any, infer R, any>
+export type OneToManyMappedByKeys<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, infer R, any, any>
         ? MappedByKeysImpl<
             CtorMembers<R>, 
             ManyToOneProp<any, any, "OWNING", any>
         > & string :
         never;
 
-export type ManyToManyMappedByKeys<TModel extends Model<any, any, any, any>> =
-    TModel extends Model<any, any, infer R, any>
+export type ManyToManyMappedByKeys<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, infer R, any, any>
         ? MappedByKeysImpl<
             CtorMembers<R>, 
             ManyToManyProp<any, any, "OWNING">
@@ -208,7 +234,7 @@ type UniqueKeysImpl<TFlattenCtorMembers> =
         }[keyof TFlattenCtorMembers]
         : never;
 
-export type OrderedKeys<TModel extends Model<any, any, any, any>> =
+export type OrderedKeys<TModel extends Model<any, any, any, any, any>> =
     OrderedKeysImpl<FlattenMembers<ModelCtor<TModel>>>;
 
 type OrderedKeysImpl<TFlattenCtorMembers> = 
@@ -220,3 +246,4 @@ type OrderedKeysImpl<TFlattenCtorMembers> =
                     : never
         }[keyof TFlattenCtorMembers]
         : never;
+
