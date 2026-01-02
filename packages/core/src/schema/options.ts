@@ -8,7 +8,7 @@ export type JoinColumn = {
 
 export type CascaseType = "NONE" | "UPDATE" | "DELETE" | "GRM_DELETE";
 
-export type Order<TModel extends Model<any, any, any>> = 
+export type Order<TModel extends Model<any, any, any, any>> = 
     OrderedKeys<TModel> 
     | {
         readonly path: OrderedKeys<TModel>, 

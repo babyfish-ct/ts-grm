@@ -3,7 +3,7 @@ import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, S
 import { Prettify } from "@/utils";
 
 export const dto = {
-    view<TModel extends Model<any, any, any>, X>(
+    view<TModel extends Model<any, any, any, any>, X>(
         model: TModel,
         fn: (
             builder: ViewBuilder<ModelMembers<TModel>, {}, any, any>

@@ -24,6 +24,18 @@ export const bookModel = model("Book", "id", class {
     })
 });
 
+export const paperBookModel = model.extends(bookModel)("PaperBook", class {
+    size = prop.embedded({
+        width: prop.i32(),
+        height: prop.i32()
+    })
+});
+
+export const electronicBookModel = model.extends(bookModel)("ElectronicBook", class {
+    address = prop.str();
+});
+
+
 export const authorModel = model("Author", "id", class {
     id = prop.i64()
     name = prop.embedded({

@@ -45,7 +45,7 @@ export const prop = {
         return new EmbeddedProp({...EMPTY_PROP_DEFINTION_DATA, props});
     },
 
-    o2o<TModel extends Model<any, any, any>>(
+    o2o<TModel extends Model<any, any, any, any>>(
         targetModel: TModel
     ): UnconfiguredOneToOneProp<TModel> {
         return new UnconfiguredOneToOneProp({
@@ -55,7 +55,7 @@ export const prop = {
         });
     },
 
-    m2o<TModel extends Model<any, any, any>>(
+    m2o<TModel extends Model<any, any, any, any>>(
         targetModel: TModel
     ): UnconfiguredManyToOneProp<TModel> {
         return new UnconfiguredManyToOneProp({
@@ -65,7 +65,7 @@ export const prop = {
         });
     },
 
-    o2m<TModel extends Model<any, any, any>>(
+    o2m<TModel extends Model<any, any, any, any>>(
         targetModel: TModel
     ): UnconfiguredOneToManyProp<TModel> {
         return new UnconfiguredOneToManyProp({
@@ -75,7 +75,7 @@ export const prop = {
         });
     },
 
-    m2m<TModel extends Model<any, any, any>>(
+    m2m<TModel extends Model<any, any, any, any>>(
         targetModel: TModel
     ): UnconfiguredManyToManyProp<TModel> {
         return new UnconfiguredManyToManyProp({
@@ -145,7 +145,7 @@ export class EmbeddedProp<
 } 
 
 export abstract class AssociatedProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends Prop<TModel, TNullity> {
@@ -211,7 +211,7 @@ export abstract class AssociatedProp<
 }
 
 export interface ReferenceProp<
-    TModel extends Model<any, any, any>, 
+    TModel extends Model<any, any, any, any>, 
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> {
@@ -223,7 +223,7 @@ export interface ReferenceProp<
 }
 
 export interface CollectionProp<
-    TModel extends Model<any, any, any>
+    TModel extends Model<any, any, any, any>
 > {
     $type(): {
         collectionProp: TModel | undefined
@@ -231,7 +231,7 @@ export interface CollectionProp<
 }
 
 export class OneToOneProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReference extends ReferenceType
@@ -264,7 +264,7 @@ implements ReferenceProp<TModel, TNullity, TDirection> {
 }
 
 class UnconfiguredOneToOneProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TReference extends ReferenceType = "REAL"
@@ -298,7 +298,7 @@ class UnconfiguredOneToOneProp<
 }
 
 export class ManyToOneProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReference extends ReferenceType
@@ -331,7 +331,7 @@ implements ReferenceProp<TModel, TNullity, TDirection> {
 }
 
 class UnconfiguredManyToOneProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TReference extends ReferenceType = "REAL"
@@ -361,7 +361,7 @@ class UnconfiguredManyToOneProp<
 }
 
 export class OneToManyProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
@@ -395,7 +395,7 @@ implements CollectionProp<TModel> {
 }
 
 class UnconfiguredOneToManyProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING"
 > extends OneToManyProp<TModel, TNullity, TDirection> {
@@ -418,7 +418,7 @@ class UnconfiguredOneToManyProp<
 }
 
 export class ManyToManyProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
@@ -452,7 +452,7 @@ implements CollectionProp<TModel> {
 }
 
 class UnconfiguredManyToManyProp<
-    TModel extends Model<any, any, any>,
+    TModel extends Model<any, any, any, any>,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING"
 > extends ManyToManyProp<TModel, TNullity, TDirection> {
@@ -500,7 +500,7 @@ type PropData = {
     readonly nullity: NullityType,
     readonly scalarType: string | undefined,
     readonly props: Record<string, Prop<any, any>> | undefined,
-    readonly targetModel: Model<any, any, any> | undefined,
+    readonly targetModel: Model<any, any, any, any> | undefined,
     readonly associationType: AssociationType | undefined,
     readonly columnName: string | undefined,
     readonly joinColumns: ReadonlyArray<JoinColumn> | undefined,
