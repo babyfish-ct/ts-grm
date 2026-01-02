@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookStoreModel } from "tests/model/model";
+import { authorModel, bookStoreModel, electronicBookModel, paperBookModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -85,5 +85,41 @@ test("TestComplexView", () => {
                 flattedLastName: string;
             }[];
         }[];
+    }>();
+});
+
+test("TestInheritView", () => {
+
+    const view = dto.view(bookStoreModel, $ => $
+        .name
+        .books(
+            $ => $.name
+                .instanceOf(paperBookModel, $ => $
+                    .size($ => $.width.height)
+                )
+                .instanceOf(electronicBookModel, $ => $
+                    .address
+                )
+        )
+    );
+    
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        name: string;
+        books: ({
+            name: string;
+        } | {
+            name: string;
+            __typename: "ElectronicBook";
+            address: string;
+        } | {
+            name: string;
+            size: {
+                width: number;
+                height: number;
+            };
+            __typename: "PaperBook";
+        })[];
     }>();
 });

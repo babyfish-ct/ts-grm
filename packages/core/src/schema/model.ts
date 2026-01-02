@@ -157,6 +157,15 @@ export type ModelMembers<TModel extends Model<any, any, any, any, any>> =
         ? CtorMembers<R>
         : never;
 
+export type InheritedModelMembers<TModel extends Model<any, any, any, any, any>> =
+    TModel extends Model<any, any, any, infer SuperModel, any>
+        ? SuperModel extends undefined 
+            ? ModelMembers<TModel>
+            : SuperModel extends Model<any, any, any, any, any>
+                ? InheritedModelMembers<SuperModel> & ModelMembers<TModel>
+                : never
+        : never;
+
 export type CtorMembers<TCtor extends Ctor> =
     TCtor["prototype"];
 
