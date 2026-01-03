@@ -49,3 +49,4 @@ export const authorModel = model("Author", "id", class {
     })
     books = prop.m2m(bookModel).mappedBy("authors");
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
+

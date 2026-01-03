@@ -1,5 +1,5 @@
 import { JoinColumn, Order } from "@/schema/options";
-import { ManyToManyMappedByKeys, Model, OneToManyMappedByKeys, OneToOneMappedByKeys } from "@/schema/model";
+import { AnyModel, ManyToManyMappedByKeys, OneToManyMappedByKeys, OneToOneMappedByKeys } from "@/schema/model";
 
 export const prop = {
 
@@ -45,7 +45,7 @@ export const prop = {
         return new EmbeddedProp({...EMPTY_PROP_DEFINTION_DATA, props});
     },
 
-    o2o<TModel extends Model<any, any, any, any, any>>(
+    o2o<TModel extends AnyModel>(
         targetModel: TModel
     ): UnconfiguredOneToOneProp<TModel> {
         return new UnconfiguredOneToOneProp({
@@ -55,7 +55,7 @@ export const prop = {
         });
     },
 
-    m2o<TModel extends Model<any, any, any, any, any>>(
+    m2o<TModel extends AnyModel>(
         targetModel: TModel
     ): UnconfiguredManyToOneProp<TModel> {
         return new UnconfiguredManyToOneProp({
@@ -65,7 +65,7 @@ export const prop = {
         });
     },
 
-    o2m<TModel extends Model<any, any, any, any, any>>(
+    o2m<TModel extends AnyModel>(
         targetModel: TModel
     ): UnconfiguredOneToManyProp<TModel> {
         return new UnconfiguredOneToManyProp({
@@ -75,7 +75,7 @@ export const prop = {
         });
     },
 
-    m2m<TModel extends Model<any, any, any, any, any>>(
+    m2m<TModel extends AnyModel>(
         targetModel: TModel
     ): UnconfiguredManyToManyProp<TModel> {
         return new UnconfiguredManyToManyProp({
@@ -145,7 +145,7 @@ export class EmbeddedProp<
 } 
 
 export abstract class AssociatedProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends Prop<TModel, TNullity> {
@@ -211,7 +211,7 @@ export abstract class AssociatedProp<
 }
 
 export interface ReferenceProp<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReferenceType extends ReferenceType
@@ -224,7 +224,7 @@ export interface ReferenceProp<
 }
 
 export interface CollectionProp<
-    TModel extends Model<any, any, any, any, any>
+    TModel extends AnyModel
 > {
     $type(): {
         collectionProp: TModel | undefined
@@ -232,7 +232,7 @@ export interface CollectionProp<
 }
 
 export class OneToOneProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReference extends ReferenceType
@@ -265,7 +265,7 @@ implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
 }
 
 class UnconfiguredOneToOneProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TReference extends ReferenceType = "REAL"
@@ -299,7 +299,7 @@ class UnconfiguredOneToOneProp<
 }
 
 export class ManyToOneProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TReference extends ReferenceType
@@ -332,7 +332,7 @@ implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
 }
 
 class UnconfiguredManyToOneProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TReference extends ReferenceType = "REAL"
@@ -362,7 +362,7 @@ class UnconfiguredManyToOneProp<
 }
 
 export class OneToManyProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
@@ -390,13 +390,13 @@ implements CollectionProp<TModel> {
         ...orders: Order<TModel>[]
     ): OneToManyProp<TModel, TNullity, TDirection> {
         return new OneToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<Order<any>> }
+            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
 class UnconfiguredOneToManyProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING"
 > extends OneToManyProp<TModel, TNullity, TDirection> {
@@ -413,13 +413,13 @@ class UnconfiguredOneToManyProp<
         ...orders: Order<TModel>[]
     ): UnconfiguredOneToManyProp<TModel, TNullity, TDirection> {
         return new UnconfiguredOneToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<Order<any>> }
+            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
 export class ManyToManyProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
@@ -447,13 +447,13 @@ implements CollectionProp<TModel> {
         ...orders: Order<TModel>[]
     ): ManyToManyProp<TModel, TNullity, TDirection> {
         return new ManyToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<Order<any>> }
+            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
 class UnconfiguredManyToManyProp<
-    TModel extends Model<any, any, any, any, any>,
+    TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING"
 > extends ManyToManyProp<TModel, TNullity, TDirection> {
@@ -478,7 +478,7 @@ class UnconfiguredManyToManyProp<
         ...orders: Order<TModel>[]
     ): UnconfiguredManyToManyProp<TModel, TNullity, TDirection> {
         return new UnconfiguredManyToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<Order<any>> }
+            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
@@ -501,7 +501,7 @@ type PropData = {
     readonly nullity: NullityType,
     readonly scalarType: string | undefined,
     readonly props: Record<string, Prop<any, any>> | undefined,
-    readonly targetModel: Model<any, any, any, any, any> | undefined,
+    readonly targetModel: AnyModel | undefined,
     readonly associationType: AssociationType | undefined,
     readonly columnName: string | undefined,
     readonly joinColumns: ReadonlyArray<JoinColumn> | undefined,

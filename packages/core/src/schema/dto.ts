@@ -1,13 +1,13 @@
-import { InheritedModelMembers, Model, ModelName, OrderedKeys } from "@/schema/model";
+import { AllModelMembers, AnyModel, Model, ModelName, OrderedKeys } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
-import { PrefixType, Prettify } from "@/utils";
+import { Prettify } from "@/utils";
 
 export const dto = {
-    view<TModel extends Model<any, any, any, any, any>, X>(
+    view<TModel extends AnyModel, X>(
         model: TModel,
         fn: (
-            builder: ViewBuilder<TModel, InheritedModelMembers<TModel>, {}, any, any>
-        ) => ViewBuilder<TModel, InheritedModelMembers<TModel>, X, any, any>
+            builder: ViewBuilder<TModel, AllModelMembers<TModel>, {}, any, any>
+        ) => ViewBuilder<TModel, AllModelMembers<TModel>, X, any, any>
     ): View<ModelName<TModel>, Prettify<X>> {
         return new View();
     }
@@ -19,7 +19,7 @@ export type TypeOf<T> =
         : never;
 
 type ViewBuilder<
-    TModel extends Model<any, any, any, any, any> | never,
+    TModel extends AnyModel | never,
     TMembers, 
     TCurrent, 
     TLastProp, 
@@ -41,8 +41,8 @@ type ViewBuilder<
         : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any>
             ? <X>(
                 fn: (
-                    builder: ViewBuilder<R, InheritedModelMembers<R>, {}, any, any>
-                ) => ViewBuilder<R, InheritedModelMembers<R>, X, any, any>
+                    builder: ViewBuilder<R, AllModelMembers<R>, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, X, any, any>
             ) => ViewBuilder<
                 TModel,
                 TMembers,
@@ -57,8 +57,8 @@ type ViewBuilder<
         : TMembers[K] extends CollectionProp<infer R>
             ? <X>(
                 fn: (
-                    builder: ViewBuilder<R, InheritedModelMembers<R>, {}, any, any>
-                ) => ViewBuilder<R, InheritedModelMembers<R>, X, any, any>
+                    builder: ViewBuilder<R, AllModelMembers<R>, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, X, any, any>
             ) => ViewBuilder<
                 TModel,
                 TMembers,
@@ -92,7 +92,7 @@ type ViewBuilder<
 & CollectionOrderBy<TModel, TMembers, TCurrent, TLastProp, TLastName>;
 
 type As<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TMembers, 
     TCurrent, 
     TLastProp, 
@@ -113,7 +113,7 @@ type As<
         };
 
 type ReferenceFetch<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TMembers, 
     TCurrent, 
     TLastProp, 
@@ -128,22 +128,22 @@ type ReferenceFetch<
         : Record<string, never>;
 
 type CollectionOrderBy<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TMembers, 
     TCurrent, 
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends CollectionProp<infer R>
+    TLastProp extends CollectionProp<infer TItemModel>
         ? {
             $orderBy: (
-                ...orders: OrderedKeys<R>[]
+                ...orders: OrderedKeys<TItemModel>[]
             ) => ViewBuilder<TModel, TMembers, TCurrent, TLastProp, TLastName> 
         }
         : Record<string, never>;
 
 type Flat<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TMembers, 
     TCurrent
 > = 
@@ -180,7 +180,7 @@ type NullityType<TNullity, T> =
         : {[K in keyof T]?: T[K] | null | undefined};
 
 type Fold<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TMembers, 
     TCurrent
 > = {
@@ -193,15 +193,15 @@ type Fold<
 };
 
 type InstanceOf<
-    TModel extends Model<any, any, any, any, any>, 
+    TModel extends AnyModel, 
     TMembers, 
     TCurrent
 > = {
-    instanceOf<TDerivedModel extends Model<any, any, any, any, any>, X>(
+    instanceOf<TDerivedModel extends AnyModel, X>(
         derivedModel: DerivedModel<TDerivedModel, TModel>,
         fn: (
-            builder: ViewBuilder<TDerivedModel, InheritedModelMembers<TDerivedModel>, {}, any, "">
-        ) => ViewBuilder<TDerivedModel, InheritedModelMembers<TDerivedModel>, X, any, any>
+            builder: ViewBuilder<TDerivedModel, AllModelMembers<TDerivedModel>, {}, any, "">
+        ) => ViewBuilder<TDerivedModel, AllModelMembers<TDerivedModel>, X, any, any>
     ): ViewBuilder<
         TModel, 
         TMembers, 
@@ -220,8 +220,8 @@ type InstanceOf<
 };
 
 type DerivedModel<
-    TDerivedModel extends Model<any, any, any, any, any>,
-    TSuperModel extends Model<any, any, any, any, any>
+    TDerivedModel extends AnyModel,
+    TSuperModel extends AnyModel
 > = TDerivedModel extends Model<any, any, any, any, infer SuperNames>
         ? SuperNames extends never
             ? never
@@ -241,3 +241,7 @@ export class View<TName extends string, T> {
 
 export type ReferenceFetchType = "LOAD" | "JOIN";
 
+type PrefixType<TPrefix extends string, T> = 
+    TPrefix extends "" 
+        ? T 
+        : {[K in keyof T & string as `${TPrefix}${Capitalize<K>}`]: T[K]};
