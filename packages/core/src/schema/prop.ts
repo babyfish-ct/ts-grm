@@ -213,12 +213,13 @@ export abstract class AssociatedProp<
 export interface ReferenceProp<
     TModel extends Model<any, any, any, any, any>, 
     TNullity extends NullityType,
-    TDirection extends DirectionType
+    TDirection extends DirectionType,
+    TReferenceType extends ReferenceType
 > extends AssociatedProp<TModel, TNullity, TDirection> {
     $type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined
-        referenceProp: [TModel, TNullity, TDirection] | undefined
+        referenceProp: [TModel, TNullity, TDirection, TReferenceType] | undefined
     };
 }
 
@@ -236,12 +237,12 @@ export class OneToOneProp<
     TDirection extends DirectionType,
     TReference extends ReferenceType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
-implements ReferenceProp<TModel, TNullity, TDirection> {
+implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
 
     override $type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity, TDirection] | undefined,
+        referenceProp: [TModel, TNullity, TDirection, TReference] | undefined,
         oneToOneProp: [TModel, TNullity, TDirection, TReference] | undefined
     } {
         return { 
@@ -303,12 +304,12 @@ export class ManyToOneProp<
     TDirection extends DirectionType,
     TReference extends ReferenceType
 > extends AssociatedProp<TModel, TNullity, TDirection> 
-implements ReferenceProp<TModel, TNullity, TDirection> {
+implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
 
     override $type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity, TDirection] | undefined,
+        referenceProp: [TModel, TNullity, TDirection, TReference] | undefined,
         manyToOneProp: [TModel, TNullity, TDirection, TReference] | undefined
     } {
         return { 

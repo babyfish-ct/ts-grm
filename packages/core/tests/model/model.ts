@@ -1,4 +1,4 @@
-import { model, ModelSuperNames } from "@/schema/model";
+import { model } from "@/schema/model";
 import { prop } from "@/schema/prop";
 
 export const bookStoreModel = model("BookStore", "id", class {

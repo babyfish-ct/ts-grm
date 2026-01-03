@@ -1,6 +1,6 @@
 import { InheritedModelMembers, Model, ModelName, OrderedKeys } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
-import { Prettify } from "@/utils";
+import { PrefixType, Prettify } from "@/utils";
 
 export const dto = {
     view<TModel extends Model<any, any, any, any, any>, X>(
@@ -38,7 +38,7 @@ type ViewBuilder<
                     TMembers[K],
                     K & string
                 >
-        : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any>
+        : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any>
             ? <X>(
                 fn: (
                     builder: ViewBuilder<R, InheritedModelMembers<R>, {}, any, any>
@@ -119,7 +119,7 @@ type ReferenceFetch<
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends ReferenceProp<any, any, any>
+    TLastProp extends ReferenceProp<any, any, any, any>
         ? {
             $fetch(
                 fetchType: ReferenceFetchType
@@ -167,7 +167,7 @@ type Flat<
 
 type FlatKeys<TMembers> = {
     [K in keyof TMembers]: 
-        TMembers[K] extends ReferenceProp<any, any, any> 
+        TMembers[K] extends ReferenceProp<any, any, any, any> 
             ? K
             : TMembers[K] extends EmbeddedProp<any, any>
                 ? K
@@ -178,11 +178,6 @@ type NullityType<TNullity, T> =
     TNullity extends "NONNULL"
         ? T
         : {[K in keyof T]?: T[K] | null | undefined};
-
-type PrefixType<TPrefix extends string, T> = 
-    TPrefix extends "" 
-        ? T 
-        : {[K in keyof T & string as `${TPrefix}${Capitalize<K>}`]: T[K]};
 
 type Fold<
     TModel extends Model<any, any, any, any, any>, 
@@ -210,7 +205,15 @@ type InstanceOf<
     ): ViewBuilder<
         TModel, 
         TMembers, 
-        TCurrent | ({ __typename: ModelName<TDerivedModel>} & TCurrent & X), 
+        (
+            TCurrent extends { __typename: any }
+                ? TCurrent
+                : { __typename: ModelName<TModel> } & TCurrent
+        ) | (
+            { __typename: ModelName<TDerivedModel>} & 
+            Omit<TCurrent, "__typename"> & 
+            X
+        ), 
         any, 
         ""
     >;

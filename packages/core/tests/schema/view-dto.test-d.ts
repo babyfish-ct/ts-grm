@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { authorModel, bookStoreModel, electronicBookModel, paperBookModel } from "tests/model/model";
+import { bookStoreModel, electronicBookModel, paperBookModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -108,18 +108,19 @@ test("TestInheritView", () => {
     expectTypeOf<ViewType>().toEqualTypeOf<{
         name: string;
         books: ({
+            __typename: "Book";
             name: string;
         } | {
-            name: string;
             __typename: "ElectronicBook";
+            name: string;
             address: string;
         } | {
+            __typename: "PaperBook";
             name: string;
             size: {
                 width: number;
                 height: number;
             };
-            __typename: "PaperBook";
         })[];
     }>();
 });

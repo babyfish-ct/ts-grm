@@ -12,3 +12,7 @@ export type FilterNever<T> =
         }
         : never;
 
+export type PrefixType<TPrefix extends string, T> = 
+    TPrefix extends "" 
+        ? T 
+        : {[K in keyof T & string as `${TPrefix}${Capitalize<K>}`]: T[K]};

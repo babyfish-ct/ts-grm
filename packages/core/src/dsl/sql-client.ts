@@ -11,7 +11,8 @@ export class SqlClient {
             fn: (
                 ...tables: {
                     [K in keyof Models]: EntityTable<Models[K]>
-            }) => void
+                } extends infer T ? T extends any[] ? T : never : never
+            ) => void
         ]
     ): void {
 
