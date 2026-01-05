@@ -19,8 +19,8 @@ export const bookModel = model("Book", "id", class {
         .nullable()
     authors = prop.m2m(authorModel).joinTable({
         name: "book_author_mapping",
-        toThisColumns: ["book_id"],
-        toTargetColumns: ["author_id"]
+        joinThisColumns: ["book_id"],
+        joinTargetColumns: ["author_id"]
     })
 });
 
@@ -50,3 +50,50 @@ export const authorModel = model("Author", "id", class {
     books = prop.m2m(bookModel).mappedBy("authors");
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
 
+export const orderModel = model("Order", "id", class {
+    id = prop.embedded({
+        x: prop.i32(),
+        y: prop.embedded({
+            a: prop.i16(),
+            b: prop.i16()
+        })
+    });
+    name = prop.num()
+    tags = prop.m2m(tagModel).joinTable({
+        joinThis: {
+            referencedProp: "id",
+            columns: [
+                {columnName: "order_x", referencedSubPath: "x"},
+                {columnName: "order_y_a", referencedSubPath: "y.a"},
+                {columnName: "order_y_b", referencedSubPath: "y.b"}
+            ]
+        },
+        joinTarget: {
+            referencedProp: "id",
+            columns: [
+                {columnName: "tag_low", referencedSubPath: "low"},
+                {columnName: "tag_high", referencedSubPath: "high"}
+            ]
+        }
+    })
+});
+
+export const orderItemModel = model("OrderItem", "id", class {
+    id = prop.i64();
+    order = prop.m2o(orderModel).joinColumns({
+        joinColumns: [
+            { columnName: "order_x", referencedSubPath: "x" },
+            { columnName: "order_y_a", referencedSubPath: "y.a" },
+            { columnName: "order_y_b", referencedSubPath: "y.b" }
+        ],
+        cascade: "DELETE"
+    });
+});
+
+export const tagModel = model("Tag", "id", class {
+    id = prop.embedded({
+        low: prop.i32(),
+        high: prop.i32()
+    });
+    name = prop.str()
+});

@@ -1,5 +1,6 @@
-import { JoinColumn, Order } from "@/schema/options";
-import { AnyModel, ManyToManyMappedByKeys, OneToManyMappedByKeys, OneToOneMappedByKeys } from "@/schema/model";
+import { JoinColumn, Order } from "@/schema/order";
+import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
+import { CascaseType, JoinColumns, JoinTableToId, JoinTableToKey, WeakTypeJoinColumns } from "./join";
 
 export const prop = {
 
@@ -214,7 +215,7 @@ export interface ReferenceProp<
     TModel extends AnyModel, 
     TNullity extends NullityType,
     TDirection extends DirectionType,
-    TReferenceType extends ReferenceType
+    TReferenceType extends ReferenceKey<TModel> | undefined
 > extends AssociatedProp<TModel, TNullity, TDirection> {
     $type(): {
         prop: [TModel, TNullity]  | undefined,
@@ -222,6 +223,13 @@ export interface ReferenceProp<
         referenceProp: [TModel, TNullity, TDirection, TReferenceType] | undefined
     };
 }
+
+export type ForeignKeyProp<TProp extends ReferenceProp<any, any, "OWNING", any>> =
+    TProp extends ReferenceProp<any, any, "OWNING", infer TReferenceKey>
+        ? TReferenceKey extends undefined 
+            ? never 
+            : TProp
+        : never;
 
 export interface CollectionProp<
     TModel extends AnyModel
@@ -235,15 +243,15 @@ export class OneToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType,
-    TReference extends ReferenceType
+    TReferenceKey extends ReferenceKey<TModel> | undefined
 > extends AssociatedProp<TModel, TNullity, TDirection> 
-implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
+implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     override $type(): {
-        prop: [TModel, TNullity]  | undefined,
+        prop: [TModel, TNullity] | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity, TDirection, TReference] | undefined,
-        oneToOneProp: [TModel, TNullity, TDirection, TReference] | undefined
+        referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined,
+        oneToOneProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined
     } {
         return { 
             prop: undefined, 
@@ -257,7 +265,7 @@ implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
         super(data);
     }
 
-    nullable(): OneToOneProp<TModel, "NULLABLE", TDirection, TReference> {
+    nullable(): OneToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
         return new OneToOneProp(
             {...this.$data, nullity: "NULLABLE"}
         );
@@ -268,14 +276,14 @@ class UnconfiguredOneToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
-    TReference extends ReferenceType = "REAL"
-> extends OneToOneProp<TModel, TNullity, TDirection, TReference> {
+    TReferenceKey extends ReferenceKey<TModel> | undefined = undefined
+> extends OneToOneProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     constructor(data: PropData) {
         super(data);
     }
 
-    nullable(): UnconfiguredOneToOneProp<TModel, "NULLABLE", TDirection, TReference> {
+    nullable(): UnconfiguredOneToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
         return new UnconfiguredOneToOneProp({...this.$data, nullity: "NULLABLE"});
     }
 
@@ -283,17 +291,37 @@ class UnconfiguredOneToOneProp<
         return new OneToOneProp({...this.$data, mappedBy, nullity: "NULLABLE"});
     }
 
+    joinColumns<TTargetKeyProp extends keyof AllModelMembers<TModel>>(
+        options: {
+            targetKeyProp: TTargetKeyProp
+            joinColumns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
+            cascade?: CascaseType
+        }
+    ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
+
     joinColumns(
-        ...joinColumns: ReadonlyArray<string | JoinColumn>
-    ): OneToOneProp<TModel, TNullity, "OWNING", "REAL"> {
-        return new OneToOneProp(this.dataOfJoinColumns(joinColumns));
+        options: {
+            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+            cascade?: CascaseType
+        }
+    ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
+
+    joinColumns(
+        ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+    ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
+
+    joinColumns(
+        data: any,
+        ...restData: any[]
+    ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>> {
+        throw new Error();
     }
 
     joinTable(options: {
         readonly name?: string | undefined,
-        readonly toThisColumns?: ReadonlyArray<string | JoinColumn> | undefined,
-        readonly toTargetColumns?: ReadonlyArray<string | JoinColumn> | undefined
-    }): OneToOneProp<TModel, TNullity, "OWNING", "VIRTUAL"> {
+        readonly toThisColumns?: WeakTypeJoinColumns,
+        readonly toTargetColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+    }): OneToOneProp<TModel, TNullity, "OWNING", undefined> {
         return new OneToOneProp(this.dataOfJoinTable(options));
     }
 }
@@ -302,15 +330,15 @@ export class ManyToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType,
-    TReference extends ReferenceType
+    TReferenceKey extends ReferenceKey<TModel> | undefined
 > extends AssociatedProp<TModel, TNullity, TDirection> 
-implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
+implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     override $type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity, TDirection, TReference] | undefined,
-        manyToOneProp: [TModel, TNullity, TDirection, TReference] | undefined
+        referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined,
+        manyToOneProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined
     } {
         return { 
             prop: undefined, 
@@ -324,7 +352,7 @@ implements ReferenceProp<TModel, TNullity, TDirection, TReference> {
         super(data);
     }
 
-    nullable(): ManyToOneProp<TModel, "NULLABLE", TDirection, TReference> {
+    nullable(): ManyToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
         return new ManyToOneProp(
             {...this.$data, nullity: "NULLABLE"}
         );
@@ -335,21 +363,41 @@ class UnconfiguredManyToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
-    TReference extends ReferenceType = "REAL"
-> extends ManyToOneProp<TModel, TNullity, TDirection, TReference> {
+    TReferenceKey extends ReferenceKey<TModel> | undefined = undefined
+> extends ManyToOneProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     constructor(data: PropData) {
         super(data);
     }
 
-    nullable(): UnconfiguredManyToOneProp<TModel, "NULLABLE", TDirection, TReference> {
+    nullable(): UnconfiguredManyToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
         return new UnconfiguredManyToOneProp({...this.$data, nullity: "NULLABLE"});
     }
 
+    joinColumns<TTargetKeyProp extends keyof AllModelMembers<TModel>>(
+        options: {
+            targetKeyProp: TTargetKeyProp
+            joinColumns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
+            cascade?: CascaseType
+        }
+    ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
+
     joinColumns(
-        ...joinColumns: ReadonlyArray<string | JoinColumn>
-    ): ManyToOneProp<TModel, TNullity, "OWNING", "REAL"> {
-        return new ManyToOneProp(this.dataOfJoinColumns(joinColumns));
+        options: {
+            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+            cascade?: CascaseType
+        }
+    ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
+
+    joinColumns(
+        ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+    ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
+
+    joinColumns(
+        data: any,
+        ...restData: any[]
+    ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>> {
+        throw new Error();
     }
 
     joinTable(options: {
@@ -466,12 +514,18 @@ class UnconfiguredManyToManyProp<
         return new ManyToManyProp({...this.$data, mappedBy});
     }
 
-    joinTable(options: {
-        readonly name?: string | undefined,
-        readonly toThisColumns?: ReadonlyArray<string | JoinColumn> | undefined,
-        readonly toTargetColumns?: ReadonlyArray<string | JoinColumn> | undefined
-    }): ManyToManyProp<TModel, TNullity, "OWNING"> {
-        return new ManyToManyProp(this.dataOfJoinTable(options));
+    joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
+        options: JoinTableToKey<TModel, TTargetReferencedProp>
+    ): ManyToManyProp<TModel, TNullity, "OWNING">;
+
+    joinTable(
+        options: JoinTableToId<TModel>
+    ): ManyToManyProp<TModel, TNullity, "OWNING">;
+
+    joinTable(
+        data: any
+    ): ManyToManyProp<TModel, TNullity, "OWNING"> {
+        throw new Error();
     }
 
     orderBy(
@@ -489,12 +543,10 @@ export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
 
 type DirectionType = "OWNING" | "INVERSE";
 
-type ReferenceType = "REAL" | "VIRTUAL";
-
-type EmbeddedMember = 
+export type EmbeddedMember = 
     ScalarProp<any, any> 
-    | OneToOneProp<any, any, "OWNING", "REAL"> 
-    | ManyToOneProp<any, any, "OWNING", "REAL"> 
+    | ForeignKeyProp<OneToOneProp<any, any, "OWNING", any>>
+    | ForeignKeyProp<ManyToOneProp<any, any, "OWNING", any>>
     | EmbeddedProp<any, any>;
 
 type PropData = {

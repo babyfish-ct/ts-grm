@@ -1,38 +1,44 @@
-import { AllModelMembers, CtorMembers, Model, ModelCtor } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityType, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
+import { AllModelMembers, AnyModel, CtorMembers, Model, ModelCtor } from "@/schema/model";
+import { AssociatedProp, CollectionProp, EmbeddedProp, ForeignKeyProp, NullityType, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
 import { ExpressionType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 
 export type EntityTable<TModel extends Model<any, any, any, any, any>> = 
-    DslMembers<AllModelMembers<TModel>, "NONNULL", false>;
+    DslMembers<TModel, AllModelMembers<TModel>, "NONNULL", false>;
 
-type DslMembers<TAllMemembers extends object, TNullity extends NullityType, TRiskAccepted extends boolean> = 
+type DslMembers<
+    TModel extends AnyModel, 
+    TMembers extends object, 
+    TNullity extends NullityType, 
+    TRiskAccepted extends boolean
+> = 
     FilterNever<{
-        [K in keyof TAllMemembers]:
-            TAllMemembers[K] extends ScalarProp<infer R, infer Nullity>
+        [K in keyof TMembers]:
+            TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? ExpressionType<R, CombinedNullity<TNullity, Nullity>>
-            : TAllMemembers[K] extends EmbeddedProp<infer R, infer Nullity>
-                ? () => DslMembers<R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
-            : TAllMemembers[K] extends ReferenceProp<infer R, infer Nullity, any, any>
+            : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
+                ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
+            : TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, any, any>
                 ? Nullity extends "NONNULL" 
-                    ? NonNullReferenceJoinAction<CtorMembers<ModelCtor<R>>, TRiskAccepted>
-                    : ReferenceJoinAction<CtorMembers<ModelCtor<R>>, TRiskAccepted>
-            : TAllMemembers[K] extends CollectionProp<infer R>
-                ? CollectionJoinAction<CtorMembers<ModelCtor<R>>, TRiskAccepted>
+                    ? NonNullReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
+                    : ReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
+            : TMembers[K] extends CollectionProp<infer TTargetModel>
+                ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : never
-        } & ReferenceIdMembers<TAllMemembers,TNullity>
-    >;
+        } & ReferenceIdMembers<TMembers,TNullity>
+    > &
+    WeakJoinAction<TModel, TRiskAccepted>;
 
 type ReferenceIdMembers<TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, "REAL">
+            TMembers[K] extends ForeignKeyProp<ReferenceProp<infer TTargetModel, any, any, any>>
                 ? TTargetModel extends Model<any, infer TIdProp, any, any, any>
                     ? `${K & string}${Capitalize<TIdProp & string>}`
                     : never
                 : never
     ]: 
-        TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, any, "REAL"> 
+        TMembers[K] extends ForeignKeyProp<ReferenceProp<infer TTargetModel, infer Nullity, any, any>>
             ? TTargetModel extends Model<any, infer TProp, any, any, any>
                 ? ExpressionType<ReturnTypeOf<AllModelMembers<TTargetModel>[TProp]>, CombinedNullity<TNullity, Nullity>> 
                 : never
@@ -50,30 +56,52 @@ type CombinedNullity<
 
 export type JoinType = "INNER" | "LEFT";
 
-type NonNullReferenceJoinAction<TAllMemembers extends object, TRiskAccepted extends boolean> = {
+type NonNullReferenceJoinAction<
+    TParentModel extends AnyModel, 
+    TModel extends AnyModel, 
+    TMembers extends object, 
+    TRiskAccepted extends boolean
+> = {
 
-    (): DslMembers<TAllMemembers, "NONNULL", TRiskAccepted>;
+    (): DslMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
     
     (
-        joinType: "INNER"
-    ): DslMembers<TAllMemembers, "NONNULL", TRiskAccepted>;
+        joinType: JoinType
+    ): DslMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
     
     (
         options: {
-            joinType?: "INNER",
-            filter?: Predicate
+            joinType?: JoinType,
         }
-    ): DslMembers<TAllMemembers, "NONNULL", TRiskAccepted>;
+    ): DslMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
+
+    <TJoinType extends JoinType = "INNER">(
+        options: {
+            joinType?: TJoinType,
+            filter: FilterType<TParentModel, TModel>
+        }
+    ): DslMembers<
+        TModel, 
+        TMembers, 
+        TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
+        TRiskAccepted
+    >;
 };
 
-type ReferenceJoinAction<TAllMemembers extends object, TRiskAccepted extends boolean> = {
+type ReferenceJoinAction<
+    TParentModel extends AnyModel, 
+    TModel extends AnyModel, 
+    TMembers extends object, 
+    TRiskAccepted extends boolean
+> = {
 
-    (): DslMembers<TAllMemembers, "NONNULL", TRiskAccepted>;
+    (): DslMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
     ): DslMembers<
-        TAllMemembers, 
+        TModel, 
+        TMembers, 
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
         TRiskAccepted
     >;
@@ -81,51 +109,112 @@ type ReferenceJoinAction<TAllMemembers extends object, TRiskAccepted extends boo
     <TJoinType extends JoinType = "INNER">(
         options: {
             joinType?: TJoinType,
-            filter?: Predicate
+            filter?: FilterType<TParentModel, TModel>
         }
     ): DslMembers<
-        TAllMemembers, 
+        TModel, 
+        TMembers, 
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
         TRiskAccepted
     >;
 };
 
-type CollectionJoinAction<TAllMemembers extends object, TRiskAccepted extends boolean> = {
+type CollectionJoinAction<
+    TParentModel extends AnyModel, 
+    TModel extends AnyModel, 
+    TMembers extends object, 
+    TRiskAccepted extends boolean
+> = {
 
     (): TRiskAccepted extends true
-        ? DslMembers<TAllMemembers, "NONNULL", true>
-        : RiskUnkownJoinedCollection<TAllMemembers, "NONNULL">;
+        ? DslMembers<TModel, TMembers, "NONNULL", true>
+        : RiskUnkownJoinedTable<TModel, TMembers, "NONNULL">;
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
     ): TRiskAccepted extends true
         ? DslMembers<
-            TAllMemembers, 
+            TModel, 
+            TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
             TRiskAccepted
         >
-        : RiskUnkownJoinedCollection<
-            TAllMemembers, 
+        : RiskUnkownJoinedTable<
+            TModel,
+            TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
         >;
     
     <TJoinType extends JoinType = "INNER">(
         options: {
             joinType?: TJoinType,
-            filter?: Predicate
+            filter?: FilterType<TParentModel, TModel>
         }
     ): TRiskAccepted extends true
         ? DslMembers<
-            TAllMemembers, 
+            TModel, 
+            TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
             TRiskAccepted
         >
-        : RiskUnkownJoinedCollection<
-            TAllMemembers, 
+        : RiskUnkownJoinedTable<
+            TModel,
+            TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
         >;
 };
 
-type RiskUnkownJoinedCollection<TAllMemembers extends object, TNullity extends NullityType> = {
-    $acceptRisk(): DslMembers<TAllMemembers, TNullity, true>;
+type RiskUnkownJoinedTable<
+    TModel extends AnyModel, 
+    TMembers extends object, 
+    TNullity extends NullityType
+> = {
+    $acceptRisk(): DslMembers<TModel, TMembers, TNullity, true>;
 };
+
+type WeakJoinAction<
+    TModel extends AnyModel,
+    TRiskAccepted extends boolean
+> = {
+
+    join<
+        TTargetModel extends AnyModel,
+    >(
+        targetModel: TTargetModel,
+        filter: FilterType<TModel, TTargetModel>
+    ): TRiskAccepted extends true
+        ? DslMembers<
+            TTargetModel, 
+            AllModelMembers<TTargetModel>, 
+            "NONNULL", 
+            TRiskAccepted
+        >
+        : RiskUnkownJoinedTable<
+            TTargetModel,
+            AllModelMembers<TTargetModel>, 
+            "NONNULL"
+        >;
+
+    join<
+        TTargetModel extends AnyModel,
+        TJoinType extends JoinType,
+    >(
+        targetModel: TTargetModel,
+        joinType: TJoinType,
+        filter: FilterType<TModel, TTargetModel>
+    ): TRiskAccepted extends true
+        ? DslMembers<
+            TTargetModel, 
+            AllModelMembers<TTargetModel>, 
+            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
+            TRiskAccepted
+        >
+        : RiskUnkownJoinedTable<
+            TTargetModel,
+            AllModelMembers<TTargetModel>, 
+            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
+        >;
+};
+
+type FilterType<TParentModel extends AnyModel, TModel extends AnyModel> =
+    (source: EntityTable<TParentModel>, target: EntityTable<TModel>) => Predicate;

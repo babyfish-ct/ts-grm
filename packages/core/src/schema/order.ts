@@ -2,11 +2,8 @@ import { AnyModel, OrderedKeys } from "@/schema/model";
 
 export type JoinColumn = {
     columnName?: string,
-    referenceProp?: string | undefined,
-    cascade?: CascaseType | undefined;
+    referenceProp?: string | undefined
 };
-
-export type CascaseType = "NONE" | "UPDATE" | "DELETE" | "GRM_DELETE";
 
 export type Order<TModel extends AnyModel> = 
     OrderedKeys<TModel> 

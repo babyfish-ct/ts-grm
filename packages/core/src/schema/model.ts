@@ -1,4 +1,5 @@
-import { AssociatedProp, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, Prop, ReferenceProp, ScalarProp } from "@/schema/prop";
+import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
+import { FlattenMembers } from "@/utils";
 
 export const model: ModelCreator = modelImpl();
 
@@ -139,6 +140,11 @@ export type ModelName<TModel extends AnyModel> =
         ? TName
         : never;
 
+export type ModelIdKey<TModel extends AnyModel> =
+    TModel extends Model<any, infer TId, any, any, any>
+        ? TId
+        : never;
+
 export type ModelSuperNames<TModel extends AnyModel> =
     TModel extends Model<any, any, any, any, infer TSuperNames>
         ? TSuperNames
@@ -168,25 +174,6 @@ type MakeAllModelMembers<TCtor extends Ctor, TSuperModel extends AnyModel | unde
 
 export type CtorMembers<TCtor extends Ctor> =
     TCtor["prototype"];
-
-export type FlattenMembers<TMembers extends object> = 
-    {
-        [K in keyof TMembers]: TMembers[K]
-    } & UnionToIntersection<DeepMembers<TMembers>>;
-
-type DeepMembers<TMembers extends object, TPrefix extends string = ""> = 
-    {
-        [K in keyof TMembers]: 
-            K extends string
-                ? TMembers[K] extends EmbeddedProp<infer E, any> 
-                    ? DeepMembers<E, `${TPrefix}${K}.`> &
-                        { [Key in `${TPrefix}${K}`]: TMembers[K] }
-                    : { [Key in `${TPrefix}${K}`]: TMembers[K] }
-                : never
-    }[keyof TMembers];
-
-type UnionToIntersection<U> = 
-    (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 
 export type OneToOneMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
@@ -231,8 +218,8 @@ type UniqueKeysImpl<TFlattenCtorMembers> =
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
                     ScalarProp<any, any> 
-                    | OneToOneProp<any, any, "OWNING", "REAL">
-                    | ManyToOneProp<any, any, "OWNING", "REAL">
+                    | OneToOneProp<any, any, "OWNING", ReferenceKey<any>>
+                    | ManyToOneProp<any, any, "OWNING", ReferenceKey<any>>
                 )
                     ? K
                     : never
@@ -250,3 +237,5 @@ type OrderedKeysImpl<TFlattenCtorMembers extends object> =
                 : never
     }[keyof TFlattenCtorMembers];
 
+export type ReferenceKey<TModel extends AnyModel> = 
+    (keyof AllModelMembers<TModel>) & string;
