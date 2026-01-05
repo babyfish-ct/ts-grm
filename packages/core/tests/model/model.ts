@@ -50,6 +50,13 @@ export const authorModel = model("Author", "id", class {
     books = prop.m2m(bookModel).mappedBy("authors");
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
 
+export const treeNodeModel = model("TreeNode", "id", class {
+    id = prop.i64()
+    name = prop.str()
+    parentNode = prop.m2o(() => treeNodeModel).nullable()
+    childNodes = prop.o2m(() => treeNodeModel).mappedBy("parentNode");
+});
+
 export const orderModel = model("Order", "id", class {
     id = prop.embedded({
         x: prop.i32(),

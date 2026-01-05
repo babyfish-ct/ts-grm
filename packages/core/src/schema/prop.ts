@@ -47,7 +47,7 @@ export const prop = {
     },
 
     o2o<TModel extends AnyModel>(
-        targetModel: TModel
+        targetModel: ModelRef<TModel>
     ): UnconfiguredOneToOneProp<TModel> {
         return new UnconfiguredOneToOneProp({
             ...EMPTY_PROP_DEFINTION_DATA, 
@@ -57,7 +57,7 @@ export const prop = {
     },
 
     m2o<TModel extends AnyModel>(
-        targetModel: TModel
+        targetModel: ModelRef<TModel>
     ): UnconfiguredManyToOneProp<TModel> {
         return new UnconfiguredManyToOneProp({
             ...EMPTY_PROP_DEFINTION_DATA, 
@@ -67,7 +67,7 @@ export const prop = {
     },
 
     o2m<TModel extends AnyModel>(
-        targetModel: TModel
+        targetModel: ModelRef<TModel>
     ): UnconfiguredOneToManyProp<TModel> {
         return new UnconfiguredOneToManyProp({
             ...EMPTY_PROP_DEFINTION_DATA, 
@@ -77,7 +77,7 @@ export const prop = {
     },
 
     m2m<TModel extends AnyModel>(
-        targetModel: TModel
+        targetModel: ModelRef<TModel>
     ): UnconfiguredManyToManyProp<TModel> {
         return new UnconfiguredManyToManyProp({
             ...EMPTY_PROP_DEFINTION_DATA, 
@@ -167,47 +167,6 @@ export abstract class AssociatedProp<
 
     get targetModel(): TModel {
         return this.$data.targetModel as TModel;
-    }
-
-    protected dataOfJoinColumns(
-        joinColumns: ReadonlyArray<string | JoinColumn>
-    ): PropData {
-        const joinArr = joinColumns.map(c => {
-            if (typeof c === "string") {
-                return { columnName: c };
-            }
-            return c as JoinColumn;
-        })
-        return {...this.$data, joinColumns: joinArr}
-    }
-
-    protected dataOfJoinTable(options: {
-        readonly name?: string | undefined,
-        readonly toThisColumns?: ReadonlyArray<string | JoinColumn> | undefined,
-        readonly toTargetColumns?: ReadonlyArray<string | JoinColumn> | undefined
-    }): PropData {
-        const toThisArr: ReadonlyArray<JoinColumn> | undefined = 
-            options.toThisColumns?.map(c => {
-                if (typeof c == "string") {
-                    return { columnName: c };
-                }
-                return c as JoinColumn;
-            });
-        const toTargetArr: ReadonlyArray<JoinColumn> | undefined = 
-            options.toTargetColumns?.map(c => {
-                if (typeof c === "string") {
-                    return { columnName: c};
-                }
-                return c as JoinColumn;
-            });
-        return {
-            ...this.$data,
-            joinTable: {
-                name: options.name,
-                toThisColumns: toThisArr,
-                toTargetColumns: toTargetArr
-            }
-        };
     }
 }
 
@@ -317,12 +276,18 @@ class UnconfiguredOneToOneProp<
         throw new Error();
     }
 
-    joinTable(options: {
-        readonly name?: string | undefined,
-        readonly toThisColumns?: WeakTypeJoinColumns,
-        readonly toTargetColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
-    }): OneToOneProp<TModel, TNullity, "OWNING", undefined> {
-        return new OneToOneProp(this.dataOfJoinTable(options));
+    joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
+        options: JoinTableToKey<TModel, TTargetReferencedProp>
+    ): OneToOneProp<TModel, TNullity, "OWNING", undefined>;
+
+    joinTable(
+        options: JoinTableToId<TModel>
+    ): OneToOneProp<TModel, TNullity, "OWNING", undefined>;
+
+    joinTable(
+        data: any
+    ): OneToOneProp<TModel, TNullity, "OWNING", undefined> {
+        throw new Error();
     }
 }
 
@@ -400,12 +365,18 @@ class UnconfiguredManyToOneProp<
         throw new Error();
     }
 
-    joinTable(options: {
-        readonly name?: string | undefined,
-        readonly toThisColumns?: ReadonlyArray<string | JoinColumn> | undefined,
-        readonly toTargetColumns?: ReadonlyArray<string | JoinColumn> | undefined
-    }): ManyToOneProp<TModel, TNullity, "OWNING", "VIRTUAL"> {
-        return new ManyToOneProp(this.dataOfJoinTable(options));
+    joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
+        options: JoinTableToKey<TModel, TTargetReferencedProp>
+    ): ManyToOneProp<TModel, TNullity, "OWNING", undefined>;
+
+    joinTable(
+        options: JoinTableToId<TModel>
+    ): ManyToOneProp<TModel, TNullity, "OWNING", undefined>;
+
+    joinTable(
+        data: any
+    ): ManyToOneProp<TModel, TNullity, "OWNING", undefined> {
+        throw new Error();
     }
 }
 
@@ -553,7 +524,7 @@ type PropData = {
     readonly nullity: NullityType,
     readonly scalarType: string | undefined,
     readonly props: Record<string, Prop<any, any>> | undefined,
-    readonly targetModel: AnyModel | undefined,
+    readonly targetModel: ModelRef<AnyModel> | undefined,
     readonly associationType: AssociationType | undefined,
     readonly columnName: string | undefined,
     readonly joinColumns: ReadonlyArray<JoinColumn> | undefined,
@@ -588,3 +559,6 @@ export type NullityOf<TProp> =
     TProp extends Prop<any, infer R>
         ? R
         : never;
+
+type ModelRef<TModel extends AnyModel> =
+    TModel | (() => TModel);
