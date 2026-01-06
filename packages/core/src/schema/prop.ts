@@ -20,8 +20,8 @@ export const prop = {
         return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I32"});
     },
 
-    i64(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I64"});
+    i64(): I64Prop<number> {
+        return new I64Prop({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I64"});
     },
 
     f32(): ScalarProp<number> {
@@ -118,6 +118,32 @@ export class ScalarProp<
 
     nullable(): ScalarProp<T, "NULLABLE"> {
         return new ScalarProp({...this.$data, nullity: "NULLABLE"})
+    }
+}
+
+export class I64Prop<
+    T extends string | number, 
+    TNullity extends NullityType = "NONNULL"
+> extends ScalarProp<T, TNullity> {
+
+    override $type(): {
+        prop: [T, TNullity] | undefined,
+        scalarProp: [T, TNullity] | undefined,
+        i64Prop: [T, TNullity] | undefined
+    } {
+        return { 
+            prop: undefined, 
+            scalarProp: undefined,
+            i64Prop: undefined
+        };
+    }
+
+    override nullable(): I64Prop<T, "NULLABLE"> {
+        return new I64Prop({...this.$data, nullity: "NULLABLE"});
+    }
+
+    asString(): I64Prop<string, TNullity> {
+        return new I64Prop({...this.$data});
     }
 }
 

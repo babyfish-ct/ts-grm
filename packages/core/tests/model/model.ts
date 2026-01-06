@@ -2,7 +2,7 @@ import { model } from "@/schema/model";
 import { prop } from "@/schema/prop";
 
 export const bookStoreModel = model("BookStore", "id", class {
-    id = prop.i64()
+    id = prop.i64().asString()
     name = prop.str()
     version = prop.i32()
     books = prop.o2m(bookModel)

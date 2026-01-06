@@ -26,7 +26,7 @@ test("TestSimpleView", () => {
     type ViewType = TypeOf<typeof view>;
 
     expectTypeOf<ViewType>().toEqualTypeOf<{
-        id: number;
+        id: string;
         name: string;
         version: number;
         books: {
@@ -70,7 +70,7 @@ test("TestComplexView", () => {
     type ViewType = TypeOf<typeof view>;
 
     expectTypeOf<ViewType>().toEqualTypeOf<{
-        id: number;
+        id: string;
         name: string;
         optimisticLock: number;
         books: {

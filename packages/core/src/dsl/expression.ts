@@ -1,22 +1,35 @@
 import { NullityType } from "@/schema/prop";
 
+export type I64Expression<T, TNullity extends NullityType> =
+    T extends string
+        ? TNullity extends "NULLABLE"
+            ? NullableNumExpression<string> 
+            : NonNullNumExpression<string>
+        : TNullity extends "NULLABLE"
+            ? NullableNumExpression<number> 
+            : NonNullNumExpression<number>;
+
 export type ExpressionType<T, TIsNull extends NullityType> =
     TIsNull extends "NULLABLE"
         ? NullableExpression<T>
         : NonNullExpression<T>;
 
-export type NonNullExpression<T> = 
+export type NonNullExpression<T, TSpecial extends "I64" | undefined = undefined> = 
     T extends string
-        ? NonNullStrExpression
+        ? TSpecial extends "I64"
+            ? NonNullNumExpression<string>
+            : NonNullStrExpression
     : T extends number 
-        ? NonNullNumExpression
+        ? NonNullNumExpression<number>
     : NonNullAnyExpression<T>;
 
-export type NullableExpression<T> = 
+export type NullableExpression<T, TSpecial extends "I64" | undefined = undefined> = 
     T extends string
-        ? NullableStrExpression
+        ? TSpecial extends "I64"
+            ? NullableNumExpression<string>
+            : NullableStrExpression
     : T extends number
-        ? NullableNumExpression
+        ? NullableNumExpression<number>
     : NullableAnyExpression<T>;
 
 export type Predicate = NonNullExpression<boolean>;
@@ -47,14 +60,33 @@ interface NonNullCmpExpression<T> extends AbstractCmpExpression<T>, NonNullAnyEx
 
 interface NullableCmpExpression<T> extends AbstractCmpExpression<T>, NullableAnyExpression<T> {}
 
-interface NonNullNumExpression extends NonNullCmpExpression<number> {
-    plus(value: number | NonNullNumExpression): NonNullNumExpression;
-    plus(expr: NullableNumExpression): NullableNumExpression;
+interface NonNullNumExpression<T extends NumberType> extends NonNullCmpExpression<T> {
+    
+    plus<X extends NumberType>(
+        value: X | 
+        NonNullNumExpression<X>
+    ): NonNullNumExpression<MaxNumberType<T, X>>;
+
+    plus<X extends NumberType>(
+        expr: NullableNumExpression<X>
+    ): NullableNumExpression<MaxNumberType<T, X>>;
 }
 
-interface NullableNumExpression extends NullableCmpExpression<number> {
-    plus(value: number | NonNullNumExpression | NullableNumExpression): NullableNumExpression;
+interface NullableNumExpression<T extends NumberType> extends NullableCmpExpression<T> {
+
+    plus<X extends NumberType>(
+        value: X | NonNullNumExpression<X> | NullableNumExpression<X>
+    ): NullableNumExpression<MaxNumberType<T, X>>;
 }
+
+type NumberType = number | string;
+
+type MaxNumberType<T1 extends NumberType, T2 extends NumberType> =
+    T1 extends string
+        ? string
+    : T2 extends string
+        ? string
+    : number;
 
 interface AbstractStrExpression extends AbstractCmpExpression<string> {
     like(

@@ -3,13 +3,16 @@ import { NonNullExpression, NullableExpression } from "@/dsl/expression";
 import { authorModel, bookModel, bookStoreModel } from "tests/model/model";
 import { expectTypeOf, test } from "vitest";
 
-test("TableMembers", () => { 
+test("TableMembers", () => {
 
     const authorLastName = store().books().$acceptRisk().authors().name().lastName;
     expectTypeOf<typeof authorLastName>().toEqualTypeOf<NonNullExpression<string>>();
     
     const storeId = book().storeId;
-    expectTypeOf<typeof storeId>().toEqualTypeOf<NullableExpression<number>>();
+    expectTypeOf<typeof storeId>().toEqualTypeOf<NullableExpression<string, "I64">>();
+
+    const bookId = book().id;
+    expectTypeOf<typeof bookId>().toEqualTypeOf<NonNullExpression<number>>();
 
     const storeName1 = book().store().name;
     expectTypeOf<typeof storeName1>().toEqualTypeOf<NonNullExpression<string>>();

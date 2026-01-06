@@ -1,6 +1,6 @@
 import { AllModelMembers, AnyModel, CtorMembers, Model, ModelCtor } from "@/schema/model";
-import { AssociatedProp, CollectionProp, EmbeddedProp, ForeignKeyProp, NullityType, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
-import { ExpressionType, Predicate } from "./expression";
+import { CollectionProp, EmbeddedProp, ForeignKeyProp, I64Prop, NullityType, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
+import { ExpressionType, I64Expression, NonNullExpression, NullableExpression, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 
 export type EntityTable<TModel extends Model<any, any, any, any, any>> = 
@@ -14,7 +14,9 @@ type DslMembers<
 > = 
     FilterNever<{
         [K in keyof TMembers]:
-            TMembers[K] extends ScalarProp<infer R, infer Nullity>
+            TMembers[K] extends I64Prop<infer R, infer Nullity>
+                ? I64Expression<R, Nullity>
+            : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? ExpressionType<R, CombinedNullity<TNullity, Nullity>>
             : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
@@ -40,7 +42,13 @@ type ReferenceIdMembers<TMembers, TNullity extends NullityType> = {
     ]: 
         TMembers[K] extends ForeignKeyProp<ReferenceProp<infer TTargetModel, infer Nullity, any, any>>
             ? TTargetModel extends Model<any, infer TProp, any, any, any>
-                ? ExpressionType<ReturnTypeOf<AllModelMembers<TTargetModel>[TProp]>, CombinedNullity<TNullity, Nullity>> 
+                ? AllModelMembers<TTargetModel>[TProp] extends I64Prop<infer R, any>
+                    ? I64Expression<R, CombinedNullity<TNullity, Nullity>>
+                    : ExpressionType<
+                        ReturnTypeOf<
+                            AllModelMembers<TTargetModel>[TProp]>, 
+                            CombinedNullity<TNullity, Nullity>
+                    > 
                 : never
             : never
 };
