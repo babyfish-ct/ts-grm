@@ -1,10 +1,24 @@
 import { AnyModel } from "@/schema/model";
 import { EntityTable } from "./entity-table";
 
-export class SqlClient {
+export interface SqlClient {
+
+    $type(): { sqlClient: undefined };
+
+    $acceptRisk(): QueryWithRiskCreator;
+
+    createQuery<TModel extends AnyModel>(
+        model: TModel,
+        fn: (table: EntityTable<TModel>) => void
+    ): void;
+}
+
+export interface QueryWithRiskCreator {
+
+    $type(): { queryWithRiskCreator: undefined };
 
     createQuery<
-        const Models extends AtLeastOne<AnyModel>
+        const Models extends AtLeastTwo<AnyModel>
     >(
         ...args: [
             ...models: Models,
@@ -14,9 +28,7 @@ export class SqlClient {
                 } extends infer T ? T extends any[] ? T : never : never
             ) => void
         ]
-    ): void {
-
-    }
+    ): void;
 }
 
-type AtLeastOne<T> = [T, ...T[]];
+type AtLeastTwo<T> = [T, ...T[]];

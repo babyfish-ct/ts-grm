@@ -1,31 +1,31 @@
-import { NonNullExpression, NullableExpression } from "./expression";
+import { Expression } from "./expression";
 
 export function count(
-    expr?: NonNullExpression<any> | NullableExpression<any>
-): NonNullExpression<number> {
+    expr?: Expression<any>
+): Expression<number> {
     throw new Error();
 }
 
 export function sum(
-    expr: NonNullExpression<number> | NullableExpression<number>
-): NullableExpression<number> {
+    expr: Expression<number>
+): Expression<number> {
     throw new Error();
 }
 
 export function max(
-    expr: NonNullExpression<number> | NullableExpression<number>
-): NullableExpression<number> {
+    expr: Expression<number>
+): Expression<number> {
     throw new Error();
 }
 
 export function min(
-    expr: NonNullExpression<number> | NullableExpression<number>
-): NullableExpression<number> {
+    expr: Expression<number>
+): Expression<number> {
     throw new Error();
 }
 
 export function avg(
-    expr: NonNullExpression<number> | NullableExpression<number>
-): NullableExpression<number> {
+    expr: Expression<number>
+): Expression<number> {
     throw new Error();
 }

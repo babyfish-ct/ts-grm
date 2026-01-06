@@ -1,120 +1,158 @@
 import { NullityType } from "@/schema/prop";
 
-export type I64Expression<T, TNullity extends NullityType> =
-    T extends string
-        ? TNullity extends "NULLABLE"
-            ? NullableNumExpression<string> 
-            : NonNullNumExpression<string>
-        : TNullity extends "NULLABLE"
-            ? NullableNumExpression<number> 
-            : NonNullNumExpression<number>;
+export type MakeType<T, TNullity extends NullityType> =
+    TNullity extends "NONNULL"
+        ? T
+        : T | null | undefined;
 
-export type ExpressionType<T, TIsNull extends NullityType> =
-    TIsNull extends "NULLABLE"
-        ? NullableExpression<T>
-        : NonNullExpression<T>;
+export type Expression<
+    T, 
+    TAsNumber extends (T extends string ? true | false : false) = false
+> = 
+    NonNull<T> extends string
+        ? TAsNumber extends true
+            ? NumExpression<T & Null<string>>
+            : StrExpression<T & Null<string>>
+    : NonNull<T> extends number
+        ? NumExpression<T & Null<number>>
+    : AnyExpression<T>; 
 
-export type NonNullExpression<T, TSpecial extends "I64" | undefined = undefined> = 
-    T extends string
-        ? TSpecial extends "I64"
-            ? NonNullNumExpression<string>
-            : NonNullStrExpression
-    : T extends number 
-        ? NonNullNumExpression<number>
-    : NonNullAnyExpression<T>;
+export type Predicate = AnyExpression<boolean>;
 
-export type NullableExpression<T, TSpecial extends "I64" | undefined = undefined> = 
-    T extends string
-        ? TSpecial extends "I64"
-            ? NullableNumExpression<string>
-            : NullableStrExpression
-    : T extends number
-        ? NullableNumExpression<number>
-    : NullableAnyExpression<T>;
+type NonNull<T> = Exclude<T, null | undefined>;
 
-export type Predicate = NonNullExpression<boolean>;
+type Null<T> = T | null | undefined;
 
-interface AbstractAnyExpression<T> {
-    eq(value: T | AbstractAnyExpression<T>): Predicate;
-    ne(value: T | AbstractAnyExpression<T>): Predicate;
-    eqIf(value: T | AbstractAnyExpression<T> | null | undefined): Predicate | null | undefined;
-    neIf(value: T | AbstractAnyExpression<T> | null | undefined): Predicate | null | undefined;
-};
-
-interface NonNullAnyExpression<T> extends AbstractAnyExpression<T> {}
-
-interface NullableAnyExpression<T> extends AbstractAnyExpression<T> {}
-
-interface AbstractCmpExpression<T> extends AbstractAnyExpression<T> {
-    lt(value: T | AbstractCmpExpression<T>): Predicate;
-    le(value: T | AbstractCmpExpression<T>): Predicate;
-    gt(value: T | AbstractCmpExpression<T>): Predicate;
-    ge(value: T | AbstractCmpExpression<T>): Predicate;
-    ltIf(value: T | AbstractCmpExpression<T> | null | undefined): Predicate | null | undefined;
-    leIf(value: T | AbstractCmpExpression<T> | null | undefined): Predicate | null | undefined;
-    gtIf(value: T | AbstractCmpExpression<T> | null | undefined): Predicate | null | undefined;
-    geIf(value: T | AbstractCmpExpression<T> | null | undefined): Predicate | null | undefined;
-}
-
-interface NonNullCmpExpression<T> extends AbstractCmpExpression<T>, NonNullAnyExpression<T> {}
-
-interface NullableCmpExpression<T> extends AbstractCmpExpression<T>, NullableAnyExpression<T> {}
-
-interface NonNullNumExpression<T extends NumberType> extends NonNullCmpExpression<T> {
+type AnyExpression<T> = {
     
-    plus<X extends NumberType>(
-        value: X | 
-        NonNullNumExpression<X>
-    ): NonNullNumExpression<MaxNumberType<T, X>>;
+    __type(): { expression: T | undefined };
 
-    plus<X extends NumberType>(
-        expr: NullableNumExpression<X>
-    ): NullableNumExpression<MaxNumberType<T, X>>;
-}
-
-interface NullableNumExpression<T extends NumberType> extends NullableCmpExpression<T> {
-
-    plus<X extends NumberType>(
-        value: X | NonNullNumExpression<X> | NullableNumExpression<X>
-    ): NullableNumExpression<MaxNumberType<T, X>>;
-}
-
-type NumberType = number | string;
-
-type MaxNumberType<T1 extends NumberType, T2 extends NumberType> =
-    T1 extends string
-        ? string
-    : T2 extends string
-        ? string
-    : number;
-
-interface AbstractStrExpression extends AbstractCmpExpression<string> {
-    like(
-        value: string | AbstractStrExpression, 
-        mode?: LikeMode
+    eq(
+        value: NonNull<T> | AnyExpression<Null<T>>
     ): Predicate;
-    ilike(
-        value: string | AbstractStrExpression, 
-        mode?: LikeMode
+    
+    ne(
+        value: NonNull<T> | AnyExpression<Null<T>>
     ): Predicate;
-    likeIf(
-        value: string | AbstractStrExpression | null | undefined, 
-        mode?: LikeMode
-    ): Predicate | null | undefined;
-    ilikeIf(
-        value: string | AbstractStrExpression | null | undefined, 
-        mode?: LikeMode
-    ): Predicate | null | undefined;
+    
+    eqIf(
+        value: Null<T>
+    ): Null<Predicate>;
+    
+    neIf(
+        value: Null<T>
+    ): Null<Predicate>;
+} & (
+    T extends null | undefined
+        ? { isNull(): Predicate }
+        : Record<string, never>
+);
+
+type CmpExpression<T> = AnyExpression<T> & {
+    
+    __type(): { 
+        expression: T | undefined;
+        cmpExpression: T | undefined;
+    }
+    
+    lt(
+        value: NonNull<T> | CmpExpression<Null<T>>
+    ): Predicate;
+    
+    le(
+        value: NonNull<T> | CmpExpression<Null<T>>
+    ): Predicate;
+    
+    gt(
+        value: NonNull<T> | CmpExpression<Null<T>>
+    ): Predicate;
+    
+    ge(
+        value: NonNull<T> | CmpExpression<Null<T>>
+    ): Predicate;
+    
+    ltIf(
+        value: Null<T>
+    ): Null<Predicate>;
+    
+    leIf(
+        value: Null<T>
+    ): Null<Predicate>;
+    
+    gtIf(
+        value: Null<T>
+    ): Null<Predicate>;
+    
+    geIf(
+        value: Null<T>
+    ): Null<Predicate>;
 }
 
-interface NonNullStrExpression extends AbstractStrExpression {
-    upper(): NonNullStrExpression;
-    lower(): NonNullStrExpression;
-}
+type MergeNumType<
+    T1 extends Null<string | number>, 
+    T2 extends Null<string | number>
+> =
+    T1 | T2 extends string
+        ? Exclude<T1 | T2, number> 
+        : T1 | T2;
 
-interface NullableStrExpression extends AbstractStrExpression {
-    upper(): NullableStrExpression;
-    lower(): NullableStrExpression;
+type NumExpression<T extends Null<string | number>> = CmpExpression<T> & {
+
+    __type(): { 
+        expression: T | undefined;
+        cmpExpression: T | undefined;
+        numExpression: T | undefined;
+    }
+
+    plus<X extends Null<string | number>>(
+        value: NonNull<X> | NumExpression<Null<X>>
+    ): NumExpression<MergeNumType<T, X>>;
+
+    minus<X extends Null<string | number>>(
+        value: NonNull<X> | NumExpression<Null<X>>
+    ): NumExpression<MergeNumType<T, X>>;
+
+    times<X extends Null<string | number>>(
+        value: NonNull<X> | NumExpression<Null<X>>
+    ): NumExpression<MergeNumType<T, X>>;
+
+    div<X extends Null<string | number>>(
+        value: NonNull<X> | NumExpression<Null<X>>
+    ): NumExpression<MergeNumType<T, X>>;
+
+    rem<X extends Null<string | number>>(
+        value: NonNull<X> | NumExpression<Null<X>>
+    ): NumExpression<MergeNumType<T, X>>;
 }
 
 export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
+
+type StrExpression<T extends Null<string>> = CmpExpression<T> & {
+
+    __type(): { 
+        expression: T | undefined;
+        cmpExpression: T | undefined;
+        numExpression: T | undefined;
+        strExpresion: T | undefined;
+    }
+
+    like(
+        value: NonNull<string> | StrExpression<Null<string>>, 
+        mode?: LikeMode
+    ): Null<Predicate>;
+
+    ilike(
+        value: NonNull<string> | StrExpression<Null<string>>, 
+        mode?: LikeMode
+    ): Null<Predicate>;
+
+    likeIf(
+        value: Null<string>, 
+        mode?: LikeMode
+    ): Null<Predicate>;
+
+    ilikeIf(
+        value: Null<string>, 
+        mode?: LikeMode
+    ): Null<Predicate>;
+}
