@@ -27,30 +27,29 @@ type DslMembers<
             : TMembers[K] extends CollectionProp<infer TTargetModel>
                 ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : never
-        } & ReferenceIdMembers<TMembers,TNullity>
+        } & ReferenceKeyMembers<TMembers,TNullity>
     > &
     WeakJoinAction<TModel, TRiskAccepted>;
 
-type ReferenceIdMembers<TMembers, TNullity extends NullityType> = {
+type ReferenceKeyMembers<TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends ForeignKeyProp<ReferenceProp<infer TTargetModel, any, any, any>>
-                ? TTargetModel extends Model<any, infer TIdProp, any, any, any>
-                    ? `${K & string}${Capitalize<TIdProp & string>}`
+            TMembers[K] extends ReferenceProp<infer _, any, "OWNING", infer TKey>
+                ? TKey extends string
+                    ? `${K & string}${Capitalize<TKey>}`
                     : never
                 : never
-    ]: 
-        TMembers[K] extends ForeignKeyProp<ReferenceProp<infer TTargetModel, infer Nullity, any, any>>
-            ? TTargetModel extends Model<any, infer TProp, any, any, any>
-                ? AllModelMembers<TTargetModel>[TProp] extends I64Prop<infer R, any>
-                    ? I64Expression<R, CombinedNullity<TNullity, Nullity>>
-                    : ExpressionType<
-                        ReturnTypeOf<
-                            AllModelMembers<TTargetModel>[TProp]>, 
-                            CombinedNullity<TNullity, Nullity>
-                    > 
-                : never
+    ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", infer TKey>
+        ? TKey extends string
+            ? AllModelMembers<TTargetModel>[TKey] extends I64Prop<infer R, any>
+                ? I64Expression<R, CombinedNullity<TNullity, Nullity>>
+                : ExpressionType<
+                    ReturnTypeOf<
+                        AllModelMembers<TTargetModel>[TKey]>, 
+                        CombinedNullity<TNullity, Nullity>
+                > 
             : never
+        : never
 };
 
 type CombinedNullity<
