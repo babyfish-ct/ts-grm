@@ -99,7 +99,7 @@ type As<
     TLastName extends string
 > =
     TLastName extends ""
-        ? Record<string, never>
+        ? object
         : {
             $as<TNewName extends string>(
                 name: TNewName
@@ -125,7 +125,7 @@ type ReferenceFetch<
                 fetchType: ReferenceFetchType
             ): ViewBuilder<TModel, TMembers, TCurrent, TLastProp, TLastName> 
         }
-        : Record<string, never>;
+        : object;
 
 type CollectionOrderBy<
     TModel extends AnyModel, 
@@ -140,7 +140,7 @@ type CollectionOrderBy<
                 ...orders: OrderedKeys<TItemModel>[]
             ) => ViewBuilder<TModel, TMembers, TCurrent, TLastProp, TLastName> 
         }
-        : Record<string, never>;
+        : object;
 
 type Flat<
     TModel extends AnyModel, 
@@ -148,7 +148,7 @@ type Flat<
     TCurrent
 > = 
     FlatKeys<TMembers> extends never
-        ? Record<string, never>
+        ? object
         : {
             flat<TName extends FlatKeys<TMembers>, X, TPrefix extends string = "">(
                 prop: TName,
