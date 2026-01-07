@@ -9,7 +9,7 @@ test("TestRootQueryByOne", async () => {
 
     const rows = await sqlClient().createQuery(bookModel, book => {
         where(book.storeId.eq("2"));
-        orderBy()
+        orderBy(book.price.desc())
         return select(book.fetch(simpleBookView));
     }).list();
     
