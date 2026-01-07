@@ -1,34 +1,25 @@
 import { AnyModel } from "@/schema/model";
 import { EntityTable } from "./entity-table";
+import { SelectedProjection } from "./projection";
+import { RootQuery } from "./query";
 
 export interface SqlClient {
 
     $type(): { sqlClient: undefined };
 
-    $acceptRisk(): QueryWithRiskCreator;
-
-    createQuery<TModel extends AnyModel>(
-        model: TModel,
-        fn: (table: EntityTable<TModel>) => void
-    ): void;
-}
-
-export interface QueryWithRiskCreator {
-
-    $type(): { queryWithRiskCreator: undefined };
-
     createQuery<
-        const Models extends AtLeastTwo<AnyModel>
+        const TModels extends AtLeastTwo<AnyModel>,
+        TProjection extends SelectedProjection<any>
     >(
         ...args: [
-            ...models: Models,
+            ...models: TModels,
             fn: (
                 ...tables: {
-                    [K in keyof Models]: EntityTable<Models[K]>
+                    [K in keyof TModels]: EntityTable<TModels[K]>
                 } extends infer T ? T extends any[] ? T : never : never
-            ) => void
+            ) => TProjection
         ]
-    ): void;
+    ): RootQuery<TProjection>;
 }
 
 type AtLeastTwo<T> = [T, ...T[]];

@@ -5,7 +5,7 @@ export type JoinColumn = {
     referenceProp?: string | undefined
 };
 
-export type Order<TModel extends AnyModel> = 
+export type ModelOrder<TModel extends AnyModel> = 
     OrderedKeys<TModel> 
     | {
         readonly path: OrderedKeys<TModel>, 

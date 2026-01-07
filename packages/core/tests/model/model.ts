@@ -14,6 +14,7 @@ export const bookModel = model("Book", "id", class {
     id = prop.i64()
     name = prop.str()
     edition = prop.i32()
+    price = prop.num()
     store = prop.m2o(bookStoreModel)
         .joinColumns({cascade: "DELETE"})
         .nullable()

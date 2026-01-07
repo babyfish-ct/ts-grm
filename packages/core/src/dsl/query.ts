@@ -1,18 +1,21 @@
-import { Expression } from "./expression";
+import { Expression, Predicate } from "./expression";
+import { RowTypeOf, SelectArrArgs, SelectedProjection, Selection, SelectMapArgs } from "./projection";
 
-export interface Query<T> {
+export interface Query<TProjection> {
     
     __type(): {
-        query: T | undefined;
+        query: TProjection | undefined;
     };
 }
 
-export interface RootQuery<T> extends Query<T> {
+export interface RootQuery<TProjection extends SelectedProjection<any>> extends Query<TProjection> {
 
     __type(): {
-        query: T | undefined;
-        rootQuery: T | undefined;
+        query: TProjection | undefined;
+        rootQuery: TProjection | undefined;
     };
+
+    list(): Promise<Array<RowTypeOf<TProjection>>>;
 }
 
 export interface SubQuery<T> extends Query<T> {
@@ -31,24 +34,51 @@ export interface BaseQuery<T> extends Query<T> {
     };
 }
 
-export function select(selection: Selection) {
-
+export function where(
+    ...predicates: ReadonlyArray<Predicate | null | undefined>
+) {
+    throw new Error();
 }
 
-export type Selection =
-    SelectedView<any, any> |
-    Expression<any>;
+export function orderBy(
+    ...orders: ReadonlyArray<ExpressionOrder>
+) {
+    throw new Error();
+}
 
-export type SelectedTypeOf<TSelection extends Selection> =
-    TSelection extends SelectedView<any, infer R>
-        ? R
-    : TSelection extends Expression<infer R>
-        ? R
-    : never;
+export function groupBy(
+    ...expressions: ReadonlyArray<Expression<any> | Expression<string, "AS_NUMBER">>
+) {
+    throw new Error();
+}
 
-export interface SelectedView<TName extends string, X> {
+export function having(
+    ...predicates: ReadonlyArray<Predicate | null | undefined>
+) {
+    throw new Error();
+}
 
-    __type(): {
-        selectedView: [TName, X] | undefined
-    };
-};
+export function select<
+    const TSelections extends SelectArrArgs
+>(
+    ...selections: TSelections
+): SelectedProjection<TSelections, "ARRAY">;
+
+export function select<
+    const TSelections extends SelectMapArgs
+>(
+    selections: TSelections
+): SelectedProjection<{
+    [K in keyof TSelections]: 
+        TSelections[K] extends Selection<infer U> ? Selection<U> : never
+}, "MAP">;
+
+export function select<T>(
+    selection: Selection<T>
+) : SelectedProjection<T, "ONE">;
+
+export function select(
+    selection: any
+): SelectedProjection<any> {
+    throw new Error();
+}

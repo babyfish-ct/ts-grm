@@ -2,10 +2,10 @@ import { NullityType } from "@/schema/prop";
 
 export type Expression<
     T, 
-    TAsNumber extends (T extends string ? true | false : false) = false
+    TAsNumber extends (T extends string ? "AS_NUMBER" | undefined : undefined) = undefined
 > = 
     NonNull<T> extends string
-        ? TAsNumber extends true
+        ? TAsNumber extends "AS_NUMBER"
             ? NumExpression<T & Nullable<string>>
             : StrExpression<T & Nullable<string>>
     : NonNull<T> extends number
@@ -27,7 +27,14 @@ type IsNull<T> =
 
 type AnyExpression<T> = {
     
-    __type(): { expression: T | undefined };
+    __type(): {
+        selectable: true;
+        expression: T | undefined;
+    };
+
+    asc(): ExpressionOrder;
+
+    desc(): ExpressionOrder;
 
     eq(
         value: NonNull<T> | AnyExpression<T>
@@ -39,11 +46,11 @@ type AnyExpression<T> = {
     
     eqIf(
         value: Nullable<T>
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
     
     neIf(
         value: Nullable<T>
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
 } & (
     IsNull<T> extends true
         ? { 
@@ -80,6 +87,7 @@ type CoalesceDataType<T, TArgs extends any[]> =
 type CmpExpression<T> = AnyExpression<T> & {
     
     __type(): { 
+        selectable: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
     }
@@ -102,19 +110,19 @@ type CmpExpression<T> = AnyExpression<T> & {
     
     ltIf(
         value: Nullable<T>
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
     
     leIf(
         value: Nullable<T>
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
     
     gtIf(
         value: Nullable<T>
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
     
     geIf(
         value: Nullable<T>
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
 }
 
 type MergeNumType<
@@ -128,6 +136,7 @@ type MergeNumType<
 type NumExpression<T extends Nullable<string | number>> = CmpExpression<T> & {
 
     __type(): { 
+        selectable: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
@@ -161,6 +170,7 @@ export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
 type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
 
     __type(): { 
+        selectable: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
@@ -170,22 +180,22 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
     like(
         value: string | StrExpression<string>, 
         mode?: LikeMode
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
 
     ilike(
         value: string | StrExpression<string>, 
         mode?: LikeMode
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
 
     likeIf(
         value: Nullable<string>, 
         mode?: LikeMode
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
 
     ilikeIf(
         value: Nullable<string>, 
         mode?: LikeMode
-    ): Nullable<Predicate>;
+    ): Predicate | undefined;
 
     lower(): StrExpression<T>;
 
@@ -239,20 +249,20 @@ export type MakeType<T, TNullity extends NullityType> =
         ? T
         : T | null | undefined;
 
-export function and<P extends Nullable<Predicate>>(
-    ...predicates: P[]
-): P {
+export function and(
+    ...predicates: ReadonlyArray<Nullable<Predicate>>
+): Predicate | undefined {
     throw new Error();
 }
 
-export function or<P extends Nullable<Predicate>>(
-    ...predicates: P[]
-): P {
+export function or(
+    ...predicates: ReadonlyArray<Nullable<Predicate>>
+): Predicate | undefined {
     throw new Error();
 }
 
-export function not<P extends Nullable<Predicate>>(
-    ...predicates: P[]
-): P {
+export function not(
+    ...predicates: ReadonlyArray<Nullable<Predicate>>
+): Predicate | undefined {
     throw new Error();
 }

@@ -3,7 +3,7 @@ import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, Retu
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
-import { SelectedView } from "./query";
+import { FetchedView } from "./projection";
 
 export type EntityTable<TModel extends AnyModel> = 
     EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", false>;
@@ -18,7 +18,7 @@ type EntityTableMembers<
     & { 
         fetch<X>(
             view: View<ModelName<TModel>, X>
-        ): SelectedView<
+        ): FetchedView<
             ModelName<TModel>, 
             TNullity extends "NULLABLE" ? X | null | undefined : X
         >; 
@@ -35,7 +35,7 @@ type DslMembers<
             TMembers[K] extends I64Prop<infer R, infer Nullity>
                 ? Expression<
                     MakeType<R, Nullity>,
-                    R extends string ? true : false
+                    R extends string ? "AS_NUMBER" : undefined
                 >
             : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
@@ -64,7 +64,7 @@ type ReferenceKeyMembers<TMembers, TNullity extends NullityType> = {
             ? AllModelMembers<TTargetModel>[TKey] extends I64Prop<infer R, any>
                 ? Expression<
                     MakeType<R, CombinedNullity<TNullity, Nullity>>, 
-                    R extends string ? true : false
+                    R extends string ? "AS_NUMBER" : undefined
                 >
                 : Expression<
                     MakeType<

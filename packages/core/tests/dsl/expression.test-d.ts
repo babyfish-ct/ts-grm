@@ -4,13 +4,13 @@ import { expectTypeOf, test } from "vitest";
 test("TestNumber", () => {
 
     const a = undefinedLargeNumExpr().plus(nonNullNumExpr());
-    expectTypeOf<typeof a>().toEqualTypeOf<Expression<string | undefined, true>>();
+    expectTypeOf<typeof a>().toEqualTypeOf<Expression<string | undefined, "AS_NUMBER">>();
     
     const b = nonNullLargeNumExpr().plus(undefinedNumExpr());
-    expectTypeOf<typeof b>().toEqualTypeOf<Expression<string | undefined, true>>();
+    expectTypeOf<typeof b>().toEqualTypeOf<Expression<string | undefined, "AS_NUMBER">>();
 
     const c = nonNullLargeNumExpr().plus(nonNullNumExpr());
-    expectTypeOf<typeof c>().toEqualTypeOf<Expression<string, true>>();
+    expectTypeOf<typeof c>().toEqualTypeOf<Expression<string, "AS_NUMBER">>();
 
     const d = undefinedNumExpr().plus(nonNullNumExpr());
     expectTypeOf<typeof d>().toEqualTypeOf<Expression<number | undefined>>();
@@ -61,11 +61,11 @@ function nonNullNumExpr(): Expression<number> {
     throw new Error();
 }
 
-function undefinedLargeNumExpr(): Expression<string | undefined, true> {
+function undefinedLargeNumExpr(): Expression<string | undefined, "AS_NUMBER"> {
     throw new Error();
 }
 
-function nonNullLargeNumExpr(): Expression<string, true> {
+function nonNullLargeNumExpr(): Expression<string, "AS_NUMBER"> {
     throw new Error();
 }
 

@@ -9,7 +9,7 @@ test("TableMembers", () => {
     expectTypeOf<typeof authorLastName>().toEqualTypeOf<Expression<string>>();
     
     const storeId = book().storeId;
-    expectTypeOf<typeof storeId>().toEqualTypeOf<Expression<string | null | undefined, true>>();
+    expectTypeOf<typeof storeId>().toEqualTypeOf<Expression<string | null | undefined, "AS_NUMBER">>();
 
     const bookId = book().id;
     expectTypeOf<typeof bookId>().toEqualTypeOf<Expression<number>>();

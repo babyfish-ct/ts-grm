@@ -1,6 +1,6 @@
-import { JoinColumn, Order } from "@/schema/order";
+import { JoinColumn, ModelOrder } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
-import { CascaseType, JoinColumns, JoinTableToId, JoinTableToKey, WeakTypeJoinColumns } from "./join";
+import { CascaseType, JoinColumns, JoinTableToId, JoinTableToKey } from "./join";
 
 export const prop = {
 
@@ -432,7 +432,7 @@ implements CollectionProp<TModel> {
     }
 
     orderBy(
-        ...orders: Order<TModel>[]
+        ...orders: ModelOrder<TModel>[]
     ): OneToManyProp<TModel, TNullity, TDirection> {
         return new OneToManyProp(
             {...this.$data, orders: [...orders] as ReadonlyArray<any> }
@@ -455,7 +455,7 @@ class UnconfiguredOneToManyProp<
     }
 
     override orderBy(
-        ...orders: Order<TModel>[]
+        ...orders: ModelOrder<TModel>[]
     ): UnconfiguredOneToManyProp<TModel, TNullity, TDirection> {
         return new UnconfiguredOneToManyProp(
             {...this.$data, orders: [...orders] as ReadonlyArray<any> }
@@ -489,7 +489,7 @@ implements CollectionProp<TModel> {
     }
 
     orderBy(
-        ...orders: Order<TModel>[]
+        ...orders: ModelOrder<TModel>[]
     ): ManyToManyProp<TModel, TNullity, TDirection> {
         return new ManyToManyProp(
             {...this.$data, orders: [...orders] as ReadonlyArray<any> }
@@ -526,7 +526,7 @@ class UnconfiguredManyToManyProp<
     }
 
     orderBy(
-        ...orders: Order<TModel>[]
+        ...orders: ModelOrder<TModel>[]
     ): UnconfiguredManyToManyProp<TModel, TNullity, TDirection> {
         return new UnconfiguredManyToManyProp(
             {...this.$data, orders: [...orders] as ReadonlyArray<any> }
@@ -560,7 +560,7 @@ type PropData = {
         readonly toTargetColumns: ReadonlyArray<JoinColumn> | undefined
     } | undefined
     readonly mappedBy: string | undefined,
-    readonly orders: ReadonlyArray<Order<any>> | undefined
+    readonly orders: ReadonlyArray<ModelOrder<any>> | undefined
 };
 
 const EMPTY_PROP_DEFINTION_DATA: PropData = {
