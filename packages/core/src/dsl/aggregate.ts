@@ -1,7 +1,7 @@
-import { Expression } from "./expression";
+import { Expression, ExpressionLike } from "./expression";
 
 export function count(
-    expr?: Expression<any> | Expression<string, "AS_NUMBER">
+    expr?: ExpressionLike
 ): Expression<number> {
     throw new Error();
 }

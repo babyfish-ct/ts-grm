@@ -2,7 +2,7 @@ import { NullityType } from "@/schema/prop";
 
 export type Expression<
     T, 
-    TAsNumber extends (T extends string ? "AS_NUMBER" | undefined : undefined) = undefined
+    TAsNumber extends "AS_NUMBER" | undefined = undefined
 > = 
     NonNull<T> extends string
         ? TAsNumber extends "AS_NUMBER"
@@ -29,6 +29,7 @@ type AnyExpression<T> = {
     
     __type(): {
         selectable: true;
+        expressionable: true;
         expression: T | undefined;
     };
 
@@ -43,6 +44,22 @@ type AnyExpression<T> = {
     ne(
         value: NonNull<T> | AnyExpression<T>
     ): Predicate;
+
+    in(
+        ...values: (NonNull<T> | Expression<NonNull<T>>)[]
+    ): Predicate;
+
+    in(
+        values: (NonNull<T> | Expression<NonNull<T>>)[]
+    ): Predicate;
+
+    notIn(
+        ...values: (NonNull<T> | Expression<NonNull<T>>)[]
+    ): Predicate;
+
+    notIn(
+        values: (NonNull<T> | Expression<NonNull<T>>)[]
+    ): Predicate;
     
     eqIf(
         value: Nullable<T>
@@ -50,6 +67,14 @@ type AnyExpression<T> = {
     
     neIf(
         value: Nullable<T>
+    ): Predicate | undefined;
+
+    inIf(
+        values: (NonNull<T> | Expression<NonNull<T>>)[] | null | never
+    ): Predicate | undefined;
+
+    notInIf(
+        values: (NonNull<T> | Expression<NonNull<T>>)[] | null | never
     ): Predicate | undefined;
 } & (
     IsNull<T> extends true
@@ -266,3 +291,9 @@ export function not(
 ): Predicate | undefined {
     throw new Error();
 }
+
+export type ExpressionLike = {
+    __type(): {
+        expressionable: true;
+    }
+};

@@ -3,10 +3,10 @@ import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, Retu
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
-import { FetchedView } from "./projection";
+import { FetchedView } from "./root-query";
 
-export type EntityTable<TModel extends AnyModel> = 
-    EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", false>;
+export type EntityTable<TModel extends AnyModel, TRiskAccepted extends boolean = false> = 
+    EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", TRiskAccepted>;
 
 type EntityTableMembers<
     TModel extends AnyModel, 
