@@ -48,7 +48,7 @@ export const prop = {
 
     o2o<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
-    ): UnconfiguredOneToOneProp<TModel> {
+    ): UnconfiguredOneToOneProp<TModel, "NONNULL", "OWNING", ModelIdKey<TModel>> {
         return new UnconfiguredOneToOneProp({
             ...EMPTY_PROP_DEFINTION_DATA, 
             targetModel, 
@@ -58,7 +58,7 @@ export const prop = {
 
     m2o<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
-    ): UnconfiguredManyToOneProp<TModel> {
+    ): UnconfiguredManyToOneProp<TModel, "NONNULL", "OWNING", ModelIdKey<TModel>> {
         return new UnconfiguredManyToOneProp({
             ...EMPTY_PROP_DEFINTION_DATA, 
             targetModel, 

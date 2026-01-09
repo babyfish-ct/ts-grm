@@ -4,7 +4,7 @@ import { SqlClient } from "@/dsl/sql-client";
 import { TupleSubQuery } from "@/dsl/sub-query";
 import { tuple } from "@/dsl/tuple";
 import { dto } from "@/schema/dto";
-import { authorModel, bookModel } from "tests/model/model";
+import { authorModel, bookModel, treeNodeModel } from "tests/model/model";
 import { expectTypeOf, test } from "vitest";
 
 function sqlClient(): SqlClient {
@@ -23,6 +23,11 @@ const simpleAuthorView = dto.view(authorModel, $ => $
         .lastName.$as("ln")
     )
 )
+
+const simpleTreeNodeView = dto.view(treeNodeModel, $ => $
+    .id
+    .name
+);
 
 test("TestRootQueryByOne", async () => {
 
@@ -180,4 +185,54 @@ test("TestUnionAll", () => {
             Expression<number>
         ]>
     >();
+});
+
+test("TestDerivedTable", async () => {
+    const baseModel = dsl.derivedModel(
+        dsl.baseQuery(bookModel, (q, book) => {
+            return q.select({
+                book,
+                localRank: dsl.native.num(
+                    "row_number() over(partition by...)"
+                )
+            });
+        })
+    );
+    const rows = await sqlClient().createQuery(baseModel, (q, base) => {
+        q.where(base.localRank.le(3));
+        return q.select(base.book.fetch(simpleBookView));
+    }).fetchList();
+    expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
+        id: number;
+        name: string;
+    }>();
+});
+
+test("TestCteTable", async() => {
+    const baseModel = dsl.cteModel(
+        dsl.baseQuery(treeNodeModel, (q, treeNode) => {
+            q.where(treeNode.parentNodeId.isNull())
+            return q.select({
+                treeNode,
+                depth: dsl.constant(0)
+            });
+        }).unionAllRecursively(treeNodeModel, (q, treeNode) => {
+            q.where(treeNode.parentNodeId.eq(q.prev.treeNode.id));
+            return q.select({
+                treeNode,
+                depth: q.prev.depth.plus(1)
+            })
+        })
+    );
+    const rows = await sqlClient().createQuery(baseModel, (q, base) => {
+        q.orderBy(base.treeNode.name, base.depth);
+        return q.select(
+            base.treeNode.fetch(simpleTreeNodeView),
+            base.depth
+        )
+    }).fetchList();
+    expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
+        { id: number; name: string; },
+        number
+    ]>();
 });

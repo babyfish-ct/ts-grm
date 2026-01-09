@@ -4,15 +4,19 @@ import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root-query";
-import { BaseQuerySelectMapArgs, Exportable } from "./base-query";
+import { BaseQuerySelectMapArgs, BaseModel } from "./base-query";
 
 export type TableLike = {
 
-    __type(): { 
-        tableLike: true;
-        exportable: true;
-    };
+    __type(): { tableLike: true; };
 };
+
+export type Table<T extends AnyModel | BaseModel<any>, TRiskAccepted extends boolean = false> =
+    T extends AnyModel
+        ? EntityTable<T, TRiskAccepted>
+    : T extends BaseModel<infer TMap>
+        ? BaseTable<TMap, TRiskAccepted>
+    : never;
 
 export type EntityTable<TModel extends AnyModel, TRiskAccepted extends boolean = false> = 
     EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", TRiskAccepted>;
@@ -33,7 +37,6 @@ type EntityTableMembers<
         >; 
     } & {
         __type(): {
-            exportable: true;
             tableLike: true;
             entityTable: TModel;
         }
@@ -264,11 +267,22 @@ type WeakJoinAction<
 type FilterType<TParentModel extends AnyModel, TModel extends AnyModel> =
     (source: EntityTable<TParentModel>, target: EntityTable<TModel>) => Predicate;
 
-
-export type BaseTable<T extends BaseQuerySelectMapArgs> = {
-
+export type BaseTable<
+    TMap extends BaseQuerySelectMapArgs,
+    TRiskAccepted extends boolean = false
+> = {
     __type(): { 
-        exportable: true;
-        baseTable: T | true;
+        tableLike: true; 
+        baseTable: true; 
     };
+} & {
+    [K in keyof TMap]: 
+        TMap[K] extends EntityTable<any, any>
+            ? MakeRiskAcceptedTable<TMap[K], TRiskAccepted>
+            : TMap[K];
 };
+
+type MakeRiskAcceptedTable<TEntityTable, TRiskAccepted extends boolean = false> =
+    TEntityTable extends EntityTable<infer M extends AnyModel, any>
+        ? EntityTable<M, TRiskAccepted>
+        : never;

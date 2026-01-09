@@ -32,7 +32,6 @@ type AnyExpression<T> = {
     
     __type(): {
         selectionLike: true;
-        exportable: true;
         expressionLike: true;
         expression: T | undefined;
     };
@@ -42,11 +41,11 @@ type AnyExpression<T> = {
     desc(): ExpressionOrder;
 
     eq(
-        value: NonNull<T> | AnyExpression<T>
+        value: NonNull<T> | AnyExpression<NonNull<T>>
     ): Predicate;
     
     ne(
-        value: NonNull<T> | AnyExpression<T>
+        value: NonNull<T> | AnyExpression<NonNull<T>>
     ): Predicate;
 
     in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
@@ -330,4 +329,8 @@ type HasSubqueryInArray<Arr extends any[]> =
             : HasSubqueryInArray<Rest>
         : false;
 
-    
+export function constant(
+    value: number
+): Expression<number> {
+    throw new Error();
+}

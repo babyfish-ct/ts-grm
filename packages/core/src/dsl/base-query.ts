@@ -1,7 +1,19 @@
 import { AnyModel } from "@/schema/model";
 import { ExpressionLike, Predicate } from "./expression";
-import { EntityTable } from "./table";
+import { BaseTable, EntityTable, TableLike } from "./table";
 import { AtLeastOne, ExpressionOrder } from "./utils";
+
+export function derivedModel<TQuery extends BaseQuery<any>>(
+    query: TQuery,
+) : BaseModel<BaseQueryMapOf<TQuery>> {
+    throw new Error();
+}
+
+export function cteModel<TQuery extends BaseQuery<any>>(
+    query: TQuery,
+) : BaseModel<BaseQueryMapOf<TQuery>> {
+    throw new Error();
+}
 
 export function baseQuery<
     const TModels extends AtLeastOne<AnyModel>,
@@ -22,7 +34,7 @@ export function baseQuery<
 
 export interface MutableBaseQuery {
 
-    __type(): { mutalbeBaseQuery: true };
+    __type(): { mutableBaseQuery: true };
 
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
@@ -41,27 +53,45 @@ export interface MutableBaseQuery {
     ): this;
 
     select<
-        const TSelections extends BaseQuerySelectMapArgs
+        const TSelectionMap extends BaseQuerySelectMapArgs
     >(
-        selections: TSelections
-    ): BaseQueryProjection<TSelections>;
+        selectionMap: TSelectionMap
+    ): BaseQueryProjection<TSelectionMap>;
+}
+
+export interface RecursiveMutableBaseQuery<TProjection> 
+extends MutableBaseQuery {
+    
+    __type(): { 
+        mutableBaseQuery: true 
+        recursiveBaseQuery: TProjection
+    };
+
+    readonly prev: BaseTable<BaseQueryMapOf<TProjection>>;
 }
 
 export interface BaseQuery<TProjection> {
 
-    __type(): { 
-        exportable: true;
-        baseQuery: TProjection | undefined; 
-    };
+    __type(): { baseQuery: TProjection | undefined; };
 
     limit(limit: number): BaseQuery<TProjection>;
 
     offset(offset: number): BaseQuery<TProjection>;
-}
 
-export type Exportable = {
-    __type(): { exportable: true; }
-};
+    unionAllRecursively<
+        const TModels extends AtLeastOne<AnyModel>
+    >(
+        ...args: [
+            ...models: TModels,
+            fn: (
+                q: RecursiveMutableBaseQuery<TProjection>,
+                ...tables: {
+                    [K in keyof TModels]: EntityTable<TModels[K]>
+                } extends infer T ? T extends any[] ? T : never : never
+            ) => TProjection
+        ]
+    ): BaseQuery<TProjection>;
+}
 
 export type BaseQueryProjection<TSelections extends BaseQuerySelectMapArgs> = {
 
@@ -69,5 +99,22 @@ export type BaseQueryProjection<TSelections extends BaseQuerySelectMapArgs> = {
 };
 
 export type BaseQuerySelectMapArgs = {
-    readonly [key: string]: Exportable;
+    readonly [key: string]: ExpressionLike | TableLike;
+};
+
+type BaseQueryMapOf<T> =
+    T extends BaseQueryProjection<infer R>
+        ? R
+    : T extends BaseQuery<infer P>
+        ? BaseQueryMapOf<P>
+    : never;
+
+export type BaseModel<
+    T extends BaseQuerySelectMapArgs
+> = {
+
+    __type(): {
+        tableLike: true;
+        baseTable: T | true;
+    };
 };
