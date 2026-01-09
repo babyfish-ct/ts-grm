@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookStoreModel, electronicBookModel, paperBookModel } from "tests/model/model";
+import { bookModel, bookStoreModel, electronicBookModel, paperBookModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -58,10 +58,9 @@ test("TestComplexView", () => {
             )
             .authors($ => $
                 .id
-                .flat("name", $ => $
+                .flat({prop: "name", prefix: "flatted"}, $ => $
                     .firstName
                     .lastName,
-                    {prefix: "flatted"}
                 )
             ).$orderBy("name.firstName", "name.lastName")
         )
@@ -123,4 +122,21 @@ test("TestInheritView", () => {
             };
         })[];
     }>();
+});
+
+test("TestFlatAssociation", () => {
+    
+    const view = dto.view(bookModel, $ => $
+        .name
+        .flat("store", $ => $
+            .id
+        )
+    );
+
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        name: string;
+        storeId: string | null | undefined;
+    }>()
 });

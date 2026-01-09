@@ -27,6 +27,7 @@ const simpleAuthorView = dto.view(authorModel, $ => $
 const simpleTreeNodeView = dto.view(treeNodeModel, $ => $
     .id
     .name
+    .flat("parentNode", $ => $.id)
 );
 
 test("TestRootQueryByOne", async () => {
@@ -232,7 +233,7 @@ test("TestCteTable", async() => {
         )
     }).fetchList();
     expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
-        { id: number; name: string; },
+        { id: number; name: string; parentNodeId: number | null | undefined },
         number
     ]>();
 });

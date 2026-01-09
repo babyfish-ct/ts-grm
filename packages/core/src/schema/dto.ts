@@ -150,12 +150,23 @@ type Flat<
     FlatKeys<TMembers> extends never
         ? object
         : {
-            flat<TName extends FlatKeys<TMembers>, X, TPrefix extends string = "">(
-                prop: TName,
+            flat<TName extends FlatKeys<TMembers> & string, X, TPrefix extends string = TName>(
+                options: TName | { prop: TName, prefix?: TPrefix },
                 fn: (
-                    builder: ViewBuilder<TModel, ReturnTypeOf<TMembers[TName]>, {}, any, any>
-                ) => ViewBuilder<TModel, ReturnTypeOf<TMembers[TName]>, X, any, any>,
-                options?: { prefix: TPrefix }
+                    builder: ViewBuilder<
+                        FlatTargetModel<TModel, TMembers[TName]>, 
+                        FlatTargetMembers<TMembers[TName]>, 
+                        {}, 
+                        any, 
+                        any
+                    >
+                ) => ViewBuilder<
+                    FlatTargetModel<TModel, TMembers[TName]>, 
+                    FlatTargetMembers<TMembers[TName]>, 
+                    X, 
+                    any, 
+                    any
+                >
             ): ViewBuilder<
                 TModel,
                 TMembers, 
@@ -173,6 +184,16 @@ type FlatKeys<TMembers> = {
                 ? K
                 : never
 }[keyof TMembers];
+
+type FlatTargetModel<TModel extends AnyModel, TProp> =
+    TProp extends ReferenceProp<infer TargetModel, any, any, any>
+        ? TargetModel
+        : TModel;
+
+type FlatTargetMembers<TProp> =
+    TProp extends ReferenceProp<infer TargetModel, any, any, any>
+        ? AllModelMembers<TargetModel>
+        : ReturnTypeOf<TProp>;
 
 type NullityType<TNullity, T> =
     TNullity extends "NONNULL"
