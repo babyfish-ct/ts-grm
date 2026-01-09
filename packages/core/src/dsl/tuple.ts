@@ -21,13 +21,13 @@ export type ExprTuple<TExpressions extends Expression<any, any>[]> = {
 
     in(tuples: Matchable<TExpressions>[]): Predicate;
 
-    in(subQuery: TupleSubQuery<TExpressions>): Predicate;
+    inSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 
     notIn(...tuples: Matchable<TExpressions>[]): Predicate;
 
     notIn(tuples: Matchable<TExpressions>[]): Predicate;
 
-    notIn(subQuery: TupleSubQuery<TExpressions>): Predicate;
+    notInSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 }
 
 type AtLeastTwoExpressions<T extends Expression<any, any>> =

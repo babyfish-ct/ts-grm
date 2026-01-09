@@ -1,4 +1,6 @@
 import { NullityType } from "@/schema/prop";
+import { CompilationError } from "@/utils"
+import { ExpressionSubQuery } from "./sub-query";
 
 export type Expression<
     T, 
@@ -28,8 +30,8 @@ type IsNull<T> =
 type AnyExpression<T> = {
     
     __type(): {
-        selectable: true;
-        expressionable: true;
+        selectionLike: true;
+        expressionLike: true;
         expression: T | undefined;
     };
 
@@ -45,20 +47,36 @@ type AnyExpression<T> = {
         value: NonNull<T> | AnyExpression<T>
     ): Predicate;
 
-    in(
-        ...values: (NonNull<T> | Expression<NonNull<T>>)[]
+    in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
+        ...values: HasSubqueryInArray<Values> extends true 
+            ? [SubqueryError]
+            : Values
     ): Predicate;
 
-    in(
-        values: (NonNull<T> | Expression<NonNull<T>>)[]
+    in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
+        values: HasSubqueryInArray<Values> extends true 
+            ? [SubqueryError]
+            : Values
     ): Predicate;
 
-    notIn(
-        ...values: (NonNull<T> | Expression<NonNull<T>>)[]
+    inSubQuery(
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>>>
     ): Predicate;
 
-    notIn(
-        values: (NonNull<T> | Expression<NonNull<T>>)[]
+    notIn<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
+        ...values: HasSubqueryInArray<Values> extends true 
+            ? [SubqueryError]
+            : Values
+    ): Predicate;
+
+    notIn<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
+        values: HasSubqueryInArray<Values> extends true 
+            ? [SubqueryError]
+            : Values
+    ): Predicate;
+
+    notInSubQuery(
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>>>
     ): Predicate;
     
     eqIf(
@@ -112,7 +130,7 @@ type CoalesceDataType<T, TArgs extends any[]> =
 type CmpExpression<T> = AnyExpression<T> & {
     
     __type(): { 
-        selectable: true;
+        selectionLike: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
     }
@@ -161,7 +179,7 @@ type MergeNumType<
 type NumExpression<T extends Nullable<string | number>> = CmpExpression<T> & {
 
     __type(): { 
-        selectable: true;
+        selectionLike: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
@@ -195,7 +213,7 @@ export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
 type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
 
     __type(): { 
-        selectable: true;
+        selectionLike: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
@@ -294,6 +312,20 @@ export function not(
 
 export type ExpressionLike = {
     __type(): {
-        expressionable: true;
+        expressionLike: true;
     }
 };
+
+type SubqueryError = 
+    CompilationError<`Cannot directly use subqueries in 'IN' expressions.
+Either use the 'inSubQuery()' function for collection operations;
+or use 'asValue()' to convert the subquery into a single value before using it.`>;
+
+type HasSubqueryInArray<Arr extends any[]> = 
+    Arr extends [infer First, ...infer Rest]
+        ? First extends { __type(): { expressionSubQuery: any }; }
+            ? true 
+            : HasSubqueryInArray<Rest>
+        : false;
+
+    

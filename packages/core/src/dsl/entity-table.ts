@@ -156,7 +156,6 @@ type CollectionJoinAction<
     TMembers extends object, 
     TRiskAccepted extends boolean
 > = {
-
     (): TRiskAccepted extends true
         ? EntityTableMembers<TModel, TMembers, "NONNULL", true>
         : RiskUnkownJoinedTable<TModel, TMembers, "NONNULL">;

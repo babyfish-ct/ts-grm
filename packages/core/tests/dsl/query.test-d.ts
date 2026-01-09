@@ -1,6 +1,4 @@
-import { count } from "@/dsl/aggregate";
-import { or } from "@/dsl/expression";
-import { native } from "@/dsl/native";
+import { dsl } from "@/dsl";
 import { SqlClient } from "@/dsl/sql-client";
 import { tuple } from "@/dsl/tuple";
 import { dto } from "@/schema/dto";
@@ -84,13 +82,12 @@ test("TestRootQueryByArray2", async () => {
 });
 
 test("TestRootQueryByMap", async () => {
-
     const rows = await sqlClient().createQuery(bookModel, (q, book) => {
         q.where(book.name.ilikeIf(undefined));
         return q.select({
             book: book.fetch(simpleBookView),
-            globalRank: native.number("row_number() over(order by ...)"),
-            localRank: native.number("row_number() over(parition by ...)")
+            globalRank: dsl.native.num("row_number() over(order by ...)"),
+            localRank: dsl.native.num("row_number() over(parition by ...)")
         });
     }).fetchList();
 
@@ -107,14 +104,14 @@ test("TestRootQueryByMap", async () => {
 test("TestExprIn", () => {                
     sqlClient().createQuery(bookModel, (q, book) => {
         q.where(
-            or(
+            dsl.or(
                 book.name.in("a", "b"),
                 book.name.in(["d", "e"]),
                 book.name.in("e", book.store().name),
-                book.name.in(
-                    sqlClient().createSubQuery(bookModel, (q, book) => {
+                book.name.inSubQuery(
+                    dsl.subQuery(bookModel, (q, book) => {
                         q.groupBy(book.name);
-                        q.orderBy(count().desc())
+                        q.orderBy(dsl.count().desc())
                         return q.select(book.name);
                     }).limit(1)
                 )
@@ -127,17 +124,17 @@ test("TestExprIn", () => {
 test("TestTupleIn", () => {
     sqlClient().createQuery(bookModel, (q, book) => {
         q.where(
-            or(
+            dsl.or(
                 tuple(book.name, book.edition).in(["a", 1], ["b", 2]),
                 tuple(book.name, book.edition).in([["c", 3], ["d", 4]]),
                 tuple(book.name, book.edition).in(
                     ["e", 4],
                     [book.store().name, book.store().version]
                 ),
-                tuple(book.name, book.edition).in(
-                    sqlClient().createSubQuery(bookModel, (q, book) => {
+                tuple(book.name, book.edition).inSubQuery(
+                    dsl.subQuery(bookModel, (q, book) => {
                         q.groupBy(book.name, book.edition);
-                        q.orderBy(count().desc());
+                        q.orderBy(dsl.count().desc());
                         return q.select(
                             book.name,
                             book.edition
@@ -149,3 +146,17 @@ test("TestTupleIn", () => {
         return q.select(book.fetch(simpleBookView));
     });
 });
+
+test("TestExists", () => {
+    sqlClient().createQuery(bookModel, (q, book) => {
+        q.where(
+            dsl.notExists(
+                dsl.subQuery(bookModel, (q, book2) => {
+                    q.where(book.name.eq(book2.name));
+                    q.where(book.edition.lt(book2.edition))
+                })
+            )
+        );
+        return q.select(book.fetch(simpleBookView));
+    })
+})

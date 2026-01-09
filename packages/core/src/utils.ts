@@ -42,3 +42,6 @@ type DeepMembers<
 
 type UnionToIntersection<U> = 
     (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+
+export type CompilationError<T extends string> =
+    `\u274C ts-grm: ${T}`;

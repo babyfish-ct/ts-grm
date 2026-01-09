@@ -65,7 +65,7 @@ export type RootQuerySelectArrArgs = [
 ];
 
 export type RootQuerySelectMapArgs = Record<string, {
-    __type(): { selectable: true };
+    __type(): { selectionLike: true };
 }>;
 
 export type RootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> = {
@@ -76,14 +76,14 @@ export type RootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> = {
 export type SelectionLike = {
 
     __type(): {
-        selectable: true;
+        selectionLike: true;
     };
 }
 
 export type FetchedView<TName extends string, X> = {
 
     __type(): {
-        selectable: true;
+        selectionLike: true;
         selectedView: [TName, X] | undefined;
     };
 } & SelectionLike;

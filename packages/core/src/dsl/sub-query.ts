@@ -1,5 +1,54 @@
+import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
+import { EntityTable } from "./entity-table";
 
+export function subQuery<
+    const TModels extends AtLeastOne<AnyModel>,
+    TProjection extends SubQueryProjection<any, any> | void
+>(
+    ...args: [
+        ...models: TModels,
+        fn: (
+            q: MutableSubQuery,
+            ...tables: {
+                [K in keyof TModels]: EntityTable<TModels[K]>
+            } extends infer T ? T extends any[] ? T : never : never
+        ) => TProjection
+    ]
+): TProjection extends SubQueryProjection<infer T, infer Kind>
+    ? Kind extends "EXPRESSION"
+        ? ExpressionSubQuery<T>
+        : TupleSubQuery<T>
+    : TProjection extends void
+        ? ExpressionSubQuery<Expression<number>>
+    : never {
+    throw new Error();
+}
+
+export function all<TExpression extends ExpressionLike>(
+    subQuery: ExpressionSubQuery<TExpression>
+): TExpression {
+    throw new Error();
+}
+
+export function any<TExpression extends ExpressionLike>(
+    subQuery: ExpressionSubQuery<TExpression>
+): TExpression {
+    throw new Error();
+}
+
+export function exists(
+    subQuery: SubQueryLike
+): Predicate {
+    throw new Error();
+}
+
+export function notExists(
+    subQuery: SubQueryLike
+): Predicate {
+    throw new Error();
+}
+        
 export interface MutableSubQuery {
 
     __type(): { rootQueryBuilder: undefined };
@@ -31,17 +80,30 @@ export interface MutableSubQuery {
     ): SubQueryProjection<TExpression, "EXPRESSION">;
 }
 
+export type SubQueryLike = {
+
+    __type(): { subQueryLike: true; }
+}
+
 export type ExpressionSubQuery<T> = {
 
-    __type(): { expressionSubQuery: T | undefined; };
+    __type(): { 
+        subQueryLike: true;
+        expressionSubQuery: T | undefined; 
+    };
 
     limit(limit: number): ExpressionSubQuery<T>;
     offset(offset: number): ExpressionSubQuery<T>;
+
+    asValue(): T;
 } & T;
 
 export type TupleSubQuery<T> = {
 
-    __type(): { tupleSubQuery: T | undefined; };
+    __type(): { 
+        subQueryLike: true;
+        tupleSubQuery: T | undefined; 
+    };
 
     limit(limit: number): TupleSubQuery<T>;
     offset(offset: number): TupleSubQuery<T>;
@@ -53,6 +115,8 @@ export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
 };
 
 type SubQuerySelectArrArgs = AtLeastTwo<ExpressionLike>;
+
+type AtLeastOne<T> = [T, ...T[]];
 
 type AtLeastTwo<T> = [T, T, ...T[]];
 
