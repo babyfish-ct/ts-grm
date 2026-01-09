@@ -1,15 +1,16 @@
-import { Expression, Predicate } from "./expression"
+import { Expression, ExpressionLike, Predicate } from "./expression"
 import { TupleSubQuery } from "./sub-query";
+import { AtLeastTwo } from "./utils";
 
 export function tuple<
-    const TExpressions extends AtLeastTwoExpressions<any>
+    const TExpressions extends AtLeastTwo<ExpressionLike>
 >(
     ...expressions: TExpressions
 ): ExprTuple<TExpressions> {
     throw new Error();
 }
 
-export type ExprTuple<TExpressions extends Expression<any, any>[]> = {
+export type ExprTuple<TExpressions extends ExpressionLike[]> = {
 
     __type(): { exprTuple: TExpressions | undefined }
 
@@ -29,9 +30,6 @@ export type ExprTuple<TExpressions extends Expression<any, any>[]> = {
 
     notInSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 }
-
-type AtLeastTwoExpressions<T extends Expression<any, any>> =
-    [T, T, ...T[]];
 
 type Matchable<TExpressions> =
     {

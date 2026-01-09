@@ -1,4 +1,4 @@
-import { EntityTable } from "@/dsl/entity-table";
+import { EntityTable } from "@/dsl/table";
 import { Expression } from "@/dsl/expression";
 import { authorModel, bookModel, bookStoreModel } from "tests/model/model";
 import { expectTypeOf, test } from "vitest";

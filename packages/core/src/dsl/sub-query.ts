@@ -1,6 +1,7 @@
 import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
-import { EntityTable } from "./entity-table";
+import { EntityTable } from "./table";
+import { AtLeastOne, AtLeastTwo, ExpressionOrder } from "./utils";
 
 export function subQuery<
     const TModels extends AtLeastOne<AnyModel>,
@@ -51,7 +52,7 @@ export function notExists(
         
 export interface MutableSubQuery {
 
-    __type(): { rootQueryBuilder: undefined };
+    __type(): { mutableSubQuery: true };
     
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
@@ -98,15 +99,15 @@ export type ExpressionSubQuery<T> = {
     asValue(): T;
 } & T;
 
-export type TupleSubQuery<T> = {
+export type TupleSubQuery<TProjection> = {
 
     __type(): { 
         subQueryLike: true;
-        tupleSubQuery: T | undefined; 
+        tupleSubQuery: TProjection | undefined; 
     };
 
-    limit(limit: number): TupleSubQuery<T>;
-    offset(offset: number): TupleSubQuery<T>;
+    limit(limit: number): TupleSubQuery<TProjection>;
+    offset(offset: number): TupleSubQuery<TProjection>;
 }
 
 export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
@@ -116,7 +117,4 @@ export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
 
 type SubQuerySelectArrArgs = AtLeastTwo<ExpressionLike>;
 
-type AtLeastOne<T> = [T, ...T[]];
-
-type AtLeastTwo<T> = [T, T, ...T[]];
 

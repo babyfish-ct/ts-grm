@@ -4,6 +4,15 @@ import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root-query";
+import { BaseQuerySelectMapArgs, Exportable } from "./base-query";
+
+export type TableLike = {
+
+    __type(): { 
+        tableLike: true;
+        exportable: true;
+    };
+};
 
 export type EntityTable<TModel extends AnyModel, TRiskAccepted extends boolean = false> = 
     EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", TRiskAccepted>;
@@ -22,6 +31,12 @@ type EntityTableMembers<
             ModelName<TModel>, 
             TNullity extends "NULLABLE" ? X | null | undefined : X
         >; 
+    } & {
+        __type(): {
+            exportable: true;
+            tableLike: true;
+            entityTable: TModel;
+        }
     };
 
 type DslMembers<
@@ -248,3 +263,12 @@ type WeakJoinAction<
 
 type FilterType<TParentModel extends AnyModel, TModel extends AnyModel> =
     (source: EntityTable<TParentModel>, target: EntityTable<TModel>) => Predicate;
+
+
+export type BaseTable<T extends BaseQuerySelectMapArgs> = {
+
+    __type(): { 
+        exportable: true;
+        baseTable: T | true;
+    };
+};

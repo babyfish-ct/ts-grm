@@ -1,5 +1,7 @@
 import { dsl } from "@/dsl";
+import { Expression } from "@/dsl/expression";
 import { SqlClient } from "@/dsl/sql-client";
+import { TupleSubQuery } from "@/dsl/sub-query";
 import { tuple } from "@/dsl/tuple";
 import { dto } from "@/schema/dto";
 import { authorModel, bookModel } from "tests/model/model";
@@ -159,4 +161,23 @@ test("TestExists", () => {
         );
         return q.select(book.fetch(simpleBookView));
     })
-})
+});
+
+test("TestUnionAll", () => {
+    const sq = dsl.unionAll(
+        dsl.subQuery(bookModel, (q, book) => {
+            q.where(book.storeId.eq("2"));
+            return q.select(book.name, book.edition);
+        }),
+        dsl.subQuery(bookModel, (q, book) => {
+            q.where(book.storeId.eq("4"));
+            return q.select(book.name, book.edition);
+        })
+    )
+    expectTypeOf<typeof sq>().toEqualTypeOf<
+        TupleSubQuery<[
+            Expression<string>, 
+            Expression<number>
+        ]>
+    >();
+});

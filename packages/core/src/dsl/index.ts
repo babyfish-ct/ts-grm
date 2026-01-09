@@ -1,7 +1,8 @@
 import { count } from "./aggregate";
 import { and, not, or } from "./expression";
-import { num } from "./native";
 import { all, any, exists, notExists, subQuery } from "./sub-query";
+import { unionAll, union, minus, intersect } from "./merge";
+import { num } from "./native";
 
 export const dsl = {
     subQuery,
@@ -13,6 +14,10 @@ export const dsl = {
     any,
     exists,
     notExists,
+    unionAll,
+    union,
+    minus,
+    intersect,
     native: {
         num
     }

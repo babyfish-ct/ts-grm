@@ -1,19 +1,20 @@
-import { Expression, Predicate } from "./expression";
+import { Expression, ExpressionLike, Predicate } from "./expression";
+import { ExpressionOrder } from "./utils";
 
 export interface MutableRootQuery {
 
-    __type(): { rootQueryBuilder: undefined };
+    __type(): { mutableRootQuery: true; };
 
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
     ): this;
 
     orderBy(
-        ...orders: ReadonlyArray<ExpressionOrder>
+        ...orders: ReadonlyArray<ExpressionLike | ExpressionOrder>
     ): this;
 
     groupBy(
-        ...expressions: ReadonlyArray<Expression<any, any>>
+        ...expressions: ReadonlyArray<ExpressionLike>
     ): this;
 
     having(
@@ -47,15 +48,11 @@ export type RootQuery<TProjection extends RootQueryProjection<any>> = {
 
     __type(): { rootQuery: TProjection | undefined; };
 
+    limit(limit: number): RootQuery<TProjection>;
+
+    offset(offset: number): RootQuery<TProjection>;
+
     fetchList(): Promise<Array<RowTypeOf<TProjection>>>;
-}
-
-export interface BaseQuery<T> {
-
-    __type(): {
-        query: T | undefined;
-        baseQuery: T | undefined;
-    };
 }
 
 export type RootQuerySelectArrArgs = [
@@ -70,7 +67,7 @@ export type RootQuerySelectMapArgs = Record<string, {
 
 export type RootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> = {
 
-    __type(): { selectedProjection: [T, TKind] | undefined };
+    __type(): { selectedProjection: [T, TKind] | true };
 };
 
 export type SelectionLike = {

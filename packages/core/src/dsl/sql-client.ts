@@ -1,7 +1,8 @@
 import { AnyModel } from "@/schema/model";
-import { EntityTable } from "./entity-table";
+import { EntityTable } from "./table";
 import { RootQueryProjection } from "./root-query";
 import { MutableRootQuery, RootQuery } from "./root-query";
+import { AtLeastOne } from "./utils";
 
 export interface SqlClient {
 
@@ -22,5 +23,3 @@ export interface SqlClient {
         ]
     ): RootQuery<TProjection>;
 }
-
-type AtLeastOne<T> = [T, ...T[]];

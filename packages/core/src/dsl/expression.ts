@@ -1,6 +1,7 @@
 import { NullityType } from "@/schema/prop";
 import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub-query";
+import { ExpressionOrder } from "./utils";
 
 export type Expression<
     T, 
@@ -31,6 +32,7 @@ type AnyExpression<T> = {
     
     __type(): {
         selectionLike: true;
+        exportable: true;
         expressionLike: true;
         expression: T | undefined;
     };
