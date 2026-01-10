@@ -35,9 +35,9 @@ type ViewBuilder<
                         ? {[P in K]: R} 
                         : {[P in K]?: R | null | undefined}
                     ),
-                    TMembers[K],
-                    K & string
-                >
+                TMembers[K],
+                K & string
+            >
         : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any>
             ? <X>(
                 fn: (
@@ -84,6 +84,7 @@ type ViewBuilder<
             >
         : never
 }
+& ReferenceKeyMembers<TModel, TMembers, TCurrent>
 & Fold<TModel, TMembers, TCurrent>
 & Flat<TModel, TMembers, TCurrent>
 & As<TModel, TMembers, TCurrent, TLastProp, TLastName>
@@ -194,6 +195,35 @@ type FlatTargetMembers<TProp> =
     TProp extends ReferenceProp<infer TargetModel, any, any, any>
         ? AllModelMembers<TargetModel>
         : ReturnTypeOf<TProp>;
+
+type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TCurrent> = {
+    [
+        K in keyof TMembers
+        as TMembers[K] extends ReferenceProp<infer _, any, "OWNING", infer Key> 
+            ? Key extends string
+                ? `${K & string}${Capitalize<Key>}`
+                : never
+            : never
+    ]: 
+        TMembers[K] extends ReferenceProp<
+            infer TargetModel, 
+            infer Nullity,
+            any,
+            infer Key
+        >
+            ? ViewBuilder<
+                TModel,
+                TMembers, 
+                TCurrent & (
+                    Nullity extends "NONNULL"
+                        ? {[P in K]: ReturnTypeOf<AllModelMembers<TargetModel>[Key & string]>}
+                        : {[P in K]?: ReturnTypeOf<AllModelMembers<TargetModel>[Key & string]> | null | undefined}
+                    ),
+                "",
+                K & string
+            >
+            : never
+};
 
 type NullityType<TNullity, T> =
     TNullity extends "NONNULL"

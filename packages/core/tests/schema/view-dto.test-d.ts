@@ -140,3 +140,18 @@ test("TestFlatAssociation", () => {
         storeId: string | null | undefined;
     }>()
 });
+
+test("TestAssociationKey", () => {
+    
+    const view = dto.view(bookModel, $ => $
+        .storeId.$as("fk")
+        .name
+    );
+
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        name: string;
+        fk: string | null | undefined;
+    }>()
+});
