@@ -1,5 +1,5 @@
 import { AllModelMembers, AnyModel, CtorMembers, ModelCtor, ModelName } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
+import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, DirectTypeOf, ScalarProp } from "@/schema/prop";
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
@@ -86,7 +86,7 @@ type ReferenceKeyMembers<TMembers, TNullity extends NullityType> = {
                 >
                 : Expression<
                     MakeType<
-                        ReturnTypeOf<AllModelMembers<TTargetModel>[TKey]>, 
+                        DirectTypeOf<AllModelMembers<TTargetModel>[TKey]>, 
                         CombinedNullity<TNullity, Nullity>
                     >
                 > 

@@ -576,10 +576,47 @@ const EMPTY_PROP_DEFINTION_DATA: PropData = {
     orders: undefined
 }
 
-export type ReturnTypeOf<TProp> =
+export type DirectTypeOf<TProp> =
     TProp extends Prop<infer R, any>
         ? R
         : never;
+
+export type SimpleDataTypeOf<TProp> =
+    TProp extends ScalarProp<infer R, any>
+        ? R
+    : TProp extends EmbeddedProp<infer R, any>
+        ? {
+            [
+                K in keyof R
+                    as R[K] extends Prop<any, "NONNULL">
+                        ? K 
+                        : never
+            ]: SimpleDataTypeOf<R[K]>
+        } & {
+            [
+                K in keyof R
+                    as R[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
+                        ? K 
+                        : never
+            ]?: SimpleDataTypeOf<R[K]> | null | undefined
+        }
+    : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", infer Key>
+        ? {
+            [
+                K in keyof Key
+                    as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                        ? K 
+                        : never
+            ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K]>
+        } & {
+            [
+                K in keyof Key
+                    as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                        ? K 
+                        : never
+            ]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[K]> | null | undefined
+        }
+    : never;
 
 export type NullityOf<TProp> =
     TProp extends Prop<any, infer R>

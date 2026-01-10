@@ -1,5 +1,5 @@
 import { AllModelMembers, AnyModel, Model, ModelName, OrderedKeys } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, ReturnTypeOf, ScalarProp } from "@/schema/prop";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf } from "@/schema/prop";
 import { Prettify } from "@/utils";
 
 export const dto = {
@@ -25,7 +25,7 @@ type ViewBuilder<
     TLastProp, 
     TLastName extends string
 > = {
-    [K in keyof TMembers as K extends keyof TCurrent ? never : K]:
+    [K in keyof TMembers]:
         TMembers[K] extends ScalarProp<infer R, infer Nullity>
             ? ViewBuilder<
                 TModel,
@@ -194,7 +194,7 @@ type FlatTargetModel<TModel extends AnyModel, TProp> =
 type FlatTargetMembers<TProp> =
     TProp extends ReferenceProp<infer TargetModel, any, any, any>
         ? AllModelMembers<TargetModel>
-        : ReturnTypeOf<TProp>;
+        : DirectTypeOf<TProp>;
 
 type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TCurrent> = {
     [
@@ -216,11 +216,11 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TCurrent> = {
                 TMembers, 
                 TCurrent & (
                     Nullity extends "NONNULL"
-                        ? {[P in K]: ReturnTypeOf<AllModelMembers<TargetModel>[Key & string]>}
-                        : {[P in K]?: ReturnTypeOf<AllModelMembers<TargetModel>[Key & string]> | null | undefined}
+                        ? {[P in `${K & string}${Capitalize<Key & string>}`]: SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]>}
+                        : {[P in `${K & string}${Capitalize<Key & string>}`]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]> | null | undefined}
                     ),
-                "",
-                K & string
+                TMembers[K],
+                `${K & string}${Capitalize<Key & string>}`
             >
             : never
 };

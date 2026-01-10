@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookModel, bookStoreModel, electronicBookModel, paperBookModel } from "tests/model/model";
+import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -141,7 +141,7 @@ test("TestFlatAssociation", () => {
     }>()
 });
 
-test("TestAssociationKey", () => {
+test("TestReferenceKey", () => {
     
     const view = dto.view(bookModel, $ => $
         .storeId.$as("fk")
@@ -154,4 +154,25 @@ test("TestAssociationKey", () => {
         name: string;
         fk: string | null | undefined;
     }>()
+});
+
+test("TestEmbeddedReferenceKey", () => {
+
+    const view = dto.view(orderItemModel, $ => $
+        .orderId
+        .id
+    );
+
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        id: number;
+        orderId: {
+            x: number;
+            y: {
+                a: number;
+                b: number;
+            };
+        };
+    }>();
 });
