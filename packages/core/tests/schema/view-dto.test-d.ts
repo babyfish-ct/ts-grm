@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel } from "tests/model/model";
+import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel, orderModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -174,5 +174,41 @@ test("TestEmbeddedReferenceKey", () => {
                 b: number;
             };
         };
+    }>();
+});
+
+test("TestAllScalars", () => {
+
+    const view = dto.view(bookModel, $ => $
+        .allScalars()
+    );
+
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        id: number;
+        name: string;
+        edition: number;
+        price: number;
+    }>();
+});
+
+test("TestAllScalarsWithEmbedded", () => {
+
+    const view = dto.view(orderModel, $ => $
+        .allScalars()
+    );
+
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        id: {
+            x: number;
+            y: {
+                a: number;
+                b: number;
+            };
+        };
+        name: number;
     }>();
 });

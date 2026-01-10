@@ -1,5 +1,5 @@
 import { AllModelMembers, AnyModel, Model, ModelName, OrderedKeys } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf } from "@/schema/prop";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf, NullityType } from "@/schema/prop";
 import { Prettify } from "@/utils";
 
 export const dto = {
@@ -84,6 +84,7 @@ type ViewBuilder<
             >
         : never
 }
+& AllScalars<TModel, TMembers, TCurrent>
 & ReferenceKeyMembers<TModel, TMembers, TCurrent>
 & Fold<TModel, TMembers, TCurrent>
 & Flat<TModel, TMembers, TCurrent>
@@ -171,7 +172,7 @@ type Flat<
             ): ViewBuilder<
                 TModel,
                 TMembers, 
-                TCurrent & NullityType<NullityOf<TMembers[TName]>, PrefixType<TPrefix, X>>, 
+                TCurrent & MakeTypeByNullity<NullityOf<TMembers[TName]>, PrefixType<TPrefix, X>>, 
                 any, 
                 ""
             >
@@ -225,7 +226,38 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TCurrent> = {
             : never
 };
 
-type NullityType<TNullity, T> =
+type AllScalars<TModel extends AnyModel, TMembers, TCurrent> = {
+    allScalars(): ViewBuilder<
+        TModel,
+        TMembers,
+        TCurrent & AllScalarsType<TMembers>,
+        undefined,
+        any
+    >;
+};
+
+type AllScalarsType<TMembers> = {
+    [K in keyof TMembers 
+        as IsPartOfAllScalars<TMembers[K], "NONNULL"> extends true 
+            ? K 
+            : never
+    ]: SimpleDataTypeOf<TMembers[K]>
+} & {
+    [K in keyof TMembers
+        as IsPartOfAllScalars<TMembers[K], "NULLABLE" | "INPUT_NONNULL"> extends true 
+            ? K 
+            : never
+    ]?: SimpleDataTypeOf<TMembers[K]> | null | undefined
+}
+
+type IsPartOfAllScalars<TProp, TNullity extends NullityType> =
+    TProp extends ScalarProp<any, TNullity>
+            ? true
+        : TProp extends EmbeddedProp<any, TNullity>
+            ? true
+        : false;
+
+type MakeTypeByNullity<TNullity, T> =
     TNullity extends "NONNULL"
         ? T
         : {[K in keyof T]?: T[K] | null | undefined};
