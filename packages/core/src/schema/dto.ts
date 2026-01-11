@@ -1,5 +1,5 @@
-import { AllModelMembers, AnyModel, IsDerivedModelOf, Model, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf, NullityType, AssociatedProp } from "@/schema/prop";
+import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, Model, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf, NullityType, AssociatedProp, TargetModelOf } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 
 export const dto = {
@@ -85,9 +85,10 @@ type ViewBuilder<
         : never
 }
 & AllScalars<TModel, TMembers, TCurrent>
-& ReferenceKeyMembers<TModel, TMembers, TCurrent>
 & Fold<TModel, TMembers, TCurrent>
 & Flat<TModel, TMembers, TCurrent>
+& Recursive<TModel, TMembers, TCurrent>
+& ReferenceKeyMembers<TModel, TMembers, TCurrent>
 & As<TModel, TMembers, TCurrent, TLastProp, TLastName>
 & InstanceOf<TModel, TMembers, TCurrent>
 & ReferenceFetch<TModel, TMembers, TCurrent, TLastProp, TLastName> 
@@ -314,7 +315,8 @@ type DerivedFields<
                 TCurrent, 
                 ModelSuperNames<TDerivedModel>
             >
-        : WithTypeName<X, ModelName<TDerivedModel>>
+        : { __typename: ModelName<TDerivedModel> } 
+            & X
             & SuperFields<
                 TCurrent, 
                 ModelSuperNames<TDerivedModel>
@@ -324,10 +326,6 @@ type DerivedFields<
         ? TCurrent
         : { __typename: ModelName<TModel> } & TCurrent
 );
-
-type WithTypeName<T, TTypeName extends string> =
-    { __typename: TTypeName } 
-    & Omit<T, "__typename">;
 
 type SuperFields<
     TPrevData,
@@ -345,9 +343,9 @@ type ExtractSuperFields<
     ? ExtractByTypeName<TPrevData, TTypeNames> extends infer ST
         ? ST extends { __typename: string }
             ? Omit<ST, "__typename">
-            : {}
-        : {}
-    : {};
+            : never
+        : never
+    : never;
 
 type ExtractByTypeName<TUnion, TTypeNames> = 
     TUnion extends { __typename: TTypeNames } 
@@ -364,7 +362,30 @@ type PrefixType<TPrefix extends string, T> =
         ? T 
         : {[K in keyof T & string as PrefixString<TPrefix, K>]: T[K]};
 
-export type RecursiveKeys<TModel extends AnyModel, TMembers> = 
+type Recursive<TModel extends AnyModel, TMembers, TCurrent> =
+    RecursiveKeys<TModel, TMembers> extends never
+        ? object
+        : {
+            recursive<
+                TPropName extends RecursiveKeys<TModel, TMembers>,
+                TNewName extends string = TPropName
+            >(
+                prop: TPropName,
+                newName?: TNewName
+            ): ViewBuilder<
+                TModel,
+                TMembers,
+                RecursiveType<
+                    TCurrent, 
+                    TNewName, 
+                    TMembers[TPropName] extends CollectionProp<any> ? true : false
+                >,
+                undefined,
+                ""
+            >;
+        };
+
+type RecursiveKeys<TModel extends AnyModel, TMembers> = 
     keyof {
         [K in keyof TMembers
             as IsRecursiveProp<TModel, TMembers[K]> extends true
@@ -373,12 +394,26 @@ export type RecursiveKeys<TModel extends AnyModel, TMembers> =
         ]: K
     };
 
-export type IsRecursiveProp<TModel extends AnyModel, TProp> =
+type IsRecursiveProp<TModel extends AnyModel, TProp> =
     TProp extends AssociatedProp<infer TargetModel, any, any>
-        ? ModelSuperNames<TModel> extends ModelSuperNames<TargetModel>
+        ? Extends<TModel, TargetModel> extends true
             ? true
             : false
         : false;
+
+type RecursiveType<T, TName extends string, TCollection extends boolean> =
+    T
+    & { __recursiveCore: RecursiveCore<T>; }
+    & (
+        TCollection extends true
+            ? { [P in TName]: RecursiveType<RecursiveCore<T>, TName, true>[] }
+            : { [P in TName]?: RecursiveType<RecursiveCore<T>, TName, false> | null | undefined }
+    );
+
+type RecursiveCore<T> =
+    T extends { __recursiveCore: infer C }
+        ? C
+        : T;
 
 export class View<TName extends string, T> {
 

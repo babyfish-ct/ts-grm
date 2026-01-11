@@ -576,6 +576,11 @@ const EMPTY_PROP_DEFINTION_DATA: PropData = {
     orders: undefined
 }
 
+export type TargetModelOf<TProp> =
+    TProp extends AssociatedProp<infer TargetModel, any, any>
+        ? TargetModel
+        : never;
+        
 export type DirectTypeOf<TProp> =
     TProp extends Prop<infer R, any>
         ? R

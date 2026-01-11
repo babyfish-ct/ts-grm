@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel, orderModel, pdfElectronicBookModel } from "tests/model/model";
+import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel, orderModel, pdfElectronicBookModel, treeNodeModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -265,3 +265,31 @@ test("TestAllScalarsWithEmbedded", () => {
         name: number;
     }>();
 });
+
+test("TestRecursive", () => {
+    const view = dto.view((treeNodeModel), $ => $
+        .allScalars()
+        .recursive("parentNode")
+        .recursive("childNodes")
+    );
+    type ViewType = TypeOf<typeof view>;
+
+    make<ViewType>().parentNode?.parentNode?.parentNode;
+    make<ViewType>().childNodes[0]?.childNodes[0]?.childNodes[0];
+});
+
+test("TestRecursiveWithAlias", () => {
+    const view = dto.view((treeNodeModel), $ => $
+        .allScalars()
+        .recursive("parentNode", "up")
+        .recursive("childNodes", "downs")
+    );
+    type ViewType = TypeOf<typeof view>;
+
+    make<ViewType>().up?.up?.up;
+    make<ViewType>().downs[0]?.downs[0]?.downs[0];
+});
+
+function make<T>(): T {
+    throw new Error();
+}
