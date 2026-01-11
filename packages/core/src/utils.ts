@@ -3,9 +3,11 @@ import { EmbeddedProp } from "./schema/prop";
 export type Prettify<T> = 
     T extends Array<infer U>
         ? Prettify<U>[]
-        : T extends object
-            ? { [K in keyof T & string]: Prettify<T[K]> }
-            : T;
+        : T extends { __noPrettify: true }
+            ? Omit<T, "____noPrettify">
+            : T extends object
+                ? { [K in keyof T & string]: Prettify<T[K]> }
+                : T;
 
 export type FilterNever<T> = 
     T extends object
@@ -40,8 +42,10 @@ type DeepMembers<
                 : never
     }[keyof TMembers];
 
-type UnionToIntersection<U> = 
-    (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+export type UnionToIntersection<U> = 
+    (U extends any ? (k: U) => void : never) extends (k: infer I) => void 
+        ? I 
+        : never;
 
 export type CompilationError<T extends string> =
     `\u274C ts-grm: ${T}`;

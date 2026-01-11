@@ -42,6 +42,13 @@ export const electronicBookModel = model.extends(bookModel)(
     }
 );
 
+export const pdfElectronicBookModel = model.extends(electronicBookModel)(
+    "PdfElectronicBook",
+    class {
+        pdfVersion = prop.str().nullable()
+    }
+);
+
 export const authorModel = model("Author", "id", class {
     id = prop.i64()
     name = prop.embedded({

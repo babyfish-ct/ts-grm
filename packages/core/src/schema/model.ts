@@ -239,3 +239,20 @@ type OrderedKeysImpl<TFlattenCtorMembers extends object> =
 
 export type ReferenceKey<TModel extends AnyModel> = 
     (keyof AllModelMembers<TModel>) & string;
+
+export type Extends<
+    TModel1 extends AnyModel,
+    TModel2 extends AnyModel
+> =
+    ModelName<TModel1> extends ModelName<TModel2>
+        ? true
+        : IsDerivedModelOf<TModel1, TModel2>;
+
+export type IsDerivedModelOf<
+    TModel1 extends AnyModel,
+    TModel2 extends AnyModel
+> = ModelSuperNames<TModel1> extends never
+            ? false
+            : ModelName<TModel2> extends ModelSuperNames<TModel1>
+                ? true
+                : false;

@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel, orderModel } from "tests/model/model";
+import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel, orderModel, pdfElectronicBookModel } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
@@ -99,6 +99,9 @@ test("TestInheritView", () => {
                 .instanceOf(electronicBookModel, $ => $
                     .address
                 )
+                .instanceOf(pdfElectronicBookModel, $ => $
+                    .pdfVersion
+                )
         )
     );
     
@@ -107,12 +110,8 @@ test("TestInheritView", () => {
     expectTypeOf<ViewType>().toEqualTypeOf<{
         name: string;
         books: ({
+            name: string;
             __typename: "Book";
-            name: string;
-        } | {
-            __typename: "ElectronicBook";
-            name: string;
-            address: string;
         } | {
             __typename: "PaperBook";
             name: string;
@@ -120,6 +119,60 @@ test("TestInheritView", () => {
                 width: number;
                 height: number;
             };
+        } | {
+            __typename: "ElectronicBook";
+            name: string;
+            address: string;
+        } | {
+            name: string;
+            address: string;
+            __typename: "PdfElectronicBook";
+            pdfVersion: string | null | undefined;
+        })[];
+    }>();
+});
+
+test("TestInheritView2", () => {
+
+    const view = dto.view(bookStoreModel, $ => $
+        .name
+        .books(
+            $ => $.name
+                .instanceOf(paperBookModel, $ => $
+                    .size($ => $.width.height)
+                )
+                .instanceOf(electronicBookModel, $ => $
+                    .address
+                    .instanceOf(pdfElectronicBookModel, $ => $
+                        .pdfVersion
+                    )
+                )
+        )
+    );
+    
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        name: string;
+        books: ({
+            name: string;
+            __typename: "Book";
+        } | {
+            __typename: "PaperBook";
+            name: string;
+            size: {
+                width: number;
+                height: number;
+            };
+        } | {
+            __typename: "ElectronicBook";
+            name: string;
+            address: string;
+        } | {
+            name: string;
+            address: string;
+            __typename: "PdfElectronicBook";
+            pdfVersion: string | null | undefined;
         })[];
     }>();
 });

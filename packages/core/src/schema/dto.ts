@@ -1,6 +1,6 @@
-import { AllModelMembers, AnyModel, Model, ModelName, OrderedKeys } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf, NullityType } from "@/schema/prop";
-import { Prettify } from "@/utils";
+import { AllModelMembers, AnyModel, IsDerivedModelOf, Model, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf, NullityType, AssociatedProp } from "@/schema/prop";
+import { Prettify, UnionToIntersection } from "@/utils";
 
 export const dto = {
     view<TModel extends AnyModel, X>(
@@ -178,14 +178,15 @@ type Flat<
             >
         };
 
-type FlatKeys<TMembers> = {
-    [K in keyof TMembers]: 
-        TMembers[K] extends ReferenceProp<any, any, any, any> 
-            ? K
-            : TMembers[K] extends EmbeddedProp<any, any>
+type FlatKeys<TMembers> = 
+    keyof {
+        [K in keyof TMembers]: 
+            TMembers[K] extends ReferenceProp<any, any, any, any> 
                 ? K
-                : never
-}[keyof TMembers];
+                : TMembers[K] extends EmbeddedProp<any, any>
+                    ? K
+                    : never
+    };
 
 type FlatTargetModel<TModel extends AnyModel, TProp> =
     TProp extends ReferenceProp<infer TargetModel, any, any, any>
@@ -202,7 +203,7 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TCurrent> = {
         K in keyof TMembers
         as TMembers[K] extends ReferenceProp<infer _, any, "OWNING", infer Key> 
             ? Key extends string
-                ? `${K & string}${Capitalize<Key>}`
+                ? PrefixString<K & string, Key>
                 : never
             : never
     ]: 
@@ -217,11 +218,11 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TCurrent> = {
                 TMembers, 
                 TCurrent & (
                     Nullity extends "NONNULL"
-                        ? {[P in `${K & string}${Capitalize<Key & string>}`]: SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]>}
-                        : {[P in `${K & string}${Capitalize<Key & string>}`]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]> | null | undefined}
+                        ? {[P in PrefixString<K & string, Key & string>]: SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]>}
+                        : {[P in PrefixString<K & string, Key & string>]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]> | null | undefined}
                     ),
                 TMembers[K],
-                `${K & string}${Capitalize<Key & string>}`
+                PrefixString<K & string, Key & string>
             >
             : never
 };
@@ -288,15 +289,7 @@ type InstanceOf<
     ): ViewBuilder<
         TModel, 
         TMembers, 
-        (
-            TCurrent extends { __typename: any }
-                ? TCurrent
-                : { __typename: ModelName<TModel> } & TCurrent
-        ) | (
-            { __typename: ModelName<TDerivedModel>} & 
-            Omit<TCurrent, "__typename"> & 
-            X
-        ), 
+        DerivedFields<TDerivedModel, TModel, X, TCurrent>, 
         any, 
         ""
     >;
@@ -305,13 +298,87 @@ type InstanceOf<
 type DerivedModel<
     TDerivedModel extends AnyModel,
     TSuperModel extends AnyModel
-> = TDerivedModel extends Model<any, any, any, any, infer SuperNames>
-        ? SuperNames extends never
-            ? never
-            : ModelName<TSuperModel> extends SuperNames
-                ? TDerivedModel
+> = IsDerivedModelOf<TDerivedModel, TSuperModel> extends true
+    ? TDerivedModel :
+    never;
+
+type DerivedFields<
+    TDerivedModel extends AnyModel,
+    TModel extends AnyModel,
+    X,
+    TCurrent
+> = ( 
+    [X] extends [{__typename: string}]
+        ? X
+            & SuperFields<
+                TCurrent, 
+                ModelSuperNames<TDerivedModel>
+            >
+        : WithTypeName<X, ModelName<TDerivedModel>>
+            & SuperFields<
+                TCurrent, 
+                ModelSuperNames<TDerivedModel>
+            >
+) | (
+    [TCurrent] extends [{__typename: string}]
+        ? TCurrent
+        : { __typename: ModelName<TModel> } & TCurrent
+);
+
+type WithTypeName<T, TTypeName extends string> =
+    { __typename: TTypeName } 
+    & Omit<T, "__typename">;
+
+type SuperFields<
+    TPrevData,
+    TTypeNames extends string
+> = [TPrevData] extends [{ __typename: string }]
+    ? UnionToIntersection<
+        ExtractSuperFields<TPrevData, TTypeNames>
+    >
+    : TPrevData;
+
+type ExtractSuperFields<
+    TPrevData,
+    TTypeNames extends string,
+> = TTypeNames extends any
+    ? ExtractByTypeName<TPrevData, TTypeNames> extends infer ST
+        ? ST extends { __typename: string }
+            ? Omit<ST, "__typename">
+            : {}
+        : {}
+    : {};
+
+type ExtractByTypeName<TUnion, TTypeNames> = 
+    TUnion extends { __typename: TTypeNames } 
+        ? TUnion 
+        : never;
+
+export type ReferenceFetchType = "LOAD" | "JOIN";
+
+type PrefixString<TPrefix extends string, T extends string> =
+    `${TPrefix}${Capitalize<T>}`;
+
+type PrefixType<TPrefix extends string, T> = 
+    TPrefix extends "" 
+        ? T 
+        : {[K in keyof T & string as PrefixString<TPrefix, K>]: T[K]};
+
+export type RecursiveKeys<TModel extends AnyModel, TMembers> = 
+    keyof {
+        [K in keyof TMembers
+            as IsRecursiveProp<TModel, TMembers[K]> extends true
+                ? K & string
                 : never
-            : never;
+        ]: K
+    };
+
+export type IsRecursiveProp<TModel extends AnyModel, TProp> =
+    TProp extends AssociatedProp<infer TargetModel, any, any>
+        ? ModelSuperNames<TModel> extends ModelSuperNames<TargetModel>
+            ? true
+            : false
+        : false;
 
 export class View<TName extends string, T> {
 
@@ -321,10 +388,3 @@ export class View<TName extends string, T> {
         view: undefined
     };
 }
-
-export type ReferenceFetchType = "LOAD" | "JOIN";
-
-type PrefixType<TPrefix extends string, T> = 
-    TPrefix extends "" 
-        ? T 
-        : {[K in keyof T & string as `${TPrefix}${Capitalize<K>}`]: T[K]};
