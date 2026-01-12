@@ -81,6 +81,7 @@ type ViewBuilder<
 & Fold<TModel, TMembers, TCurrent, TRecursiveKindMap>
 & Flat<TModel, TMembers, TCurrent, TRecursiveKindMap>
 & Recursive<TModel, TMembers, TCurrent, TRecursiveKindMap>
+& Remove<TModel, TMembers, TCurrent, TRecursiveKindMap>
 & ReferenceKeyMembers<TModel, TMembers, TCurrent, TRecursiveKindMap>
 & As<TModel, TMembers, TCurrent, TRecursiveKindMap, TLastProp, TLastName>
 & InstanceOf<TModel, TMembers, TCurrent, TRecursiveKindMap>
@@ -528,6 +529,24 @@ type XTypeOfView<K, X, TNullity extends NullityType> =
     TNullity extends "NONNULL"
         ? {[P in K & string]: X}
         : {[P in K & string]?: X | null | undefined};
+
+type Remove<
+    TModel extends AnyModel,
+    TMembers,
+    TCurrent,
+    TRecursiveKindMap extends RecursiveKindMap
+> = {
+    remove<TName extends keyof TMembers>(
+        name: TName
+    ): ViewBuilder<
+        TModel,
+        TMembers,
+        RecursivedType<Omit<TCurrent, TName>, TRecursiveKindMap>,
+        TRecursiveKindMap,
+        undefined,
+        ""
+    >;
+};
 
 export class View<TName extends string, T> {
 

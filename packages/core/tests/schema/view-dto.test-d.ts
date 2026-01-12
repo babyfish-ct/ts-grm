@@ -234,6 +234,7 @@ test("TestAllScalars", () => {
 
     const view = dto.view(bookModel, $ => $
         .allScalars()
+        .remove("price")
     );
 
     type ViewType = TypeOf<typeof view>;
@@ -242,7 +243,6 @@ test("TestAllScalars", () => {
         id: number;
         name: string;
         edition: number;
-        price: number;
     }>();
 });
 
