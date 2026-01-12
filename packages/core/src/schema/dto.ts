@@ -1,5 +1,5 @@
 import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, SimpleDataTypeOf, NullityType, AssociatedProp } from "@/schema/prop";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 
 export const dto = {
@@ -63,18 +63,7 @@ type ViewBuilder<
                 K & string
             >
         : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
-            ? <X>(
-                fn: (
-                    builder: ViewBuilder<never, R, {}, {}, any, any>
-                ) => ViewBuilder<never, R, X, any, any, any>
-            ) => ViewBuilder<
-                TModel,
-                TMembers,
-                TransformedType<TCurrent, XTypeOfView<K, X, Nullity>, TRecursiveKindMap>,
-                TRecursiveKindMap,
-                TMembers[K],
-                K & string
-            >
+            ? EmbeddedMethods<TModel, TMembers, TCurrent, TRecursiveKindMap, K, R, Nullity>
         : never
 }
 & AllScalars<TModel, TMembers, TCurrent, TRecursiveKindMap>
@@ -547,6 +536,85 @@ type Remove<
         ""
     >;
 };
+
+interface EmbeddedMethods<
+    TModel extends AnyModel, 
+    TMembers, 
+    TCurrent, 
+    TRecursiveKindMap extends RecursiveKindMap, 
+    TK extends keyof TMembers, 
+    TR, 
+    TNullity extends NullityType
+> {
+    
+    /**
+     * Fetch all fields of embedded property
+     */
+    (): ViewBuilder<
+        TModel,
+        TMembers,
+        TransformedType<TCurrent, XTypeOfView<TK, EmbeddedDataType<TR>, TNullity>, TRecursiveKindMap>,
+        TRecursiveKindMap,
+        TMembers[TK],
+        TK & string
+    >;
+
+    /**
+     * Fetch some fields of embeded property
+     */
+    <X>(
+        fn: (
+            builder: ViewBuilder<never, TR, {}, {}, any, any>
+        ) => ViewBuilder<never, TR, X, any, any, any>
+    ): ViewBuilder<
+        TModel,
+        TMembers,
+        TransformedType<TCurrent, XTypeOfView<TK, X, TNullity>, TRecursiveKindMap>,
+        TRecursiveKindMap,
+        TMembers[TK],
+        TK & string
+    >;
+}
+
+export type SimpleDataTypeOf<TProp> =
+    TProp extends ScalarProp<infer R, any>
+        ? R
+    : TProp extends EmbeddedProp<infer R, any>
+        ? EmbeddedDataType<R>
+    : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", infer Key>
+        ? {
+            [
+                K in keyof Key
+                    as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                        ? K 
+                        : never
+            ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K]>
+        } & {
+            [
+                K in keyof Key
+                    as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                        ? K 
+                        : never
+            ]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[K]> | null | undefined
+        }
+    : never;
+
+export type EmbeddedDataType<T> =
+    {
+        [
+            K in keyof T
+                as T[K] extends Prop<any, "NONNULL">
+                    ? K 
+                    : never
+        ]: SimpleDataTypeOf<T[K]>
+    } & {
+        [
+            K in keyof T
+                as T[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
+                    ? K 
+                    : never
+        ]?: SimpleDataTypeOf<T[K]> | null | undefined
+    };
 
 export class View<TName extends string, T> {
 

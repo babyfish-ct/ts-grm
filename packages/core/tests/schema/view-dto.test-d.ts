@@ -266,6 +266,32 @@ test("TestAllScalarsWithEmbedded", () => {
     }>();
 });
 
+test("TestDefaultEmbedded", () => {
+    
+    const view = dto.view(bookModel, $ => $
+        .allScalars()
+        .authors($ => $
+            .id
+            .name()
+        )
+    );
+    type ViewType = TypeOf<typeof view>;
+
+    expectTypeOf<ViewType>().toEqualTypeOf<{
+        id: number;
+        name: string;
+        edition: number;
+        price: number;
+        authors: {
+            id: number;
+            name: {
+                firstName: string;
+                lastName: string;
+            };
+        }[];
+    }>();
+});
+
 test("TestRecursive", () => {
 
     const view = dto.view((treeNodeModel), $ => $
