@@ -267,24 +267,44 @@ test("TestAllScalarsWithEmbedded", () => {
 });
 
 test("TestRecursive", () => {
+
     const view = dto.view((treeNodeModel), $ => $
-        .allScalars()
+        .allScalars() // Before recursion
         .recursive("parentNode")
         .recursive("childNodes")
     );
     type ViewType = TypeOf<typeof view>;
+    expectTypeOf<keyof ViewType>().toEqualTypeOf<
+        "id" | "name" | "parentNode" | "childNodes"
+    >();
+    expectTypeOf<keyof Exclude<ViewType["parentNode"], null | undefined>>().toEqualTypeOf<
+        "id" | "name" | "parentNode"
+    >();
+    expectTypeOf<keyof ElementOf<ViewType["childNodes"]>>().toEqualTypeOf<
+        "id" | "name" | "childNodes"
+    >();
 
     make<ViewType>().parentNode?.parentNode?.parentNode;
     make<ViewType>().childNodes[0]?.childNodes[0]?.childNodes[0];
 });
 
 test("TestRecursiveWithAlias", () => {
+
     const view = dto.view((treeNodeModel), $ => $
-        .allScalars()
-        .recursive("parentNode", "up")
-        .recursive("childNodes", "downs")
+        .recursive({prop: "parentNode", alias: "up"})
+        .recursive({prop: "childNodes", alias: "downs"})
+        .allScalars() // After recursion
     );
     type ViewType = TypeOf<typeof view>;
+    expectTypeOf<keyof ViewType>().toEqualTypeOf<
+        "id" | "name" | "up" | "downs"
+    >();
+    expectTypeOf<keyof Exclude<ViewType["up"], null | undefined>>().toEqualTypeOf<
+        "id" | "name" | "up"
+    >();
+    expectTypeOf<keyof ElementOf<ViewType["downs"]>>().toEqualTypeOf<
+        "id" | "name" | "downs"
+    >();
 
     make<ViewType>().up?.up?.up;
     make<ViewType>().downs[0]?.downs[0]?.downs[0];
@@ -293,3 +313,8 @@ test("TestRecursiveWithAlias", () => {
 function make<T>(): T {
     throw new Error();
 }
+
+type ElementOf<T> = 
+    T extends Array<infer R> 
+        ? R 
+        : never;

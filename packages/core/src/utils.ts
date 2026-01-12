@@ -3,14 +3,6 @@ import { EmbeddedProp } from "./schema/prop";
 export type Prettify<T> = 
     T extends Array<infer U>
         ? Prettify<U>[]
-    : T extends { __recursiveCore: any }
-        ? { 
-            [K in keyof T & string
-                as K extends "__recursiveCore"
-                    ? never
-                    : K   
-            ]: T[K] 
-        }
     : T extends object
         ? { [K in keyof T & string]: Prettify<T[K]> }
     : T;
