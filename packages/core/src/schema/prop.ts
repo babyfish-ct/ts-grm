@@ -538,6 +538,15 @@ type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_M
 
 export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
 
+export type CombinedNullity<
+    TNullity1 extends NullityType, 
+    TNullity2 extends NullityType
+> = TNullity1 extends "NULLABLE"
+        ? "NULLABLE"
+    : TNullity2 extends "NULLABLE"
+        ? "NULLABLE"
+    : "NONNULL";
+
 type DirectionType = "OWNING" | "INVERSE";
 
 export type EmbeddedMember = 

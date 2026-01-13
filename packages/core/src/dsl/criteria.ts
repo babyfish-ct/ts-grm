@@ -1,31 +1,31 @@
 import { AllModelMembers, AnyModel } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, I64Prop, Prop, ReferenceProp, ScalarProp } from "@/schema/prop";
+import { CollectionProp, CombinedNullity, EmbeddedProp, I64Prop, NullityType, Prop, ReferenceProp, ScalarProp } from "@/schema/prop";
 
 export type Criteria<TModel extends AnyModel> =
-    CriteriaMembers<AllModelMembers<TModel>>;
+    CriteriaMembers<AllModelMembers<TModel>, "NONNULL">;
 
-type CriteriaMembers<TMembers> = {
-    [K in keyof TMembers]?: CriteriaMember<TMembers[K]>;
-} & LogicOperators<TMembers>;
+type CriteriaMembers<TMembers, TNullity extends NullityType> = {
+    [K in keyof TMembers]?: CriteriaMember<TMembers[K], TNullity>;
+} & LogicOperators<TMembers, TNullity>;
 
-type LogicOperators<TMembers> = {
-    $and?: CriteriaMembers<TMembers> | CriteriaMembers<TMembers>[];
-    $or?: CriteriaMembers<TMembers> | CriteriaMembers<TMembers>[];
-    $not?: CriteriaMembers<TMembers> | CriteriaMembers<TMembers>[];
+type LogicOperators<TMembers, TNullity extends NullityType> = {
+    $and?: CriteriaMembers<TMembers, TNullity> | CriteriaMembers<TMembers, TNullity>[];
+    $or?: CriteriaMembers<TMembers, TNullity> | CriteriaMembers<TMembers, TNullity>[];
+    $not?: CriteriaMembers<TMembers, TNullity> | CriteriaMembers<TMembers, TNullity>[];
 };
 
-type CriteriaMember<TProp> =
+type CriteriaMember<TProp, TNullity extends NullityType> =
     TProp extends Prop<any, infer Nullity>
         ? Nullity extends "NULLABLE"
-            ? { $isNull: boolean } | NonNullCriteiraMember<TProp>
-            : NonNullCriteiraMember<TProp>
+            ? { $isNull: boolean } | NonNullCriteiraMember<TProp, TNullity>
+            : NonNullCriteiraMember<TProp, TNullity>
         : never;
 
-type NonNullCriteiraMember<TProp> =
+type NonNullCriteiraMember<TProp, TNullity extends NullityType> =
     TProp extends ScalarProp<any, any>
         ? ScalarType<TProp>
-    : TProp extends EmbeddedProp<infer R, any>
-        ? { [K in keyof R]?: CriteriaMember<R[K]> } & LogicOperators<R>
+    : TProp extends EmbeddedProp<infer R, infer Nullity>
+        ? { [K in keyof R]?: CriteriaMember<R[K], CombinedNullity<TNullity, Nullity>> } & LogicOperators<R, TNullity>
     : TProp extends ReferenceProp<any, any, any, any>
         ? ReferenceType<TProp>
     : TProp extends CollectionProp<any>
@@ -49,7 +49,7 @@ type ReferenceType<TProp> =
     { $action?: "SOME" | "NONE"; }
     & (
         TProp extends ReferenceProp<infer TargetModel, any, any, any>
-            ? CriteriaMembers<AllModelMembers<TargetModel>>
+            ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
             : never
     );
 
@@ -63,7 +63,7 @@ type CollectionType<TProp> =
 
 type TargetMembers<TProp> =
     TProp extends CollectionProp<infer TargetModel>
-        ? CriteriaMembers<AllModelMembers<TargetModel>>
+        ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
         : never;
 
 interface AnyJson<T> {

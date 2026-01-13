@@ -1,5 +1,5 @@
 import { AllModelMembers, AnyModel, CtorMembers, ModelCtor, ModelName } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, DirectTypeOf, ScalarProp } from "@/schema/prop";
+import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, DirectTypeOf, ScalarProp, CombinedNullity } from "@/schema/prop";
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
@@ -93,15 +93,6 @@ type ReferenceKeyMembers<TMembers, TNullity extends NullityType> = {
             : never
         : never
 };
-
-type CombinedNullity<
-    TNullity1 extends NullityType, 
-    TNullity2 extends NullityType
-> = TNullity1 extends "NULLABLE"
-        ? "NULLABLE"
-    : TNullity2 extends "NULLABLE"
-        ? "NULLABLE"
-    : "NONNULL";
 
 export type JoinType = "INNER" | "LEFT";
 

@@ -1,7 +1,7 @@
 import { count } from "./aggregate";
 import { and, constant, not, or } from "./expression";
 import { all, any, exists, notExists, subQuery } from "./sub-query";
-import { unionAll, union, minus, intersect } from "./merge";
+import { unionAll, union, minus, intersect } from "./merged-query";
 import { num } from "./native";
 import { baseQuery, cteModel, derivedModel } from "./base-query";
 
