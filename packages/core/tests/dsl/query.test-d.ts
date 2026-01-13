@@ -34,7 +34,7 @@ test("TestRootQueryByOne", async () => {
 
     const rows = await sqlClient().createQuery(bookModel, (q, book) => {
         q.where(book.storeId.eq("2"));
-        q.orderBy(book.price.desc())
+        q.orderBy(book.price.desc());
         return q.select(book.fetch(simpleBookView));
     }).fetchList();
     

@@ -30,9 +30,9 @@ type EntityTableMembers<
     & WeakJoinAction<TModel, TRiskAccepted> 
     & { 
         fetch<X>(
-            view: View<ModelName<TModel>, X>
+            view: View<TModel, X>
         ): FetchedView<
-            ModelName<TModel>, 
+            TModel, 
             TNullity extends "NULLABLE" ? X | null | undefined : X
         >; 
     } & {

@@ -8,10 +8,15 @@ export const dto = {
         fn: (
             builder: ViewBuilder<TModel, AllModelMembers<TModel>, {}, {}, any, any>
         ) => ViewBuilder<TModel, AllModelMembers<TModel>, X, any, any, any>
-    ): View<ModelName<TModel>, Prettify<X>> {
+    ): View<TModel, Prettify<X>> {
         return new View();
     }
 };
+
+export type ModelOf<T> =
+    T extends View<infer R, any>
+        ? R
+        : never;
 
 export type TypeOf<T> =
     T extends View<any, infer R>
@@ -616,10 +621,10 @@ export type EmbeddedDataType<T> =
         ]?: SimpleDataTypeOf<T[K]> | null | undefined
     };
 
-export class View<TName extends string, T> {
+export class View<TModel extends AnyModel, T> {
 
     readonly $type: {
-        view: [TName, T] | undefined
+        view: [TModel, T] | undefined
     } = {
         view: undefined
     };

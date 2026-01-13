@@ -1,3 +1,4 @@
+import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
 import { ExpressionOrder } from "./utils";
 
@@ -77,11 +78,11 @@ export type SelectionLike = {
     };
 }
 
-export type FetchedView<TName extends string, X> = {
+export type FetchedView<TModel extends AnyModel, X> = {
 
     __type(): {
         selectionLike: true;
-        selectedView: [TName, X] | undefined;
+        selectedView: [TModel, X] | undefined;
     };
 } & SelectionLike;
 
