@@ -9,9 +9,9 @@ type CriteriaMembers<TMembers> = {
 } & LogicOperators<TMembers>;
 
 type LogicOperators<TMembers> = {
-    $and?: CriteriaMembers<TMembers>[];
-    $or?: CriteriaMembers<TMembers>[];
-    $not?: CriteriaMembers<TMembers>[];
+    $and?: CriteriaMembers<TMembers> | CriteriaMembers<TMembers>[];
+    $or?: CriteriaMembers<TMembers> | CriteriaMembers<TMembers>[];
+    $not?: CriteriaMembers<TMembers> | CriteriaMembers<TMembers>[];
 };
 
 type CriteriaMember<TProp> =
@@ -54,14 +54,17 @@ type ReferenceType<TProp> =
     );
 
 type CollectionType<TProp> =
-    "SOME" | (
-        { $action?: "SOME" | "NONE" | "EVERY"; }
-        & (
-            TProp extends CollectionProp<infer TargetModel>
-                ? CriteriaMembers<AllModelMembers<TargetModel>>
-                : never
-        )
-    );
+    TargetMembers<TProp> 
+    | { $elemMatch: TargetMembers<TProp>; }
+    | { $none: TargetMembers<TProp>; }
+    | { $all: TargetMembers<TProp> }
+    | { $exists: boolean } & TargetMembers<TProp>
+    | { $size: number | CmpJson<number> } & TargetMembers<TProp>;
+
+type TargetMembers<TProp> =
+    TProp extends CollectionProp<infer TargetModel>
+        ? CriteriaMembers<AllModelMembers<TargetModel>>
+        : never;
 
 interface AnyJson<T> {
     $eq?: T;
@@ -72,23 +75,36 @@ interface AnyJson<T> {
 
 interface CmpJson<T> extends AnyJson<T> {
     $lt?: T;
-    $le?: T;
+    $lte?: T;
     $gt?: T;
-    $ge?: T;
+    $gte?: T;
     $between?: [T, T];
+    $in?: T[];
+    $nin?: T[];
     $ltIf?: T | null | undefined;
-    $leIf?: T | null | undefined;
+    $lteIf?: T | null | undefined;
     $gtIf?: T | null | undefined;
-    $geIf?: T | null | undefined;
-    $betweenIf?: [T | null | undefined, T | null | undefined]
+    $gteIf?: T | null | undefined;
+    $betweenIf?: [T | null | undefined, T | null | undefined];
+    $inIf?: T[] | null | undefined;
+    $ninIf?: T[] | null | undefined;
 }
 
 interface StrJson extends CmpJson<string> {
     $startsWith?: string;
     $endsWith?: string;
     $contains?: string;
+    $regex?: string | RegExp;
+    $istartsWith?: string;
+    $iendsWith?: string;
+    $icontains?: string;
+    $iregex?: string | RegExp;
     $startsWithIf?: string | null | undefined;
     $endsWithIf?: string | null | undefined;
     $containsIf?: string | null | undefined;
-    $insensitive?: boolean; 
+    $regexIf?: string | RegExp;
+    $istartsWithIf?: string | null | undefined;
+    $iendsWithIf?: string | null | undefined;
+    $icontainsIf?: string | null | undefined;
+    $iregexIf?: string | RegExp;
 }

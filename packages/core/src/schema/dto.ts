@@ -1,3 +1,4 @@
+import { AtLeastOne } from "@/dsl/utils";
 import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
@@ -530,12 +531,12 @@ type Remove<
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
-    remove<TName extends keyof TMembers>(
-        name: TName
+    remove<TNames extends AtLeastOne<keyof TMembers>>(
+        ...names: TNames
     ): ViewBuilder<
         TModel,
         TMembers,
-        RecursivedType<Omit<TCurrent, TName>, TRecursiveKindMap>,
+        RecursivedType<Omit<TCurrent, TNames[number]>, TRecursiveKindMap>,
         TRecursiveKindMap,
         undefined,
         ""

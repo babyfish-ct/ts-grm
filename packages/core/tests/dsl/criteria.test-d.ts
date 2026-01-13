@@ -16,18 +16,19 @@ const simpleBookView = dto.view(bookModel, $ => $
 test("Test Criteria", async () => {
     const view = await sqlClient().findNonNull(simpleBookView, {
         $or: [
-            { name: { $contains: "graphql", $insensitive: true }},
-            { name: { $contains: "typescript", $insensitive: true}}
+            { name: { $icontains: "graphql" } },
+            { name: { $icontains: "typescript"} }
         ],
-        price: { $ge: 10, $leIf: undefined },
+        price: { $gte: 10, $lteIf: undefined },
         store: { $isNull: false },
         authors: { 
-            $action: "NONE",
-            name: {
-                $or: [
-                    { firstName: "unkonwn" },
-                    { lastName: "unknown" }
-                ]
+            $none: {
+                name: {
+                    $or: {
+                        firstName: "unkonwn",
+                        lastName: "unkown"
+                    }
+                }
             }
         }
     });
