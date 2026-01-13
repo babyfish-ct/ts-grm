@@ -67,7 +67,7 @@ interface AnyJson<T> {
     $eq?: T;
     $ne?: T;
     $eqIf?: T | null | undefined;
-    $eqNe?: T | null | undefined;
+    $neIf?: T | null | undefined;
 }
 
 interface CmpJson<T> extends AnyJson<T> {
