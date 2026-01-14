@@ -1,20 +1,20 @@
 import { SqlClient } from "@/dsl/sql-client";
 import { dto } from "@/schema/dto";
 import test from "node:test";
-import { bookModel } from "tests/model/model";
+import { BOOK } from "tests/model/model";
 import { expectTypeOf } from "vitest";
 
 function sqlClient(): SqlClient {
     throw new Error();
 }
 
-const simpleBookView = dto.view(bookModel, $ => $
+const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $
     .allScalars()
     .remove("price")
 );
 
-test("Test Criteria", async () => {
-    const view = await sqlClient().findNonNull(simpleBookView, {
+test("TestCriteria", async () => {
+    const view = await sqlClient().findNonNull(SIMPLE_BOOK_VIEW, {
         $or: [
             { name: { $icontains: "graphql" } },
             { name: { $icontains: "typescript"} }

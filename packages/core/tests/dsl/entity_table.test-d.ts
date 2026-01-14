@@ -1,6 +1,6 @@
 import { EntityTable } from "@/dsl/table";
 import { Expression } from "@/dsl/expression";
-import { authorModel, bookModel, bookStoreModel } from "tests/model/model";
+import { AUTHOR, BOOK, BOOK_STORE } from "tests/model/model";
 import { expectTypeOf, test } from "vitest";
 
 test("TableMembers", () => {
@@ -26,23 +26,23 @@ test("TableMembers", () => {
     expectTypeOf<typeof storeName3>().toEqualTypeOf<Expression<string>>();
 
     const weakJoinName1 = store().join(
-        authorModel, 
+        AUTHOR, 
         (source, target) => source.name.eq(target.name().firstName)
     ).$acceptRisk().name().firstName;
     expectTypeOf<typeof weakJoinName1>().toEqualTypeOf<Expression<string>>();
 
     const weakJoinName2 = store().join(
-        authorModel, 
+        AUTHOR, 
         "LEFT",
         (source, target) => source.name.eq(target.name().firstName)
     ).$acceptRisk().name().firstName;
     expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null | undefined>>();
 });
 
-function book(): EntityTable<typeof bookModel> {
+function book(): EntityTable<typeof BOOK> {
     throw new Error();
 }
 
-function store(): EntityTable<typeof bookStoreModel> {
+function store(): EntityTable<typeof BOOK_STORE> {
     throw new Error();
 }

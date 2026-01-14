@@ -1,11 +1,11 @@
 import { test, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { bookModel, bookStoreModel, electronicBookModel, paperBookModel, orderItemModel, orderModel, pdfElectronicBookModel, treeNodeModel } from "tests/model/model";
+import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, ORDER_ITEM, ORDER, PDF_ELECTRONIC_BOOK, TREE_NODE } from "tests/model/model";
 
 test("TestSimpleView", () => {
 
-    const view = dto.view(bookStoreModel, $ => $
+    const view = dto.view(BOOK_STORE, $ => $
         .id
         .name
         .version
@@ -46,7 +46,7 @@ test("TestSimpleView", () => {
 
 test("TestComplexView", () => {
 
-    const view = dto.view(bookStoreModel, $ => $
+    const view = dto.view(BOOK_STORE, $ => $
         .id
         .name
         .version.$as("optimisticLock")
@@ -89,17 +89,17 @@ test("TestComplexView", () => {
 
 test("TestInheritView", () => {
 
-    const view = dto.view(bookStoreModel, $ => $
+    const view = dto.view(BOOK_STORE, $ => $
         .name
         .books(
             $ => $.name
-                .instanceOf(paperBookModel, $ => $
+                .instanceOf(PAPER_BOOK, $ => $
                     .size($ => $.width.height)
                 )
-                .instanceOf(electronicBookModel, $ => $
+                .instanceOf(ELECTRONIC_BOOK, $ => $
                     .address
                 )
-                .instanceOf(pdfElectronicBookModel, $ => $
+                .instanceOf(PDF_ELECTRONIC_BOOK, $ => $
                     .pdfVersion
                 )
         )
@@ -134,16 +134,16 @@ test("TestInheritView", () => {
 
 test("TestInheritView2", () => {
 
-    const view = dto.view(bookStoreModel, $ => $
+    const view = dto.view(BOOK_STORE, $ => $
         .name
         .books(
             $ => $.name
-                .instanceOf(paperBookModel, $ => $
+                .instanceOf(PAPER_BOOK, $ => $
                     .size($ => $.width.height)
                 )
-                .instanceOf(electronicBookModel, $ => $
+                .instanceOf(ELECTRONIC_BOOK, $ => $
                     .address
-                    .instanceOf(pdfElectronicBookModel, $ => $
+                    .instanceOf(PDF_ELECTRONIC_BOOK, $ => $
                         .pdfVersion
                     )
                 )
@@ -179,7 +179,7 @@ test("TestInheritView2", () => {
 
 test("TestFlatAssociation", () => {
     
-    const view = dto.view(bookModel, $ => $
+    const view = dto.view(BOOK, $ => $
         .name
         .flat("store", $ => $
             .id
@@ -196,7 +196,7 @@ test("TestFlatAssociation", () => {
 
 test("TestReferenceKey", () => {
     
-    const view = dto.view(bookModel, $ => $
+    const view = dto.view(BOOK, $ => $
         .storeId.$as("fk")
         .name
     );
@@ -211,7 +211,7 @@ test("TestReferenceKey", () => {
 
 test("TestEmbeddedReferenceKey", () => {
 
-    const view = dto.view(orderItemModel, $ => $
+    const view = dto.view(ORDER_ITEM, $ => $
         .orderId
         .id
     );
@@ -232,7 +232,7 @@ test("TestEmbeddedReferenceKey", () => {
 
 test("TestAllScalars", () => {
 
-    const view = dto.view(bookModel, $ => $
+    const view = dto.view(BOOK, $ => $
         .allScalars()
         .remove("price")
     );
@@ -248,7 +248,7 @@ test("TestAllScalars", () => {
 
 test("TestAllScalarsWithEmbedded", () => {
 
-    const view = dto.view(orderModel, $ => $
+    const view = dto.view(ORDER, $ => $
         .allScalars()
     );
 
@@ -268,7 +268,7 @@ test("TestAllScalarsWithEmbedded", () => {
 
 test("TestDefaultEmbedded", () => {
     
-    const view = dto.view(bookModel, $ => $
+    const view = dto.view(BOOK, $ => $
         .allScalars()
         .authors($ => $
             .id
@@ -294,7 +294,7 @@ test("TestDefaultEmbedded", () => {
 
 test("TestRecursive", () => {
 
-    const view = dto.view((treeNodeModel), $ => $
+    const view = dto.view((TREE_NODE), $ => $
         .allScalars() // Before recursion
         .recursive("parentNode")
         .recursive("childNodes")
@@ -316,7 +316,7 @@ test("TestRecursive", () => {
 
 test("TestRecursiveWithAlias", () => {
 
-    const view = dto.view((treeNodeModel), $ => $
+    const view = dto.view((TREE_NODE), $ => $
         .recursive({prop: "parentNode", alias: "up"})
         .recursive({prop: "childNodes", alias: "downs"})
         .allScalars() // After recursion

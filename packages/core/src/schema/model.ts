@@ -1,3 +1,4 @@
+import { createEntity } from "@/impl/metadata/entity";
 import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
 
@@ -7,7 +8,7 @@ function modelImpl(): ModelCreator {
 
     function create<
         TName extends string, 
-        TIdKey extends keyof CtorMembers<TCtor>,
+        TIdKey extends keyof CtorMembers<TCtor> & string,
         TCtor extends Ctor
     >(
         name: TName,
@@ -15,7 +16,8 @@ function modelImpl(): ModelCreator {
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
-        return new Model(name, idKey, ctor, undefined);
+        return createEntity(name, idKey, ctor, undefined) as 
+            Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never>;
     }
 
     function ext<
@@ -37,7 +39,14 @@ function modelImpl(): ModelCreator {
             MakeAllModelMembers<TCtor, TSuperModel>,
             ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
         > =>
-            new Model(name, superModel.idKey, ctor, superModel);
+            createEntity(name, undefined, ctor, superModel) as 
+                Model<
+                    TName, 
+                    SuperIdKey<TSuperModel>, 
+                    TCtor, 
+                    MakeAllModelMembers<TCtor, TSuperModel>,
+                    ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+                >;
     }
     create.extends = ext;
     return create as any as ModelCreator;
@@ -47,7 +56,7 @@ type ModelCreator = {
     
     <
         TName extends string, 
-        TIdKey extends keyof CtorMembers<TCtor>,
+        TIdKey extends keyof CtorMembers<TCtor> & string,
         TCtor extends Ctor
     >(
         name: TName,
@@ -88,24 +97,19 @@ type OtherString<T extends string, X extends string> =
         ? never
         : T;
 
-export class Model<
+export interface Model<
     TName extends string, 
-    TIdKey extends keyof CtorMembers<TCtor>,
+    TIdKey extends string,
     TCtor extends Ctor,
     TAllMemembers extends object,
     TSuperNames extends string | never
 > {
 
-    readonly $type: {
+    __type(): {
         model: [TName, TIdKey, TCtor, TAllMemembers, TSuperNames] | undefined 
-    } = { model: undefined };
-    
-    constructor(
-        readonly name: TName, 
-        readonly idKey: TIdKey,
-        readonly ctor: TCtor,
-        readonly superModel: AnyModel | undefined
-    ) {}
+    };
+
+    readonly name: string;
 }
 
 export type AnyModel = Model<any, any, any, any, any>;
@@ -128,7 +132,7 @@ type SuperIdKey<TSuperModel extends AnyModel> =
         ? IdKey
         : never;
 
-interface Ctor {
+export interface Ctor {
     new (): any;
     readonly prototype: {
         readonly [key: string]: any 

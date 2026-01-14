@@ -13,7 +13,7 @@ export const prop = {
     },
 
     i16(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I6"});
+        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I16"});
     },
 
     i32(): ScalarProp<number> {
@@ -89,20 +89,20 @@ export const prop = {
 
 export class Prop<T, TNullity extends NullityType> {
 
-    $type(): {
+    __type(): {
         prop: [T, TNullity] | undefined
     } {
         return {prop: undefined };
     };
 
-    protected constructor(readonly $data: PropData) {}
+    protected constructor(readonly __data: PropData) {}
 }
 
 export class ScalarProp<
     T, TNullity extends NullityType = "NONNULL"
 > extends Prop<T, TNullity> {
 
-    override $type(): {
+    override __type(): {
         prop: [T, TNullity] | undefined,
         scalarProp: [T, TNullity] | undefined
     } {
@@ -117,7 +117,7 @@ export class ScalarProp<
     }
 
     nullable(): ScalarProp<T, "NULLABLE"> {
-        return new ScalarProp({...this.$data, nullity: "NULLABLE"})
+        return new ScalarProp({...this.__data, nullity: "NULLABLE"})
     }
 }
 
@@ -126,7 +126,7 @@ export class I64Prop<
     TNullity extends NullityType = "NONNULL"
 > extends ScalarProp<T, TNullity> {
 
-    override $type(): {
+    override __type(): {
         prop: [T, TNullity] | undefined,
         scalarProp: [T, TNullity] | undefined,
         i64Prop: [T, TNullity] | undefined
@@ -139,11 +139,11 @@ export class I64Prop<
     }
 
     override nullable(): I64Prop<T, "NULLABLE"> {
-        return new I64Prop({...this.$data, nullity: "NULLABLE"});
+        return new I64Prop({...this.__data, nullity: "NULLABLE"});
     }
 
     asString(): I64Prop<string, TNullity> {
-        return new I64Prop({...this.$data});
+        return new I64Prop({...this.__data});
     }
 }
 
@@ -152,7 +152,7 @@ export class EmbeddedProp<
     TNullity extends NullityType = "NONNULL"
 > extends Prop<TProps, TNullity> {
 
-    override $type(): {
+    override __type(): {
         prop: [TProps, TNullity] | undefined,
         embeddedProp: [TProps, TNullity] | undefined
     } {
@@ -167,7 +167,7 @@ export class EmbeddedProp<
     }
 
     get props(): TProps {
-        return this.$data.props as TProps;
+        return this.__data.props as TProps;
     }
 } 
 
@@ -177,7 +177,7 @@ export abstract class AssociatedProp<
     TDirection extends DirectionType
 > extends Prop<TModel, TNullity> {
 
-    override $type(): {
+    override __type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined
     } {
@@ -192,7 +192,7 @@ export abstract class AssociatedProp<
     }
 
     get targetModel(): TModel {
-        return this.$data.targetModel as TModel;
+        return this.__data.targetModel as TModel;
     }
 }
 
@@ -202,7 +202,7 @@ export interface ReferenceProp<
     TDirection extends DirectionType,
     TReferenceKey extends ReferenceKey<TModel> | undefined
 > extends AssociatedProp<TModel, TNullity, TDirection> {
-    $type(): {
+    __type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined
         referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined
@@ -219,7 +219,7 @@ export type ForeignKeyProp<TProp extends ReferenceProp<any, any, "OWNING", any>>
 export interface CollectionProp<
     TModel extends AnyModel
 > {
-    $type(): {
+    __type(): {
         collectionProp: TModel | undefined
     };
 }
@@ -232,7 +232,7 @@ export class OneToOneProp<
 > extends AssociatedProp<TModel, TNullity, TDirection> 
 implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
-    override $type(): {
+    override __type(): {
         prop: [TModel, TNullity] | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
         referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined,
@@ -252,7 +252,7 @@ implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     nullable(): OneToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
         return new OneToOneProp(
-            {...this.$data, nullity: "NULLABLE"}
+            {...this.__data, nullity: "NULLABLE"}
         );
     }
 }
@@ -269,11 +269,11 @@ class UnconfiguredOneToOneProp<
     }
 
     nullable(): UnconfiguredOneToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
-        return new UnconfiguredOneToOneProp({...this.$data, nullity: "NULLABLE"});
+        return new UnconfiguredOneToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
     mappedBy(mappedBy: OneToOneMappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", "VIRTUAL"> {
-        return new OneToOneProp({...this.$data, mappedBy, nullity: "NULLABLE"});
+        return new OneToOneProp({...this.__data, mappedBy, nullity: "NULLABLE"});
     }
 
     joinColumns<TTargetKeyProp extends ReferenceKey<TModel>>(
@@ -325,7 +325,7 @@ export class ManyToOneProp<
 > extends AssociatedProp<TModel, TNullity, TDirection> 
 implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
-    override $type(): {
+    override __type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
         referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined,
@@ -345,7 +345,7 @@ implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     nullable(): ManyToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
         return new ManyToOneProp(
-            {...this.$data, nullity: "NULLABLE"}
+            {...this.__data, nullity: "NULLABLE"}
         );
     }
 }
@@ -362,7 +362,7 @@ class UnconfiguredManyToOneProp<
     }
 
     nullable(): UnconfiguredManyToOneProp<TModel, "NULLABLE", TDirection, TReferenceKey> {
-        return new UnconfiguredManyToOneProp({...this.$data, nullity: "NULLABLE"});
+        return new UnconfiguredManyToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
     joinColumns<TTargetKeyProp extends ReferenceKey<TModel>>(
@@ -413,7 +413,7 @@ export class OneToManyProp<
 > extends AssociatedProp<TModel, TNullity, TDirection> 
 implements CollectionProp<TModel> {
 
-    override $type(): {
+    override __type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
         collectionProp: TModel | undefined,
@@ -435,7 +435,7 @@ implements CollectionProp<TModel> {
         ...orders: ModelOrder<TModel>[]
     ): OneToManyProp<TModel, TNullity, TDirection> {
         return new OneToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
+            {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
@@ -451,14 +451,14 @@ class UnconfiguredOneToManyProp<
     }
 
     mappedBy(mappedBy: OneToManyMappedByKeys<TModel>): OneToManyProp<TModel, TNullity, "INVERSE"> {
-        return new OneToManyProp({...this.$data, mappedBy});
+        return new OneToManyProp({...this.__data, mappedBy});
     }
 
     override orderBy(
         ...orders: ModelOrder<TModel>[]
     ): UnconfiguredOneToManyProp<TModel, TNullity, TDirection> {
         return new UnconfiguredOneToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
+            {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
@@ -470,7 +470,7 @@ export class ManyToManyProp<
 > extends AssociatedProp<TModel, TNullity, TDirection> 
 implements CollectionProp<TModel> {
 
-    override $type(): {
+    override __type(): {
         prop: [TModel, TNullity]  | undefined,
         associatedProp: [TModel, TNullity, TDirection] | undefined,
         collectionProp: TModel | undefined,
@@ -492,7 +492,7 @@ implements CollectionProp<TModel> {
         ...orders: ModelOrder<TModel>[]
     ): ManyToManyProp<TModel, TNullity, TDirection> {
         return new ManyToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
+            {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
@@ -508,7 +508,7 @@ class UnconfiguredManyToManyProp<
     }
 
     mappedBy(mappedBy: ManyToManyMappedByKeys<TModel>): ManyToManyProp<TModel, TNullity, "INVERSE"> {
-        return new ManyToManyProp({...this.$data, mappedBy});
+        return new ManyToManyProp({...this.__data, mappedBy});
     }
 
     joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
@@ -529,7 +529,7 @@ class UnconfiguredManyToManyProp<
         ...orders: ModelOrder<TModel>[]
     ): UnconfiguredManyToManyProp<TModel, TNullity, TDirection> {
         return new UnconfiguredManyToManyProp(
-            {...this.$data, orders: [...orders] as ReadonlyArray<any> }
+            {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
@@ -555,22 +555,31 @@ export type EmbeddedMember =
     | ForeignKeyProp<ManyToOneProp<any, any, "OWNING", any>>
     | EmbeddedProp<any, any>;
 
-type PropData = {
-    readonly nullity: NullityType,
-    readonly scalarType: string | undefined,
-    readonly props: Record<string, Prop<any, any>> | undefined,
-    readonly targetModel: ModelRef<AnyModel> | undefined,
-    readonly associationType: AssociationType | undefined,
-    readonly columnName: string | undefined,
-    readonly joinColumns: ReadonlyArray<JoinColumn> | undefined,
+export type PropData = {
+    readonly nullity: NullityType;
+    readonly scalarType: ScalarType | undefined;
+    readonly props: Record<string, Prop<any, any>> | undefined;
+    readonly targetModel: ModelRef<AnyModel> | undefined;
+    readonly associationType: AssociationType | undefined;
+    readonly columnName: string | undefined;
+    readonly joinColumns: ReadonlyArray<JoinColumn> | undefined;
     readonly joinTable: {
-        readonly name?: string | undefined,
-        readonly toThisColumns: ReadonlyArray<JoinColumn> | undefined,
-        readonly toTargetColumns: ReadonlyArray<JoinColumn> | undefined
-    } | undefined
+        readonly name?: string | undefined;
+        readonly toThisColumns: ReadonlyArray<JoinColumn> | undefined;
+        readonly toTargetColumns: ReadonlyArray<JoinColumn> | undefined;
+    } | undefined;
     readonly mappedBy: string | undefined,
-    readonly orders: ReadonlyArray<ModelOrder<any>> | undefined
+    readonly orders: ReadonlyArray<{
+        readonly path: string;
+        readonly desc: string;
+    }> | undefined;
 };
+
+export type ScalarType = 
+    "STR" 
+    | "I8" | "I16" | "I32" | "I64" 
+    | "F32" | "F64" | "NUM" 
+    | "DATE";
 
 const EMPTY_PROP_DEFINTION_DATA: PropData = {
     nullity: "NONNULL",
