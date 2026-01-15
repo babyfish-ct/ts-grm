@@ -59,7 +59,7 @@ export class Entity implements AnyModel {
     }
 
     get allPropMap(): ReadonlyMap<string, EntityProp> {
-        this.resolve(2);
+        this.resolve(1);
         return this._allPropMap ?? 
             error(`The allPropMap of ${this.name} is not initialized`);
     }
@@ -154,16 +154,15 @@ export class Entity implements AnyModel {
         }
         const allPropMap = new Map<string, EntityProp>(this.superEntity.allPropMap);
         for (const prop of this.declaredPropMap.values()) {
-            const superProp = this.superEntity.allPropMap.values();
-            if (superProp === undefined) {
-                continue;
+            const superProp = this.superEntity.allPropMap.get(prop.name);
+            if (superProp !== undefined) {
+                throw new PropError(
+                    this.name,
+                    prop.name,
+                    dedent`A property with the same name has 
+                    already been defined in super-entity "${this.superEntity.name}"`
+                );
             }
-            throw new PropError(
-                this.name,
-                prop.name,
-                dedent`A property with the same name has 
-                already been defined in super-entity "${this.superEntity.name}"`
-            );
             allPropMap.set(prop.name, prop);
         }
         return allPropMap;

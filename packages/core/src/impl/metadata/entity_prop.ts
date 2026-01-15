@@ -194,11 +194,13 @@ export class EntityProp {
         if (prefix != undefined) {
             map.set(`${prefix}.${this.name}`, this);
         }
-        for (const prop of this.props!!.values()) {
-            prop._collectDeeperProps(
-                prefix === undefined ? prop.name : `${prefix}.${prop.name}`,
-                map
-            );
+        if (this.props !== undefined) {
+            for (const prop of this.props.values()) {
+                prop._collectDeeperProps(
+                    prefix === undefined ? this.name : `${prefix}.${this.name}`,
+                    map
+                );
+            }
         }
     }
 

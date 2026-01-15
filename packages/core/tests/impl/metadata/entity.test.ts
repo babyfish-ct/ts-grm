@@ -7,6 +7,17 @@ test("TestEntity", () => {
     expect(
         [...paperBookEntity.declaredPropMap.keys()].sort()
     ).toEqual(
-        [].sort()
+        ["size"].sort()
+    );
+    expect(
+        [...paperBookEntity.allPropMap.keys()].sort()
+    ).toEqual(
+        ["id", "name", "edition", "price", "store", "authors", "size"].sort()
+    ); 
+    expect(
+        [...paperBookEntity.expanedPropMap.keys()].sort()
+    ).toEqual(
+        ["id", "name", "edition", "price", "store", "authors", 
+            "size", "size.width", "size.height"].sort()
     ); 
 });
