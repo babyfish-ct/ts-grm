@@ -1,4 +1,4 @@
-function dedent(strings: TemplateStringsArray, ...values: any[]): string {
+export function dedent(strings: TemplateStringsArray, ...values: any[]): string {
     const str = strings.reduce((result, string, i) =>
         result + string + (values[i] || ''), '');
     

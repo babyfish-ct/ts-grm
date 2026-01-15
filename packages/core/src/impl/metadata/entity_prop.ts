@@ -1,6 +1,8 @@
 import { Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
+import { ModelImpl } from "./model_impl";
+import { dedent } from "@/error/util";
 
 export class EntityProp {
 
@@ -14,44 +16,46 @@ export class EntityProp {
 
     readonly targetEntity: Entity | undefined;
 
-    private _unresolvedData: PropData | undefined;
+    private _orders:  ReadonlyArray<{
+        readonly prop: EntityProp;
+        readonly desc: boolean;
+    }> | undefined = undefined;
 
-    readonly orders:  ReadonlyArray<{
-        readonly path: string;
-        readonly desc: string;
-    }> | undefined;
+    private _oppositeProp: EntityProp | undefined;
+
+    private _resolved = false;
 
     constructor(
         readonly declaringEntity: Entity,
         readonly name: string,
-        data: PropData,
+        private readonly _data: PropData,
         readonly parentProp: EntityProp | undefined
     ) {
-        this._unresolvedData = data;
         this.validateData();
-        this.nullable = data.nullity !== "NONNULL";
-        this.inputNonNull = data.nullity != "NULLABLE";   
-        this.scalarType = data.scalarType; 
-        if (data.props !== undefined) {
-            this.props = this.createProps(data.props);
+        this.nullable = _data.nullity !== "NONNULL";
+        this.inputNonNull = _data.nullity != "NULLABLE";   
+        this.scalarType = _data.scalarType; 
+        if (_data.props !== undefined) {
+            this.props = this.createProps(_data.props);
         } else {
             this.props = undefined;
         }
-        if (data.targetModel !== undefined) {
-            if (typeof data.targetModel === "function") {
-                this.targetEntity = data.targetModel() as Entity;
-            } else {
-                this.targetEntity = data.targetModel as Entity;
+        if (_data.targetModel !== undefined) {
+            const targetModel: ModelImpl<any, any, any, any, any> =
+                typeof _data.targetModel === "function"
+                    ? _data.targetModel() as ModelImpl<any, any, any, any, any>
+                    : _data.targetModel as ModelImpl<any, any, any, any, any>;
+            if (targetModel === undefined) {
+                this.raise `The associatied model must be specified`
             }
-            this.orders = undefined;
+            this.targetEntity = targetModel.toEntity();
         } else {
             this.targetEntity = undefined;
-            this.orders = undefined;
         }
     }
 
     private validateData() {
-        if (this._unresolvedData!!.associationType === undefined) {
+        if (this._data!!.associationType === undefined) {
             this.validateSimpleData();
         } else {
             this.validateAssociationData();
@@ -59,7 +63,7 @@ export class EntityProp {
     }
 
     private validateSimpleData() {
-        const data = this._unresolvedData!!;
+        const data = this._data;
         if (data.joinColumns != undefined) {
             this.raise `The "joinColumns" cannot be specified for non-association property.`;
         }
@@ -85,7 +89,7 @@ export class EntityProp {
     }
 
     private validateAssociationData() {
-        const data = this._unresolvedData!!;
+        const data = this._data!!;
         if (data.associationType !== "ONE_TO_ONE" &&
             data.associationType !== "ONE_TO_MANY" &&
             data.associationType !== "MANY_TO_ONE" &&
@@ -122,6 +126,79 @@ export class EntityProp {
         ) {
             this.raise `"orders" can only be specified for 
             one-to-many or many-to-one property.`;
+        }
+    }
+
+    resolve() {
+        if (this._resolved) {
+            return;
+        }
+        this._initOrders();
+        this._initMappedBy();
+        this._resolveTarget();
+    }
+
+    private _initOrders() {
+        if (this._data.orders === undefined) {
+            this._orders = [];
+        } else {
+            const orders = new Array<{
+                prop: EntityProp,
+                desc: boolean
+            }>(this._data.orders.length);
+            const paths = new Set<string>();
+            let index = 0;
+            for (const ord of this._data.orders) {
+                if (paths.has(ord.path)) {
+                    this.raise `Duplicated order paths "${ord.path}"`
+                }
+                const prop = this.targetEntity!!.expanedPropMap.get(ord.path);
+                if (prop === undefined) {
+                    this.raise `Illegal order path "${ord.path}" 
+                    which deos not exists in target model ${this.targetEntity?.name}`
+                }
+                orders[index++] = { prop: prop!!, desc: ord.mode === "DESC" };
+            }
+            this._orders = orders;
+        }
+    }
+
+    private _initMappedBy() {
+        if (this._data.mappedBy === undefined) {
+            return;
+        }
+        const prop = this.targetEntity?.expanedPropMap.get(this._data.mappedBy);
+        if (prop === undefined) {
+            this.raise `Illegal mappedBy "${this._data.mappedBy}" 
+            which deos not exists in target model ${this.targetEntity?.name}`
+        }
+        if (prop?.targetEntity !== this.declaringEntity) {
+            this.raise `Illegal mappedBy property 
+            "${prop?.declaringEntity.name}.${prop?.name}", 
+            its target model is not this model`
+        }
+        // TODO 
+        this._oppositeProp = prop!!;
+        prop!!._oppositeProp = this;
+    }
+
+    private _resolveTarget() {
+        this.targetEntity?.resolve(2);
+    }
+
+    collectDeeperProps(map: Map<string, EntityProp>) {
+        this._collectDeeperProps(undefined, map);
+    }
+
+    private _collectDeeperProps(prefix: string | undefined, map: Map<string, EntityProp>) {
+        if (prefix != undefined) {
+            map.set(`${prefix}.${this.name}`, this);
+        }
+        for (const prop of this.props!!.values()) {
+            prop._collectDeeperProps(
+                prefix === undefined ? prop.name : `${prefix}.${prop.name}`,
+                map
+            );
         }
     }
 

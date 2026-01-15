@@ -1,6 +1,6 @@
-import { createEntity } from "@/impl/metadata/entity";
 import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
+import { ModelImpl } from "@/impl/metadata/model_impl";
 
 export const model: ModelCreator = modelImpl();
 
@@ -16,8 +16,7 @@ function modelImpl(): ModelCreator {
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
-        return createEntity(name, idKey, ctor, undefined) as 
-            Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never>;
+        return new ModelImpl(name, idKey, ctor);
     }
 
     function ext<
@@ -38,15 +37,18 @@ function modelImpl(): ModelCreator {
             TCtor, 
             MakeAllModelMembers<TCtor, TSuperModel>,
             ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
-        > =>
-            createEntity(name, undefined, ctor, superModel) as 
-                Model<
-                    TName, 
-                    SuperIdKey<TSuperModel>, 
-                    TCtor, 
-                    MakeAllModelMembers<TCtor, TSuperModel>,
-                    ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
-                >;
+        > => new ModelImpl<
+            TName, 
+            SuperIdKey<TSuperModel>, 
+            TCtor, 
+            MakeAllModelMembers<TCtor, TSuperModel>,
+            ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+        >(
+            name, 
+            undefined, 
+            ctor, 
+            superModel
+        );
     }
     create.extends = ext;
     return create as any as ModelCreator;
@@ -104,12 +106,9 @@ export interface Model<
     TAllMemembers extends object,
     TSuperNames extends string | never
 > {
-
     __type(): {
         model: [TName, TIdKey, TCtor, TAllMemembers, TSuperNames] | undefined 
     };
-
-    readonly name: string;
 }
 
 export type AnyModel = Model<any, any, any, any, any>;

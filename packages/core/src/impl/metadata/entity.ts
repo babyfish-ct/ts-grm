@@ -1,15 +1,9 @@
 import { ModelError, PropError } from "@/error/metadata_error";
 import { AnyModel, Ctor } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
-
-export function createEntity(
-    name: string,
-    idKey: string | undefined,
-    ctor: Ctor,
-    superModel: AnyModel | undefined
-): Entity {
-    return new Entity(name, idKey, ctor, superModel as Entity | undefined);
-}
+import { ModelImpl } from "@/impl/metadata/model_impl";
+import { dedent } from "@/error/util";
+import { error } from "../util";
 
 export class Entity implements AnyModel {
 
@@ -19,63 +13,112 @@ export class Entity implements AnyModel {
         return { model: undefined };
     }
 
-    readonly idProp: EntityProp;
+    readonly superEntity: Entity | undefined;
 
-    readonly declaredPropMap: ReadonlyMap<string, EntityProp>;
+    private _phase = 0;
 
-    readonly allPropMap: ReadonlyMap<string, EntityProp>;
+    private _idProp: EntityProp | undefined = undefined;
 
-    constructor(readonly name: string, idKey: string | undefined, ctor: Ctor, readonly superEntity: Entity | undefined) {
-        this.registerEntity();
-        this.declaredPropMap = this.createDeclaredProps(ctor);
-        this.idProp = this.findIdProp(idKey);
-        this.allPropMap = this.createAllProps();
+    private _declaredPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
+    private _allPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
+    private _expanedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
+    static of(model: AnyModel): Entity {
+        return (model as ModelImpl<any, any, any, any, any>).toEntity()
     }
 
-    private registerEntity() {
-        if (ALL_MODEL_MAP.has(this.name)) {
+    constructor(
+        readonly name: string, 
+        private _idKey: string | undefined, 
+        private _ctor: Ctor, 
+        superModel?: AnyModel
+    ) {
+        if (!isValidModelName(name)) {
             throw new ModelError(
-                this.name,
-                `Another model with the same name already exists.`
-            );
-        }
-        if (!isValidModelName(this.name)) {
-            throw new ModelError(
-                this.name, 
-                dedent `Must follow PascalCase naming convention: 
-                "${PASCAL_CASE_REGEX.source}".`
+                name,
+                dedent`Must fllow PascalCase naming convention:
+                "${CAMEL_CASE_REGEX.source}"`
             )
         }
-        ALL_MODEL_MAP.set(this.name, this);
+        this.superEntity = superModel !== undefined
+            ? Entity.of(superModel)
+            : undefined;
     }
 
-    private findIdProp(idKey: string | undefined): EntityProp {
-        if (this.superEntity !== undefined) {
-            return this.superEntity.idProp;
-        }
-        const idProp = this.declaredPropMap.get(idKey ?? "");
-        if (idProp === undefined) {
-            throw new ModelError(
-                this.name,
-                dedent`Specify the name of the id attribute as "${idKey}", 
-                but there is no such attribute.`
-            );
-        }
-        return idProp;
+    get idProp(): EntityProp {
+        this.resolve(1);
+        return this._idProp!!;
     }
 
-    private createDeclaredProps(ctor: Ctor): ReadonlyMap<string, EntityProp> {
+    get declaredPropMap(): ReadonlyMap<string, EntityProp> {
+        this.resolve(1)
+        return this._declaredPropMap ?? 
+            error(`The declaredPropMap of ${this.name} is not initialized`);
+    }
+
+    get allPropMap(): ReadonlyMap<string, EntityProp> {
+        this.resolve(2);
+        return this._allPropMap ?? 
+            error(`The allPropMap of ${this.name} is not initialized`);
+    }
+
+    get expanedPropMap(): ReadonlyMap<string, EntityProp> {
+        this.resolve(1);
+        return this._expanedPropMap?? 
+            error(`The expandedPropMap of ${this.name} is not initialized`);
+    }
+
+    resolve(phase: number): this {
+        const max = Math.min(Math.max(0, phase), 2);
+        for (let i = this._phase + 1; i <= max; i++) {
+            this._resolve(i);
+        }
+        return this;
+    }
+
+    private _resolve(phase: number) {
+        this.superEntity?.resolve(phase);
+        if (this._phase >= phase) {
+            return;
+        }
+
+        const oldPhase = this._phase;
+        this._phase = phase;
+        try {
+            switch (phase) {
+                case 1:
+                    this._declaredPropMap = this._createDeclaredProps();
+                    this._idProp = this._findIdProp();
+                    this._allPropMap = this._createAllProps();
+                    this._expanedPropMap = this._expandProps();
+                    break;
+                case 2:
+                    for (const prop of this.declaredPropMap.values()) {
+                        prop.resolve()
+                    }
+                    break;
+            }
+        } catch (err) {
+            this._phase = oldPhase;
+            throw err;
+        }
+    }
+
+    private _createDeclaredProps(): ReadonlyMap<string, EntityProp> {
         const declaredPropMap = new Map<string, EntityProp>();
-        for (const propName in ctor.prototype) {
-            if (!isValidPropName(this.name)) {
+        const instance = new this._ctor();
+        for (const propName in instance) {
+            if (!isValidPropName(propName)) {
                 throw new PropError(
                     this.name,
                     propName,
-                    dedent`Must fllow CamelCase naming convention:
+                    dedent `Must fllow CamelCase naming convention:
                     "${CAMEL_CASE_REGEX.source}"`
                 );
             }
-            if (!declaredPropMap.has(propName)) {
+            if (declaredPropMap.has(propName)) {
                 throw new PropError(
                     this.name,
                     propName,
@@ -84,13 +127,28 @@ export class Entity implements AnyModel {
             }
             declaredPropMap.set(
                 propName, 
-                new EntityProp(this, propName, ctor.prototype[propName].__data, undefined)
+                new EntityProp(this, propName, instance[propName].__data, undefined)
             );
         }
         return declaredPropMap;
     }
 
-    private createAllProps(): ReadonlyMap<string, EntityProp> {
+    private _findIdProp(): EntityProp {
+        if (this.superEntity !== undefined) {
+            return this.superEntity.idProp;
+        }
+        const idProp = this.declaredPropMap.get(this._idKey ?? "");
+        if (idProp === undefined) {
+            throw new ModelError(
+                this.name,
+                dedent`Specify the name of the id attribute as "${this._idKey}", 
+                but there is no such attribute.`
+            );
+        }
+        return idProp;
+    }
+
+    private _createAllProps(): ReadonlyMap<string, EntityProp> {
         if (this.superEntity === undefined) {
             return this.declaredPropMap;
         }
@@ -110,9 +168,18 @@ export class Entity implements AnyModel {
         }
         return allPropMap;
     }
-}
 
-const ALL_MODEL_MAP = new Map<string, Entity>();
+    private _expandProps(): ReadonlyMap<string, EntityProp> {
+        let expendedPropMap: Map<string, EntityProp> | undefined = undefined;
+        for (const prop of this.allPropMap.values()) {
+            if (prop.props !== undefined) {
+                expendedPropMap = new Map<string, EntityProp>(this.allPropMap);
+            }
+            prop.collectDeeperProps(expendedPropMap!!);
+        }
+        return expendedPropMap !== undefined ? expendedPropMap : this.allPropMap;
+    }
+}
 
 const PASCAL_CASE_REGEX = /^[A-Z][A-Za-z\d]*$/;
 function isValidModelName(name: string): boolean {

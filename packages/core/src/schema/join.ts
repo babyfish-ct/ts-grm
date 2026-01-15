@@ -22,24 +22,7 @@ export type JoinColumn<
         }
         : string | { columnName: string, referencedSubPath?: "" };
 
-export type JoinTableToId<TModel extends AnyModel> =
-    {
-        name?: string,
-        joinThisColumns?: WeakTypeJoinColumns,
-        joinTargetColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
-    } | {
-        name?: string,
-        joinThis?: {
-            columns?: WeakTypeJoinColumns,
-            cascade?: CascaseType
-        }
-        joinTarget?: {
-            columns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>,
-            cascade?: CascaseType
-        }
-    };
-
-export type JoinTableToKey<
+export type JoinTable<
     TModel extends AnyModel, 
     TTargetReferencedProp extends keyof AllModelMembers<TModel>
 > =

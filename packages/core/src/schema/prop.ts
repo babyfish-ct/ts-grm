@@ -1,6 +1,6 @@
-import { JoinColumn, ModelOrder } from "@/schema/order";
+import { ModelOrder } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
-import { CascaseType, JoinColumns, JoinTableToId, JoinTableToKey } from "./join";
+import { CascaseType, JoinColumn, JoinColumns, JoinTable } from "./join";
 
 export const prop = {
 
@@ -286,8 +286,9 @@ class UnconfiguredOneToOneProp<
 
     joinColumns(
         options: {
-            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
-            cascade?: CascaseType
+            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>;
+            referencedProp?: keyof AllModelMembers<TModel>; 
+            cascade?: CascaseType;
         }
     ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
 
@@ -296,24 +297,23 @@ class UnconfiguredOneToOneProp<
     ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
 
     joinColumns(
-        data: any,
-        ...restData: any[]
+        data: any
     ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>> {
-        throw new Error();
+        return new OneToOneProp({
+            ...this.__data, 
+            joinColumns: foreignKeyDataOf(data, this.__data.targetModel)
+        });
     }
 
-    joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
-        options: JoinTableToKey<TModel, TTargetReferencedProp>
-    ): OneToOneProp<TModel, TNullity, "OWNING", undefined>;
-
-    joinTable(
-        options: JoinTableToId<TModel>
-    ): OneToOneProp<TModel, TNullity, "OWNING", undefined>;
-
-    joinTable(
-        data: any
+    joinTable<
+        TTargetReferencedProp extends keyof AllModelMembers<TModel> = ModelIdKey<TModel>
+    >(
+        options: JoinTable<TModel, TTargetReferencedProp>
     ): OneToOneProp<TModel, TNullity, "OWNING", undefined> {
-        throw new Error();
+        return new OneToOneProp({
+            ...this.__data,
+            joinTable: joinTableDataOf(options, this.targetModel)
+        });
     }
 }
 
@@ -375,8 +375,9 @@ class UnconfiguredManyToOneProp<
 
     joinColumns(
         options: {
-            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
-            cascade?: CascaseType
+            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>;
+            referencedProp?: keyof AllModelMembers<TModel>;
+            cascade?: CascaseType;
         }
     ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
 
@@ -385,24 +386,21 @@ class UnconfiguredManyToOneProp<
     ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
 
     joinColumns(
-        data: any,
-        ...restData: any[]
+        options: any
     ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>> {
-        throw new Error();
+        return new ManyToOneProp({
+            ...this.__data,
+            joinColumns: foreignKeyDataOf(options, this.__data.targetModel)
+        });
     }
 
     joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
-        options: JoinTableToKey<TModel, TTargetReferencedProp>
-    ): ManyToOneProp<TModel, TNullity, "OWNING", undefined>;
-
-    joinTable(
-        options: JoinTableToId<TModel>
-    ): ManyToOneProp<TModel, TNullity, "OWNING", undefined>;
-
-    joinTable(
-        data: any
+        options: JoinTable<TModel, TTargetReferencedProp>
     ): ManyToOneProp<TModel, TNullity, "OWNING", undefined> {
-        throw new Error();
+        return new ManyToOneProp({
+            ...this.__data,
+            joinColumns: foreignKeyDataOf(options, this.__data.targetModel)
+        });
     }
 }
 
@@ -512,17 +510,12 @@ class UnconfiguredManyToManyProp<
     }
 
     joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
-        options: JoinTableToKey<TModel, TTargetReferencedProp>
-    ): ManyToManyProp<TModel, TNullity, "OWNING">;
-
-    joinTable(
-        options: JoinTableToId<TModel>
-    ): ManyToManyProp<TModel, TNullity, "OWNING">;
-
-    joinTable(
-        data: any
+        options: JoinTable<TModel, TTargetReferencedProp>
     ): ManyToManyProp<TModel, TNullity, "OWNING"> {
-        throw new Error();
+        return new ManyToManyProp({
+            ...this.__data,
+            joinTable: joinTableDataOf(options, this.__data.targetModel)
+        });
     }
 
     orderBy(
@@ -562,18 +555,31 @@ export type PropData = {
     readonly targetModel: ModelRef<AnyModel> | undefined;
     readonly associationType: AssociationType | undefined;
     readonly columnName: string | undefined;
-    readonly joinColumns: ReadonlyArray<JoinColumn> | undefined;
-    readonly joinTable: {
-        readonly name?: string | undefined;
-        readonly toThisColumns: ReadonlyArray<JoinColumn> | undefined;
-        readonly toTargetColumns: ReadonlyArray<JoinColumn> | undefined;
-    } | undefined;
+    readonly joinColumns: ForeignKeyData | undefined;
+    readonly joinTable: JoinTableData | undefined;
     readonly mappedBy: string | undefined,
     readonly orders: ReadonlyArray<{
         readonly path: string;
-        readonly desc: string;
+        readonly mode: "ASC" | "DESC";
     }> | undefined;
 };
+
+export type JoinTableData = {
+    readonly name: string | undefined;
+    readonly joinThis: ForeignKeyData | undefined;
+    readonly joinTarget: ForeignKeyData | undefined;
+};
+
+export type ForeignKeyData = {
+    readonly referencedProp: string | undefined;
+    readonly columns: ReadonlyArray<JoinColumnData>;
+    readonly cascade: CascaseType;
+};
+
+export type JoinColumnData = {
+    readonly columnName: string;
+    readonly referencedSubPath: string | undefined;
+}
 
 export type ScalarType = 
     "STR" 
@@ -588,7 +594,7 @@ const EMPTY_PROP_DEFINTION_DATA: PropData = {
     targetModel: undefined,
     associationType: undefined,
     columnName: undefined,
-    joinColumns: undefined,
+    join: undefined,
     joinTable: undefined,
     mappedBy: undefined,
     orders: undefined
@@ -611,3 +617,50 @@ export type NullityOf<TProp> =
 
 type ModelRef<TModel extends AnyModel> =
     TModel | (() => TModel);
+
+function joinTableDataOf(
+    joinTable: any,
+    targetModel: any
+): JoinTableData {
+    return {
+        name: joinTable.name,
+        joinThis: foreignKeyDataOf(
+            joinTable.joinThis ?? joinTable.joinThisColumns, undefined
+        ),
+        joinTarget: foreignKeyDataOf(
+            joinTable.joinTarget ?? joinTable.joinTargetColumns, targetModel
+        )
+    };
+}
+
+function foreignKeyDataOf(data: any, targetModel: any): ForeignKeyData | undefined {
+    if (data === undefined) {
+        return undefined;
+    }
+    if (Array.isArray(data)) {
+        const arr = data as ReadonlyArray<JoinColumn<any>>;
+        const columns = arr.map(joinColumnDataOf);
+        return {
+            referencedProp: targetModel?._idKey,
+            columns,
+            cascade: "NONE"
+        };
+    }
+    return {
+        referencedProp: data.referencedProp ?? targetModel._idKey,
+        columns: data.columns?.map(joinColumnDataOf(data)),
+        cascade: data.cascade
+    };
+}
+
+function joinColumnDataOf(data: any): JoinColumnData {
+    if (typeof data === "string") {
+        return { columnName: data as string, referencedSubPath: "" };
+    }
+    return {
+        columnName: data.columnName,
+        referencedSubPath: data.referencedSubPath !== "" ?
+            data.referencedSubPath :
+            undefined
+    };
+}

@@ -15,7 +15,7 @@
     "lint": "yarn workspaces foreach -A run lint",
     "clean": "yarn workspaces foreach -A run clean",
     "test:watch": "yarn workspaces foreach -p -i run test:watch",
-    "test:ui": "yarn workspaces foreach -p -i run test:ui",
+    "test:ui": "yarn workspaces foreach -A -p -i run test:ui",
     "test:coverage": "yarn workspaces foreach -A run test:coverage",
     "test:typecheck": "yarn workspaces foreach -A run test:typecheck"
   },
