@@ -3,6 +3,8 @@ import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { ModelImpl } from "./model_impl";
 import { dedent } from "@/error/util";
+import { EntityPropOrder } from "./entity_prop_order";
+import { makeErr } from "../util";
 
 export class EntityProp {
 
@@ -14,16 +16,13 @@ export class EntityProp {
 
     readonly props: ReadonlyMap<string, EntityProp> | undefined;
 
-    readonly targetEntity: Entity | undefined;
+    private _targetEntity: Entity | undefined;
 
-    private _orders:  ReadonlyArray<{
-        readonly prop: EntityProp;
-        readonly desc: boolean;
-    }> | undefined = undefined;
+    private _orders:  ReadonlyArray<EntityPropOrder> | undefined = undefined;
 
     private _oppositeProp: EntityProp | undefined;
 
-    private _resolved = false;
+    private _phase = 0;
 
     constructor(
         readonly declaringEntity: Entity,
@@ -48,10 +47,26 @@ export class EntityProp {
             if (targetModel === undefined) {
                 this.raise `The associatied model must be specified`
             }
-            this.targetEntity = targetModel.toEntity();
+            this._targetEntity = targetModel.toEntity();
         } else {
-            this.targetEntity = undefined;
+            this._targetEntity = undefined;
         }
+    }
+
+    get targetEntity(): Entity | undefined {
+        return this._targetEntity?.resolve(2);
+    }
+
+    get oppositeProp(): EntityProp | undefined {
+        this.declaringEntity.resolve(2);
+        return this._oppositeProp;
+    }
+
+    get orders(): ReadonlyArray<EntityPropOrder> {
+        this.declaringEntity.resolve(2);
+        return this._orders ?? 
+            makeErr(`The orders of ${this.declaringEntity.name}.${this.name} 
+                is not initialized`);
     }
 
     private validateData() {
@@ -129,35 +144,44 @@ export class EntityProp {
         }
     }
 
-    resolve() {
-        if (this._resolved) {
+    resolve(phase: number) {
+        const max = Math.max(Math.min(phase, 2), 0);
+        for (let i = this._phase + 1; i <= max; i++) {
+            this._resolve(i);
+        }
+    }
+
+    private _resolve(phase: number) { 
+        if (this._phase >= phase) {
             return;
         }
-        this._initOrders();
-        this._initMappedBy();
-        this._resolveTarget();
+        if (phase == 2) {
+            this._initOrders();
+            this._initMappedBy();
+        }
+        this._resolveTarget(phase);
     }
 
     private _initOrders() {
         if (this._data.orders === undefined) {
             this._orders = [];
         } else {
-            const orders = new Array<{
-                prop: EntityProp,
-                desc: boolean
-            }>(this._data.orders.length);
+            const orders = new Array<EntityPropOrder>(this._data.orders.length);
             const paths = new Set<string>();
             let index = 0;
             for (const ord of this._data.orders) {
+                const path = typeof ord === "string" ? ord as string : ord.path;
+                const desc = typeof ord === "string" ? false : ord.desc;
+                const nulls = typeof ord === "string" ? "UNSPECIFIED" : ord.nulls;
                 if (paths.has(ord.path)) {
-                    this.raise `Duplicated order paths "${ord.path}"`
+                    this.raise `Duplicated order paths "${path}"`
                 }
-                const prop = this.targetEntity!!.expanedPropMap.get(ord.path);
+                const prop = this._targetEntity!!.expanedPropMap.get(path);
                 if (prop === undefined) {
-                    this.raise `Illegal order path "${ord.path}" 
-                    which deos not exists in target model ${this.targetEntity?.name}`
+                    throw this.raise `Illegal order path "${path}" 
+                    which deos not exists in target model ${this._targetEntity?.name}`
                 }
-                orders[index++] = { prop: prop!!, desc: ord.mode === "DESC" };
+                orders[index++] = { prop, desc, nulls };
             }
             this._orders = orders;
         }
@@ -167,12 +191,12 @@ export class EntityProp {
         if (this._data.mappedBy === undefined) {
             return;
         }
-        const prop = this.targetEntity?.expanedPropMap.get(this._data.mappedBy);
+        const prop = this._targetEntity?.expanedPropMap.get(this._data.mappedBy);
         if (prop === undefined) {
-            this.raise `Illegal mappedBy "${this._data.mappedBy}" 
-            which deos not exists in target model ${this.targetEntity?.name}`
+            throw this.raise `Illegal mappedBy "${this._data.mappedBy}" 
+            which deos not exists in target model ${this._targetEntity?.name}`
         }
-        if (prop?.targetEntity !== this.declaringEntity) {
+        if (prop._targetEntity !== this.declaringEntity) {
             this.raise `Illegal mappedBy property 
             "${prop?.declaringEntity.name}.${prop?.name}", 
             its target model is not this model`
@@ -182,8 +206,8 @@ export class EntityProp {
         prop!!._oppositeProp = this;
     }
 
-    private _resolveTarget() {
-        this.targetEntity?.resolve(2);
+    private _resolveTarget(phase: number) {
+        this._targetEntity?.resolve(phase);
     }
 
     collectDeeperProps(map: Map<string, EntityProp>) {
@@ -235,5 +259,13 @@ export class EntityProp {
             resultMap.set(key, new EntityProp(this.declaringEntity, key, prop.__data, this));
         }
         return resultMap;
+    }
+
+    toJSON(): any {
+        return {
+            prop: true,
+            declaringEntity: this.declaringEntity,
+            name: this.name
+        };
     }
 }

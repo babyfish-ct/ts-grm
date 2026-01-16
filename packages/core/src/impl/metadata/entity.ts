@@ -3,15 +3,9 @@ import { AnyModel, Ctor } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { ModelImpl } from "@/impl/metadata/model_impl";
 import { dedent } from "@/error/util";
-import { error } from "../util";
+import { makeErr } from "../util";
 
-export class Entity implements AnyModel {
-
-    __type(): {
-        model: [any, any, any, any, any] | undefined 
-    } {
-        return { model: undefined };
-    }
+export class Entity {
 
     readonly superEntity: Entity | undefined;
 
@@ -55,19 +49,24 @@ export class Entity implements AnyModel {
     get declaredPropMap(): ReadonlyMap<string, EntityProp> {
         this.resolve(1)
         return this._declaredPropMap ?? 
-            error(`The declaredPropMap of ${this.name} is not initialized`);
+            makeErr(`The declaredPropMap of ${this.name} is not initialized`);
     }
 
     get allPropMap(): ReadonlyMap<string, EntityProp> {
         this.resolve(1);
         return this._allPropMap ?? 
-            error(`The allPropMap of ${this.name} is not initialized`);
+            makeErr(`The allPropMap of ${this.name} is not initialized`);
     }
 
     get expanedPropMap(): ReadonlyMap<string, EntityProp> {
         this.resolve(1);
-        return this._expanedPropMap?? 
-            error(`The expandedPropMap of ${this.name} is not initialized`);
+        return this._expanedPropMap ?? 
+            makeErr(`The expandedPropMap of ${this.name} is not initialized`);
+    }
+
+    prop(name: string): EntityProp {
+        return this.expanedPropMap.get(name) ?? 
+            makeErr(`There is no property "${name}" in the model "${this.name}"`);
     }
 
     resolve(phase: number): this {
@@ -96,7 +95,10 @@ export class Entity implements AnyModel {
                     break;
                 case 2:
                     for (const prop of this.declaredPropMap.values()) {
-                        prop.resolve()
+                        prop.resolve(1);
+                    }
+                    for (const prop of this.declaredPropMap.values()) {
+                        prop.resolve(2);
                     }
                     break;
             }
@@ -177,6 +179,13 @@ export class Entity implements AnyModel {
             prop.collectDeeperProps(expendedPropMap!!);
         }
         return expendedPropMap !== undefined ? expendedPropMap : this.allPropMap;
+    }
+
+    toJSON(): any {
+        return {
+            entity: true,
+            name: this.name
+        }
     }
 }
 

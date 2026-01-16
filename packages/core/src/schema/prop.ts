@@ -1,4 +1,4 @@
-import { ModelOrder } from "@/schema/order";
+import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
 import { CascaseType, JoinColumn, JoinColumns, JoinTable } from "./join";
 
@@ -432,8 +432,24 @@ implements CollectionProp<TModel> {
     orderBy(
         ...orders: ModelOrder<TModel>[]
     ): OneToManyProp<TModel, TNullity, TDirection> {
+        const arr: ReadonlyArray<{
+            path: string,
+            desc: boolean,
+            nulls: OrderNullsType
+        }> = orders.map(o => 
+            typeof o === "object"
+                ? {
+                    path: o.path as string,
+                    desc: o.desc ?? false,
+                    nulls: o.nulls ?? "UNSPECIFIED"
+                } : {
+                    path: o as string,
+                    desc: false,
+                    nulls: "UNSPECIFIED"
+                }
+        );
         return new OneToManyProp(
-            {...this.__data, orders: [...orders] as ReadonlyArray<any> }
+            {...this.__data, orders: arr }
         );
     }
 }
@@ -560,7 +576,8 @@ export type PropData = {
     readonly mappedBy: string | undefined,
     readonly orders: ReadonlyArray<{
         readonly path: string;
-        readonly mode: "ASC" | "DESC";
+        readonly desc: boolean;
+        readonly nulls: OrderNullsType;
     }> | undefined;
 };
 
@@ -594,7 +611,7 @@ const EMPTY_PROP_DEFINTION_DATA: PropData = {
     targetModel: undefined,
     associationType: undefined,
     columnName: undefined,
-    join: undefined,
+    joinColumns: undefined,
     joinTable: undefined,
     mappedBy: undefined,
     orders: undefined

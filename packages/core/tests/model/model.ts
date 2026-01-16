@@ -22,7 +22,7 @@ export const BOOK = model("Book", "id", class {
         name: "book_author_mapping",
         joinThisColumns: ["book_id"],
         joinTargetColumns: ["author_id"]
-    })
+    }).orderBy("name.firstName", "name.lastName")
 });
 
 export const PAPER_BOOK = model.extends(BOOK)(
