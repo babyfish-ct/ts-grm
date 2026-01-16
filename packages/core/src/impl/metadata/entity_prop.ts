@@ -47,7 +47,7 @@ export class EntityProp {
             if (targetModel === undefined) {
                 this.raise `The associatied model must be specified`
             }
-            this._targetEntity = targetModel.toEntity();
+            this._targetEntity = targetModel.toUnresolvedEntity();
         } else {
             this._targetEntity = undefined;
         }

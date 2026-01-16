@@ -31,6 +31,10 @@ export class ModelImpl<
     ) {}
 
     toEntity(): Entity {
+        return this.toUnresolvedEntity().resolve(2);
+    }
+
+    toUnresolvedEntity(): Entity {
         let entity = this._entity;
         if (entity === undefined) {
             this._entity = entity = new Entity(
