@@ -53,12 +53,12 @@ test("TestEntity", () => {
     expect(authorDotBooks.oppositeProp).toEqual(bookDotAuthors);
     expect(bookDotAuthors.orders).toEqual([
         {
-            prop: authorModel.expanedPropMap.get("name.first"),
+            prop: authorModel.expanedPropMap.get("name.firstName"),
             desc: false,
             nulls: "UNSPECIFIED"
         },
         {
-            prop: authorModel.expanedPropMap.get("name.last"),
+            prop: authorModel.expanedPropMap.get("name.lastName"),
             desc: false,
             nulls: "UNSPECIFIED"
         }

@@ -5,235 +5,238 @@ import { TupleSubQuery } from "@/dsl/sub-query";
 import { tuple } from "@/dsl/tuple";
 import { dto } from "@/schema/dto";
 import { AUTHOR, BOOK, TREE_NODE } from "tests/model/model";
-import { expectTypeOf, test } from "vitest";
+import { expectTypeOf, describe, it } from "vitest";
 
-function sqlClient(): SqlClient {
-    throw new Error();
-}
+describe("QueryTest", () => {
+    
+    function sqlClient(): SqlClient {
+        throw new Error();
+    }
 
-const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $
-    .id
-    .name
-);
+    const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $
+        .id
+        .name
+    );
 
-const SIMPLE_AUTHOR_VIEW = dto.view(AUTHOR, $ => $
-    .id
-    .name($ => $
-        .firstName.$as("fn")
-        .lastName.$as("ln")
+    const SIMPLE_AUTHOR_VIEW = dto.view(AUTHOR, $ => $
+        .id
+        .name($ => $
+            .firstName.$as("fn")
+            .lastName.$as("ln")
+        )
     )
-)
 
-const SIMPLE_TREE_NODE_VIEW = dto.view(TREE_NODE, $ => $
-    .id
-    .name
-    .flat("parentNode", $ => $.id)
-);
+    const SIMPLE_TREE_NODE_VIEW = dto.view(TREE_NODE, $ => $
+        .id
+        .name
+        .flat("parentNode", $ => $.id)
+    );
 
-test("TestRootQueryByOne", async () => {
+    it("TestRootQueryByOne", async () => {
 
-    const rows = await sqlClient().createQuery(BOOK, (q, book) => {
-        q.where(book.storeId.eq("2"));
-        q.orderBy(book.price.desc());
-        return q.select(book.fetch(SIMPLE_BOOK_VIEW));
-    }).fetchList();
-    
-    expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
-        id: number;
-        name: string;
-    }>();
-});
-
-test("TestRootQueryByArray", async () => {
-    
-    const rows = await sqlClient().createQuery(BOOK, AUTHOR, (q, book, author) => {
-        q.where(book.name.eq(author.name().firstName));
-        q.orderBy(book.price.desc());
-        return q.select(
-            book.fetch(SIMPLE_BOOK_VIEW), 
-            author.fetch(SIMPLE_AUTHOR_VIEW)
-        );
-    }).fetchList();
-
-    expectTypeOf<typeof rows[0]>().toEqualTypeOf<[{
-        id: number;
-        name: string;
-    }, {
-        id: number;
-        name: {
-            fn: string;
-            ln: string;
-        };
-    }]>();
-});
-
-test("TestRootQueryByArray2", async () => {
-    
-    const rows = await sqlClient().createQuery(BOOK, (q, book) => {
-        q.orderBy(book.price.desc());
-        return q.select(
-            book.fetch(SIMPLE_BOOK_VIEW), 
-            book.authors("LEFT").$acceptRisk().fetch(SIMPLE_AUTHOR_VIEW)
-        );
-    }).fetchList();
-
-    expectTypeOf<typeof rows[0]>().toEqualTypeOf<[{
-        id: number;
-        name: string;
-    }, {
-        id: number;
-        name: {
-            fn: string;
-            ln: string;
-        };
-    } | null | undefined]>();
-});
-
-test("TestRootQueryByMap", async () => {
-    const rows = await sqlClient().createQuery(BOOK, (q, book) => {
-        q.where(book.name.ilikeIf(undefined));
-        return q.select({
-            book: book.fetch(SIMPLE_BOOK_VIEW),
-            globalRank: dsl.native.num("row_number() over(order by ...)"),
-            localRank: dsl.native.num("row_number() over(parition by ...)")
-        });
-    }).fetchList();
-
-    expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
-        readonly book: {
+        const rows = await sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(book.storeId.eq("2"));
+            q.orderBy(book.price.desc());
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        }).fetchList();
+        
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
             id: number;
             name: string;
-        };
-        readonly globalRank: number;
-        readonly localRank: number;
-    }>();
-});
-
-test("TestExprIn", () => {                
-    sqlClient().createQuery(BOOK, (q, book) => {
-        q.where(
-            dsl.or(
-                book.name.in("a", "b"),
-                book.name.in(["d", "e"]),
-                book.name.in("e", book.store().name),
-                book.name.inSubQuery(
-                    dsl.subQuery(BOOK, (q, book) => {
-                        q.groupBy(book.name);
-                        q.orderBy(dsl.count().desc())
-                        return q.select(book.name);
-                    }).limit(1)
-                )
-            )
-        )
-        return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        }>();
     });
-});
 
-test("TestTupleIn", () => {
-    sqlClient().createQuery(BOOK, (q, book) => {
-        q.where(
-            dsl.or(
-                tuple(book.name, book.edition).in(["a", 1], ["b", 2]),
-                tuple(book.name, book.edition).in([["c", 3], ["d", 4]]),
-                tuple(book.name, book.edition).in(
-                    ["e", 4],
-                    [book.store().name, book.store().version]
-                ),
-                tuple(book.name, book.edition).inSubQuery(
-                    dsl.subQuery(BOOK, (q, book) => {
-                        q.groupBy(book.name, book.edition);
-                        q.orderBy(dsl.count().desc());
-                        return q.select(
-                            book.name,
-                            book.edition
-                        );
-                    }).limit(1)
-                )
-            )
-        )
-        return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+    it("TestRootQueryByArray", async () => {
+        
+        const rows = await sqlClient().createQuery(BOOK, AUTHOR, (q, book, author) => {
+            q.where(book.name.eq(author.name().firstName));
+            q.orderBy(book.price.desc());
+            return q.select(
+                book.fetch(SIMPLE_BOOK_VIEW), 
+                author.fetch(SIMPLE_AUTHOR_VIEW)
+            );
+        }).fetchList();
+
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<[{
+            id: number;
+            name: string;
+        }, {
+            id: number;
+            name: {
+                fn: string;
+                ln: string;
+            };
+        }]>();
     });
-});
 
-test("TestExists", () => {
-    sqlClient().createQuery(BOOK, (q, book) => {
-        q.where(
-            dsl.notExists(
-                dsl.subQuery(BOOK, (q, book2) => {
-                    q.where(book.name.eq(book2.name));
-                    q.where(book.edition.lt(book2.edition))
-                })
-            )
-        );
-        return q.select(book.fetch(SIMPLE_BOOK_VIEW));
-    })
-});
+    it("TestRootQueryByArray2", async () => {
+        
+        const rows = await sqlClient().createQuery(BOOK, (q, book) => {
+            q.orderBy(book.price.desc());
+            return q.select(
+                book.fetch(SIMPLE_BOOK_VIEW), 
+                book.authors("LEFT").$acceptRisk().fetch(SIMPLE_AUTHOR_VIEW)
+            );
+        }).fetchList();
 
-test("TestUnionAll", () => {
-    const sq = dsl.unionAll(
-        dsl.subQuery(BOOK, (q, book) => {
-            q.where(book.storeId.eq("2"));
-            return q.select(book.name, book.edition);
-        }),
-        dsl.subQuery(BOOK, (q, book) => {
-            q.where(book.storeId.eq("4"));
-            return q.select(book.name, book.edition);
-        })
-    )
-    expectTypeOf<typeof sq>().toEqualTypeOf<
-        TupleSubQuery<[
-            Expression<string>, 
-            Expression<number>
-        ]>
-    >();
-});
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<[{
+            id: number;
+            name: string;
+        }, {
+            id: number;
+            name: {
+                fn: string;
+                ln: string;
+            };
+        } | null | undefined]>();
+    });
 
-test("TestDerivedTable", async () => {
-    const baseModel = dsl.derivedModel(
-        dsl.baseQuery(BOOK, (q, book) => {
+    it("TestRootQueryByMap", async () => {
+        const rows = await sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(book.name.ilikeIf(undefined));
             return q.select({
-                book,
-                localRank: dsl.native.num(
-                    "row_number() over(partition by...)"
+                book: book.fetch(SIMPLE_BOOK_VIEW),
+                globalRank: dsl.native.num("row_number() over(order by ...)"),
+                localRank: dsl.native.num("row_number() over(parition by ...)")
+            });
+        }).fetchList();
+
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
+            readonly book: {
+                id: number;
+                name: string;
+            };
+            readonly globalRank: number;
+            readonly localRank: number;
+        }>();
+    });
+
+    it("TestExprIn", () => {                
+        sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.or(
+                    book.name.in("a", "b"),
+                    book.name.in(["d", "e"]),
+                    book.name.in("e", book.store().name),
+                    book.name.inSubQuery(
+                        dsl.subQuery(BOOK, (q, book) => {
+                            q.groupBy(book.name);
+                            q.orderBy(dsl.count().desc())
+                            return q.select(book.name);
+                        }).limit(1)
+                    )
                 )
-            });
-        })
-    );
-    const rows = await sqlClient().createQuery(baseModel, (q, base) => {
-        q.where(base.localRank.le(3));
-        return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
-    }).fetchList();
-    expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
-        id: number;
-        name: string;
-    }>();
-});
+            )
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+    });
 
-test("TestCteTable", async() => {
-    const baseModel = dsl.cteModel(
-        dsl.baseQuery(TREE_NODE, (q, treeNode) => {
-            q.where(treeNode.parentNodeId.isNull())
-            return q.select({
-                treeNode,
-                depth: dsl.constant(0)
-            });
-        }).unionAllRecursively(TREE_NODE, (q, treeNode) => {
-            q.where(treeNode.parentNodeId.eq(q.prev.treeNode.id));
-            return q.select({
-                treeNode,
-                depth: q.prev.depth.plus(1)
+    it("TestTupleIn", () => {
+        sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.or(
+                    tuple(book.name, book.edition).in(["a", 1], ["b", 2]),
+                    tuple(book.name, book.edition).in([["c", 3], ["d", 4]]),
+                    tuple(book.name, book.edition).in(
+                        ["e", 4],
+                        [book.store().name, book.store().version]
+                    ),
+                    tuple(book.name, book.edition).inSubQuery(
+                        dsl.subQuery(BOOK, (q, book) => {
+                            q.groupBy(book.name, book.edition);
+                            q.orderBy(dsl.count().desc());
+                            return q.select(
+                                book.name,
+                                book.edition
+                            );
+                        }).limit(1)
+                    )
+                )
+            )
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+    });
+
+    it("TestExists", () => {
+        sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.notExists(
+                    dsl.subQuery(BOOK, (q, book2) => {
+                        q.where(book.name.eq(book2.name));
+                        q.where(book.edition.lt(book2.edition))
+                    })
+                )
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        })
+    });
+
+    it("TestUnionAll", () => {
+        const sq = dsl.unionAll(
+            dsl.subQuery(BOOK, (q, book) => {
+                q.where(book.storeId.eq("2"));
+                return q.select(book.name, book.edition);
+            }),
+            dsl.subQuery(BOOK, (q, book) => {
+                q.where(book.storeId.eq("4"));
+                return q.select(book.name, book.edition);
             })
-        })
-    );
-    const rows = await sqlClient().createQuery(baseModel, (q, base) => {
-        q.orderBy(base.treeNode.name, base.depth);
-        return q.select(
-            base.treeNode.fetch(SIMPLE_TREE_NODE_VIEW),
-            base.depth
         )
-    }).fetchList();
-    expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
-        { id: number; name: string; parentNodeId: number | null | undefined },
-        number
-    ]>();
+        expectTypeOf<typeof sq>().toEqualTypeOf<
+            TupleSubQuery<[
+                Expression<string>, 
+                Expression<number>
+            ]>
+        >();
+    });
+
+    it("TestDerivedTable", async () => {
+        const baseModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    localRank: dsl.native.num(
+                        "row_number() over(partition by...)"
+                    )
+                });
+            })
+        );
+        const rows = await sqlClient().createQuery(baseModel, (q, base) => {
+            q.where(base.localRank.le(3));
+            return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
+        }).fetchList();
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
+            id: number;
+            name: string;
+        }>();
+    });
+
+    it("TestCteTable", async() => {
+        const baseModel = dsl.cteModel(
+            dsl.baseQuery(TREE_NODE, (q, treeNode) => {
+                q.where(treeNode.parentNodeId.isNull())
+                return q.select({
+                    treeNode,
+                    depth: dsl.constant(0)
+                });
+            }).unionAllRecursively(TREE_NODE, (q, treeNode) => {
+                q.where(treeNode.parentNodeId.eq(q.prev.treeNode.id));
+                return q.select({
+                    treeNode,
+                    depth: q.prev.depth.plus(1)
+                })
+            })
+        );
+        const rows = await sqlClient().createQuery(baseModel, (q, base) => {
+            q.orderBy(base.treeNode.name, base.depth);
+            return q.select(
+                base.treeNode.fetch(SIMPLE_TREE_NODE_VIEW),
+                base.depth
+            )
+        }).fetchList();
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
+            { id: number; name: string; parentNodeId: number | null },
+            number
+        ]>();
+    });
 });

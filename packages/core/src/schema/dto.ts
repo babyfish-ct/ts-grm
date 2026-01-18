@@ -3,16 +3,62 @@ import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelS
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 
-export const dto = {
-    view<TModel extends AnyModel, X>(
+export const dto = { view: viewCreator() };
+
+function viewCreator(): ViewCreator {
+
+    const view = <TModel extends AnyModel, X>(
         model: TModel,
         fn: (
-            builder: ViewBuilder<TModel, AllModelMembers<TModel>, {}, {}, any, any>
-        ) => ViewBuilder<TModel, AllModelMembers<TModel>, X, any, any, any>
-    ): View<TModel, Prettify<X>> {
-        return new View();
+            builder: ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>
+        ) => ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", X, any, any, any>
+    ): View<TModel, Prettify<X>> => {
+        throw new Error("Not implemented");
     }
+
+    view.nullAsUndefined = <TModel extends AnyModel, X>(
+        model: TModel,
+        fn: (
+            builder: ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", {}, {}, any, any>
+        ) => ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", X, any, any, any>
+    ): View<TModel, Prettify<X>> => {
+        throw new Error("Not implemented");
+    }
+
+    return view as ViewCreator;
+}
+
+type ViewCreator = {
+    
+    <TModel extends AnyModel, X>(
+        model: TModel,
+        fn: (
+            builder: ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>
+        ) => ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", X, any, any, any>
+    ): View<TModel, Prettify<X>>;
+
+    nullAsUndefined: NullAsUndefinedViewCreator;
 };
+
+type NullAsUndefinedViewCreator = {
+
+    <TModel extends AnyModel, X>(
+        model: TModel,
+        fn: (
+            builder: ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", {}, {}, any, any>
+        ) => ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", X, any, any, any>
+    ): View<TModel, Prettify<X>>;
+}
+
+
+function view<TModel extends AnyModel, X, TViewNullType extends ViewNullType = "NULL">(
+    model: TModel,
+    fn: (
+        builder: ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>
+    ) => ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", X, any, any, any>
+): View<TModel, Prettify<X>> {
+    throw new Error("Not implemented");
+}
 
 export type ModelOf<T> =
     T extends View<infer R, any>
@@ -24,9 +70,12 @@ export type TypeOf<T> =
         ? R
         : never;
 
+export type ViewNullType = "NULL" | "UNDEFINED";
+
 type ViewBuilder<
     TModel extends AnyModel | never,
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap,
     TLastProp, 
@@ -37,7 +86,13 @@ type ViewBuilder<
             ? ViewBuilder<
                 TModel,
                 TMembers, 
-                TransformedType<TCurrent, XTypeOfView<K, R, Nullity>, TRecursiveKindMap>,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, R, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
                 TRecursiveKindMap,
                 TMembers[K],
                 K & string
@@ -45,12 +100,18 @@ type ViewBuilder<
         : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any>
             ? <X>(
                 fn: (
-                    builder: ViewBuilder<R, AllModelMembers<R>, {}, {}, any, any>
-                ) => ViewBuilder<R, AllModelMembers<R>, X, any, any, any>
+                    builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
             ) => ViewBuilder<
                 TModel,
                 TMembers,
-                TransformedType<TCurrent, XTypeOfView<K, R, Nullity>, TRecursiveKindMap>,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, R, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
                 TRecursiveKindMap,
                 TMembers[K],
                 K & string
@@ -58,34 +119,41 @@ type ViewBuilder<
         : TMembers[K] extends CollectionProp<infer R>
             ? <X>(
                 fn: (
-                    builder: ViewBuilder<R, AllModelMembers<R>, {}, {}, any, any>
-                ) => ViewBuilder<R, AllModelMembers<R>, X, any, any, any>
+                    builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
             ) => ViewBuilder<
                 TModel,
                 TMembers,
-                TransformedType<TCurrent, XTypeOfView<K, X[], "NONNULL">, TRecursiveKindMap>,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, X[], "NONNULL", TViewNullType>, 
+                    TRecursiveKindMap
+                >,
                 TRecursiveKindMap,
                 TMembers[K],
                 K & string
             >
         : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
-            ? EmbeddedMethods<TModel, TMembers, TCurrent, TRecursiveKindMap, K, R, Nullity>
+            ? EmbeddedMethods<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, K, R, Nullity>
         : never
 }
-& AllScalars<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& Fold<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& Flat<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& Recursive<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& Remove<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& ReferenceKeyMembers<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& As<TModel, TMembers, TCurrent, TRecursiveKindMap, TLastProp, TLastName>
-& InstanceOf<TModel, TMembers, TCurrent, TRecursiveKindMap>
-& ReferenceFetch<TModel, TMembers, TCurrent, TRecursiveKindMap, TLastProp, TLastName> 
-& CollectionOrderBy<TModel, TMembers, TCurrent, TRecursiveKindMap, TLastProp, TLastName>;
+& AllScalars<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& Fold<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& Flat<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& Recursive<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& Remove<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& ReferenceKeyMembers<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& As<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName>
+& InstanceOf<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+& ReferenceFetch<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName> 
+& CollectionOrderBy<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName>;
 
 type As<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap,
     TLastProp, 
@@ -99,7 +167,9 @@ type As<
             ) : ViewBuilder<
                 TModel,
                 TMembers, 
+                TViewNullType,
                 RecursivedType<
+                    TViewNullType,
                     {[K in keyof TCurrent as K extends TLastName ? TNewName : K]: TCurrent[K]}, 
                     TRecursiveKindMap
                 >,
@@ -112,6 +182,7 @@ type As<
 type ReferenceFetch<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap,
     TLastProp, 
@@ -124,6 +195,7 @@ type ReferenceFetch<
             ): ViewBuilder<
                 TModel, 
                 TMembers, 
+                TViewNullType,
                 TCurrent, 
                 TRecursiveKindMap, 
                 TLastProp, 
@@ -135,6 +207,7 @@ type ReferenceFetch<
 type CollectionOrderBy<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap,
     TLastProp, 
@@ -144,13 +217,22 @@ type CollectionOrderBy<
         ? {
             $orderBy: (
                 ...orders: OrderedKeys<TItemModel>[]
-            ) => ViewBuilder<TModel, TMembers, TCurrent, TRecursiveKindMap, TLastProp, TLastName> 
+            ) => ViewBuilder<
+                TModel, 
+                TMembers, 
+                TViewNullType,
+                TCurrent, 
+                TRecursiveKindMap, 
+                TLastProp, 
+                TLastName
+            > 
         }
         : object;
 
 type Flat<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = 
@@ -163,6 +245,7 @@ type Flat<
                     builder: ViewBuilder<
                         FlatTargetModel<TModel, TMembers[TName]>, 
                         FlatTargetMembers<TMembers[TName]>, 
+                        TViewNullType,
                         {}, 
                         {},
                         any, 
@@ -171,6 +254,7 @@ type Flat<
                 ) => ViewBuilder<
                     FlatTargetModel<TModel, TMembers[TName]>, 
                     FlatTargetMembers<TMembers[TName]>, 
+                    TViewNullType,
                     X, 
                     any,
                     any, 
@@ -179,8 +263,14 @@ type Flat<
             ): ViewBuilder<
                 TModel,
                 TMembers, 
+                TViewNullType,
                 RecursivedType<
-                    TCurrent & MakeTypeByNullity<NullityOf<TMembers[TName]>, PrefixType<TPrefix, X>>,
+                    TViewNullType,
+                    TCurrent & MakeTypeByNullity<
+                        NullityOf<TMembers[TName]>, 
+                        TViewNullType, 
+                        PrefixType<TPrefix, X>
+                    >,
                     TRecursiveKindMap
                 >, 
                 TRecursiveKindMap,
@@ -212,6 +302,7 @@ type FlatTargetMembers<TProp> =
 type ReferenceKeyMembers<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap
 > = {
@@ -232,12 +323,15 @@ type ReferenceKeyMembers<
             ? ViewBuilder<
                 TModel,
                 TMembers, 
+                TViewNullType,
                 TransformedType<
+                    TViewNullType,
                     TCurrent, 
                     XTypeOfView<
                         PrefixString<K & string, Key & string>,
-                        SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string]>,
-                        Nullity
+                        SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>,
+                        Nullity,
+                        TViewNullType
                     >,
                     TRecursiveKindMap
                 >,
@@ -251,14 +345,17 @@ type ReferenceKeyMembers<
 type AllScalars<
         TModel extends AnyModel, 
         TMembers, 
+        TViewNullType extends ViewNullType,
         TCurrent,
         TRecursiveKindMap extends RecursiveKindMap
     > = {
     allScalars(): ViewBuilder<
         TModel,
         TMembers,
+        TViewNullType,
         RecursivedType<
-            TCurrent & AllScalarsType<TMembers>, 
+            TViewNullType,
+            TCurrent & AllScalarsType<TMembers, TViewNullType>, 
             TRecursiveKindMap
         >,
         TRecursiveKindMap,
@@ -267,19 +364,27 @@ type AllScalars<
     >;
 };
 
-type AllScalarsType<TMembers> = {
+type AllScalarsType<TMembers, TViewNullType extends ViewNullType> = {
     [K in keyof TMembers 
         as IsPartOfAllScalars<TMembers[K], "NONNULL"> extends true 
             ? K 
             : never
-    ]: SimpleDataTypeOf<TMembers[K]>
-} & {
-    [K in keyof TMembers
-        as IsPartOfAllScalars<TMembers[K], "NULLABLE" | "INPUT_NONNULL"> extends true 
-            ? K 
-            : never
-    ]?: SimpleDataTypeOf<TMembers[K]> | null | undefined
-}
+    ]: SimpleDataTypeOf<TMembers[K], TViewNullType>
+} & (
+    TViewNullType extends "NULL" ? {
+            [K in keyof TMembers
+                as IsPartOfAllScalars<TMembers[K], "NULLABLE" | "INPUT_NONNULL"> extends true 
+                    ? K 
+                    : never
+            ]: SimpleDataTypeOf<TMembers[K], TViewNullType> | null
+        } : {
+            [K in keyof TMembers
+                as IsPartOfAllScalars<TMembers[K], "NULLABLE" | "INPUT_NONNULL"> extends true 
+                    ? K 
+                    : never
+            ]?: SimpleDataTypeOf<TMembers[K], TViewNullType> | undefined
+        } 
+)
 
 type IsPartOfAllScalars<TProp, TNullity extends NullityType> =
     TProp extends ScalarProp<any, TNullity>
@@ -288,27 +393,36 @@ type IsPartOfAllScalars<TProp, TNullity extends NullityType> =
             ? true
         : false;
 
-type MakeTypeByNullity<TNullity, T> =
+type MakeTypeByNullity<
+    TNullity, 
+    TViewNullType extends ViewNullType,
+    T
+> =
     TNullity extends "NONNULL"
         ? T
-        : {[K in keyof T]?: T[K] | null | undefined};
+        : TViewNullType extends "NULL"
+            ? {[K in keyof T]: T[K] | null}
+            : {[K in keyof T]?: T[K] | undefined};
 
 type Fold<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
     fold<TName extends string, X>(
         name: TName,
         fn: (
-            builder: ViewBuilder<TModel, TMembers, {}, {}, any, "">
-        ) => ViewBuilder<TModel, TMembers, X, any, any, any>
+            builder: ViewBuilder<TModel, TMembers, TViewNullType, {}, {}, any, "">
+        ) => ViewBuilder<TModel, TMembers, TViewNullType, X, any, any, any>
     ): ViewBuilder<
         TModel, 
         TMembers, 
+        TViewNullType,
         TransformedType<
-            TCurrent, XTypeOfView<TName, X, "NONNULL">, 
+            TViewNullType,
+            TCurrent, XTypeOfView<TName, X, "NONNULL", TViewNullType>, 
             TRecursiveKindMap
         >, 
         TRecursiveKindMap,
@@ -320,18 +434,37 @@ type Fold<
 type InstanceOf<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
     instanceOf<TDerivedModel extends AnyModel, X>(
         derivedModel: DerivedModel<TDerivedModel, TModel>,
         fn: (
-            builder: ViewBuilder<TDerivedModel, AllModelMembers<TDerivedModel>, {}, {}, any, "">
-        ) => ViewBuilder<TDerivedModel, AllModelMembers<TDerivedModel>, X, any, any, any>
+            builder: ViewBuilder<
+                TDerivedModel, 
+                AllModelMembers<TDerivedModel>, 
+                TViewNullType,
+                {}, 
+                {}, 
+                any, 
+                ""
+            >
+        ) => ViewBuilder<
+            TDerivedModel, 
+            AllModelMembers<TDerivedModel>, 
+            TViewNullType, 
+            X, 
+            any, 
+            any, 
+            any
+        >
     ): ViewBuilder<
         TModel, 
         TMembers, 
+        TViewNullType,
         RecursivedType<
+            TViewNullType,
             DerivedFields<TDerivedModel, TModel, X, TCurrent>,
             TRecursiveKindMap
         >, 
@@ -410,6 +543,7 @@ type PrefixType<TPrefix extends string, T> =
 type Recursive<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap
 > =
@@ -429,7 +563,9 @@ type Recursive<
             ): ViewBuilder<
                 TModel,
                 TMembers,
+                TViewNullType,
                 RecursivedType<
+                    TViewNullType,
                     TCurrent,
                     NewRecursiveKindMap<TRecursiveKindMap, TMembers, TPropName, TAlias, TDepth>
                 >,
@@ -456,10 +592,12 @@ type IsRecursiveProp<TModel extends AnyModel, TProp> =
         : false;
 
 type TransformedType<
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TXType,
     TRecursiveKindMap extends RecursiveKindMap
 > = RecursivedType<
+    TViewNullType,
     TXType extends never
         ? TCurrent
         : TCurrent & TXType,
@@ -476,58 +614,73 @@ type NewRecursiveKindMap<
     [P in TAlias]: TMembers[TPropName] extends CollectionProp<any>
             ? TDepth extends -1
                 ? "COLLECTION"
-                : "NULLABLE_COLLECTION"
+                : "UNDEFINED_COLLECTION"
             : "REFERENCE"
     }
 
 type RecursivedType<
+    TViewNullType extends ViewNullType,
     T,
     TRecursiveKindMap extends RecursiveKindMap
 > = {} extends TRecursiveKindMap 
     ? T
     : RecursivingType<
+        TViewNullType,
         Omit<T, keyof TRecursiveKindMap>, 
         TRecursiveKindMap
     >;
 
 type RecursivingType<
+    TViewNullType extends ViewNullType,
     TCore,
     TRecursiveKindMap extends RecursiveKindMap
 > = 
     TCore
-    & {
-        [K in keyof TRecursiveKindMap
-            as TRecursiveKindMap[K] extends "REFERENCE"
-                ? K
-                : never
-        ]?: RecursivingType<TCore, Pick<TRecursiveKindMap, K>> | null | undefined;        
-    } 
+    & (
+        TViewNullType extends "NULL"
+            ? {
+                [K in keyof TRecursiveKindMap
+                    as TRecursiveKindMap[K] extends "REFERENCE"
+                        ? K
+                        : never
+                ]: RecursivingType<TViewNullType, TCore, Pick<TRecursiveKindMap, K>> | null;        
+            } : {
+                [K in keyof TRecursiveKindMap
+                    as TRecursiveKindMap[K] extends "REFERENCE"
+                        ? K
+                        : never
+                ]?: RecursivingType<TViewNullType, TCore, Pick<TRecursiveKindMap, K>> | undefined;        
+            }
+    ) 
     & {
         [K in keyof TRecursiveKindMap
             as TRecursiveKindMap[K] extends "COLLECTION"
                 ? K
                 : never
-        ]: RecursivingType<TCore, Pick<TRecursiveKindMap, K>>[];
+        ]: RecursivingType<TViewNullType, TCore, Pick<TRecursiveKindMap, K>>[];
     } & {
         [K in keyof TRecursiveKindMap
-            as TRecursiveKindMap[K] extends "NULLABLE_COLLECTION"
+            as TRecursiveKindMap[K] extends "UNDEFINED_COLLECTION"
                 ? K
                 : never
-        ]?: RecursivingType<TCore, Pick<TRecursiveKindMap, K>>[] | null | undefined;          
+        ]?: RecursivingType<TViewNullType, TCore, Pick<TRecursiveKindMap, K>>[] | undefined;          
     };
 
 type RecursiveKindMap = { [key:string]: RecursiveKind }
 
-type RecursiveKind = "REFERENCE" | "COLLECTION" | "NULLABLE_COLLECTION";
+type RecursiveKind = "REFERENCE" | "COLLECTION" | "UNDEFINED_COLLECTION";
 
-type XTypeOfView<K, X, TNullity extends NullityType> =
+type XTypeOfView<K, X, TNullity extends NullityType, TViewNullType extends ViewNullType> =
     TNullity extends "NONNULL"
         ? {[P in K & string]: X}
-        : {[P in K & string]?: X | null | undefined};
+        : TViewNullType extends "NULL"
+            ? {[P in K & string]: X | null}
+            : {[P in K & string]?: X | undefined};
 
 type Remove<
     TModel extends AnyModel,
     TMembers,
+    TViewNullType extends ViewNullType,
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
@@ -536,7 +689,12 @@ type Remove<
     ): ViewBuilder<
         TModel,
         TMembers,
-        RecursivedType<Omit<TCurrent, TNames[number]>, TRecursiveKindMap>,
+        TViewNullType,
+        RecursivedType<
+            TViewNullType, 
+            Omit<TCurrent, TNames[number]>, 
+            TRecursiveKindMap
+        >,
         TRecursiveKindMap,
         undefined,
         ""
@@ -546,6 +704,7 @@ type Remove<
 interface EmbeddedMethods<
     TModel extends AnyModel, 
     TMembers, 
+    TViewNullType extends ViewNullType,
     TCurrent, 
     TRecursiveKindMap extends RecursiveKindMap, 
     TK extends keyof TMembers, 
@@ -559,7 +718,13 @@ interface EmbeddedMethods<
     (): ViewBuilder<
         TModel,
         TMembers,
-        TransformedType<TCurrent, XTypeOfView<TK, EmbeddedDataType<TR>, TNullity>, TRecursiveKindMap>,
+        TViewNullType,
+        TransformedType<
+            TViewNullType,
+            TCurrent, 
+            XTypeOfView<TK, EmbeddedDataType<TR, TViewNullType>, TNullity, TViewNullType>, 
+            TRecursiveKindMap
+        >,
         TRecursiveKindMap,
         TMembers[TK],
         TK & string
@@ -570,23 +735,29 @@ interface EmbeddedMethods<
      */
     <X>(
         fn: (
-            builder: ViewBuilder<never, TR, {}, {}, any, any>
-        ) => ViewBuilder<never, TR, X, any, any, any>
+            builder: ViewBuilder<never, TR, TViewNullType, {}, {}, any, any>
+        ) => ViewBuilder<never, TR, TViewNullType, X, any, any, any>
     ): ViewBuilder<
         TModel,
         TMembers,
-        TransformedType<TCurrent, XTypeOfView<TK, X, TNullity>, TRecursiveKindMap>,
+        TViewNullType,
+        TransformedType<
+            TViewNullType,
+            TCurrent, 
+            XTypeOfView<TK, X, TNullity, TViewNullType>, 
+            TRecursiveKindMap
+        >,
         TRecursiveKindMap,
         TMembers[TK],
         TK & string
     >;
 }
 
-export type SimpleDataTypeOf<TProp> =
+export type SimpleDataTypeOf<TProp, TViewNullType extends ViewNullType> =
     TProp extends ScalarProp<infer R, any>
         ? R
     : TProp extends EmbeddedProp<infer R, any>
-        ? EmbeddedDataType<R>
+        ? EmbeddedDataType<R, TViewNullType>
     : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", infer Key>
         ? {
             [
@@ -594,33 +765,53 @@ export type SimpleDataTypeOf<TProp> =
                     as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
                         ? K 
                         : never
-            ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K]>
-        } & {
-            [
-                K in keyof Key
-                    as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
-                        ? K 
-                        : never
-            ]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[K]> | null | undefined
-        }
+            ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K], TViewNullType>
+        } & (
+            TViewNullType extends "NULL" 
+                ? {
+                    [
+                        K in keyof Key
+                            as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                                ? K 
+                                : never
+                    ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K], TViewNullType> | null
+                } : {
+                    [
+                        K in keyof Key
+                            as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                                ? K 
+                                : never
+                    ]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[K], TViewNullType> | undefined
+                } 
+        )
     : never;
 
-export type EmbeddedDataType<T> =
+export type EmbeddedDataType<T, TViewNullType extends ViewNullType> =
     {
         [
             K in keyof T
                 as T[K] extends Prop<any, "NONNULL">
                     ? K 
                     : never
-        ]: SimpleDataTypeOf<T[K]>
-    } & {
-        [
-            K in keyof T
-                as T[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
-                    ? K 
-                    : never
-        ]?: SimpleDataTypeOf<T[K]> | null | undefined
-    };
+        ]: SimpleDataTypeOf<T[K], TViewNullType>
+    } & (
+        TViewNullType extends "NULL"
+            ? {
+                [
+                    K in keyof T
+                        as T[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
+                            ? K 
+                            : never
+                ]: SimpleDataTypeOf<T[K], TViewNullType> | null
+            } : {
+                [
+                    K in keyof T
+                        as T[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
+                            ? K 
+                            : never
+                ]?: SimpleDataTypeOf<T[K], TViewNullType> | undefined
+            }
+    );
 
 export class View<TModel extends AnyModel, T> {
 

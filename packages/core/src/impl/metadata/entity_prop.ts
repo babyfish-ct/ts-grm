@@ -177,7 +177,7 @@ export class EntityProp {
                     this.raise `Duplicated order paths "${path}"`
                 }
                 const prop = this._targetEntity!!.expanedPropMap.get(path);
-                if (prop === undefined) {
+                if (prop == null) {
                     throw this.raise `Illegal order path "${path}" 
                     which deos not exists in target model ${this._targetEntity?.name}`
                 }

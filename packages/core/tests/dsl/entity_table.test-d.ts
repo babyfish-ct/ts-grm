@@ -3,6 +3,14 @@ import { Expression } from "@/dsl/expression";
 import { AUTHOR, BOOK, BOOK_STORE } from "tests/model/model";
 import { expectTypeOf, test } from "vitest";
 
+function book(): EntityTable<typeof BOOK> {
+    throw new Error();
+}
+
+function store(): EntityTable<typeof BOOK_STORE> {
+    throw new Error();
+}
+
 test("TableMembers", () => {
 
     const authorLastName = store().books().$acceptRisk().authors().name().lastName;
@@ -38,11 +46,3 @@ test("TableMembers", () => {
     ).$acceptRisk().name().firstName;
     expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null | undefined>>();
 });
-
-function book(): EntityTable<typeof BOOK> {
-    throw new Error();
-}
-
-function store(): EntityTable<typeof BOOK_STORE> {
-    throw new Error();
-}
