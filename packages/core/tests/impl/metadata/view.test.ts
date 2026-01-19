@@ -22,7 +22,9 @@ describe("TestView", () => {
                             desc: o.desc
                         };
                     }),
-                    implicit: f.implicit
+                    nullable: f.nullable,
+                    implicit: f.implicit,
+                    bridegePath: f.bridgePath
                 };
             })
         }
@@ -39,16 +41,19 @@ describe("TestView", () => {
                 {
                     "path": "id",
                     "entityPath": "Book.id",
+                    "nullable": false,
                     "implicit": false
                 },
                 {
                     "path": "name",
                     "entityPath": "Book.name",
+                    "nullable": false,
                     "implicit": false
                 },
                 {
                     "path": "edition",
                     "entityPath": "Book.edition",
+                    "nullable": false,
                     "implicit": false
                 }
             ]
@@ -60,7 +65,7 @@ describe("TestView", () => {
             .allScalars()
             .remove("price")
             .store($ => $.allScalars())
-            .authors($ => $.id.name($ => $.firstName))
+            .authors($ => $.id.name())
         );
         expect(dtoJson(view.dto)).toEqual({
             "entity": "Book",
@@ -68,16 +73,19 @@ describe("TestView", () => {
                 {
                     "path": "id",
                     "entityPath": "Book.id",
+                    "nullable": false,
                     "implicit": false
                 },
                 {
                     "path": "name",
                     "entityPath": "Book.name",
+                    "nullable": false,
                     "implicit": false
                 },
                 {
                     "path": "edition",
                     "entityPath": "Book.edition",
+                    "nullable": false,
                     "implicit": false
                 },
                 {
@@ -89,20 +97,24 @@ describe("TestView", () => {
                             {
                                 "path": "id",
                                 "entityPath": "BookStore.id",
+                                "nullable": false,
                                 "implicit": false
                             },
                             {
                                 "path": "name",
                                 "entityPath": "BookStore.name",
+                                "nullable": false,
                                 "implicit": false
                             },
                             {
                                 "path": "version",
                                 "entityPath": "BookStore.version",
+                                "nullable": false,
                                 "implicit": false
                             }
                         ]
                     },
+                    "nullable": true,
                     "implicit": false
                 },
                 {
@@ -114,6 +126,7 @@ describe("TestView", () => {
                             {
                                 "path": "id",
                                 "entityPath": "Author.id",
+                                "nullable": false,
                                 "implicit": false
                             },
                             {
@@ -125,15 +138,108 @@ describe("TestView", () => {
                                         {
                                             "path": "firstName",
                                             "entityPath": "Author.name.firstName",
+                                            "nullable": false,
+                                            "implicit": false
+                                        },
+                                        {
+                                            "path": "lastName",
+                                            "entityPath": "Author.name.lastName",
+                                            "nullable": false,
                                             "implicit": false
                                         }
                                     ]
                                 },
+                                "nullable": false,
                                 "implicit": false
                             }
                         ]
                     },
+                    "nullable": false,
                     "implicit": false
+                }
+            ]
+        });
+    });
+
+    it("flat", () => {
+
+        const view = dto.view(BOOK, $ => $
+            .allScalars()
+            .flat("store", $ => $
+                .id
+                .name
+            )
+        );
+
+        expect(dtoJson(view.dto)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "path": "id",
+                    "entityPath": "Book.id",
+                    "nullable": false,
+                    "implicit": false
+                },
+                {
+                    "path": "name",
+                    "entityPath": "Book.name",
+                    "nullable": false,
+                    "implicit": false
+                },
+                {
+                    "path": "edition",
+                    "entityPath": "Book.edition",
+                    "nullable": false,
+                    "implicit": false
+                },
+                {
+                    "path": "price",
+                    "entityPath": "Book.price",
+                    "nullable": false,
+                    "implicit": false
+                },
+                {
+                    "path": [
+                        "store",
+                        "id"
+                    ],
+                    "entityPath": "BookStore.id",
+                    "nullable": true,
+                    "implicit": false,
+                    "bridegePath": "store"
+                },
+                {
+                    "path": [
+                        "store",
+                        "name"
+                    ],
+                    "entityPath": "BookStore.name",
+                    "nullable": true,
+                    "implicit": false,
+                    "bridegePath": "store"
+                },
+                {
+                    "path": "store",
+                    "entityPath": "Book.store",
+                    "dto": {
+                        "entity": "BookStore",
+                        "fields": [
+                            {
+                                "path": "id",
+                                "entityPath": "BookStore.id",
+                                "nullable": false,
+                                "implicit": false
+                            },
+                            {
+                                "path": "name",
+                                "entityPath": "BookStore.name",
+                                "nullable": false,
+                                "implicit": false
+                            }
+                        ]
+                    },
+                    "nullable": true,
+                    "implicit": true
                 }
             ]
         });

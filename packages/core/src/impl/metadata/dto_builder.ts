@@ -40,11 +40,7 @@ class DtoBuilder {
 
     add(prop: EntityProp, fn?: TypedDtoBuilderFn) {
         const field = this.field(prop, fn);
-        if (this.addedPaths.has(field.path)) {
-            throw new StateError(`Cannot add the dto path "${field.path}"`);
-        }
-        this.fields.push(field);
-        this.addedPaths.add(field.path);
+        this.addField(field);
         this.lastPropName = prop.name;
     }
 
@@ -56,22 +52,28 @@ class DtoBuilder {
             throw new ArgumentError(`Cannot flat the property "${prop.toString()}" 
             because it is neither reference nor embedded property`);
         }
-        const field = this.field(prop, fn);
-        if (this.addedPaths.has(field.path)) {
-            throw new StateError(`Cannot add the dto path "${field.path}"`);
+        const field: DtoField = {
+            ...this.field(prop, fn),
+            implicit: true
+        };
+        for (const nestedField of field.dto!!.fields) {
+            const flattedField: DtoField = {
+                ...nestedField,
+                path: withPrefix(prefix, nestedField.path),
+                bridgePath: prop.targetEntity != null ? prop.name : undefined,
+                nullable: prop.nullable || nestedField.nullable
+            };
+            if (prop.targetEntity != null) {
+                this.addField(flattedField);
+            }
         }
-        this.fields.push(field);
-        this.addedPaths.add(field.path);
+        this.addField(field);
         this.lastPropName = undefined;
     }
 
     fold(key: string, prop: EntityProp, fn?: TypedDtoBuilderFn) {
         const field = this.field(prop, fn);
-        if (this.addedPaths.has(field.path)) {
-            throw new StateError(`Cannot add the dto path "${field.path}"`);
-        }
-        this.fields.push(field);
-        this.addedPaths.add(field.path);
+        this.addField(field);
         this.lastPropName = key;
     }
 
@@ -90,7 +92,10 @@ class DtoBuilder {
         const arr = this.fields;
         for (let i = arr.length - 1; i >= 0; --i) {
             const path = arr[i]!!.path;
-            if (path === alias || path.startsWith(`${alias}.`)) {
+            const match = typeof path === "string"
+                ? path === alias 
+                : path[0] === alias;
+            if (match) {
                 arr.splice(i, 1);
             }
         }
@@ -118,12 +123,14 @@ class DtoBuilder {
             fn(childBuilder);
             const childDto = childBuilder.__unwrap().build();
             return {
-                path: `${prop.name}`,
+                path: prop.name,
                 entityPath: prop,
                 dto: childDto,
                 fetchType: undefined,
                 orders: undefined,
-                implicit: false
+                nullable: prop.nullable,
+                implicit: false,
+                bridgePath: undefined
             };
         }
         if (prop.props != null) {
@@ -134,12 +141,14 @@ class DtoBuilder {
             (fn ?? ($ => ($ as any).allScalars()))(childBuilder);
             const childDto = childBuilder.__unwrap().build();
             return {
-                path: `${prop.name}`,
+                path: prop.name,
                 entityPath: prop,
                 dto: childDto,
                 fetchType: undefined,
                 orders: undefined,
-                implicit: false
+                nullable: prop.nullable,
+                implicit: false,
+                bridgePath: undefined
             };
         }
         if (fn != null) {
@@ -154,8 +163,21 @@ class DtoBuilder {
             dto: undefined,
             fetchType: undefined,
             orders: undefined,
-            implicit: false
+            nullable: false,
+            implicit: false,
+            bridgePath: undefined
         };
+    }
+
+    private addField(field: DtoField) {
+        const key = typeof field.path === "string"
+            ? field.path
+            : field.path.join(".");
+        if (this.addedPaths.has(key)) {
+            throw new StateError(`Cannot add the DTO path "${field.path}"`);
+        }
+        this.addedPaths.add(key);
+        this.fields.push(field);
     }
 }
 
@@ -175,10 +197,7 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                     return receiver;
                 }
             case "flat":
-                return (options: string | { 
-                    readonly prop: string;
-                    readonly prefix?: string
-                }, fn: TypedDtoBuilderFn) => {
+                return (options: FlatOptions, fn: TypedDtoBuilderFn) => {
                     const prop = typeof options === "string"
                         ? options 
                         : options.prop;
@@ -214,3 +233,21 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
         }
     }
 };
+
+type FlatOptions = string | { 
+    readonly prop: string;
+    readonly prefix?: string
+};
+
+function withPrefix(
+    prefix: string, 
+    path: string | ReadonlyArray<string>
+): string | ReadonlyArray<string> {
+    if (prefix === "") {
+        return path;
+    }
+    if (typeof path === "string") {
+        return [prefix, path];
+    }
+    return [prefix, ...path];
+}

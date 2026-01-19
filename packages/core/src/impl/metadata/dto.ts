@@ -12,7 +12,7 @@ export type Dto = {
 
 export type DtoField = {
 
-    readonly path: string;
+    readonly path: string | ReadonlyArray<string>;
 
     readonly entityPath: EntityProp | ReadonlyArray<EntityProp>;
 
@@ -22,5 +22,9 @@ export type DtoField = {
 
     readonly orders: ReadonlyArray<EntityPropOrder> | undefined;
 
+    readonly nullable: boolean;
+
     readonly implicit: boolean;
+
+    readonly bridgePath: string | ReadonlyArray<string> | undefined;
 };

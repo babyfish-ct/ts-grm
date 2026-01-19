@@ -293,12 +293,13 @@ type Flat<
 
 type FlatKeys<TMembers> = 
     keyof {
-        [K in keyof TMembers]: 
-            TMembers[K] extends ReferenceProp<any, any, any, any> 
+        [K in keyof TMembers
+            as TMembers[K] extends ReferenceProp<any, any, any, any> 
                 ? K
                 : TMembers[K] extends EmbeddedProp<any, any>
                     ? K
                     : never
+        ]: number
     };
 
 type FlatTargetModel<TModel extends AnyModel, TProp> =
