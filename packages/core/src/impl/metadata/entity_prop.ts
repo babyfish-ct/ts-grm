@@ -1,4 +1,4 @@
-import { Prop, PropData, ScalarType } from "@/schema/prop";
+import { AssociationType, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { ModelImpl } from "./model_impl";
@@ -13,6 +13,8 @@ export class EntityProp {
     readonly inputNonNull: boolean;
 
     readonly scalarType: ScalarType | undefined;
+
+    readonly associationType: AssociationType | undefined;
 
     readonly props: ReadonlyMap<string, EntityProp> | undefined;
 
@@ -34,6 +36,7 @@ export class EntityProp {
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this.scalarType = _data.scalarType; 
+        this.associationType = _data.associationType;
         if (_data.props !== undefined) {
             this.props = this.createProps(_data.props);
         } else {
@@ -267,5 +270,11 @@ export class EntityProp {
             declaringEntity: this.declaringEntity,
             name: this.name
         };
+    }
+
+    toString(): string {
+        return this.parentProp != null
+            ? `${this.parentProp.toString()}.${this.name}`
+            : `${this.declaringEntity.name}.${this.name}`;
     }
 }

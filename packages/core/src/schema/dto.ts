@@ -2,6 +2,12 @@ import { AtLeastOne } from "@/dsl/utils";
 import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
+import { ModelOrder } from "./order";
+import { EntityTable } from "@/dsl/table";
+import { Predicate } from "@/dsl/expression";
+import { Dto } from "@/impl/metadata/dto";
+import { createTypedDtoBuilder } from "@/impl/metadata/dto_builder";
+import { Entity } from "@/impl/metadata/entity";
 
 export const dto = { view: viewCreator() };
 
@@ -13,7 +19,9 @@ function viewCreator(): ViewCreator {
             builder: ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>
         ) => ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", X, any, any, any>
     ): View<TModel, Prettify<X>> => {
-        throw new Error("Not implemented");
+        const builder = createTypedDtoBuilder(Entity.of(model));
+        fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
+        return new View(builder.__unwrap().build());
     }
 
     view.nullAsUndefined = <TModel extends AnyModel, X>(
@@ -22,7 +30,9 @@ function viewCreator(): ViewCreator {
             builder: ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", {}, {}, any, any>
         ) => ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", X, any, any, any>
     ): View<TModel, Prettify<X>> => {
-        throw new Error("Not implemented");
+        const builder = createTypedDtoBuilder(Entity.of(model));
+        fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
+        return new View(builder.__unwrap().build());
     }
 
     return view as ViewCreator;
@@ -48,16 +58,6 @@ type NullAsUndefinedViewCreator = {
             builder: ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", {}, {}, any, any>
         ) => ViewBuilder<TModel, AllModelMembers<TModel>, "UNDEFINED", X, any, any, any>
     ): View<TModel, Prettify<X>>;
-}
-
-
-function view<TModel extends AnyModel, X, TViewNullType extends ViewNullType = "NULL">(
-    model: TModel,
-    fn: (
-        builder: ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>
-    ) => ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", X, any, any, any>
-): View<TModel, Prettify<X>> {
-    throw new Error("Not implemented");
 }
 
 export type ModelOf<T> =
@@ -109,7 +109,7 @@ type ViewBuilder<
                 TransformedType<
                     TViewNullType,
                     TCurrent, 
-                    XTypeOfView<K, R, Nullity, TViewNullType>, 
+                    XTypeOfView<K, X, Nullity, TViewNullType>, 
                     TRecursiveKindMap
                 >,
                 TRecursiveKindMap,
@@ -215,9 +215,21 @@ type CollectionOrderBy<
 > =
     TLastProp extends CollectionProp<infer TItemModel>
         ? {
-            $orderBy: (
-                ...orders: OrderedKeys<TItemModel>[]
-            ) => ViewBuilder<
+            $where(
+                fn: (table: EntityTable<TItemModel>) => Predicate | null | undefined
+            ): ViewBuilder<
+                TModel, 
+                TMembers, 
+                TViewNullType,
+                TCurrent, 
+                TRecursiveKindMap, 
+                TLastProp, 
+                TLastName
+            >;
+
+            $orderBy(
+                ...orders: ReadonlyArray<ModelOrder<TItemModel>>
+            ): ViewBuilder<
                 TModel, 
                 TMembers, 
                 TViewNullType,
@@ -684,7 +696,7 @@ type Remove<
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
-    remove<TNames extends AtLeastOne<keyof TMembers>>(
+    remove<TNames extends AtLeastOne<keyof TCurrent>>(
         ...names: TNames
     ): ViewBuilder<
         TModel,
@@ -820,4 +832,6 @@ export class View<TModel extends AnyModel, T> {
     } = {
         view: undefined
     };
+
+    constructor(readonly dto: Dto) {}
 }

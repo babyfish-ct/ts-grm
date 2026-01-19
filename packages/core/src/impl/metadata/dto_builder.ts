@@ -1,51 +1,216 @@
-import { ArgumentError } from "@/error/common";
-import { makeErr } from "../util";
+import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
+import { Dto, DtoField } from "./dto";
+import { makeErr } from "../util";
+
+export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
+    const builder = new DtoBuilder(entity);
+    return new Proxy(builder, typedDtoBuilderHandler) as any as TypedDtoBuilder;
+}
+
+interface TypedDtoBuilder {
+    __unwrap(): DtoBuilder
+}
+
+type TypedDtoBuilderFn = (builder: TypedDtoBuilder) => TypedDtoBuilder;
 
 class DtoBuilder {
 
-    constructor(readonly entity: Entity, private readonly embededPrefix?: string) {
+    private readonly fields: Array<DtoField> = [];
 
+    private readonly addedPaths = new Set<string>();
+
+    private lastPropName: string | undefined = undefined;
+
+    constructor(
+        private readonly source: Entity | EntityProp
+    ) {}
+
+    prop(name: string): EntityProp {
+        if (this.source instanceof Entity) {
+            return this.source.allPropMap.get(name) ?? makeErr(() => 
+                new ArgumentError(`No property "${name}" in model "${this.source.name}"`)
+            );
+        }
+        return this.source.props?.get(name) ?? makeErr(() =>
+            new ArgumentError(`No property "${name}" in embeded path "${this.source.toString()}"`)
+        );
     }
 
-    add(prop: EntityProp) {
-        if (prop.props != null || prop.targetEntity != null) {
-            console.log('add method', prop.name);
-        } else {
-            console.log('add field', prop.name);
+    add(prop: EntityProp, fn?: TypedDtoBuilderFn) {
+        const field = this.field(prop, fn);
+        if (this.addedPaths.has(field.path)) {
+            throw new StateError(`Cannot add the dto path "${field.path}"`);
+        }
+        this.fields.push(field);
+        this.addedPaths.add(field.path);
+        this.lastPropName = prop.name;
+    }
+
+    flat(prefix: string, prop: EntityProp, fn?: TypedDtoBuilderFn) {
+        if (prop.props == null 
+            && prop.associationType !== "ONE_TO_ONE" 
+            && prop.associationType !== "MANY_TO_ONE"
+        ) {
+            throw new ArgumentError(`Cannot flat the property "${prop.toString()}" 
+            because it is neither reference nor embedded property`);
+        }
+        const field = this.field(prop, fn);
+        if (this.addedPaths.has(field.path)) {
+            throw new StateError(`Cannot add the dto path "${field.path}"`);
+        }
+        this.fields.push(field);
+        this.addedPaths.add(field.path);
+        this.lastPropName = undefined;
+    }
+
+    fold(key: string, prop: EntityProp, fn?: TypedDtoBuilderFn) {
+        const field = this.field(prop, fn);
+        if (this.addedPaths.has(field.path)) {
+            throw new StateError(`Cannot add the dto path "${field.path}"`);
+        }
+        this.fields.push(field);
+        this.addedPaths.add(field.path);
+        this.lastPropName = key;
+    }
+
+    allScalars() {
+        const propMap = this.source instanceof Entity
+            ? this.source.allPropMap
+            : this.source.props ?? makeErr("Internal bug");
+        for (const prop of propMap.values()) {
+            if (prop.scalarType != null || prop.props != null) {
+                this.add(prop);
+            }
         }
     }
 
     remove(alias: string) {
+        const arr = this.fields;
+        for (let i = arr.length - 1; i >= 0; --i) {
+            const path = arr[i]!!.path;
+            if (path === alias || path.startsWith(`${alias}.`)) {
+                arr.splice(i, 1);
+            }
+        }
+    }
 
+    build(): Dto {
+        return {
+            entity: this.source instanceof Entity
+                ? this.source
+                : this.source.declaringEntity,
+            fields: this.fields
+        };
+    }
+
+    private field(
+        prop: EntityProp, 
+        fn?: TypedDtoBuilderFn
+    ): DtoField {
+        if (prop.targetEntity != null) {
+            if (fn == null) {
+                throw new ArgumentError(`Cannot add association property 
+                    "${prop.toString()}" without child DTO lambda`);
+            }
+            const childBuilder = createTypedDtoBuilder(prop.targetEntity);
+            fn(childBuilder);
+            const childDto = childBuilder.__unwrap().build();
+            return {
+                path: `${prop.name}`,
+                entityPath: prop,
+                dto: childDto,
+                fetchType: undefined,
+                orders: undefined,
+                implicit: false
+            };
+        }
+        if (prop.props != null) {
+            const childBuilder = new Proxy(
+                new DtoBuilder(prop),
+                typedDtoBuilderHandler
+            ) as any as TypedDtoBuilder;
+            (fn ?? ($ => ($ as any).allScalars()))(childBuilder);
+            const childDto = childBuilder.__unwrap().build();
+            return {
+                path: `${prop.name}`,
+                entityPath: prop,
+                dto: childDto,
+                fetchType: undefined,
+                orders: undefined,
+                implicit: false
+            };
+        }
+        if (fn != null) {
+            throw new ArgumentError(
+                `Child DTO cannnot be specified for "${prop.toString()}" 
+                which is neither associated nor embeded property`
+            );
+        }
+        return {
+            path: prop.name,
+            entityPath: prop,
+            dto: undefined,
+            fetchType: undefined,
+            orders: undefined,
+            implicit: false
+        };
     }
 }
 
-const handler: ProxyHandler<DtoBuilder> = {
+const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
     get: (target: DtoBuilder, prop: string | symbol, receiver: any) => {
         if (typeof prop === 'symbol') {
             return Reflect.get(target, prop);
         }
-        if (prop in target) {
-            return Reflect.get(target, prop);
-        }
-        const entityProp = target.entity.allPropMap.get(prop) ??
-            makeErr(() => new ArgumentError(
-                `There is no property "${prop}" in model "${target.entity.name}"`
-            ));
-        if (entityProp.props != null || entityProp.targetEntity != null) {
-            return () => {
+        switch (prop) {
+            case "__unwrap":
+                return () => {
+                    return target;
+                };
+            case "allScalars":
+                return () => {
+                    target.allScalars();
+                    return receiver;
+                }
+            case "flat":
+                return (options: string | { 
+                    readonly prop: string;
+                    readonly prefix?: string
+                }, fn: TypedDtoBuilderFn) => {
+                    const prop = typeof options === "string"
+                        ? options 
+                        : options.prop;
+                    const prefix = typeof options === "string"
+                        ? prop
+                        : options.prefix ?? prop;
+                    target.flat(prefix, target.prop(prop), fn);
+                    return receiver;
+                }
+            case "fold":
+                return (key: string, fn: TypedDtoBuilderFn) => {
+                    target.fold(key, target.prop(prop), fn);
+                    return receiver;
+                }
+            case "remove":
+                return (alias: string) => {
+                    target.remove(alias);
+                    return receiver;
+                }
+            default:
+                if (prop in target) {
+                    return Reflect.get(target, prop);
+                }
+                const entityProp = target.prop(prop);
+                if (entityProp.props != null || entityProp.targetEntity != null) {
+                    return (fn?: TypedDtoBuilderFn) => {
+                        target.add(entityProp, fn);
+                        return receiver;
+                    }
+                }
                 target.add(entityProp);
                 return receiver;
-            }
         }
-        target.add(entityProp);
-        return receiver;
     }
 };
-
-export function createDtoBuilder(entity: Entity, embededPrefix?: string): any {
-    const target = new DtoBuilder(entity, embededPrefix);
-    return new Proxy(target, handler);
-}
