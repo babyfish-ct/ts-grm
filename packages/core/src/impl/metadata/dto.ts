@@ -5,7 +5,7 @@ import { Entity } from "./entity";
 
 export type Dto = {
 
-    readonly entity: Entity;
+    readonly entity: Entity | undefined;
     
     readonly fields: ReadonlyArray<DtoField>;
 };
@@ -14,7 +14,7 @@ export type DtoField = {
 
     readonly path: string | ReadonlyArray<string>;
 
-    readonly entityPath: EntityProp | ReadonlyArray<EntityProp>;
+    readonly entityPath: EntityProp;
 
     readonly dto: Dto | undefined;
 

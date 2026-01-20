@@ -63,18 +63,34 @@ class DtoBuilder {
                 bridgePath: prop.targetEntity != null ? prop.name : undefined,
                 nullable: prop.nullable || nestedField.nullable
             };
-            if (prop.targetEntity != null) {
-                this.addField(flattedField);
-            }
+            this.addField(flattedField);
         }
-        this.addField(field);
+        if (prop.targetEntity != null) {
+            this.addField(field);
+        }
         this.lastPropName = undefined;
     }
 
-    fold(key: string, prop: EntityProp, fn?: TypedDtoBuilderFn) {
-        const field = this.field(prop, fn);
-        this.addField(field);
-        this.lastPropName = key;
+    fold(key: string, fn: TypedDtoBuilderFn) {
+        if (key === "") {
+            throw new ArgumentError(`The key of "fold" function cannot be empty`);
+        }
+        const builder = new Proxy(
+            new DtoBuilder(this.source),
+            typedDtoBuilderHandler
+        ) as any as TypedDtoBuilder;
+        fn(builder);
+        const dto = builder.__unwrap().build();
+        const foldFields = dto.fields.map(f => {
+            return {
+                ...f,
+                path: withFoldKey(key, f.path)
+            };
+        });
+        for (const foldField of foldFields) {
+            this.addField(foldField);
+        }
+        this.lastPropName = undefined;
     }
 
     allScalars() {
@@ -86,26 +102,46 @@ class DtoBuilder {
                 this.add(prop);
             }
         }
+        this.lastPropName = undefined;
     }
 
     remove(alias: string) {
         const arr = this.fields;
         for (let i = arr.length - 1; i >= 0; --i) {
-            const path = arr[i]!!.path;
-            const match = typeof path === "string"
-                ? path === alias 
-                : path[0] === alias;
-            if (match) {
+            if (isMatched(arr[i]!!, alias)) {
                 arr.splice(i, 1);
             }
         }
+        this.lastPropName = undefined;
+    }
+
+    $as(alias: string) {
+        if (this.lastPropName == null) {
+            throw new StateError(`"$as" function cannot be invoked because there is no last property`);
+        }
+        if (alias === "") {
+            throw new ArgumentError(`The arugment of "$as" function cannot be empty`);
+        }
+        const arr = this.fields;
+        const renamedFields: Array<DtoField> = [];
+        for (let i = arr.length - 1; i >= 0; --i) {
+            if (!isMatched(arr[i]!!, this.lastPropName)) {
+                continue;
+            }
+            const field = arr.splice(i, 1)[0]!!;
+            renamedFields.unshift(rename(field, alias));
+        }
+        for (const renamedField of renamedFields) {
+            this.addField(renamedField);
+        }
+        this.lastPropName = alias;
     }
 
     build(): Dto {
         return {
             entity: this.source instanceof Entity
                 ? this.source
-                : this.source.declaringEntity,
+                : undefined,
             fields: this.fields
         };
     }
@@ -197,7 +233,7 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                     return receiver;
                 }
             case "flat":
-                return (options: FlatOptions, fn: TypedDtoBuilderFn) => {
+                return (options: FlatOptions, fn?: TypedDtoBuilderFn) => {
                     const prop = typeof options === "string"
                         ? options 
                         : options.prop;
@@ -209,12 +245,17 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                 }
             case "fold":
                 return (key: string, fn: TypedDtoBuilderFn) => {
-                    target.fold(key, target.prop(prop), fn);
+                    target.fold(key, fn);
                     return receiver;
                 }
             case "remove":
                 return (alias: string) => {
                     target.remove(alias);
+                    return receiver;
+                }
+            case "$as":
+                return (alias: string) => {
+                    target.$as(alias);
                     return receiver;
                 }
             default:
@@ -247,7 +288,51 @@ function withPrefix(
         return path;
     }
     if (typeof path === "string") {
-        return [prefix, path];
+        return `${prefix}${capitalize(path)}`;
     }
-    return [prefix, ...path];
+    return [`${prefix}${capitalize(path[0]!!)}`, ...path.slice(1, path.length)];
+}
+
+function capitalize(str: string): string {
+    if (str.length === 0) {
+        return str;
+    }
+    const firstChar = String.fromCodePoint(str.codePointAt(0)!);
+    const rest = str.slice(firstChar.length);
+    return firstChar.toUpperCase() + rest;
+}
+
+function withFoldKey(
+    key: string, 
+    path: string | ReadonlyArray<string>
+): ReadonlyArray<string> {
+    if (typeof path === "string") {
+        return [key, path];
+    }
+    return [key, ...path];
+}
+
+function isMatched(
+    field: DtoField, 
+    alias: string
+): boolean {
+    const path = field.path;
+    if (typeof path === "string") {
+        return path === alias;
+    }
+    return path[0] === alias;
+}
+
+function rename(
+    field: DtoField, 
+    alias: string
+): DtoField {
+    const path = field.path;
+    const newPath = typeof path === "string"
+        ? alias
+        : [alias, ...path.slice(1, path.length)];
+    return {
+        ...field,
+        path: newPath
+    };
 }

@@ -247,12 +247,25 @@ type Flat<
     TViewNullType extends ViewNullType,
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
+> = FlatReference<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
+    & FlatEmbedded<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>;
+
+type FlatReference<
+    TModel extends AnyModel, 
+    TMembers, 
+    TViewNullType extends ViewNullType,
+    TCurrent,
+    TRecursiveKindMap extends RecursiveKindMap
 > = 
-    FlatKeys<TMembers> extends never
+    FlatReferenceKeys<TMembers> extends never
         ? object
         : {
-            flat<TName extends FlatKeys<TMembers> & string, X, TPrefix extends string = TName>(
-                options: TName | { prop: TName, prefix?: TPrefix },
+            flat<TName extends FlatReferenceKeys<TMembers> & string, X, TPrefix extends string = TName>(
+                options: TName | { 
+                    prop: TName, 
+                    prefix?: TPrefix,
+                    fetchType?: ReferenceFetchType
+                },
                 fn: (
                     builder: ViewBuilder<
                         FlatTargetModel<TModel, TMembers[TName]>, 
@@ -291,14 +304,94 @@ type Flat<
             >
         };
 
-type FlatKeys<TMembers> = 
+type FlatEmbedded<
+    TModel extends AnyModel, 
+    TMembers, 
+    TViewNullType extends ViewNullType,
+    TCurrent,
+    TRecursiveKindMap extends RecursiveKindMap
+> = 
+    FlatEmbeddedKeys<TMembers> extends never
+        ? object
+        : {
+            flat<TName extends FlatEmbeddedKeys<TMembers> & string, X, TPrefix extends string = TName>(
+                options: TName | { prop: TName, prefix?: TPrefix },
+                fn: (
+                    builder: ViewBuilder<
+                        FlatTargetModel<TModel, TMembers[TName]>, 
+                        FlatTargetMembers<TMembers[TName]>, 
+                        TViewNullType,
+                        {}, 
+                        {},
+                        any, 
+                        any
+                    >
+                ) => ViewBuilder<
+                    FlatTargetModel<TModel, TMembers[TName]>, 
+                    FlatTargetMembers<TMembers[TName]>, 
+                    TViewNullType,
+                    X, 
+                    any,
+                    any, 
+                    any
+                >
+            ): ViewBuilder<
+                TModel,
+                TMembers, 
+                TViewNullType,
+                RecursivedType<
+                    TViewNullType,
+                    TCurrent & MakeTypeByNullity<
+                        NullityOf<TMembers[TName]>, 
+                        TViewNullType, 
+                        PrefixType<TPrefix, X>
+                    >,
+                    TRecursiveKindMap
+                >, 
+                TRecursiveKindMap,
+                any, 
+                ""
+            >;
+
+            flat<TName extends FlatEmbeddedKeys<TMembers> & string, TPrefix extends string = TName>(
+                options: TName | { prop: TName, prefix?: TPrefix }
+            ): ViewBuilder<
+                TModel,
+                TMembers, 
+                TViewNullType,
+                RecursivedType<
+                    TViewNullType,
+                    TCurrent & MakeTypeByNullity<
+                        NullityOf<TMembers[TName]>, 
+                        TViewNullType, 
+                        PrefixType<
+                            TPrefix, 
+                            AllScalarsType<DirectTypeOf<TMembers[TName]>, TViewNullType>
+                        >
+                    >,
+                    TRecursiveKindMap
+                >, 
+                TRecursiveKindMap,
+                any, 
+                ""
+            >;
+        };
+
+type FlatReferenceKeys<TMembers> = 
     keyof {
         [K in keyof TMembers
             as TMembers[K] extends ReferenceProp<any, any, any, any> 
                 ? K
-                : TMembers[K] extends EmbeddedProp<any, any>
-                    ? K
-                    : never
+                : never
+        ]: number
+    };
+
+type FlatEmbeddedKeys<TMembers> = 
+    keyof {
+        [K in keyof TMembers
+            as TMembers[K] extends EmbeddedProp<any, any>
+                ? K
+                : never
         ]: number
     };
 
