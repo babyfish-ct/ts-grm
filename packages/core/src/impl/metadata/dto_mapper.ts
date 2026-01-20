@@ -1,43 +1,121 @@
-// import { DtoField } from "./dto";
-// import { Entity } from "./entity";
-// import { EntityProp } from "./entity_prop";
+import { ArgumentError } from "@/error/common";
+import { makeErr } from "../util";
+import { Dto, DtoField } from "./dto";
+import { Entity } from "./entity";
+import { EntityProp } from "./entity_prop";
 
-// export class Context {
+export function dtoMapper(dto: Dto): DtoMapper {
+    const mapper = new Mapper(
+        dto.entity ?? makeErr(() => new ArgumentError(`"dto.entity" must be specified`)), 
+        undefined
+    );
+    for (const field of dto.fields) {
+        mapper.add(field);
+    }
+    return mapper.toDtoMapper();
+}
 
-//     private mapper: Mapper;
+export type DtoMapper = {
 
-//     constructor(entity: Entity) {
-//         this.mapper = new Mapper(entity, undefined);
-//     }
+    readonly entity: Entity;
 
-//     addField(field: )
-// }
+    readonly associatedProp: EntityProp | undefined;
 
-// export class Mapper {
+    readonly fields: ReadonlyArray<DtoMapperField>;
+}
 
-//     private fieldMap = new Map<string, MapperField>();
+export type DtoMapperField = {
 
-//     constructor(
-//         readonly entity: Entity,
-//         readonly associatedProp: EntityProp | undefined
-//     ) {}
+    readonly prop: EntityProp;
 
-//     field(dtoField: DtoField) {
-//         let field = this.fieldMap.get(dtoField.entityProp.name);
-//         if (field != null) {
-//             return field;
-//         }
-//         field = new MapperField(dtoField.entityProp);
-//         this.fieldMap.set(dtoField.entityProp.name, field);
-//         return field;
-//     }
-// };
+    readonly paths: ReadonlyArray<Path>;
 
-// export class MapperField {
+    readonly subMapper: DtoMapper | undefined;
+}
 
-//     constructor(
-//         readonly prop: EntityProp
-//     ) {
+export type Path = string | ReadonlyArray<string>;
 
-//     }
-// }
+class Mapper {
+
+    private fieldMap = new Map<string, MapperField>();
+
+    constructor(
+        readonly entity: Entity,
+        readonly associatedProp: EntityProp | undefined
+    ) {}
+
+    add(dtoField: DtoField) {
+        const field = this._field(dtoField);
+        field.path(dtoField.path);
+        if (dtoField.dto != null) {
+            const subMapper = field.subMapper ?? this;
+            for (const subDtoField of dtoField.dto.fields) {
+                subMapper.add(subDtoField);
+            }
+        }
+    }
+
+    private _field(dtoField: DtoField) {
+        const key = dtoFieldKey(dtoField);
+        let field = this.fieldMap.get(key);
+        if (field == null) {
+            field = new MapperField(dtoField.entityProp);
+            this.fieldMap.set(dtoField.entityProp.name, field);
+        }
+        return field;
+    }
+
+    toDtoMapper(): DtoMapper {
+        return {
+            entity: this.entity,
+            associatedProp: this.associatedProp,
+            fields: Array.from(this.fieldMap.values()).map(f => f.toDtoMapperField())
+        };
+    }
+};
+
+class MapperField {
+
+    readonly subMapper : Mapper | undefined;
+
+    private paths = new Set<string>();
+
+    constructor(
+        readonly prop: EntityProp
+    ) {
+        if (prop.targetEntity == null) {
+            this.subMapper = undefined;
+        } else {
+            this.subMapper = new Mapper(prop.targetEntity, prop);
+        }
+    }
+
+    path(path: string | ReadonlyArray<string>) {
+        const str = typeof path === "string"
+            ? path
+            : path.join("/");
+        this.paths.add(str);
+    }
+
+    toDtoMapperField(): DtoMapperField {
+        const paths = Array.from(this.paths).map(path => {
+            const parts = path.split('/');
+            return parts.length === 1
+                ? parts[0]!!
+                : parts;
+        });
+        return {
+            prop: this.prop,
+            paths,
+            subMapper: this.subMapper?.toDtoMapper()
+        };
+    }
+}
+
+function dtoFieldKey(field: DtoField): string {
+    let key = field.entityProp.toString();
+    if (field.orders != null) {
+        key += JSON.stringify(field.orders);
+    }
+    return key;
+}

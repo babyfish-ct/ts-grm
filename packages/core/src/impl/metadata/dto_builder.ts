@@ -3,7 +3,6 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { Dto, DtoField } from "./dto";
 import { makeErr } from "../util";
-import { dto } from "@/schema/dto";
 
 export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
     const builder = new DtoBuilder(entity);

@@ -1,13 +1,13 @@
 import { AtLeastOne } from "@/dsl/utils";
-import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames, OrderedKeys } from "@/schema/model";
+import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
-import { Dto } from "@/impl/metadata/dto";
 import { createTypedDtoBuilder } from "@/impl/metadata/dto_builder";
 import { Entity } from "@/impl/metadata/entity";
+import { dtoMapper, DtoMapper } from "@/impl/metadata/dto_mapper";
 
 export const dto = { view: viewCreator() };
 
@@ -21,7 +21,7 @@ function viewCreator(): ViewCreator {
     ): View<TModel, Prettify<X>> => {
         const builder = createTypedDtoBuilder(Entity.of(model));
         fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
-        return new View(builder.__unwrap().build());
+        return new View(dtoMapper(builder.__unwrap().build()));
     }
 
     view.nullAsUndefined = <TModel extends AnyModel, X>(
@@ -32,7 +32,7 @@ function viewCreator(): ViewCreator {
     ): View<TModel, Prettify<X>> => {
         const builder = createTypedDtoBuilder(Entity.of(model));
         fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
-        return new View(builder.__unwrap().build());
+        return new View(dtoMapper(builder.__unwrap().build()));
     }
 
     return view as ViewCreator;
@@ -927,5 +927,5 @@ export class View<TModel extends AnyModel, T> {
         view: undefined
     };
 
-    constructor(readonly dto: Dto) {}
+    constructor(readonly mapper: DtoMapper) {}
 }
