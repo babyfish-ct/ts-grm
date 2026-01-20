@@ -14,7 +14,7 @@ export type DtoField = {
 
     readonly path: string | ReadonlyArray<string>;
 
-    readonly entityPath: EntityProp;
+    readonly entityProp: EntityProp;
 
     readonly dto: Dto | undefined;
 
@@ -24,7 +24,5 @@ export type DtoField = {
 
     readonly nullable: boolean;
 
-    readonly implicit: boolean;
-
-    readonly bridgePath: string | ReadonlyArray<string> | undefined;
+    readonly dependency: Dto | undefined;
 };

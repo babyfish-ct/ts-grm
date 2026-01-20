@@ -1,17 +1,17 @@
 import { AUTHOR, BOOK } from "../../model/model";
 import { dto } from "@/schema/dto";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Dto } from "@/impl/metadata/dto";
 
 describe("TestView", () => {
-
+ 
     function dtoJson(dto: Dto): any {
         return {
             entity: dto.entity?.name,
             fields: dto.fields.map(f => {
                 return {
                     path: f.path,
-                    entityPath: f.entityPath.toString(),
+                    entityProp: f.entityProp.toString(),
                     dto: f.dto != null ? dtoJson(f.dto) : undefined,
                     fetchType: f.fetchType,
                     orders: f.orders?.map(o => {
@@ -20,9 +20,7 @@ describe("TestView", () => {
                             desc: o.desc
                         };
                     }),
-                    nullable: f.nullable,
-                    implicit: f.implicit,
-                    bridegePath: f.bridgePath
+                    nullable: f.nullable
                 };
             })
         }
@@ -38,21 +36,18 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "id",
-                    "entityPath": "Book.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.id",
+                    "nullable": false
                 },
                 {
                     "path": "name",
-                    "entityPath": "Book.name",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.name",
+                    "nullable": false
                 },
                 {
                     "path": "edition",
-                    "entityPath": "Book.edition",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.edition",
+                    "nullable": false
                 }
             ]
         });
@@ -70,89 +65,77 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "id",
-                    "entityPath": "Book.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.id",
+                    "nullable": false
                 },
                 {
                     "path": "name",
-                    "entityPath": "Book.name",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.name",
+                    "nullable": false
                 },
                 {
                     "path": "edition",
-                    "entityPath": "Book.edition",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.edition",
+                    "nullable": false
                 },
                 {
                     "path": "store",
-                    "entityPath": "Book.store",
+                    "entityProp": "Book.store",
                     "dto": {
                         "entity": "BookStore",
                         "fields": [
                             {
                                 "path": "id",
-                                "entityPath": "BookStore.id",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "BookStore.id",
+                                "nullable": false
                             },
                             {
                                 "path": "name",
-                                "entityPath": "BookStore.name",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "BookStore.name",
+                                "nullable": false
                             },
                             {
                                 "path": "version",
-                                "entityPath": "BookStore.version",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "BookStore.version",
+                                "nullable": false
                             }
                         ]
                     },
-                    "nullable": true,
-                    "implicit": false
+                    "nullable": true
                 },
                 {
                     "path": "authors",
-                    "entityPath": "Book.authors",
+                    "entityProp": "Book.authors",
                     "dto": {
                         "entity": "Author",
                         "fields": [
                             {
                                 "path": "id",
-                                "entityPath": "Author.id",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "Author.id",
+                                "nullable": false
                             },
                             {
                                 "path": "name",
-                                "entityPath": "Author.name",
+                                "entityProp": "Author.name",
                                 "dto": {
                                     "fields": [
                                         {
                                             "path": "firstName",
-                                            "entityPath": "Author.name.firstName",
-                                            "nullable": false,
-                                            "implicit": false
+                                            "entityProp": "Author.name.firstName",
+                                            "nullable": false
                                         },
                                         {
                                             "path": "lastName",
-                                            "entityPath": "Author.name.lastName",
-                                            "nullable": false,
-                                            "implicit": false
+                                            "entityProp": "Author.name.lastName",
+                                            "nullable": false
                                         }
                                     ]
                                 },
-                                "nullable": false,
-                                "implicit": false
+                                "nullable": false
                             }
                         ]
                     },
-                    "nullable": false,
-                    "implicit": false
+                    "nullable": false
                 }
             ]
         });
@@ -173,64 +156,43 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "id",
-                    "entityPath": "Book.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.id",
+                    "nullable": false
                 },
                 {
                     "path": "name",
-                    "entityPath": "Book.name",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.name",
+                    "nullable": false
                 },
                 {
                     "path": "edition",
-                    "entityPath": "Book.edition",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.edition",
+                    "nullable": false
                 },
                 {
                     "path": "price",
-                    "entityPath": "Book.price",
-                    "nullable": false,
-                    "implicit": false
-                },
-                {
-                    "path": "storeId",
-                    "entityPath": "BookStore.id",
-                    "nullable": true,
-                    "implicit": false,
-                    "bridegePath": "store"
-                },
-                {
-                    "path": "storeName",
-                    "entityPath": "BookStore.name",
-                    "nullable": true,
-                    "implicit": false,
-                    "bridegePath": "store"
+                    "entityProp": "Book.price",
+                    "nullable": false
                 },
                 {
                     "path": "store",
-                    "entityPath": "Book.store",
+                    "entityProp": "Book.store",
                     "dto": {
                         "entity": "BookStore",
                         "fields": [
                             {
-                                "path": "id",
-                                "entityPath": "BookStore.id",
-                                "nullable": false,
-                                "implicit": false
+                                "path": ["..", "storeId"],
+                                "entityProp": "BookStore.id",
+                                "nullable": false
                             },
                             {
-                                "path": "name",
-                                "entityPath": "BookStore.name",
-                                "nullable": false,
-                                "implicit": false
+                                "path": ["..", "storeName"],
+                                "entityProp": "BookStore.name",
+                                "nullable": false
                             }
                         ]
                     },
-                    "nullable": true,
-                    "implicit": true
+                    "nullable": true
                 }
             ]
         });
@@ -249,21 +211,18 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "id",
-                    "entityPath": "Author.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Author.id",
+                    "nullable": false
                 },
                 {
                     "path": "flattenFirstName",
-                    "entityPath": "Author.name.firstName",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Author.name.firstName",
+                    "nullable": false
                 },
                 {
                     "path": "flattenLastName",
-                    "entityPath": "Author.name.lastName",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Author.name.lastName",
+                    "nullable": false
                 }
             ]
         });
@@ -279,27 +238,24 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "id",
-                    "entityPath": "Book.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.id",
+                    "nullable": false
                 },
                 {
                     "path": [
                         "key",
                         "name"
                     ],
-                    "entityPath": "Book.name",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.name",
+                    "nullable": false
                 },
                 {
                     "path": [
                         "key",
                         "edition"
                     ],
-                    "entityPath": "Book.edition",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.edition",
+                    "nullable": false
                 }
             ]
         });
@@ -319,51 +275,45 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "id",
-                    "entityPath": "Book.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.id",
+                    "nullable": false
                 },
                 {
                     "path": [
                         "associations",
                         "authors"
                     ],
-                    "entityPath": "Book.authors",
+                    "entityProp": "Book.authors",
                     "dto": {
                         "entity": "Author",
                         "fields": [
                             {
                                 "path": "id",
-                                "entityPath": "Author.id",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "Author.id",
+                                "nullable": false
                             },
                             {
                                 "path": "name",
-                                "entityPath": "Author.name",
+                                "entityProp": "Author.name",
                                 "dto": {
                                     "fields": [
                                         {
                                             "path": "firstName",
-                                            "entityPath": "Author.name.firstName",
-                                            "nullable": false,
-                                            "implicit": false
+                                            "entityProp": "Author.name.firstName",
+                                            "nullable": false
                                         },
                                         {
                                             "path": "lastName",
-                                            "entityPath": "Author.name.lastName",
-                                            "nullable": false,
-                                            "implicit": false
+                                            "entityProp": "Author.name.lastName",
+                                            "nullable": false
                                         }
                                     ]
                                 },
-                                "nullable": false,
-                                "implicit": false
+                                "nullable": false
                             }
                         ]
                     },
-                    "nullable": false,
-                    "implicit": false
+                    "nullable": false
                 }
             ]
         });
@@ -392,59 +342,52 @@ describe("TestView", () => {
             "fields": [
                 {
                     "path": "bookId",
-                    "entityPath": "Book.id",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.id",
+                    "nullable": false
                 },
                 {
                     "path": [
                         "key",
                         "bookName"
                     ],
-                    "entityPath": "Book.name",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.name",
+                    "nullable": false
                 },
                 {
                     "path": [
                         "key",
                         "bookEdition"
                     ],
-                    "entityPath": "Book.edition",
-                    "nullable": false,
-                    "implicit": false
+                    "entityProp": "Book.edition",
+                    "nullable": false
                 },
                 {
                     "path": [
                         "associations",
                         "authors"
                     ],
-                    "entityPath": "Book.authors",
+                    "entityProp": "Book.authors",
                     "dto": {
                         "entity": "Author",
                         "fields": [
                             {
                                 "path": "id",
-                                "entityPath": "Author.id",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "Author.id",
+                                "nullable": false
                             },
                             {
                                 "path": "flattenFirstName",
-                                "entityPath": "Author.name.firstName",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "Author.name.firstName",
+                                "nullable": false
                             },
                             {
                                 "path": "flattenLastName",
-                                "entityPath": "Author.name.lastName",
-                                "nullable": false,
-                                "implicit": false
+                                "entityProp": "Author.name.lastName",
+                                "nullable": false
                             }
                         ]
                     },
-                    "nullable": false,
-                    "implicit": false
+                    "nullable": false
                 }
             ]
         });

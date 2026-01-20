@@ -3,6 +3,7 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { Dto, DtoField } from "./dto";
 import { makeErr } from "../util";
+import { dto } from "@/schema/dto";
 
 export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
     const builder = new DtoBuilder(entity);
@@ -52,21 +53,27 @@ class DtoBuilder {
             throw new ArgumentError(`Cannot flat the property "${prop.toString()}" 
             because it is neither reference nor embedded property`);
         }
-        const field: DtoField = {
-            ...this.field(prop, fn),
-            implicit: true
-        };
-        for (const nestedField of field.dto!!.fields) {
-            const flattedField: DtoField = {
-                ...nestedField,
-                path: withPrefix(prefix, nestedField.path),
-                bridgePath: prop.targetEntity != null ? prop.name : undefined,
-                nullable: prop.nullable || nestedField.nullable
-            };
-            this.addField(flattedField);
-        }
+        const field: DtoField = this.field(prop, fn);
         if (prop.targetEntity != null) {
-            this.addField(field);
+            const convertedField: DtoField = {
+                ...field,
+                dto: {
+                    ...field.dto!!,
+                    fields: field.dto?.fields.map(f => ({
+                        ...f,
+                        path: withFoldKey("..", withPrefix(prefix, f.path))
+                    })) as ReadonlyArray<DtoField>
+                }
+            };
+            this.addField(convertedField);
+        } else {
+            for (const nestedField of field.dto!!.fields) {
+                const convertedNestedField = {
+                    ...nestedField,
+                    path: withPrefix(prefix, nestedField.path)
+                }
+                this.addField(convertedNestedField);
+            }
         }
         this.lastPropName = undefined;
     }
@@ -160,13 +167,12 @@ class DtoBuilder {
             const childDto = childBuilder.__unwrap().build();
             return {
                 path: prop.name,
-                entityPath: prop,
+                entityProp: prop,
                 dto: childDto,
                 fetchType: undefined,
                 orders: undefined,
                 nullable: prop.nullable,
-                implicit: false,
-                bridgePath: undefined
+                dependency: undefined
             };
         }
         if (prop.props != null) {
@@ -178,13 +184,12 @@ class DtoBuilder {
             const childDto = childBuilder.__unwrap().build();
             return {
                 path: prop.name,
-                entityPath: prop,
+                entityProp: prop,
                 dto: childDto,
                 fetchType: undefined,
                 orders: undefined,
                 nullable: prop.nullable,
-                implicit: false,
-                bridgePath: undefined
+                dependency: undefined
             };
         }
         if (fn != null) {
@@ -195,13 +200,12 @@ class DtoBuilder {
         }
         return {
             path: prop.name,
-            entityPath: prop,
+            entityProp: prop,
             dto: undefined,
             fetchType: undefined,
             orders: undefined,
             nullable: false,
-            implicit: false,
-            bridgePath: undefined
+            dependency: undefined
         };
     }
 
