@@ -5,6 +5,7 @@ import { ModelImpl } from "./model_impl";
 import { dedent } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { makeErr } from "../util";
+import { StateError } from "@/error/common";
 
 export class EntityProp {
 
@@ -26,6 +27,12 @@ export class EntityProp {
 
     private _phase = 0;
 
+    readonly referencedKeyPropName: string | undefined;
+
+    private _referenceKeyProp: EntityProp | undefined;
+
+    private _referenceProp: EntityProp | undefined;
+
     constructor(
         readonly declaringEntity: Entity,
         readonly name: string,
@@ -37,23 +44,24 @@ export class EntityProp {
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this.scalarType = _data.scalarType; 
         this.associationType = _data.associationType;
-        if (_data.props !== undefined) {
+        if (_data.props != null) {
             this.props = this.createProps(_data.props);
         } else {
             this.props = undefined;
         }
-        if (_data.targetModel !== undefined) {
+        if (_data.targetModel != null) {
             const targetModel: ModelImpl<any, any, any, any, any> =
                 typeof _data.targetModel === "function"
                     ? _data.targetModel() as ModelImpl<any, any, any, any, any>
                     : _data.targetModel as ModelImpl<any, any, any, any, any>;
-            if (targetModel === undefined) {
+            if (targetModel == null) {
                 this.raise `The associatied model must be specified`
             }
             this._targetEntity = targetModel.toUnresolvedEntity();
         } else {
             this._targetEntity = undefined;
         }
+        this.referencedKeyPropName = this._referencedKeyPropName();
     }
 
     get targetEntity(): Entity | undefined {
@@ -72,8 +80,16 @@ export class EntityProp {
                 is not initialized`);
     }
 
+    get referenceKeyProp(): EntityProp | undefined {
+        return this._referenceKeyProp;
+    }
+
+    get referenceProp(): EntityProp | undefined {
+        return this._referenceProp;
+    }
+
     private validateData() {
-        if (this._data!!.associationType === undefined) {
+        if (this._data!!.associationType == null) {
             this.validateSimpleData();
         } else {
             this.validateAssociationData();
@@ -82,25 +98,26 @@ export class EntityProp {
 
     private validateSimpleData() {
         const data = this._data;
-        if (data.joinColumns != undefined) {
+        if (data.joinColumns != null) {
             this.raise `The "joinColumns" cannot be specified for non-association property.`;
         }
-        if (data.joinTable !== undefined) {
+        if (data.joinTable != null) {
             this.raise `The "joinTable" cannot be specified for non-association property.`;
         }
-        if (data.orders !== undefined) {
+        if (data.orders != null) {
             this.raise `The "orders" cannot be specified for non-association property.`;
         }
-        if (data.targetModel !== undefined) {
+        if (data.targetModel != null) {
             this.raise `The "targetModel" cannot be specified for non-association property.`;
         }
-        if (data.mappedBy !== undefined) {
+        if (data.mappedBy != null) {
             this.raise `The "mappedBy" cannot be specified for non-association property.`;
         }
-        if (data.scalarType === undefined && data.props === undefined) {
-            this.raise `Either "scalarType" or "props" must be specified for non-association property.`;
+        if (data.scalarType == null && data.props == null && data.reference == null) {
+            this.raise `Either "scalarType", "props", or "reference" 
+            must be specified for non-association property.`;
         }
-        if (data.scalarType !== undefined && data.props != undefined) {
+        if (data.scalarType != null && data.props != null) {
             this.raise `Both "scalarType" and "props" cannot be specified 
             simultaneously for non-association property.`;
         }
@@ -116,29 +133,29 @@ export class EntityProp {
             this.raise `The association type must be 
             "ONE_TO_ONE", "ONE_TO_MANY", "MANY_TO_ONE", or "MANY_TO_MANY".`
         }
-        if (data.scalarType !== undefined) {
+        if (data.scalarType != null) {
             this.raise `The "scalarType" cannot be specified for association property.`;
         }
-        if (data.props !== undefined) {
+        if (data.props != null) {
             this.raise `The "props" cannot be specified for association property.`;
         }
-        if (data.columnName !== undefined) {
+        if (data.columnName != null) {
             this.raise `The "columnName" for association property cannot be specified; 
             please specify either joinColumns or joinTable.`;
         }
-        if (data.joinColumns !== undefined && data.joinTable != undefined) {
+        if (data.joinColumns != null && data.joinTable != null) {
             this.raise `Both "joinColumns" and "joinTable" cannot be specified 
             simultaneously for association property.`;
         }
-        if (data.joinColumns !== undefined && data.mappedBy !== undefined) {
+        if (data.joinColumns != null && data.mappedBy != null) {
             this.raise `Both "joinColumns" and "mappedBy" cannot be specified 
             simultaneously for association property.`;
         }
-        if (data.joinTable !== undefined && data.mappedBy !== undefined) {
+        if (data.joinTable != null && data.mappedBy != null) {
             this.raise `Both "joinTable" and "mappedBy" cannot be specified 
             simultaneously for association property.`;
         }
-        if (data.orders !== undefined && 
+        if (data.orders != null && 
             data.associationType !== "ONE_TO_MANY" && 
             data.associationType !== "MANY_TO_MANY"
         ) {
@@ -165,8 +182,21 @@ export class EntityProp {
         this._resolveTarget(phase);
     }
 
+    private _referencedKeyPropName(): string | undefined {
+        if (this._data.associationType == null || 
+            this._data.associationType === "ONE_TO_MANY" ||
+            this._data.associationType === "MANY_TO_MANY" ||
+            this._data.mappedBy != null ||
+            this._data.joinTable != null
+        ) {
+            return undefined;
+        }
+        return this._data?.joinColumns?.referencedProp ??
+            this._targetEntity!!.idKey;
+    }
+
     private _initOrders() {
-        if (this._data.orders === undefined) {
+        if (this._data.orders == null) {
             this._orders = [];
         } else {
             const orders = new Array<EntityPropOrder>(this._data.orders.length);
@@ -191,11 +221,11 @@ export class EntityProp {
     }
 
     private _initMappedBy() {
-        if (this._data.mappedBy === undefined) {
+        if (this._data.mappedBy == null) {
             return;
         }
         const prop = this._targetEntity?.expanedPropMap.get(this._data.mappedBy);
-        if (prop === undefined) {
+        if (prop == null) {
             throw this.raise `Illegal mappedBy "${this._data.mappedBy}" 
             which deos not exists in target model ${this._targetEntity?.name}`
         }
@@ -218,21 +248,30 @@ export class EntityProp {
     }
 
     private _collectDeeperProps(prefix: string | undefined, map: Map<string, EntityProp>) {
-        if (prefix != undefined) {
+        if (prefix != null) {
             map.set(`${prefix}.${this.name}`, this);
         }
-        if (this.props !== undefined) {
+        if (this.props != null) {
             for (const prop of this.props.values()) {
                 prop._collectDeeperProps(
-                    prefix === undefined ? this.name : `${prefix}.${this.name}`,
+                    prefix == null ? this.name : `${prefix}.${this.name}`,
                     map
                 );
             }
         }
     }
 
+    // @ts-ignore
+    private _setReferenceProp(prop: EntityProp) {
+        if (this._referenceProp != null || prop._referenceKeyProp != null) {
+            throw new StateError("Internal bug");
+        }
+        this._referenceProp = prop;
+        prop._referenceKeyProp = this;
+    }
+
     private raise(strings: TemplateStringsArray, ...values: any[]): never {
-        if (this.parentProp !== undefined) {
+        if (this.parentProp != null) {
             throw new PropError(
                 this.parentProp.declaringEntity.name,
                 `this.parentProp.name.${this.name}`,
@@ -252,10 +291,10 @@ export class EntityProp {
         const resultMap = new Map<string, EntityProp>();
         for (const key in props) {
             const prop = props[key];
-            if (prop === undefined) {
+            if (prop == null) {
                 continue;
             }
-            if (prop.__data.associationType !== undefined) {
+            if (prop.__data.associationType != null) {
                 this.raise `The internal property of an embedded property 
                     cannot be association property.`;
             }

@@ -579,6 +579,7 @@ export type PropData = {
         readonly desc: boolean;
         readonly nulls: OrderNullsType;
     }> | undefined;
+    readonly reference: string | undefined;
 };
 
 export type JoinTableData = {
@@ -614,7 +615,8 @@ const EMPTY_PROP_DEFINTION_DATA: PropData = {
     joinColumns: undefined,
     joinTable: undefined,
     mappedBy: undefined,
-    orders: undefined
+    orders: undefined,
+    reference: undefined,
 }
 
 export type TargetModelOf<TProp> =

@@ -3,7 +3,7 @@ import { AnyModel, Ctor } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { ModelImpl } from "@/impl/metadata/model_impl";
 import { dedent } from "@/error/util";
-import { makeErr } from "../util";
+import { capitalize, makeErr } from "../util";
 
 export class Entity {
 
@@ -39,6 +39,11 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
+    }
+
+    get idKey(): string {
+        return this.superEntity?.idKey ?? this._idKey ?? 
+            makeErr("Internal bug");
     }
 
     get idProp(): EntityProp {
@@ -132,7 +137,50 @@ export class Entity {
                 new EntityProp(this, propName, instance[propName].__data, undefined)
             );
         }
+        this._collectReferenceKeyProps(declaredPropMap);
         return declaredPropMap;
+    }
+
+    private _collectReferenceKeyProps(map: Map<string, EntityProp>) {
+        const newProps: Array<EntityProp> = [];
+        for (const prop of map.values()) {
+            const referencedKeyPropName = prop.referencedKeyPropName;
+            if (referencedKeyPropName == null) {
+                continue;
+            }
+            const newPropName = `${prop.name}${capitalize(referencedKeyPropName)}`
+            if (map.has(newPropName)) {
+                throw new ModelError(
+                    this.name,
+                    dedent `The association "${prop.toString()}" has foreign key, 
+                    so the associated id property "${newPropName}" 
+                    will be defined automatically, you cannot define 
+                    "${newPropName}" mannually`
+                );
+            }
+            const referenceKeyProp = new EntityProp(this, newPropName, {
+                nullity: prop.nullable 
+                    ? prop.inputNonNull
+                        ? "INPUT_NONNULL"
+                        : "NULLABLE"
+                    : "NONNULL",
+                scalarType: undefined,
+                props: undefined,
+                targetModel: undefined,
+                associationType: undefined,
+                columnName: undefined,
+                joinColumns: undefined,
+                joinTable: undefined,
+                mappedBy: undefined,
+                orders: undefined,
+                reference: prop.name
+            }, undefined);
+            (referenceKeyProp as any)._setReferenceProp(prop);
+            newProps.push(referenceKeyProp);
+        }
+        for (const prop of newProps) {
+            map.set(prop.name, prop);
+        }
     }
 
     private _findIdProp(): EntityProp {

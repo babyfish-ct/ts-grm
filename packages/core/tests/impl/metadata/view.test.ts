@@ -48,7 +48,7 @@ describe("TestView", () => {
     it("wideAssociations", () => {
         const view = dto.view(BOOK, $ => $
             .allScalars()
-            .remove("price")
+            .remove("id", "price")
             .store($ => $.allScalars())
             .authors($ => $.id.name())
         );
@@ -56,16 +56,16 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
-                    "prop": "Book.id",
-                    "paths": ["id"]
-                },
-                {
                     "prop": "Book.name",
                     "paths": ["name"]
                 },
                 {
                     "prop": "Book.edition",
                     "paths": ["edition"]
+                },
+                {
+                    "prop": "Book.storeId",
+                    "paths": [] // implicit `Book.storeId` to fetch `Book.store`
                 },
                 {
                     "prop": "Book.store",
@@ -90,6 +90,10 @@ describe("TestView", () => {
                     }
                 },
                 {
+                    "prop": "Book.id",
+                    "paths": [] // Implicit field `Book.id` to fetch `Book.authors`
+                },
+                {
                     "prop": "Book.authors",
                     "paths": ["authors"],
                     "subMapper": {
@@ -101,16 +105,16 @@ describe("TestView", () => {
                                 "paths": ["id"]
                             },
                             {
-                                "prop": "Author.name",
-                                "paths": ["name"]
-                            },
-                            {
                                 "prop": "Author.name.firstName",
-                                "paths": ["firstName"]
+                                "paths": [
+                                    ["name", "firstName"]
+                                ]
                             },
                             {
                                 "prop": "Author.name.lastName",
-                                "paths": ["lastName"]
+                                "paths": [
+                                    ["name", "lastName"]
+                                ]
                             }
                         ]
                     }
@@ -171,16 +175,16 @@ describe("TestView", () => {
                                             "paths": ["id"]
                                         },
                                         {
-                                            "prop": "Author.name",
-                                            "paths": ["name"]
-                                        },
-                                        {
                                             "prop": "Author.name.firstName",
-                                            "paths": ["firstName"]
+                                            "paths": [
+                                                ["name", "firstName"]
+                                            ]
                                         },
                                         {
                                             "prop": "Author.name.lastName",
-                                            "paths": ["lastName"]
+                                            "paths": [
+                                                ["name", "lastName"]
+                                            ]
                                         }
                                     ]
                                 }
@@ -222,6 +226,10 @@ describe("TestView", () => {
                     "paths": ["price"]
                 },
                 {
+                    "prop": "Book.storeId",
+                    "paths": [] // Implicit property `Book.storeId` to fetch `Book.store`
+                },
+                {
                     "prop": "Book.store",
                     "paths": ["store"],
                     "subMapper": {
@@ -247,198 +255,191 @@ describe("TestView", () => {
         });
     });
 
-    // it("flatEmbedded", () => {
-    //     const view = dto.view(AUTHOR, $ => $
-    //         .id
-    //         .flat({
-    //             prop: "name",
-    //             prefix: "flatten"
-    //         })
-    //     );
-    //     expect(dtoJson(view.dto)).toEqual({
-    //         "entity": "Author",
-    //         "fields": [
-    //             {
-    //                 "path": "id",
-    //                 "entityProp": "Author.id",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": "flattenFirstName",
-    //                 "entityProp": "Author.name.firstName",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": "flattenLastName",
-    //                 "entityProp": "Author.name.lastName",
-    //                 "nullable": false
-    //             }
-    //         ]
-    //     });
-    // });
+    it("flatEmbedded", () => {
+        const view = dto.view(AUTHOR, $ => $
+            .id
+            .flat({
+                prop: "name",
+                prefix: "flatten"
+            })
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Author",
+            "fields": [
+                {
+                    "prop": "Author.id",
+                    "paths": ["id"]
+                },
+                {
+                    "prop": "Author.name.firstName",
+                    "paths": ["flattenFirstName"]
+                },
+                {
+                    "prop": "Author.name.lastName",
+                    "paths": ["flattenLastName"]
+                }
+            ]
+        });
+    });
 
-    // it("foldScalars", () => {
-    //     const view = dto.view(BOOK, $ => $
-    //         .id
-    //         .fold("key", $ => $.name.edition)
-    //     );
-    //     expect(dtoJson(view.dto)).toEqual({
-    //         "entity": "Book",
-    //         "fields": [
-    //             {
-    //                 "path": "id",
-    //                 "entityProp": "Book.id",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": [
-    //                     "key",
-    //                     "name"
-    //                 ],
-    //                 "entityProp": "Book.name",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": [
-    //                     "key",
-    //                     "edition"
-    //                 ],
-    //                 "entityProp": "Book.edition",
-    //                 "nullable": false
-    //             }
-    //         ]
-    //     });
-    // });
+    it("foldScalars", () => {
+        const view = dto.view(BOOK, $ => $
+            .id
+            .fold("key", $ => $.name.edition)
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "prop": "Book.id",
+                    "paths": ["id"]
+                },
+                {
+                    "prop": "Book.name",
+                    "paths": [
+                        ["key", "name"]
+                    ]
+                },
+                {
+                    "prop": "Book.edition",
+                    "paths": [
+                        ["key", "edition"]
+                    ]
+                }
+            ]
+        });
+    });
 
-    // it("foldAssociations", () => {
-    //     const view = dto.view(BOOK, $ => $
-    //         .id
-    //         .fold("associations", $ => $
-    //             .authors($ => $
-    //                 .allScalars()
-    //             )
-    //         )
-    //     );
-    //     expect(dtoJson(view.dto)).toEqual({
-    //         "entity": "Book",
-    //         "fields": [
-    //             {
-    //                 "path": "id",
-    //                 "entityProp": "Book.id",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": [
-    //                     "associations",
-    //                     "authors"
-    //                 ],
-    //                 "entityProp": "Book.authors",
-    //                 "dto": {
-    //                     "entity": "Author",
-    //                     "fields": [
-    //                         {
-    //                             "path": "id",
-    //                             "entityProp": "Author.id",
-    //                             "nullable": false
-    //                         },
-    //                         {
-    //                             "path": "name",
-    //                             "entityProp": "Author.name",
-    //                             "dto": {
-    //                                 "fields": [
-    //                                     {
-    //                                         "path": "firstName",
-    //                                         "entityProp": "Author.name.firstName",
-    //                                         "nullable": false
-    //                                     },
-    //                                     {
-    //                                         "path": "lastName",
-    //                                         "entityProp": "Author.name.lastName",
-    //                                         "nullable": false
-    //                                     }
-    //                                 ]
-    //                             },
-    //                             "nullable": false
-    //                         }
-    //                     ]
-    //                 },
-    //                 "nullable": false
-    //             }
-    //         ]
-    //     });
-    // });
+    it("foldAssociations", () => {
+        const view = dto.view(BOOK, $ => $
+            .id
+            .fold("associations", $ => $
+                .authors($ => $
+                    .allScalars()
+                )
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "prop": "Book.id",
+                    "paths": ["id"]
+                },
+                {
+                    "prop": "Book.authors",
+                    "paths": [
+                        ["associations", "authors"]
+                    ],
+                    "subMapper": {
+                        "entity": "Author",
+                        "associatedProp": "Book.authors",
+                        "fields": [
+                            {
+                                "prop": "Author.id",
+                                "paths": ["id"]
+                            },
+                            {
+                                "prop": "Author.name.firstName",
+                                "paths": [
+                                    ["name", "firstName"]
+                                ]
+                            },
+                            {
+                                "prop": "Author.name.lastName",
+                                "paths": [
+                                    ["name", "lastName"]
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        });
+    });
 
-    // it("rename", () => {
-    //     const view = dto.view(BOOK, $ => $
-    //         .id.$as("bookId")
-    //         .fold("key", $ => $
-    //             .name.$as("bookName")
-    //             .edition.$as("bookEdition")
-    //         )
-    //         .fold("associations", $ => $
-    //             .authors($ => $
-    //                 .allScalars()
-    //                 .remove("name")
-    //                 .flat({
-    //                     prop: "name",
-    //                     prefix: "flatten"
-    //                 })
-    //             )
-    //         )
-    //     );
-    //     expect(dtoJson(view.dto)).toEqual({
-    //         "entity": "Book",
-    //         "fields": [
-    //             {
-    //                 "path": "bookId",
-    //                 "entityProp": "Book.id",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": [
-    //                     "key",
-    //                     "bookName"
-    //                 ],
-    //                 "entityProp": "Book.name",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": [
-    //                     "key",
-    //                     "bookEdition"
-    //                 ],
-    //                 "entityProp": "Book.edition",
-    //                 "nullable": false
-    //             },
-    //             {
-    //                 "path": [
-    //                     "associations",
-    //                     "authors"
-    //                 ],
-    //                 "entityProp": "Book.authors",
-    //                 "dto": {
-    //                     "entity": "Author",
-    //                     "fields": [
-    //                         {
-    //                             "path": "id",
-    //                             "entityProp": "Author.id",
-    //                             "nullable": false
-    //                         },
-    //                         {
-    //                             "path": "flattenFirstName",
-    //                             "entityProp": "Author.name.firstName",
-    //                             "nullable": false
-    //                         },
-    //                         {
-    //                             "path": "flattenLastName",
-    //                             "entityProp": "Author.name.lastName",
-    //                             "nullable": false
-    //                         }
-    //                     ]
-    //                 },
-    //                 "nullable": false
-    //             }
-    //         ]
-    //     });
-    // });
+    it("rename", () => {
+        const view = dto.view(BOOK, $ => $
+            .id.$as("bookId")
+            .fold("key", $ => $
+                .name.$as("bookName")
+                .edition.$as("bookEdition")
+            )
+            .fold("associations", $ => $
+                .authors($ => $
+                    .allScalars()
+                    .remove("name")
+                    .flat({
+                        prop: "name",
+                        prefix: "flatten"
+                    }, $ => $
+                        .firstName.$as("fn")
+                        .lastName.$as("ln")
+                    )
+                )
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "prop": "Book.id",
+                    "paths": [
+                        "bookId"
+                    ]
+                },
+                {
+                    "prop": "Book.name",
+                    "paths": [
+                        [
+                            "key",
+                            "bookName"
+                        ]
+                    ]
+                },
+                {
+                    "prop": "Book.edition",
+                    "paths": [
+                        [
+                            "key",
+                            "bookEdition"
+                        ]
+                    ]
+                },
+                {
+                    "prop": "Book.authors",
+                    "paths": [
+                        [
+                            "associations",
+                            "authors"
+                        ]
+                    ],
+                    "subMapper": {
+                        "entity": "Author",
+                        "associatedProp": "Book.authors",
+                        "fields": [
+                            {
+                                "prop": "Author.id",
+                                "paths": [
+                                    "id"
+                                ]
+                            },
+                            {
+                                "prop": "Author.name.firstName",
+                                "paths": [
+                                    "flattenFn"
+                                ]
+                            },
+                            {
+                                "prop": "Author.name.lastName",
+                                "paths": [
+                                    "flattenLn"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        });
+    });
 });

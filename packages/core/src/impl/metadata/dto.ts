@@ -12,7 +12,7 @@ export type Dto = {
 
 export type DtoField = {
 
-    readonly path: string | ReadonlyArray<string>;
+    readonly path: string | ReadonlyArray<string> | undefined;
 
     readonly entityProp: EntityProp;
 

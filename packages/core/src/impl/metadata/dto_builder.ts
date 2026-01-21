@@ -2,7 +2,7 @@ import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { Dto, DtoField } from "./dto";
-import { makeErr } from "../util";
+import { capitalize, makeErr } from "../util";
 
 export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
     const builder = new DtoBuilder(entity);
@@ -60,7 +60,9 @@ class DtoBuilder {
                     ...field.dto!!,
                     fields: field.dto?.fields.map(f => ({
                         ...f,
-                        path: withFoldKey("..", withPrefix(prefix, f.path))
+                        path: f.path != null
+                            ? withFoldKey("..", withPrefix(prefix, f.path))
+                            : undefined
                     })) as ReadonlyArray<DtoField>
                 }
             };
@@ -69,7 +71,9 @@ class DtoBuilder {
             for (const nestedField of field.dto!!.fields) {
                 const convertedNestedField = {
                     ...nestedField,
-                    path: withPrefix(prefix, nestedField.path)
+                    path: nestedField.path != null 
+                        ? withPrefix(prefix, nestedField.path)
+                        : undefined
                 }
                 this.addField(convertedNestedField);
             }
@@ -90,7 +94,9 @@ class DtoBuilder {
         const foldFields = dto.fields.map(f => {
             return {
                 ...f,
-                path: withFoldKey(key, f.path)
+                path: f.path != null 
+                    ? withFoldKey(key, f.path)
+                    : undefined
             };
         });
         for (const foldField of foldFields) {
@@ -111,11 +117,13 @@ class DtoBuilder {
         this.lastPropName = undefined;
     }
 
-    remove(alias: string) {
-        const arr = this.fields;
-        for (let i = arr.length - 1; i >= 0; --i) {
-            if (isMatched(arr[i]!!, alias)) {
-                arr.splice(i, 1);
+    remove(...aliases: string[]) {
+        for (const alias of aliases) {
+            const arr = this.fields;
+            for (let i = arr.length - 1; i >= 0; --i) {
+                if (isMatched(arr[i]!!, alias)) {
+                    arr.splice(i, 1);
+                }
             }
         }
         this.lastPropName = undefined;
@@ -209,13 +217,15 @@ class DtoBuilder {
     }
 
     private addField(field: DtoField) {
-        const key = typeof field.path === "string"
-            ? field.path
-            : field.path.join(".");
-        if (this.addedPaths.has(key)) {
-            throw new StateError(`Cannot add the DTO path "${field.path}"`);
+        if (field.path != null) {
+            const key = typeof field.path === "string"
+                ? field.path
+                : field.path.join(".");
+            if (this.addedPaths.has(key)) {
+                throw new StateError(`Cannot add the DTO path "${field.path}"`);
+            }
+            this.addedPaths.add(key);
         }
-        this.addedPaths.add(key);
         this.fields.push(field);
     }
 }
@@ -252,8 +262,8 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                     return receiver;
                 }
             case "remove":
-                return (alias: string) => {
-                    target.remove(alias);
+                return (...aliases: string[]) => {
+                    target.remove(...aliases);
                     return receiver;
                 }
             case "$as":
@@ -296,15 +306,6 @@ function withPrefix(
     return [`${prefix}${capitalize(path[0]!!)}`, ...path.slice(1, path.length)];
 }
 
-function capitalize(str: string): string {
-    if (str.length === 0) {
-        return str;
-    }
-    const firstChar = String.fromCodePoint(str.codePointAt(0)!);
-    const rest = str.slice(firstChar.length);
-    return firstChar.toUpperCase() + rest;
-}
-
 function withFoldKey(
     key: string, 
     path: string | ReadonlyArray<string>
@@ -320,6 +321,9 @@ function isMatched(
     alias: string
 ): boolean {
     const path = field.path;
+    if (path == null) {
+        return false;
+    }
     if (typeof path === "string") {
         return path === alias;
     }
@@ -331,6 +335,9 @@ function rename(
     alias: string
 ): DtoField {
     const path = field.path;
+    if (path == null) {
+        return field;
+    }
     const newPath = typeof path === "string"
         ? alias
         : [alias, ...path.slice(1, path.length)];

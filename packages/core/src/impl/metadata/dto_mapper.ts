@@ -45,13 +45,54 @@ class Mapper {
     ) {}
 
     add(dtoField: DtoField) {
-        const field = this._field(dtoField);
-        field.path(dtoField.path);
+        this.addImplicitFields(dtoField.entityProp);
+        let field: MapperField | undefined = undefined;
+        if (dtoField.dto == null || dtoField.entityProp.targetEntity != null) {
+            field = this._field(dtoField);
+            field.path(dtoField.path);
+        }
         if (dtoField.dto != null) {
-            const subMapper = field.subMapper ?? this;
-            for (const subDtoField of dtoField.dto.fields) {
-                subMapper.add(subDtoField);
+            if (field != null) { // Association
+                for (const subDtoField of dtoField.dto.fields) {
+                    field.subMapper!!.add(subDtoField);
+                }
+            } else { // Embedded
+                for (const subDtoField of dtoField.dto.fields) {
+                    this.add({
+                        ...subDtoField,
+                        path: embeddedPath(dtoField.path, subDtoField.path)
+                    });
+                }
             }
+        }
+    }
+
+    addImplicitFields(prop: EntityProp) {
+        const referenceKeyProp = prop.referenceKeyProp;
+        if (referenceKeyProp != null) {
+            const newDtoField: DtoField = {
+                entityProp: referenceKeyProp,
+                path: undefined,
+                dto: undefined,
+                fetchType: undefined,
+                orders: undefined,
+                nullable: referenceKeyProp.nullable,
+                dependency: undefined
+            };
+            this._field(newDtoField);
+        } else if (prop.targetEntity != null) {
+            let keyProp = prop.declaringEntity.idProp;
+            // TODO
+            const newDtoField: DtoField = {
+                entityProp: keyProp,
+                path: undefined,
+                dto: undefined,
+                fetchType: undefined,
+                orders: undefined,
+                nullable: keyProp.nullable,
+                dependency: undefined
+            };
+            this._field(newDtoField);
         }
     }
 
@@ -60,7 +101,7 @@ class Mapper {
         let field = this.fieldMap.get(key);
         if (field == null) {
             field = new MapperField(dtoField.entityProp);
-            this.fieldMap.set(dtoField.entityProp.name, field);
+            this.fieldMap.set(key, field);
         }
         return field;
     }
@@ -90,11 +131,13 @@ class MapperField {
         }
     }
 
-    path(path: string | ReadonlyArray<string>) {
-        const str = typeof path === "string"
-            ? path
-            : path.join("/");
-        this.paths.add(str);
+    path(path: string | ReadonlyArray<string> | undefined) {
+        if (path != null) {
+            const str = typeof path === "string"
+                ? path
+                : path.join("/");
+            this.paths.add(str);
+        }
     }
 
     toDtoMapperField(): DtoMapperField {
@@ -118,4 +161,16 @@ function dtoFieldKey(field: DtoField): string {
         key += JSON.stringify(field.orders);
     }
     return key;
+}
+
+function embeddedPath(
+    path1: string | ReadonlyArray<string> | undefined,
+    path2: string | ReadonlyArray<string> | undefined
+): ReadonlyArray<string> | undefined {
+    if (path1 == null || path2 == null) {
+        return undefined;
+    }
+    const arr1 = typeof path1 === "string" ? [path1] : path1;
+    const arr2 = typeof path2 === "string" ? [path2] : path2;
+    return [...arr1, ...arr2];
 }
