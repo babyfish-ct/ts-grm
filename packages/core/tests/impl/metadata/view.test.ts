@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DtoMapper } from "@/impl/metadata/dto_mapper";
 import { dto } from "@/schema/dto";
-import { BOOK, AUTHOR, BOOK_STORE } from "../../model/model";
+import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE } from "../../model/model";
 
 describe("TestView", () => {
  
@@ -231,7 +231,7 @@ describe("TestView", () => {
                 },
                 {
                     "prop": "Book.store",
-                    "paths": ["store"],
+                    "paths": [], // Implicit property because of flatten operation.
                     "subMapper": {
                         "entity": "BookStore",
                         "associatedProp": "Book.store",
@@ -420,21 +420,92 @@ describe("TestView", () => {
                         "fields": [
                             {
                                 "prop": "Author.id",
-                                "paths": [
-                                    "id"
-                                ]
+                                "paths": ["id"]
                             },
                             {
                                 "prop": "Author.name.firstName",
-                                "paths": [
-                                    "flattenFn"
-                                ]
+                                "paths": ["flattenFn"]
                             },
                             {
                                 "prop": "Author.name.lastName",
+                                "paths": ["flattenLn"]
+                            }
+                        ]
+                    }
+                }
+            ]
+        });
+    });
+
+    it("deepFlat", () => {
+        const view = dto.view(TREE_NODE, $ => $
+            .allScalars()
+            .flat({prop: "parentNode", prefix: "parent"}, $ => $
+                .allScalars()
+                .flat({prop: "parentNode", prefix: "grand"}, $ => $
+                    .allScalars()
+                )
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "TreeNode",
+            "fields": [
+                {
+                    "prop": "TreeNode.id",
+                    "paths": ["id"]
+                },
+                {
+                    "prop": "TreeNode.name",
+                    "paths": ["name"]
+                },
+                {
+                    "prop": "TreeNode.parentNodeId",
+                    "paths": []
+                },
+                {
+                    "prop": "TreeNode.parentNode",
+                    "paths": [],
+                    "subMapper": {
+                        "entity": "TreeNode",
+                        "associatedProp": "TreeNode.parentNode",
+                        "fields": [
+                            {
+                                "prop": "TreeNode.id",
                                 "paths": [
-                                    "flattenLn"
+                                    ["..", "parentId"]
                                 ]
+                            },
+                            {
+                                "prop": "TreeNode.name",
+                                "paths": [
+                                    ["..", "parentName"]
+                                ]
+                            },
+                            {
+                                "prop": "TreeNode.parentNodeId",
+                                "paths": []
+                            },
+                            {
+                                "prop": "TreeNode.parentNode",
+                                "paths": [],
+                                "subMapper": {
+                                    "entity": "TreeNode",
+                                    "associatedProp": "TreeNode.parentNode",
+                                    "fields": [
+                                        {
+                                            "prop": "TreeNode.id",
+                                            "paths": [
+                                                ["..", "..", "parentGrandId"]
+                                            ]
+                                        },
+                                        {
+                                            "prop": "TreeNode.name",
+                                            "paths": [
+                                                ["..", "..", "parentGrandName"]
+                                            ]
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     }

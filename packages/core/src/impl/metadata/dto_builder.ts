@@ -56,15 +56,8 @@ class DtoBuilder {
         if (prop.targetEntity != null) {
             const convertedField: DtoField = {
                 ...field,
-                dto: {
-                    ...field.dto!!,
-                    fields: field.dto?.fields.map(f => ({
-                        ...f,
-                        path: f.path != null
-                            ? withFoldKey("..", withPrefix(prefix, f.path))
-                            : undefined
-                    })) as ReadonlyArray<DtoField>
-                }
+                path: undefined,
+                dto: flattenDto(field.dto, prefix, 0)
             };
             this.addField(convertedField);
         } else {
@@ -345,4 +338,56 @@ function rename(
         ...field,
         path: newPath
     };
+}
+
+function flattenDto(
+    dto: Dto | undefined, 
+    prefix: string,
+    depth: number
+): Dto | undefined {
+    if (dto == null) {
+        return undefined
+    }
+    return {
+        ...dto,
+        fields: dto.fields.map(field => {
+            return {
+                ...field,
+                path: flattenPath(field.path, prefix, depth),
+                dto: field.dto != null && (
+                    field.entityProp.associationType === "MANY_TO_ONE" 
+                        || field.entityProp.associationType === "ONE_TO_MANY"
+                    )
+                    ? flattenDto(field.dto, prefix, depth + 1)
+                    : field.dto
+            };
+        })
+    };
+}
+
+function flattenPath(
+    path: string | ReadonlyArray<string> | undefined,
+    prefix: string,
+    depth: number
+): string | ReadonlyArray<string> | undefined {
+    if (path == null) {
+        return undefined;
+    }
+    const arr = typeof path === "string" ? [path] : path;
+    if (arr.length < depth) {
+        return path;
+    }
+    let matchedCount = 0;
+    for (let i = 0; i < depth; i++) {
+        if (arr[i] !== "..") {
+            break;
+        }
+        matchedCount++;
+    }
+    if (matchedCount !== depth) {
+        return path;
+    }
+    const finalPath = ["..", ...arr];
+    finalPath[matchedCount + 1] = `${prefix}${capitalize(finalPath[matchedCount + 1]!!)}`;
+    return finalPath;
 }
