@@ -15,7 +15,8 @@ describe("TestView", () => {
                     paths: f.paths,
                     subMapper: f.subMapper != null
                         ? mapperJson(f.subMapper)
-                        : undefined
+                        : undefined,
+                    recursiveDepth: f.recursiveDepth
                 };
             })
         }
@@ -513,4 +514,39 @@ describe("TestView", () => {
             ]
         });
     });
+
+    it("recursive", () => {
+        const view = dto.view(TREE_NODE, $ => $
+            .name
+            .recursive("parentNode")
+            .recursive("childNodes")
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "TreeNode",
+            "fields": [
+                {
+                    "prop": "TreeNode.name",
+                    "paths": ["name"]
+                },
+                {
+                    "prop": "TreeNode.parentNodeId",
+                    "paths": [] // Implicit field to fetch `TreeNode.parentNode`
+                },
+                {
+                    "prop": "TreeNode.parentNode",
+                    "paths": ["parentNode"],
+                    "recursiveDepth": -1 // Unlimited depth
+                },
+                {
+                    "prop": "TreeNode.id",
+                    "paths": [] // Implict field to fetch `TreeNode.childNodes`
+                },
+                {
+                    "prop": "TreeNode.childNodes",
+                    "paths": ["childNodes"],
+                    "recursiveDepth": -1 // Unlimited depth
+                }
+            ]
+        });
+    })
 });

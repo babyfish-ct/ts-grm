@@ -40,7 +40,7 @@ class DtoBuilder {
 
     add(prop: EntityProp, fn?: TypedDtoBuilderFn) {
         const field = this.field(prop, fn);
-        this.addField(field);
+        this._addField(field);
         this.lastPropName = prop.name;
     }
 
@@ -59,7 +59,7 @@ class DtoBuilder {
                 path: undefined,
                 dto: flattenDto(field.dto, prefix, 0)
             };
-            this.addField(convertedField);
+            this._addField(convertedField);
         } else {
             for (const nestedField of field.dto!!.fields) {
                 const convertedNestedField = {
@@ -68,7 +68,7 @@ class DtoBuilder {
                         ? withPrefix(prefix, nestedField.path)
                         : undefined
                 }
-                this.addField(convertedNestedField);
+                this._addField(convertedNestedField);
             }
         }
         this.lastPropName = undefined;
@@ -93,7 +93,7 @@ class DtoBuilder {
             };
         });
         for (const foldField of foldFields) {
-            this.addField(foldField);
+            this._addField(foldField);
         }
         this.lastPropName = undefined;
     }
@@ -122,6 +122,44 @@ class DtoBuilder {
         this.lastPropName = undefined;
     }
 
+    recursive(options: RecursiveOptions) {
+        const propName = typeof options === "string"
+            ? options
+            : options.prop;
+        const prop = this.prop(propName);
+        const alias = typeof options === "string" 
+            ? propName
+            : options.alias ?? propName;
+        const depth = typeof options === "string"
+            ? -1
+            : options.depth ?? -1;
+        if (depth !== -1 && depth < 1) {
+            throw new ArgumentError(`The recursive depth must be at least 1`);
+        }
+        if (!prop.isRecursive) {
+            throw new ArgumentError(`The property ${prop.toString()} is not recursive`);
+        }
+        for (const field of this.fields) {
+            if (field.entityProp === prop) {
+                throw new StateError(
+                    `Cannot fetch the property ${prop.toString()} recursively 
+                    because annother dto field fetches the association unrecursively`
+                );
+            }
+        }
+        const field: DtoField = {
+            path: alias,
+            entityProp: prop,
+            dto: undefined,
+            fetchType: undefined,
+            orders: undefined,
+            recursiveDepth: depth,
+            nullable: prop.nullable,
+            dependency: undefined
+        };
+        this._addField(field);
+    }
+
     $as(alias: string) {
         if (this.lastPropName == null) {
             throw new StateError(`"$as" function cannot be invoked because there is no last property`);
@@ -139,7 +177,7 @@ class DtoBuilder {
             renamedFields.unshift(rename(field, alias));
         }
         for (const renamedField of renamedFields) {
-            this.addField(renamedField);
+            this._addField(renamedField);
         }
         this.lastPropName = alias;
     }
@@ -171,6 +209,7 @@ class DtoBuilder {
                 dto: childDto,
                 fetchType: undefined,
                 orders: undefined,
+                recursiveDepth: undefined,
                 nullable: prop.nullable,
                 dependency: undefined
             };
@@ -188,6 +227,7 @@ class DtoBuilder {
                 dto: childDto,
                 fetchType: undefined,
                 orders: undefined,
+                recursiveDepth: undefined,
                 nullable: prop.nullable,
                 dependency: undefined
             };
@@ -204,12 +244,13 @@ class DtoBuilder {
             dto: undefined,
             fetchType: undefined,
             orders: undefined,
+            recursiveDepth: undefined,
             nullable: false,
             dependency: undefined
         };
     }
 
-    private addField(field: DtoField) {
+    private _addField(field: DtoField) {
         if (field.path != null) {
             const key = typeof field.path === "string"
                 ? field.path
@@ -257,6 +298,11 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
             case "remove":
                 return (...aliases: string[]) => {
                     target.remove(...aliases);
+                    return receiver;
+                }
+            case "recursive":
+                return (options: RecursiveOptions) => {
+                    target.recursive(options);
                     return receiver;
                 }
             case "$as":
@@ -391,3 +437,9 @@ function flattenPath(
     finalPath[matchedCount + 1] = `${prefix}${capitalize(finalPath[matchedCount + 1]!!)}`;
     return finalPath;
 }
+
+type RecursiveOptions = string | {
+    readonly prop: string,
+    readonly alias?: string | null | undefined,
+    readonly depth?: number | null | undefined
+};

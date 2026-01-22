@@ -31,6 +31,8 @@ export type DtoMapperField = {
     readonly paths: ReadonlyArray<Path>;
 
     readonly subMapper: DtoMapper | undefined;
+
+    readonly recursiveDepth: number | undefined;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -76,6 +78,7 @@ class Mapper {
                 dto: undefined,
                 fetchType: undefined,
                 orders: undefined,
+                recursiveDepth: undefined,
                 nullable: referenceKeyProp.nullable,
                 dependency: undefined
             };
@@ -89,6 +92,7 @@ class Mapper {
                 dto: undefined,
                 fetchType: undefined,
                 orders: undefined,
+                recursiveDepth: undefined,
                 nullable: keyProp.nullable,
                 dependency: undefined
             };
@@ -100,7 +104,7 @@ class Mapper {
         const key = dtoFieldKey(dtoField);
         let field = this.fieldMap.get(key);
         if (field == null) {
-            field = new MapperField(dtoField.entityProp);
+            field = new MapperField(dtoField.entityProp, dtoField.recursiveDepth);
             this.fieldMap.set(key, field);
         }
         return field;
@@ -122,9 +126,10 @@ class MapperField {
     private paths = new Set<string>();
 
     constructor(
-        readonly prop: EntityProp
+        readonly prop: EntityProp,
+        readonly recursiveDepth: number | undefined
     ) {
-        if (prop.targetEntity == null) {
+        if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMapper = undefined;
         } else {
             this.subMapper = new Mapper(prop.targetEntity, prop);
@@ -150,7 +155,8 @@ class MapperField {
         return {
             prop: this.prop,
             paths,
-            subMapper: this.subMapper?.toDtoMapper()
+            subMapper: this.subMapper?.toDtoMapper(),
+            recursiveDepth: this.recursiveDepth
         };
     }
 }

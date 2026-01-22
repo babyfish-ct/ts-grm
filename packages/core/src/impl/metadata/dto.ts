@@ -22,6 +22,8 @@ export type DtoField = {
 
     readonly orders: ReadonlyArray<EntityPropOrder> | undefined;
 
+    readonly recursiveDepth: number | undefined;
+
     readonly nullable: boolean;
 
     readonly dependency: Dto | undefined;

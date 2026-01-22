@@ -88,6 +88,15 @@ export class EntityProp {
         return this._referenceProp;
     }
 
+    get isRecursive(): boolean {
+        for (let targetEntity = this.targetEntity; targetEntity != null; targetEntity = targetEntity.superEntity) {
+            if (targetEntity === this.declaringEntity) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private validateData() {
         if (this._data!!.associationType == null) {
             this.validateSimpleData();
