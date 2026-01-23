@@ -65,7 +65,7 @@ class Mapper {
         try {
             this._addImplicitFields(dtoField.entityProp);
         } finally {
-            if (this.dependencyWriter.indices!!.length !== 0) {
+            if (this.dependencyWriter.indices!.length !== 0) {
                 dependencies = this.dependencyWriter.indices;
             }
             this.dependencyWriter = this.dependencyWriter.parent;
@@ -104,7 +104,7 @@ class Mapper {
         if (dtoField.dto != null) {
             if (field != null) { // Association
                 for (const subDtoField of dtoField.dto.fields) {
-                    field.subMapper!!._add(subDtoField, mapPath);
+                    field.subMapper!._add(subDtoField, mapPath);
                 }
             } else { // Embedded
                 for (const subDtoField of dtoField.dto.fields) {
@@ -173,7 +173,7 @@ class MapperField {
         const paths = Array.from(this.paths).map(path => {
             const parts = path.split('/');
             return parts.length === 1
-                ? parts[0]!!
+                ? parts[0]!
                 : parts;
         });
         return {

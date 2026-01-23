@@ -35,12 +35,12 @@ describe("EntityTest", () => {
         expect(storeDotBooks.oppositeProp).toEqual(bookDotStore);
         expect(storeDotBooks.orders).toEqual([
             { 
-                prop: paperBookEntity.superEntity!!.expanedPropMap.get("name"),
+                prop: paperBookEntity.superEntity!.expanedPropMap.get("name"),
                 desc: false,
                 nulls: "UNSPECIFIED"
             },
             { 
-                prop: paperBookEntity.superEntity!!.expanedPropMap.get("edition"),
+                prop: paperBookEntity.superEntity!.expanedPropMap.get("edition"),
                 desc: true,
                 nulls: "UNSPECIFIED"
             }
@@ -76,7 +76,7 @@ describe("EntityTest", () => {
             makeErr(`No property named "orderId"`);
         expect(order.referenceKeyProp).toEqual(orderId);
         expect(orderId.referenceProp).toEqual(order);
-        expect(Array.from(orderId.props!!.keys())).toEqual(["x", "y"]);
+        expect(Array.from(orderId.props!.keys())).toEqual(["x", "y"]);
         expect(Array.from(orderItemEntity.allPropMap.keys())).toEqual([
             "id",
             "order",

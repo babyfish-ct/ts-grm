@@ -113,7 +113,7 @@ export class EntityProp {
     }
 
     private validateData() {
-        if (this._data!!.associationType == null) {
+        if (this._data!.associationType == null) {
             this.validateSimpleData();
         } else {
             this.validateAssociationData();
@@ -148,7 +148,7 @@ export class EntityProp {
     }
 
     private validateAssociationData() {
-        const data = this._data!!;
+        const data = this._data!;
         if (data.associationType !== "ONE_TO_ONE" &&
             data.associationType !== "ONE_TO_MANY" &&
             data.associationType !== "MANY_TO_ONE" &&
@@ -219,7 +219,7 @@ export class EntityProp {
             return undefined;
         }
         return this._data?.joinColumns?.referencedProp ??
-            this._targetEntity!!.idKey;
+            this._targetEntity!.idKey;
     }
 
     private _initOrders() {
@@ -236,7 +236,7 @@ export class EntityProp {
                 if (paths.has(ord.path)) {
                     this.raise `Duplicated order paths "${path}"`
                 }
-                const prop = this._targetEntity!!.expanedPropMap.get(path);
+                const prop = this._targetEntity!.expanedPropMap.get(path);
                 if (prop == null) {
                     throw this.raise `Illegal order path "${path}" 
                     which deos not exists in target model ${this._targetEntity?.name}`
@@ -262,8 +262,8 @@ export class EntityProp {
             its target model is not this model`
         }
         // TODO 
-        this._oppositeProp = prop!!;
-        prop!!._oppositeProp = this;
+        this._oppositeProp = prop!;
+        prop!._oppositeProp = this;
     }
 
     private _resolveTarget(phase: number) {
@@ -276,9 +276,9 @@ export class EntityProp {
             return;
         }
         const keyProp = referenceProp
-            ._targetEntity!!
+            ._targetEntity!
             .allPropMap
-            .get(referenceProp._referencedTargetKeyPropName()!!)!!;
+            .get(referenceProp._referencedTargetKeyPropName()!)!;
         this._referencedTargetKeyProp = keyProp;
         this._scalarType = keyProp._scalarType;
         this._props = keyProp._props;

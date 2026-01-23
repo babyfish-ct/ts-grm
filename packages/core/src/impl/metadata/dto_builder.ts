@@ -61,7 +61,7 @@ class DtoBuilder {
             };
             this._addField(convertedField);
         } else {
-            for (const nestedField of field.dto!!.fields) {
+            for (const nestedField of field.dto!.fields) {
                 const convertedNestedField = {
                     ...nestedField,
                     path: nestedField.path != null 
@@ -114,7 +114,7 @@ class DtoBuilder {
         for (const alias of aliases) {
             const arr = this.fields;
             for (let i = arr.length - 1; i >= 0; --i) {
-                if (isMatched(arr[i]!!, alias)) {
+                if (isMatched(arr[i]!, alias)) {
                     arr.splice(i, 1);
                 }
             }
@@ -170,10 +170,10 @@ class DtoBuilder {
         const arr = this.fields;
         const renamedFields: Array<DtoField> = [];
         for (let i = arr.length - 1; i >= 0; --i) {
-            if (!isMatched(arr[i]!!, this.lastPropName)) {
+            if (!isMatched(arr[i]!, this.lastPropName)) {
                 continue;
             }
-            const field = arr.splice(i, 1)[0]!!;
+            const field = arr.splice(i, 1)[0]!;
             renamedFields.unshift(rename(field, alias));
         }
         for (const renamedField of renamedFields) {
@@ -342,7 +342,7 @@ function withPrefix(
     if (typeof path === "string") {
         return `${prefix}${capitalize(path)}`;
     }
-    return [`${prefix}${capitalize(path[0]!!)}`, ...path.slice(1, path.length)];
+    return [`${prefix}${capitalize(path[0]!)}`, ...path.slice(1, path.length)];
 }
 
 function withFoldKey(
@@ -434,7 +434,7 @@ function flattenPath(
         return path;
     }
     const finalPath = ["..", ...arr];
-    finalPath[matchedCount + 1] = `${prefix}${capitalize(finalPath[matchedCount + 1]!!)}`;
+    finalPath[matchedCount + 1] = `${prefix}${capitalize(finalPath[matchedCount + 1]!)}`;
     return finalPath;
 }
 

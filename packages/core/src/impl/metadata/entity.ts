@@ -48,7 +48,7 @@ export class Entity {
 
     get idProp(): EntityProp {
         this.resolve(1);
-        return this._idProp!!;
+        return this._idProp!;
     }
 
     get declaredPropMap(): ReadonlyMap<string, EntityProp> {
@@ -225,7 +225,7 @@ export class Entity {
             if (prop.props !== undefined) {
                 expendedPropMap = new Map<string, EntityProp>(this.allPropMap);
             }
-            prop.collectDeeperProps(expendedPropMap!!);
+            prop.collectDeeperProps(expendedPropMap!);
         }
         return expendedPropMap !== undefined ? expendedPropMap : this.allPropMap;
     }
