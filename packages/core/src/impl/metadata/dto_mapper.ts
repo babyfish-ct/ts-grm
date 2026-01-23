@@ -34,6 +34,8 @@ export type DtoMapperField = {
     readonly subMapper: DtoMapper | undefined;
 
     readonly recursiveDepth: number | undefined;
+
+    readonly dependencies: ReadonlyArray<number> | undefined;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -41,6 +43,10 @@ export type Path = string | ReadonlyArray<string>;
 class Mapper {
 
     private fieldMap = new Map<string, MapperField>();
+
+    private dependencyWriter: DepenencyWriter | undefined = undefined;
+
+    private dependencyReader: DependencyReader | undefined = undefined;
 
     constructor(
         readonly entity: Entity,
@@ -52,8 +58,25 @@ class Mapper {
     }
     
     private _add(dtoField: DtoField, mapPath: boolean) {
-        this._addImplicitFields(dtoField.entityProp);
-        this._addImpl(dtoField, mapPath);
+        
+        let dependencies: ReadonlyArray<number> | undefined = undefined;
+
+        this.dependencyWriter = { indices: [], parent: this.dependencyWriter };
+        try {
+            this._addImplicitFields(dtoField.entityProp);
+        } finally {
+            if (this.dependencyWriter.indices!!.length !== 0) {
+                dependencies = this.dependencyWriter.indices;
+            }
+            this.dependencyWriter = this.dependencyWriter.parent;
+        }
+
+        this.dependencyReader = { indices: dependencies, parent: this.dependencyReader };
+        try {
+            this._addImpl(dtoField, mapPath);
+        } finally {
+            this.dependencyReader = this.dependencyReader?.parent;
+        }
     }
 
     private _addImplicitFields(prop: EntityProp) {
@@ -73,6 +96,9 @@ class Mapper {
             field = this._field(dtoField);
             if (mapPath) {
                 field.path(dtoField.path);
+            }
+            if (this.dependencyWriter != null) {
+                this.dependencyWriter.indices.push(field.index);
             }
         }
         if (dtoField.dto != null) {
@@ -95,7 +121,12 @@ class Mapper {
         const key = dtoFieldKey(dtoField);
         let field = this.fieldMap.get(key);
         if (field == null) {
-            field = new MapperField(dtoField.entityProp, dtoField.recursiveDepth);
+            field = new MapperField(
+                this.fieldMap.size, 
+                dtoField.entityProp, 
+                dtoField.recursiveDepth,
+                this.dependencyReader?.indices
+            );
             this.fieldMap.set(key, field);
         }
         return field;
@@ -117,8 +148,10 @@ class MapperField {
     private paths = new Set<string>();
 
     constructor(
+        readonly index: number,
         readonly prop: EntityProp,
-        readonly recursiveDepth: number | undefined
+        readonly recursiveDepth: number | undefined,
+        readonly dependies: ReadonlyArray<number> | undefined
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMapper = undefined;
@@ -147,7 +180,8 @@ class MapperField {
             prop: this.prop,
             paths,
             subMapper: this.subMapper?.toDtoMapper(),
-            recursiveDepth: this.recursiveDepth
+            recursiveDepth: this.recursiveDepth,
+            dependencies: this.dependies
         };
     }
 }
@@ -170,4 +204,13 @@ function embeddedPath(
     const arr1 = typeof path1 === "string" ? [path1] : path1;
     const arr2 = typeof path2 === "string" ? [path2] : path2;
     return [...arr1, ...arr2];
+}
+type DepenencyWriter = {
+    indices: Array<number>;
+    parent: DepenencyWriter | undefined;
+}
+
+type DependencyReader = {
+    indices: ReadonlyArray<number> | undefined;
+    parent: DependencyReader | undefined;
 }

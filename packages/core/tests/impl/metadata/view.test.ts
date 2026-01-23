@@ -16,7 +16,8 @@ describe("TestView", () => {
                     subMapper: f.subMapper != null
                         ? mapperJson(f.subMapper)
                         : undefined,
-                    recursiveDepth: f.recursiveDepth
+                    recursiveDepth: f.recursiveDepth,
+                    dependencies: f.dependencies
                 };
             })
         }
@@ -69,6 +70,7 @@ describe("TestView", () => {
                     "paths": [] // implicit `Book.storeId` to fetch `Book.store`
                 },
                 {
+                    "dependencies": [2],
                     "prop": "Book.store",
                     "paths": ["store"],
                     "subMapper": {
@@ -95,6 +97,7 @@ describe("TestView", () => {
                     "paths": [] // Implicit field `Book.id` to fetch `Book.authors`
                 },
                 {
+                    "dependencies": [4],
                     "prop": "Book.authors",
                     "paths": ["authors"],
                     "subMapper": {
@@ -150,6 +153,7 @@ describe("TestView", () => {
                     "paths": ["name"]
                 },
                 {
+                    "dependencies": [0],
                     "prop": "BookStore.books",
                     "paths": ["books"],
                     "subMapper": {
@@ -165,6 +169,7 @@ describe("TestView", () => {
                                 "paths": ["name"]
                             },
                             {
+                                "dependencies": [0],
                                 "prop": "Book.authors",
                                 "paths": ["authors"],
                                 "subMapper": {
@@ -231,6 +236,7 @@ describe("TestView", () => {
                     "paths": [] // Implicit property `Book.storeId` to fetch `Book.store`
                 },
                 {
+                    "dependencies": [4],
                     "prop": "Book.store",
                     "paths": [], // Implicit property because of flatten operation.
                     "subMapper": {
@@ -328,6 +334,7 @@ describe("TestView", () => {
                     "paths": ["id"]
                 },
                 {
+                    "dependencies": [0],
                     "prop": "Book.authors",
                     "paths": [
                         ["associations", "authors"]
@@ -408,6 +415,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "dependencies": [0],
                     "prop": "Book.authors",
                     "paths": [
                         [
@@ -464,6 +472,7 @@ describe("TestView", () => {
                     "paths": []
                 },
                 {
+                    "dependencies": [2],
                     "prop": "TreeNode.parentNode",
                     "paths": [],
                     "subMapper": {
@@ -487,6 +496,7 @@ describe("TestView", () => {
                                 "paths": []
                             },
                             {
+                                "dependencies": [2],
                                 "prop": "TreeNode.parentNode",
                                 "paths": [],
                                 "subMapper": {
@@ -537,6 +547,7 @@ describe("TestView", () => {
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
+                    "dependencies": [0, 1, 2],
                     "prop": "OrderItem.order",
                     "paths": [
                         "order"
@@ -587,6 +598,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "dependencies": [0, 1, 2],
                     "prop": "OrderItem.order",
                     "paths": [
                         "order"
@@ -635,6 +647,7 @@ describe("TestView", () => {
                     "paths": [] // Implicit property to fetch `OrderItem.order`
                 },
                 {
+                    "dependencies": [2, 0, 1],
                     "prop": "OrderItem.order",
                     "paths": [
                         "order"
@@ -674,6 +687,7 @@ describe("TestView", () => {
                     "paths": [] // Implicit field to fetch `TreeNode.parentNode`
                 },
                 {
+                    "dependencies": [1],
                     "prop": "TreeNode.parentNode",
                     "paths": ["parentNode"],
                     "recursiveDepth": -1 // Unlimited depth
@@ -683,6 +697,7 @@ describe("TestView", () => {
                     "paths": [] // Implict field to fetch `TreeNode.childNodes`
                 },
                 {
+                    "dependencies": [3],
                     "prop": "TreeNode.childNodes",
                     "paths": ["childNodes"],
                     "recursiveDepth": -1 // Unlimited depth
