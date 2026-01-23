@@ -105,6 +105,7 @@ export class Entity {
                     for (const prop of this.declaredPropMap.values()) {
                         prop.resolve(2);
                     }
+                    this._addExpandedReferencedTargetKeyProps();
                     break;
             }
         } catch (err) {
@@ -144,11 +145,11 @@ export class Entity {
     private _collectReferenceKeyProps(map: Map<string, EntityProp>) {
         const newProps: Array<EntityProp> = [];
         for (const prop of map.values()) {
-            const referencedKeyPropName = prop.referencedKeyPropName;
-            if (referencedKeyPropName == null) {
+            const referencedTargetKeyPropName = prop.referencedTargetKeyPropName;
+            if (referencedTargetKeyPropName == null) {
                 continue;
             }
-            const newPropName = `${prop.name}${capitalize(referencedKeyPropName)}`
+            const newPropName = `${prop.name}${capitalize(referencedTargetKeyPropName)}`
             if (map.has(newPropName)) {
                 throw new ModelError(
                     this.name,
@@ -227,6 +228,21 @@ export class Entity {
             prop.collectDeeperProps(expendedPropMap!!);
         }
         return expendedPropMap !== undefined ? expendedPropMap : this.allPropMap;
+    }
+
+    private _addExpandedReferencedTargetKeyProps() {
+        for (const prop of this.allPropMap.values()) {
+            const targetKeyProp = prop.referencedTargetKeyProp;
+            if (targetKeyProp != null && targetKeyProp.props !== undefined) {
+                const map = new Map<string, EntityProp>();
+                targetKeyProp.collectDeeperProps(map);
+                const offset = targetKeyProp.name.length;
+                for (const [key, value] of map.entries()) {
+                    const newKey = `${prop.name}${key.substring(offset)}`;
+                    (this._expanedPropMap as Map<string, EntityProp>).set(newKey, value);
+                }
+            }
+        }
     }
 
     toJSON(): any {

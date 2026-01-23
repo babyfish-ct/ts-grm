@@ -426,25 +426,63 @@ type ReferenceKeyMembers<
             any,
             infer Key
         >
-            ? ViewBuilder<
-                TModel,
-                TMembers, 
-                TViewNullType,
-                TransformedType<
+            ? AllModelMembers<TargetModel>[Key & string] extends EmbeddedProp<infer R, infer Nullity>
+                ? <X = SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>>(
+                    fn?: (builder: ViewBuilder<
+                        never,
+                        R, 
+                        TViewNullType,
+                        {},
+                        TRecursiveKindMap,
+                        any,
+                        ""
+                    >) => ViewBuilder<
+                        never,
+                        R, 
+                        TViewNullType,
+                        X,
+                        TRecursiveKindMap,
+                        any,
+                        any
+                    >
+                ) => ViewBuilder<
+                    TModel,
+                    TMembers, 
                     TViewNullType,
-                    TCurrent, 
-                    XTypeOfView<
-                        PrefixString<K & string, Key & string>,
-                        SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>,
-                        Nullity,
-                        TViewNullType
+                    TransformedType<
+                        TViewNullType,
+                        TCurrent, 
+                        XTypeOfView<
+                            PrefixString<K & string, Key & string>,
+                            X,
+                            Nullity,
+                            TViewNullType
+                        >,
+                        TRecursiveKindMap
                     >,
-                    TRecursiveKindMap
-                >,
-                TRecursiveKindMap,
-                TMembers[K],
-                PrefixString<K & string, Key & string>
-            >
+                    TRecursiveKindMap,
+                    TMembers[K],
+                    PrefixString<K & string, Key & string>
+                >
+                : ViewBuilder<
+                    TModel,
+                    TMembers, 
+                    TViewNullType,
+                    TransformedType<
+                        TViewNullType,
+                        TCurrent, 
+                        XTypeOfView<
+                            PrefixString<K & string, Key & string>,
+                            SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>,
+                            Nullity,
+                            TViewNullType
+                        >,
+                        TRecursiveKindMap
+                    >,
+                    TRecursiveKindMap,
+                    TMembers[K],
+                    PrefixString<K & string, Key & string>
+                >
             : never
 };
 

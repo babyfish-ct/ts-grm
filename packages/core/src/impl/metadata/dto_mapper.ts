@@ -3,6 +3,7 @@ import { makeErr } from "../util";
 import { Dto, DtoField } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
+import { dtoField } from "./dto_builder";
 
 export function dtoMapper(dto: Dto): DtoMapper {
     const mapper = new Mapper(
@@ -47,56 +48,46 @@ class Mapper {
     ) {}
 
     add(dtoField: DtoField) {
-        this.addImplicitFields(dtoField.entityProp);
+        this._add(dtoField, true);
+    }
+    
+    private _add(dtoField: DtoField, mapPath: boolean) {
+        this._addImplicitFields(dtoField.entityProp);
+        this._addImpl(dtoField, mapPath);
+    }
+
+    private _addImplicitFields(prop: EntityProp) {
+        const referenceKeyProp = prop.referenceKeyProp;
+        if (referenceKeyProp != null) {
+            this._addImpl(dtoField(referenceKeyProp), false);
+        } else if (prop.targetEntity != null) {
+            let keyProp = prop.declaringEntity.idProp;
+            // TODO: backProp may not be id property
+            this._addImpl(dtoField(keyProp), false);
+        }
+    }
+
+    private _addImpl(dtoField: DtoField, mapPath: boolean) {
         let field: MapperField | undefined = undefined;
         if (dtoField.dto == null || dtoField.entityProp.targetEntity != null) {
             field = this._field(dtoField);
-            field.path(dtoField.path);
+            if (mapPath) {
+                field.path(dtoField.path);
+            }
         }
         if (dtoField.dto != null) {
             if (field != null) { // Association
                 for (const subDtoField of dtoField.dto.fields) {
-                    field.subMapper!!.add(subDtoField);
+                    field.subMapper!!._add(subDtoField, mapPath);
                 }
             } else { // Embedded
                 for (const subDtoField of dtoField.dto.fields) {
-                    this.add({
+                    this._add({
                         ...subDtoField,
                         path: embeddedPath(dtoField.path, subDtoField.path)
-                    });
+                    }, mapPath);
                 }
             }
-        }
-    }
-
-    addImplicitFields(prop: EntityProp) {
-        const referenceKeyProp = prop.referenceKeyProp;
-        if (referenceKeyProp != null) {
-            const newDtoField: DtoField = {
-                entityProp: referenceKeyProp,
-                path: undefined,
-                dto: undefined,
-                fetchType: undefined,
-                orders: undefined,
-                recursiveDepth: undefined,
-                nullable: referenceKeyProp.nullable,
-                dependency: undefined
-            };
-            this._field(newDtoField);
-        } else if (prop.targetEntity != null) {
-            let keyProp = prop.declaringEntity.idProp;
-            // TODO
-            const newDtoField: DtoField = {
-                entityProp: keyProp,
-                path: undefined,
-                dto: undefined,
-                fetchType: undefined,
-                orders: undefined,
-                recursiveDepth: undefined,
-                nullable: keyProp.nullable,
-                dependency: undefined
-            };
-            this._field(newDtoField);
         }
     }
 

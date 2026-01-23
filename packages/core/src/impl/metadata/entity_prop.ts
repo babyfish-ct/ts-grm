@@ -13,11 +13,11 @@ export class EntityProp {
 
     readonly inputNonNull: boolean;
 
-    readonly scalarType: ScalarType | undefined;
+    private _scalarType: ScalarType | undefined;
 
     readonly associationType: AssociationType | undefined;
 
-    readonly props: ReadonlyMap<string, EntityProp> | undefined;
+    private _props: ReadonlyMap<string, EntityProp> | undefined;
 
     private _targetEntity: Entity | undefined;
 
@@ -27,7 +27,9 @@ export class EntityProp {
 
     private _phase = 0;
 
-    readonly referencedKeyPropName: string | undefined;
+    readonly referencedTargetKeyPropName: string | undefined;
+
+    private _referencedTargetKeyProp: EntityProp | undefined;
 
     private _referenceKeyProp: EntityProp | undefined;
 
@@ -42,12 +44,12 @@ export class EntityProp {
         this.validateData();
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
-        this.scalarType = _data.scalarType; 
+        this._scalarType = _data.scalarType; 
         this.associationType = _data.associationType;
         if (_data.props != null) {
-            this.props = this.createProps(_data.props);
+            this._props = this.createProps(_data.props);
         } else {
-            this.props = undefined;
+            this._props = undefined;
         }
         if (_data.targetModel != null) {
             const targetModel: ModelImpl<any, any, any, any, any> =
@@ -61,7 +63,16 @@ export class EntityProp {
         } else {
             this._targetEntity = undefined;
         }
-        this.referencedKeyPropName = this._referencedKeyPropName();
+        this.referencedTargetKeyPropName = this._referencedTargetKeyPropName();
+        this._referencedTargetKeyProp = undefined;
+    }
+
+    get scalarType(): ScalarType | undefined {
+        return this._scalarType;
+    }
+
+    get props(): ReadonlyMap<string, EntityProp> | undefined {
+        return this._props;
     }
 
     get targetEntity(): Entity | undefined {
@@ -86,6 +97,10 @@ export class EntityProp {
 
     get referenceProp(): EntityProp | undefined {
         return this._referenceProp;
+    }
+
+    get referencedTargetKeyProp(): EntityProp | undefined {
+        return this._referencedTargetKeyProp;
     }
 
     get isRecursive(): boolean {
@@ -184,14 +199,17 @@ export class EntityProp {
         if (this._phase >= phase) {
             return;
         }
-        if (phase == 2) {
+        if (phase === 2) {
             this._initOrders();
             this._initMappedBy();
         }
         this._resolveTarget(phase);
+        if (phase === 2) {
+            this._resolveReferenceKeyProp();
+        }
     }
 
-    private _referencedKeyPropName(): string | undefined {
+    private _referencedTargetKeyPropName(): string | undefined {
         if (this._data.associationType == null || 
             this._data.associationType === "ONE_TO_MANY" ||
             this._data.associationType === "MANY_TO_MANY" ||
@@ -250,6 +268,20 @@ export class EntityProp {
 
     private _resolveTarget(phase: number) {
         this._targetEntity?.resolve(phase);
+    }
+
+    private _resolveReferenceKeyProp() {
+        const referenceProp = this._referenceProp;
+        if (referenceProp == null) {
+            return;
+        }
+        const keyProp = referenceProp
+            ._targetEntity!!
+            .allPropMap
+            .get(referenceProp._referencedTargetKeyPropName()!!)!!;
+        this._referencedTargetKeyProp = keyProp;
+        this._scalarType = keyProp._scalarType;
+        this._props = keyProp._props;
     }
 
     collectDeeperProps(map: Map<string, EntityProp>) {

@@ -13,7 +13,7 @@ describe("ViewShapeTest", () => {
             ? R 
             : never;
             
-    it("TestSimpleView", () => {
+    it("testSimpleView", () => {
 
         const view = dto.view(BOOK_STORE, $ => $
             .id
@@ -54,7 +54,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestComplexView", () => {
+    it("testComplexView", () => {
 
         const view = dto.view(BOOK_STORE, $ => $
             .id
@@ -97,7 +97,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestInheritViewWithNull", () => {
+    it("testInheritViewWithNull", () => {
 
         const view = dto.view(BOOK_STORE, $ => $
             .name
@@ -142,7 +142,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestInheritViewWithUndefined", () => {
+    it("testInheritViewWithUndefined", () => {
 
         const view = dto.view.nullAsUndefined(BOOK_STORE, $ => $
             .name
@@ -187,7 +187,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestInheritView2WithNull", () => {
+    it("testInheritView2WithNull", () => {
 
         const view = dto.view(BOOK_STORE, $ => $
             .name
@@ -232,7 +232,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestInheritView2WithUndefined", () => {
+    it("testInheritView2WithUndefined", () => {
 
         const view = dto.view.nullAsUndefined(BOOK_STORE, $ => $
             .name
@@ -277,7 +277,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestFlatAssociationWithNull", () => {
+    it("testFlatAssociationWithNull", () => {
         
         const view = dto.view(BOOK, $ => $
             .name
@@ -294,7 +294,7 @@ describe("ViewShapeTest", () => {
         }>()
     });
 
-    it("TestFlatAssociationWithUndefined", () => {
+    it("testFlatAssociationWithUndefined", () => {
         
         const view = dto.view.nullAsUndefined(BOOK, $ => $
             .name
@@ -311,7 +311,7 @@ describe("ViewShapeTest", () => {
         }>()
     });
 
-    it("TestReferenceKeyWithNull", () => {
+    it("testReferenceKeyWithNull", () => {
         
         const view = dto.view(BOOK, $ => $
             .storeId.$as("fk")
@@ -326,7 +326,7 @@ describe("ViewShapeTest", () => {
         }>()
     });
 
-    it("TestReferenceKeyWithUndefined", () => {
+    it("testReferenceKeyWithUndefined", () => {
         
         const view = dto.view.nullAsUndefined(BOOK, $ => $
             .storeId.$as("fk")
@@ -341,10 +341,10 @@ describe("ViewShapeTest", () => {
         }>()
     });
 
-    it("TestEmbeddedReferenceKey", () => {
+    it("testEmbeddedReferenceKey", () => {
 
         const view = dto.view(ORDER_ITEM, $ => $
-            .orderId
+            .orderId()
             .id
         );
 
@@ -362,7 +362,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestAllScalars", () => {
+    it("testAllScalars", () => {
 
         const view = dto.view(BOOK, $ => $
             .allScalars()
@@ -378,7 +378,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestAllScalarsWithEmbedded", () => {
+    it("testAllScalarsWithEmbedded", () => {
 
         const view = dto.view(ORDER, $ => $
             .allScalars()
@@ -398,7 +398,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestDefaultEmbedded", () => {
+    it("testDefaultEmbedded", () => {
         
         const view = dto.view(BOOK, $ => $
             .allScalars()
@@ -424,7 +424,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestRecursiveWithNull", () => {
+    it("testRecursiveWithNull", () => {
 
         const view = dto.view((TREE_NODE), $ => $
             .allScalars() // Before recursion
@@ -446,7 +446,7 @@ describe("ViewShapeTest", () => {
         make<ViewType>().childNodes[0]?.childNodes[0]?.childNodes[0];
     });
 
-    it("TestRecursiveWithUndefined", () => {
+    it("testRecursiveWithUndefined", () => {
 
         const view = dto.view.nullAsUndefined((TREE_NODE), $ => $
             .allScalars() // Before recursion
@@ -468,7 +468,7 @@ describe("ViewShapeTest", () => {
         make<ViewType>().childNodes[0]?.childNodes[0]?.childNodes[0];
     });
 
-    it("TestRecursiveWithAliasAndNull", () => {
+    it("testRecursiveWithAliasAndNull", () => {
 
         const view = dto.view((TREE_NODE), $ => $
             .recursive({prop: "parentNode", alias: "up"})
@@ -490,7 +490,7 @@ describe("ViewShapeTest", () => {
         make<ViewType>().downs[0]?.downs[0]?.downs[0];
     });
 
-    it("TestRecursiveWithAliasAndUndefined", () => {
+    it("testRecursiveWithAliasAndUndefined", () => {
 
         const view = dto.view.nullAsUndefined((TREE_NODE), $ => $
             .recursive({prop: "parentNode", alias: "up"})
@@ -512,7 +512,7 @@ describe("ViewShapeTest", () => {
         make<ViewType>().downs[0]?.downs[0]?.downs[0];
     });
 
-    it("TestDefaultEmbeded", () => {
+    it("testDefaultEmbeded", () => {
         const view = dto.view(AUTHOR, $ => $.id.name());
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<ViewType>().toEqualTypeOf<{
@@ -524,7 +524,7 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
-    it("TestFlatDefaultEmbeded", () => {
+    it("testFlatDefaultEmbeded", () => {
         const view = dto.view(AUTHOR, $ => $.id.flat("name"));
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<ViewType>().toEqualTypeOf<{

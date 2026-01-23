@@ -667,8 +667,8 @@ function foreignKeyDataOf(data: any, targetModel: any): ForeignKeyData | undefin
     }
     return {
         referencedProp: data.referencedProp ?? targetModel._idKey,
-        columns: data.columns?.map(joinColumnDataOf(data)),
-        cascade: data.cascade
+        columns: data.columns?.map((c: any) => joinColumnDataOf(c)),
+        cascade: data.cascade ?? "NONE"
     };
 }
 

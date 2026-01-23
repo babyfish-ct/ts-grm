@@ -39,7 +39,7 @@ class DtoBuilder {
     }
 
     add(prop: EntityProp, fn?: TypedDtoBuilderFn) {
-        const field = this.field(prop, fn);
+        const field = dtoField(prop, fn);
         this._addField(field);
         this.lastPropName = prop.name;
     }
@@ -52,7 +52,7 @@ class DtoBuilder {
             throw new ArgumentError(`Cannot flat the property "${prop.toString()}" 
             because it is neither reference nor embedded property`);
         }
-        const field: DtoField = this.field(prop, fn);
+        const field: DtoField = dtoField(prop, fn);
         if (prop.targetEntity != null) {
             const convertedField: DtoField = {
                 ...field,
@@ -103,7 +103,7 @@ class DtoBuilder {
             ? this.source.allPropMap
             : this.source.props ?? makeErr("Internal bug");
         for (const prop of propMap.values()) {
-            if (prop.scalarType != null || prop.props != null) {
+            if (prop.referenceProp == null && (prop.scalarType != null || prop.props != null)) {
                 this.add(prop);
             }
         }
@@ -191,65 +191,6 @@ class DtoBuilder {
         };
     }
 
-    private field(
-        prop: EntityProp, 
-        fn?: TypedDtoBuilderFn
-    ): DtoField {
-        if (prop.targetEntity != null) {
-            if (fn == null) {
-                throw new ArgumentError(`Cannot add association property 
-                    "${prop.toString()}" without child DTO lambda`);
-            }
-            const childBuilder = createTypedDtoBuilder(prop.targetEntity);
-            fn(childBuilder);
-            const childDto = childBuilder.__unwrap().build();
-            return {
-                path: prop.name,
-                entityProp: prop,
-                dto: childDto,
-                fetchType: undefined,
-                orders: undefined,
-                recursiveDepth: undefined,
-                nullable: prop.nullable,
-                dependency: undefined
-            };
-        }
-        if (prop.props != null) {
-            const childBuilder = new Proxy(
-                new DtoBuilder(prop),
-                typedDtoBuilderHandler
-            ) as any as TypedDtoBuilder;
-            (fn ?? ($ => ($ as any).allScalars()))(childBuilder);
-            const childDto = childBuilder.__unwrap().build();
-            return {
-                path: prop.name,
-                entityProp: prop,
-                dto: childDto,
-                fetchType: undefined,
-                orders: undefined,
-                recursiveDepth: undefined,
-                nullable: prop.nullable,
-                dependency: undefined
-            };
-        }
-        if (fn != null) {
-            throw new ArgumentError(
-                `Child DTO cannnot be specified for "${prop.toString()}" 
-                which is neither associated nor embeded property`
-            );
-        }
-        return {
-            path: prop.name,
-            entityProp: prop,
-            dto: undefined,
-            fetchType: undefined,
-            orders: undefined,
-            recursiveDepth: undefined,
-            nullable: false,
-            dependency: undefined
-        };
-    }
-
     private _addField(field: DtoField) {
         if (field.path != null) {
             const key = typeof field.path === "string"
@@ -326,6 +267,65 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
         }
     }
 };
+
+export function dtoField(
+    prop: EntityProp, 
+    fn?: TypedDtoBuilderFn
+): DtoField {
+    if (prop.targetEntity != null) {
+        if (fn == null) {
+            throw new ArgumentError(`Cannot add association property 
+                "${prop.toString()}" without child DTO lambda`);
+        }
+        const childBuilder = createTypedDtoBuilder(prop.targetEntity);
+        fn(childBuilder);
+        const childDto = childBuilder.__unwrap().build();
+        return {
+            path: prop.name,
+            entityProp: prop,
+            dto: childDto,
+            fetchType: undefined,
+            orders: undefined,
+            recursiveDepth: undefined,
+            nullable: prop.nullable,
+            dependency: undefined
+        };
+    }
+    if (prop.props != null) {
+        const childBuilder = new Proxy(
+            new DtoBuilder(prop),
+            typedDtoBuilderHandler
+        ) as any as TypedDtoBuilder;
+        (fn ?? ($ => ($ as any).allScalars()))(childBuilder);
+        const childDto = childBuilder.__unwrap().build();
+        return {
+            path: prop.name,
+            entityProp: prop,
+            dto: childDto,
+            fetchType: undefined,
+            orders: undefined,
+            recursiveDepth: undefined,
+            nullable: prop.nullable,
+            dependency: undefined
+        };
+    }
+    if (fn != null) {
+        throw new ArgumentError(
+            `Child DTO cannnot be specified for "${prop.toString()}" 
+            which is neither associated nor embeded property`
+        );
+    }
+    return {
+        path: prop.name,
+        entityProp: prop,
+        dto: undefined,
+        fetchType: undefined,
+        orders: undefined,
+        recursiveDepth: undefined,
+        nullable: false,
+        dependency: undefined
+    };
+}
 
 type FlatOptions = string | { 
     readonly prop: string;

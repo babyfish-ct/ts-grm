@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DtoMapper } from "@/impl/metadata/dto_mapper";
 import { dto } from "@/schema/dto";
-import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE } from "../../model/model";
+import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../../model/model";
 
 describe("TestView", () => {
  
@@ -515,6 +515,147 @@ describe("TestView", () => {
         });
     });
 
+    it("implicitEmbeddedReferenceKey", () => {
+        const view = dto.view(ORDER_ITEM, $ => $
+            .order($ => $
+                .name
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "OrderItem",
+            "fields": [
+                {
+                    "prop": "Order.id.x",
+                    "paths": [] // Implicit foreign key to fetch `OrderItem.order`
+                },
+                {
+                    "prop": "Order.id.y.a",
+                    "paths": [] // Implicit foreign key to fetch `OrderItem.order`
+                },
+                {
+                    "prop": "Order.id.y.b",
+                    "paths": [] // Implicit foreign key to fetch `OrderItem.order`
+                },
+                {
+                    "prop": "OrderItem.order",
+                    "paths": [
+                        "order"
+                    ],
+                    "subMapper": {
+                        "entity": "Order",
+                        "associatedProp": "OrderItem.order",
+                        "fields": [
+                            {
+                                "prop": "Order.name",
+                                "paths": [
+                                    "name"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        });
+    });
+
+    it("explicitEmbeddedReferenceKey", () => {
+        const view = dto.view(ORDER_ITEM, $ => $
+            .orderId()
+            .order($ => $
+                .name
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "OrderItem",
+            "fields": [
+                {
+                    "prop": "Order.id.x",
+                    "paths": [
+                        ["orderId", "x"]
+                    ]
+                },
+                {
+                    "prop": "Order.id.y.a",
+                    "paths": [
+                        ["orderId", "y", "a"]
+                    ]
+                },
+                {
+                    "prop": "Order.id.y.b",
+                    "paths": [
+                        ["orderId", "y", "b"]
+                    ]
+                },
+                {
+                    "prop": "OrderItem.order",
+                    "paths": [
+                        "order"
+                    ],
+                    "subMapper": {
+                        "entity": "Order",
+                        "associatedProp": "OrderItem.order",
+                        "fields": [
+                            {
+                                "prop": "Order.name",
+                                "paths": [
+                                    "name"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        });
+    });
+
+    it("mixedEmbeddedReferenceKey", () => {
+        const view = dto.view(ORDER_ITEM, $ => $
+            .orderId($ => $.y())
+            .order($ => $
+                .name
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "OrderItem",
+            "fields": [
+                {
+                    "prop": "Order.id.y.a",
+                    "paths": [
+                        ["orderId", "y", "a"]
+                    ]
+                },
+                {
+                    "prop": "Order.id.y.b",
+                    "paths": [
+                        ["orderId", "y", "b"]
+                    ]
+                },
+                {
+                    "prop": "Order.id.x",
+                    "paths": [] // Implicit property to fetch `OrderItem.order`
+                },
+                {
+                    "prop": "OrderItem.order",
+                    "paths": [
+                        "order"
+                    ],
+                    "subMapper": {
+                        "entity": "Order",
+                        "associatedProp": "OrderItem.order",
+                        "fields": [
+                            {
+                                "prop": "Order.name",
+                                "paths": [
+                                    "name"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        });
+    });
+
     it("recursive", () => {
         const view = dto.view(TREE_NODE, $ => $
             .name
@@ -548,5 +689,5 @@ describe("TestView", () => {
                 }
             ]
         });
-    })
+    });
 });
