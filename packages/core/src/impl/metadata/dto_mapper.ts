@@ -36,6 +36,8 @@ export type DtoMapperField = {
     readonly recursiveDepth: number | undefined;
 
     readonly dependencies: ReadonlyArray<number> | undefined;
+
+    readonly isDependent: boolean;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -99,6 +101,7 @@ class Mapper {
             }
             if (this.dependencyWriter != null) {
                 this.dependencyWriter.indices.push(field.index);
+                field.setDependent();
             }
         }
         if (dtoField.dto != null) {
@@ -147,6 +150,8 @@ class MapperField {
 
     private paths = new Set<string>();
 
+    private isDependent = false;
+
     constructor(
         readonly index: number,
         readonly prop: EntityProp,
@@ -169,6 +174,10 @@ class MapperField {
         }
     }
 
+    setDependent() {
+        this.isDependent = true;
+    }
+
     toDtoMapperField(): DtoMapperField {
         const paths = Array.from(this.paths).map(path => {
             const parts = path.split('/');
@@ -181,7 +190,8 @@ class MapperField {
             paths,
             subMapper: this.subMapper?.toDtoMapper(),
             recursiveDepth: this.recursiveDepth,
-            dependencies: this.dependies
+            dependencies: this.dependies,
+            isDependent: this.isDependent
         };
     }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DtoMapper } from "@/impl/metadata/dto_mapper";
 import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../../model/model";
+import { buildShapeDescriptor } from "@/impl/metadata/shape_descriptor";
 
 describe("TestView", () => {
  
@@ -17,7 +18,8 @@ describe("TestView", () => {
                         ? mapperJson(f.subMapper)
                         : undefined,
                     recursiveDepth: f.recursiveDepth,
-                    dependencies: f.dependencies
+                    dependencies: f.dependencies,
+                    isDependent: f.isDependent ? true : undefined
                 };
             })
         }
@@ -45,6 +47,14 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "name": true,
+                "edition": true
+            },
+            "implicit": {}
+        });
     });
 
     it("wideAssociations", () => {
@@ -66,6 +76,7 @@ describe("TestView", () => {
                     "paths": ["edition"]
                 },
                 {
+                    "isDependent": true,
                     "prop": "Book.storeId",
                     "paths": [] // implicit `Book.storeId` to fetch `Book.store`
                 },
@@ -93,6 +104,7 @@ describe("TestView", () => {
                     }
                 },
                 {
+                    "isDependent": true,
                     "prop": "Book.id",
                     "paths": [] // Implicit field `Book.id` to fetch `Book.authors`
                 },
@@ -125,6 +137,30 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "name": true,
+                "edition": true,
+                "store": {
+                    "id": true,
+                    "name": true,
+                    "version": true
+                },
+                "authors": {
+                    "__array": {
+                        "id": true,
+                        "name": {
+                            "firstName": true,
+                            "lastName": true
+                        }
+                    }
+                }
+            },
+            "implicit": {
+                "_2": true,
+                "_4": true
+            }
+        });
     });
 
     it("deepAssocitions", () => {
@@ -145,6 +181,7 @@ describe("TestView", () => {
             "entity": "BookStore",
             "fields": [
                 {
+                    "isDependent": true,
                     "prop": "BookStore.id",
                     "paths": ["id"]
                 },
@@ -161,6 +198,7 @@ describe("TestView", () => {
                         "associatedProp": "BookStore.books",
                         "fields": [
                             {
+                                "isDependent": true,
                                 "prop": "Book.id",
                                 "paths": ["id"]
                             },
@@ -200,6 +238,28 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "name": true,
+                "books": {
+                    "__array": {
+                        "id": true,
+                        "name": true,
+                        "authors": {
+                            "__array": {
+                                "id": true,
+                                "name": {
+                                    "firstName": true,
+                                    "lastName": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "implicit": {}
+        });
     });
 
     it("flatAssociation", () => {
@@ -232,6 +292,7 @@ describe("TestView", () => {
                     "paths": ["price"]
                 },
                 {
+                    "isDependent": true,
                     "prop": "Book.storeId",
                     "paths": [] // Implicit property `Book.storeId` to fetch `Book.store`
                 },
@@ -260,6 +321,19 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "name": true,
+                "edition": true,
+                "price": true,
+                "storeId": true,
+                "storeName": true
+            },
+            "implicit": {
+                "_4": true
+            }
+        });
     });
 
     it("flatEmbedded", () => {
@@ -286,6 +360,14 @@ describe("TestView", () => {
                     "paths": ["flattenLastName"]
                 }
             ]
+        });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "flattenFirstName": true,
+                "flattenLastName": true
+            },
+            "implicit": {}
         });
     });
 
@@ -315,6 +397,16 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "key": {
+                    "name": true,
+                    "edition": true
+                }
+            },
+            "implicit": {}
+        });
     });
 
     it("foldAssociations", () => {
@@ -330,6 +422,7 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "isDependent": true,
                     "prop": "Book.id",
                     "paths": ["id"]
                 },
@@ -364,6 +457,23 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "associations": {
+                    "authors": {
+                        "__array": {
+                            "id": true,
+                            "name": {
+                                "firstName": true,
+                                "lastName": true
+                            }
+                        }
+                    }
+                }
+            },
+            "implicit": {}
+        });
     });
 
     it("rename", () => {
@@ -391,6 +501,7 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "isDependent": true,
                     "prop": "Book.id",
                     "paths": [
                         "bookId"
@@ -444,6 +555,25 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "bookId": true,
+                "key": {
+                    "bookName": true,
+                    "bookEdition": true
+                },
+                "associations": {
+                    "authors": {
+                        "__array": {
+                            "id": true,
+                            "flattenFn": true,
+                            "flattenLn": true
+                        }
+                    }
+                }
+            },
+            "implicit": {}
+        });
     });
 
     it("deepFlat", () => {
@@ -468,8 +598,9 @@ describe("TestView", () => {
                     "paths": ["name"]
                 },
                 {
+                    "isDependent": true,
                     "prop": "TreeNode.parentNodeId",
-                    "paths": []
+                    "paths": [] // Implicit property to fetch `TreeNode.parentNode`
                 },
                 {
                     "dependencies": [2],
@@ -492,8 +623,9 @@ describe("TestView", () => {
                                 ]
                             },
                             {
+                                "isDependent": true,
                                 "prop": "TreeNode.parentNodeId",
-                                "paths": []
+                                "paths": [] // Implicit property to fetch `TreeNode.parentNode`
                             },
                             {
                                 "dependencies": [2],
@@ -523,6 +655,20 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "id": true,
+                "name": true,
+                "parentId": true,
+                "parentName": true,
+                "parentGrandId": true,
+                "parentGrandName": true
+            },
+            "implicit": {
+                "_2": true,
+                "parentNode._2": true
+            }
+        });
     });
 
     it("implicitEmbeddedReferenceKey", () => {
@@ -535,14 +681,17 @@ describe("TestView", () => {
             "entity": "OrderItem",
             "fields": [
                 {
+                    "isDependent": true,
                     "prop": "Order.id.x",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
+                    "isDependent": true,
                     "prop": "Order.id.y.a",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
+                    "isDependent": true,
                     "prop": "Order.id.y.b",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
@@ -566,6 +715,18 @@ describe("TestView", () => {
                     }
                 }
             ]
+        });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "order": {
+                    "name": true
+                }
+            },
+            "implicit": {
+                "_0": true,
+                "_1": true,
+                "_2": true
+            }
         });
     });
 
@@ -580,18 +741,21 @@ describe("TestView", () => {
             "entity": "OrderItem",
             "fields": [
                 {
+                    "isDependent": true,
                     "prop": "Order.id.x",
                     "paths": [
                         ["orderId", "x"]
                     ]
                 },
                 {
+                    "isDependent": true,
                     "prop": "Order.id.y.a",
                     "paths": [
                         ["orderId", "y", "a"]
                     ]
                 },
                 {
+                    "isDependent": true,
                     "prop": "Order.id.y.b",
                     "paths": [
                         ["orderId", "y", "b"]
@@ -618,6 +782,21 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "orderId": {
+                    "x": true,
+                    "y": {
+                        "a": true,
+                        "b": true
+                    }
+                },
+                "order": {
+                    "name": true
+                }
+            },
+            "implicit": {}
+        });
     });
 
     it("mixedEmbeddedReferenceKey", () => {
@@ -631,18 +810,21 @@ describe("TestView", () => {
             "entity": "OrderItem",
             "fields": [
                 {
+                    "isDependent": true,
                     "prop": "Order.id.y.a",
                     "paths": [
                         ["orderId", "y", "a"]
                     ]
                 },
                 {
+                    "isDependent": true,
                     "prop": "Order.id.y.b",
                     "paths": [
                         ["orderId", "y", "b"]
                     ]
                 },
                 {
+                    "isDependent": true,
                     "prop": "Order.id.x",
                     "paths": [] // Implicit property to fetch `OrderItem.order`
                 },
@@ -667,6 +849,22 @@ describe("TestView", () => {
                 }
             ]
         });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "orderId": {
+                    "y": {
+                        "a": true,
+                        "b": true
+                    }
+                },
+                "order": {
+                    "name": true
+                }
+            },
+            "implicit": {
+                "_2": true
+            }
+        });
     });
 
     it("recursive", () => {
@@ -683,6 +881,7 @@ describe("TestView", () => {
                     "paths": ["name"]
                 },
                 {
+                    "isDependent": true,
                     "prop": "TreeNode.parentNodeId",
                     "paths": [] // Implicit field to fetch `TreeNode.parentNode`
                 },
@@ -693,6 +892,7 @@ describe("TestView", () => {
                     "recursiveDepth": -1 // Unlimited depth
                 },
                 {
+                    "isDependent": true,
                     "prop": "TreeNode.id",
                     "paths": [] // Implict field to fetch `TreeNode.childNodes`
                 },
@@ -703,6 +903,23 @@ describe("TestView", () => {
                     "recursiveDepth": -1 // Unlimited depth
                 }
             ]
+        });
+        expect(buildShapeDescriptor(view.mapper)).toEqual({
+            "dto": {
+                "name": true,
+                "parentNode": {
+                    "__recursive": true
+                },
+                "childNodes": {
+                    "__array": {
+                        "__recursive": true
+                    }
+                }
+            },
+            "implicit": {
+                "_1": true,
+                "_3": true
+            }
         });
     });
 });
