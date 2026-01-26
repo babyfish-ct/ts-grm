@@ -21,7 +21,7 @@ function viewCreator(): ViewCreator {
     ): View<TModel, Prettify<X>> => {
         const builder = createTypedDtoBuilder(Entity.of(model));
         fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
-        return new View(dtoMapper(builder.__unwrap().build()));
+        return new View(dtoMapper(builder.__unwrap().build(), false));
     }
 
     view.nullAsUndefined = <TModel extends AnyModel, X>(
@@ -32,7 +32,7 @@ function viewCreator(): ViewCreator {
     ): View<TModel, Prettify<X>> => {
         const builder = createTypedDtoBuilder(Entity.of(model));
         fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
-        return new View(dtoMapper(builder.__unwrap().build()));
+        return new View(dtoMapper(builder.__unwrap().build(), true));
     }
 
     return view as ViewCreator;

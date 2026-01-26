@@ -1,57 +1,32 @@
-import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
 import { DtoMapper } from "./dto_mapper";
+import { buildShapeDescriptor, ShapeDescriptor } from "./shape_descriptor";
 
-export class DtoReader {
+function createDtoReader(
+    mapper: DtoMapper
+): DtoReader {
+    throw new Error();
+}
+
+interface DtoReader {
+
+    read(reader: DataReader): void;
+}
+
+abstract class DtoReaderImpl implements DtoReader {
+
+    private readonly shapeDescriptor: ShapeDescriptor;
 
     constructor(
-        readonly mapper: DtoMapper,
-        readonly nullAsUndefined: boolean
+        private readonly mapper: DtoMapper,
+        private readonly batchSize: number
     ) {
+        this.shapeDescriptor = buildShapeDescriptor(mapper);
     }
-}
 
-type DtoRow = {};
+    read(reader: DataReader): void {
+        while (reader.next()) {
 
-type DtoRowMapper = (reader: DataReader) => DtoRow;
-
-function createDtoRowMapper(
-    mapper: DtoMapper
-): DtoRowMapper {
-    const writer = new CodeWriter();
-    writer
-        .code("return function(reader) ")
-        .scope("CURLY_BRACKETS", () => {
-
-        });
-    return new Function(writer.toString()) as DtoRowMapper;
-}
-
-type DataRow = {
-    parent: DataRow | undefined;
-    dto: object | undefined;
-    implicit: object | undefined;
-};
-
-function emptyDataRowCode(
-    mapper: DtoMapper
-): string {
-    const writer = new CodeWriter();
-    writer
-        .code("function createDataRow() ")
-        .scope("CURLY_BRACKETS", () => {
-        });
-    return writer.toString();
-}
-
-function emptyDtoCode(
-    mapper: DtoMapper
-): string {
-    const writer = new CodeWriter();
-    writer
-        .code("function createDto() ")
-        .scope("CURLY_BRACKETS", () => {
-
-        });
-    return writer.toString();
+        }
+    }
 }

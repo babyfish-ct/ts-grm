@@ -4,10 +4,12 @@ import { Dto, DtoField } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { dtoField } from "./dto_builder";
+import { createRowMapper, RowMapper } from "./row_mapper";
 
-export function dtoMapper(dto: Dto): DtoMapper {
+export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
         dto.entity ?? makeErr(() => new ArgumentError(`"dto.entity" must be specified`)), 
+        nullAsUndefined,
         undefined
     );
     for (const field of dto.fields) {
@@ -16,13 +18,24 @@ export function dtoMapper(dto: Dto): DtoMapper {
     return mapper.toDtoMapper();
 }
 
-export type DtoMapper = {
+export class DtoMapper {
 
-    readonly entity: Entity;
+    private _rowMapper: RowMapper | undefined = undefined;
 
-    readonly associatedProp: EntityProp | undefined;
+    constructor(
+        readonly entity: Entity,
+        readonly nullAsUndefined: boolean,
+        readonly associatedProp: EntityProp | undefined,
+        readonly fields: ReadonlyArray<DtoMapperField>
+    ) {}
 
-    readonly fields: ReadonlyArray<DtoMapperField>;
+    get rowMapper(): RowMapper {
+        let rowMapper = this._rowMapper;
+        if (rowMapper == null) {
+            this._rowMapper = rowMapper = createRowMapper(this);
+        }
+        return rowMapper;
+    }
 }
 
 export type DtoMapperField = {
@@ -52,6 +65,7 @@ class Mapper {
 
     constructor(
         readonly entity: Entity,
+        readonly nullAsUndefined: boolean,
         readonly associatedProp: EntityProp | undefined
     ) {}
 
@@ -125,6 +139,7 @@ class Mapper {
         let field = this.fieldMap.get(key);
         if (field == null) {
             field = new MapperField(
+                this.nullAsUndefined,
                 this.fieldMap.size, 
                 dtoField.entityProp, 
                 dtoField.recursiveDepth,
@@ -136,11 +151,12 @@ class Mapper {
     }
 
     toDtoMapper(): DtoMapper {
-        return {
-            entity: this.entity,
-            associatedProp: this.associatedProp,
-            fields: Array.from(this.fieldMap.values()).map(f => f.toDtoMapperField())
-        };
+        return new DtoMapper(
+            this.entity,
+            this.nullAsUndefined,
+            this.associatedProp,
+            Array.from(this.fieldMap.values()).map(f => f.toDtoMapperField())
+        );
     }
 };
 
@@ -153,15 +169,16 @@ class MapperField {
     private isDependent = false;
 
     constructor(
+        nullAsUndefined: boolean,
         readonly index: number,
         readonly prop: EntityProp,
         readonly recursiveDepth: number | undefined,
-        readonly dependies: ReadonlyArray<number> | undefined
+        readonly dependencies: ReadonlyArray<number> | undefined
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMapper = undefined;
         } else {
-            this.subMapper = new Mapper(prop.targetEntity, prop);
+            this.subMapper = new Mapper(prop.targetEntity, nullAsUndefined, prop);
         }
     }
 
@@ -190,7 +207,7 @@ class MapperField {
             paths,
             subMapper: this.subMapper?.toDtoMapper(),
             recursiveDepth: this.recursiveDepth,
-            dependencies: this.dependies,
+            dependencies: this.dependencies,
             isDependent: this.isDependent
         };
     }

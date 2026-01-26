@@ -9,7 +9,7 @@ test("testCodeWriter", () => {
         .scope("CURLY_BRACKETS", () => {
             writer
                 .code("constructor")
-                .scope({kind: "PARENTHESES", mutline: true}, () => {
+                .scope({kind: "PARENTHESES", multiline: true}, () => {
                     for (const arg of args) {
                         writer.separator().code("readonly ").code(arg).code(": number");
                     }
@@ -32,7 +32,10 @@ test("testCodeWriter", () => {
         });
     expect(writer.toString()).toEqual(`class Demo {
     constructor(
-        readonly a: number, readonly b: number, readonly c: number) {
+        readonly a: number, 
+        readonly b: number, 
+        readonly c: number
+    ) {
         console.log("Demo initialized");
     }
     start() {

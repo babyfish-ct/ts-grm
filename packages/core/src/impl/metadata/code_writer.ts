@@ -9,7 +9,7 @@ export class CodeWriter {
     scope(
         options: ScopeKind | {
             readonly kind: ScopeKind;
-            readonly mutline?: boolean;
+            readonly multiline?: boolean;
         },
         fn: () => void
     ): this {
@@ -18,9 +18,9 @@ export class CodeWriter {
             : options.kind;
         const multiline = (
             typeof options === "string"
-                ? undefined 
-                : options.mutline
-        ) ?? kind === "CURLY_BRACKETS";
+                ? undefined
+                : options.multiline
+        ) ?? (kind === "CURLY_BRACKETS");
         this._parts.push(startStr(kind));
         this._scope = {
             kind,
@@ -34,6 +34,9 @@ export class CodeWriter {
                 this.newLine();
             }
             fn();
+            if (multiline && this._parts[this._parts.length - 1] != "\n") {
+                this.newLine();
+            }
         } finally {
             this._scope = this._scope.parent;
         }
@@ -52,7 +55,10 @@ export class CodeWriter {
         return this;
     }
 
-    newLine(): this {
+    newLine(end: string = ""): this {
+        if (end !== "") {
+            this._parts.push(end);
+        }
         this._parts.push("\n");
         this._lineDirty = false;
         return this;
@@ -61,6 +67,9 @@ export class CodeWriter {
     separator(text: string = ", "): this {
         if (this._scope != null && this._scope.dirty) {
             this.code(text);
+            if (this._scope.multiline) {
+                this.newLine();
+            }
         }
         return this;
     }
