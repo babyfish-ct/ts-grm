@@ -21,7 +21,7 @@ export class CodeWriter {
                 ? undefined
                 : options.multiline
         ) ?? (kind === "CURLY_BRACKETS");
-        this._parts.push(startStr(kind));
+        this.code(startStr(kind));
         this._scope = {
             kind,
             parent: this._scope,

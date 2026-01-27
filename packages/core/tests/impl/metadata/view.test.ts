@@ -142,9 +142,11 @@ describe("TestView", () => {
                 "name": true,
                 "edition": true,
                 "store": {
-                    "id": true,
-                    "name": true,
-                    "version": true
+                    "__ref": {
+                        "id": true,
+                        "name": true,
+                        "version": true
+                    }
                 },
                 "authors": {
                     "__array": {
@@ -260,6 +262,20 @@ describe("TestView", () => {
             },
             "implicit": {}
         });
+    });
+
+    it("implictDeepAssociations", () => {
+        const view = dto.view(BOOK_STORE, $ => $
+            .name
+            .books($ => $
+                .name
+                .authors($ => $
+                    .name()
+                )
+            )
+        );
+        console.log(JSON.stringify(mapperJson(view.mapper)));
+        console.log(JSON.stringify(buildShapeDescriptor(view.mapper)));
     });
 
     it("flatAssociation", () => {
@@ -719,7 +735,9 @@ describe("TestView", () => {
         expect(buildShapeDescriptor(view.mapper)).toEqual({
             "dto": {
                 "order": {
-                    "name": true
+                    "__ref": {
+                        "name": true
+                    }
                 }
             },
             "implicit": {
@@ -792,7 +810,9 @@ describe("TestView", () => {
                     }
                 },
                 "order": {
-                    "name": true
+                    "__ref": {
+                        "name": true
+                    }
                 }
             },
             "implicit": {}
@@ -858,7 +878,9 @@ describe("TestView", () => {
                     }
                 },
                 "order": {
-                    "name": true
+                    "__ref": {
+                        "name": true
+                    }
                 }
             },
             "implicit": {
@@ -908,7 +930,9 @@ describe("TestView", () => {
             "dto": {
                 "name": true,
                 "parentNode": {
-                    "__recursive": true
+                    "__ref": {
+                        "__recursive": true
+                    }
                 },
                 "childNodes": {
                     "__array": {

@@ -13,7 +13,8 @@ export type ShapeNode = {
 export type ShapeMember = 
     true 
     | ShapeNode
-    | { __array: ShapeNode };
+    | { __array: ShapeNode }
+    | { __ref: ShapeNode };
 
 export function buildShapeDescriptor(
     mapper: DtoMapper,
@@ -85,10 +86,18 @@ function buildShapeMember(
                 __array: buildShapeDescriptorImpl(field.subMapper).dto
             };
         } 
+        if (isReference(field.prop)) {
+            return {
+                __ref: buildShapeDescriptorImpl(field.subMapper).dto
+            };
+        }
         return buildShapeDescriptorImpl(field.subMapper).dto;
     } else if (field.recursiveDepth !== undefined) {
         if (isCollection(field.prop)) {
             return { __array: {...recursive} };
+        }
+        if (isReference(field.prop)) {
+            return { __ref: {...recursive} };
         }
         return { ...recursive };
     }
@@ -98,6 +107,11 @@ function buildShapeMember(
 function isCollection(prop: EntityProp): boolean {
     return prop.associationType === "ONE_TO_MANY" 
         || prop.associationType === "MANY_TO_MANY";
+}
+
+function isReference(prop: EntityProp): boolean {
+    return prop.associationType == "ONE_TO_ONE" 
+        || prop.associationType == "MANY_TO_ONE";
 }
 
 let shapeScope: ShapeScope | undefined = undefined;

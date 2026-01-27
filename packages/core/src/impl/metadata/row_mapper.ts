@@ -4,19 +4,19 @@ import { DtoMapper } from "./dto_mapper";
 import { buildShapeDescriptor, ShapeNode } from "./shape_descriptor";
 
 export type Row = {
+
+    readonly mapper: RowMapper;
     
-    parent: Row;
+    readonly parent: Row;
 
-    dto: object;
+    readonly dto: object;
 
-    implicit: object;
+    readonly implicit: object;
 }
 
 export abstract class RowMapper {
 
-    abstract create(parent: Row | undefined): Row;
-
-    abstract map(row: Row, reader: DataReader): void;
+    abstract create(parent: Row | undefined, reader: DataReader): Row;
 }
 
 export function createRowMapper(mapper: DtoMapper): RowMapper {
@@ -32,10 +32,8 @@ export function createRowMapper(mapper: DtoMapper): RowMapper {
         .scope("CURLY_BRACKETS", () => {
             writeDtoTemplate(shapeDescriptor.dto, mapper.nullAsUndefined, writer);
             writeImplicitTemplate(implicit, mapper.nullAsUndefined, writer);
-            writeCreate(implicit, writer);
-            writeMap(mapper, implicit, writer);
+            writeCreate(mapper, implicit, writer);
         });
-    console.log(writer.toString());
     const cls = new Function("$baseClass", writer.toString())(RowMapper);
     return new cls();
 }
@@ -76,12 +74,17 @@ function writeDtoTemplate0(
         if (member == null || typeof member === "boolean") {
             continue;
         }
-        const deepShape = member.__array ?? member;
+        if ((member as any).__array != null) {
+            continue;
+        }
+        if ((member as any).__ref != null) {
+            continue;
+        }
         paths.push(key);
         try {
             writeDtoTemplate0(
                 paths, 
-                deepShape as ShapeNode, 
+                member as ShapeNode, 
                 nullAsUndefined, 
                 writer
             );
@@ -116,40 +119,31 @@ function writeImplicitTemplate(
 }
 
 function writeCreate(
-    implicit: {[key:string]: true} | undefined,
-    writer: CodeWriter
-) {
-    writer
-        .code("create(parent) ")
-        .scope("CURLY_BRACKETS", () => {
-            writer
-                .code("return ")
-                .scope("CURLY_BRACKETS", () => {
-                    writer.code("parent");
-                    writer.separator();
-                    writer.code("dto: { ...this._template }");
-                    writer.separator();
-                    writer.code("implicit: ");
-                    if (implicit != null) {
-                        writer.code("{ ...this._implicitTemplate }");
-                    } else {
-                        writer.code("undefined");
-                    }
-                })
-                .code(";");
-        })
-        .newLine();
-}
-
-function writeMap(
     mapper: DtoMapper, 
     implicit: {[key:string]: true} | undefined,
     writer: CodeWriter
 ) {
     const fields = mapper.fields;
     const size = fields.length;
-    writer.code("map(row, reader) ");
+    writer.code("create(parent, reader) ");
     writer.scope("CURLY_BRACKETS", () => {
+        writer
+            .code("const row = ")
+            .scope("CURLY_BRACKETS", () => {
+                writer.code("mapper: this");
+                writer.separator();
+                writer.code("parent");
+                writer.separator();
+                writer.code("dto: { ...this._template }");
+                writer.separator();
+                writer.code("implicit: ");
+                if (implicit != null) {
+                    writer.code("{ ...this._implicitTemplate }");
+                } else {
+                    writer.code("undefined");
+                }
+            })
+            .newLine(";");
         if (implicit != null) {
             writer.code("const { dto, implicit } = row").newLine(";");
         } else {
@@ -158,6 +152,9 @@ function writeMap(
         for (let i = 0; i < size; i++) {
             const field = fields[i]!;
             for (const path of field.paths) {
+                if (field.dependencies != null) {
+                    continue;
+                }
                 const sp = typeof path === "string"
                     ? path
                     : path.length === 1 ? path[0] : undefined;
@@ -171,6 +168,17 @@ function writeMap(
                         .newLine(";");
                 }
             }
+            if (field.paths.length === 0) {
+                writer
+                    .code("implicit.")
+                    .code("_")
+                    .code(`${i}`)
+                    .code(" = reader.get(")
+                    .code(`${i}`)
+                    .code(")")
+                    .newLine(";");
+            }
         }
+        writer.code("return row").newLine(";");
     });
 }
