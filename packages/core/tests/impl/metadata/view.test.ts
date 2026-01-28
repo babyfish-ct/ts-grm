@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DtoMapper } from "@/impl/metadata/dto_mapper";
 import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../../model/model";
-import { buildShapeDescriptor } from "@/impl/metadata/shape_descriptor";
+import { buildShape } from "@/impl/metadata/shape";
 
 describe("TestView", () => {
  
@@ -47,13 +47,10 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "name": true,
-                "edition": true
-            },
-            "implicit": {}
+        expect(buildShape(view.mapper)).toEqual({
+            "id": true,
+            "name": true,
+            "edition": true
         });
     });
 
@@ -137,8 +134,8 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
+        expect(buildShape(view.mapper)).toEqual({
+            
                 "name": true,
                 "edition": true,
                 "store": {
@@ -156,12 +153,11 @@ describe("TestView", () => {
                             "lastName": true
                         }
                     }
+                },
+                "__implicit": {
+                    "_2": true,
+                    "_4": true
                 }
-            },
-            "implicit": {
-                "_2": true,
-                "_4": true
-            }
         });
     });
 
@@ -240,31 +236,28 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "name": true,
-                "books": {
-                    "__array": {
-                        "id": true,
-                        "name": true,
-                        "authors": {
-                            "__array": {
-                                "id": true,
-                                "name": {
-                                    "firstName": true,
-                                    "lastName": true
-                                }
+        expect(buildShape(view.mapper)).toEqual({
+            "id": true,
+            "name": true,
+            "books": {
+                "__array": {
+                    "id": true,
+                    "name": true,
+                    "authors": {
+                        "__array": {
+                            "id": true,
+                            "name": {
+                                "firstName": true,
+                                "lastName": true
                             }
                         }
                     }
                 }
-            },
-            "implicit": {}
+            }
         });
     });
 
-    it("implictDeepAssociations", () => {
+    it("implicitDeepAssociations", () => {
         const view = dto.view(BOOK_STORE, $ => $
             .name
             .books($ => $
@@ -274,8 +267,91 @@ describe("TestView", () => {
                 )
             )
         );
-        console.log(JSON.stringify(mapperJson(view.mapper)));
-        console.log(JSON.stringify(buildShapeDescriptor(view.mapper)));
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "BookStore",
+            "fields": [
+                {
+                    "prop": "BookStore.name",
+                    "paths": ["name"]
+                },
+                {
+                    "prop": "BookStore.id",
+                    "paths": [], // Implicit property to fetch `BookStore.books`
+                    "isDependent": true
+                },
+                {
+                    "prop": "BookStore.books",
+                    "paths": [
+                        "books"
+                    ],
+                    "subMapper": {
+                        "entity": "Book",
+                        "associatedProp": "BookStore.books",
+                        "fields": [
+                            {
+                                "prop": "Book.name",
+                                "paths": [
+                                    "name"
+                                ]
+                            },
+                            {
+                                "prop": "Book.id",
+                                "paths": [], // Implicit property to fetch `Book.authors`
+                                "isDependent": true
+                            },
+                            {
+                                "prop": "Book.authors",
+                                "paths": [
+                                    "authors"
+                                ],
+                                "subMapper": {
+                                    "entity": "Author",
+                                    "associatedProp": "Book.authors",
+                                    "fields": [
+                                        {
+                                            "prop": "Author.name.firstName",
+                                            "paths": [
+                                                ["name", "firstName"]
+                                            ]
+                                        },
+                                        {
+                                            "prop": "Author.name.lastName",
+                                            "paths": [
+                                                ["name", "lastName"]
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "dependencies": [1]
+                            }
+                        ]
+                    },
+                    "dependencies": [1]
+                }
+            ]
+        });
+        expect(buildShape(view.mapper)).toEqual({
+            "name": true,
+            "__implicit": {
+                "_1": true
+            },
+            "books": {
+                "__array": {
+                    "name": true,
+                    "__implicit": {
+                        "_1": true
+                    },
+                    "authors": {
+                        "__array": {
+                            "name": {
+                                "firstName": true,
+                                "lastName": true
+                            }
+                        }
+                    }
+                }
+            }
+        });
     });
 
     it("flatAssociation", () => {
@@ -337,16 +413,14 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "name": true,
-                "edition": true,
-                "price": true,
-                "storeId": true,
-                "storeName": true
-            },
-            "implicit": {
+        expect(buildShape(view.mapper)).toEqual({
+            "id": true,
+            "name": true,
+            "edition": true,
+            "price": true,
+            "storeId": true,
+            "storeName": true,
+            "__implicit": {
                 "_4": true
             }
         });
@@ -377,13 +451,10 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "flattenFirstName": true,
-                "flattenLastName": true
-            },
-            "implicit": {}
+        expect(buildShape(view.mapper)).toEqual({
+            "id": true,
+            "flattenFirstName": true,
+            "flattenLastName": true
         });
     });
 
@@ -413,15 +484,12 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "key": {
-                    "name": true,
-                    "edition": true
-                }
-            },
-            "implicit": {}
+        expect(buildShape(view.mapper)).toEqual({
+            "id": true,
+            "key": {
+                "name": true,
+                "edition": true
+            }
         });
     });
 
@@ -473,22 +541,19 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "associations": {
-                    "authors": {
-                        "__array": {
-                            "id": true,
-                            "name": {
-                                "firstName": true,
-                                "lastName": true
-                            }
+        expect(buildShape(view.mapper)).toEqual({
+            "id": true,
+            "associations": {
+                "authors": {
+                    "__array": {
+                        "id": true,
+                        "name": {
+                            "firstName": true,
+                            "lastName": true
                         }
                     }
                 }
-            },
-            "implicit": {}
+            }
         });
     });
 
@@ -571,24 +636,21 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "bookId": true,
-                "key": {
-                    "bookName": true,
-                    "bookEdition": true
-                },
-                "associations": {
-                    "authors": {
-                        "__array": {
-                            "id": true,
-                            "flattenFn": true,
-                            "flattenLn": true
-                        }
+        expect(buildShape(view.mapper)).toEqual({
+            "bookId": true,
+            "key": {
+                "bookName": true,
+                "bookEdition": true
+            },
+            "associations": {
+                "authors": {
+                    "__array": {
+                        "id": true,
+                        "flattenFn": true,
+                        "flattenLn": true
                     }
                 }
-            },
-            "implicit": {}
+            }
         });
     });
 
@@ -671,19 +733,21 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "id": true,
-                "name": true,
-                "parentId": true,
-                "parentName": true,
-                "parentGrandId": true,
-                "parentGrandName": true
+        expect(buildShape(view.mapper)).toEqual({
+            "__implicit": {
+                "_2": true
             },
-            "implicit": {
-                "_2": true,
-                "parentNode._2": true
-            }
+            "parentNode": {
+                "__implicit": {
+                    "_2": true
+                },
+            },
+            "id": true,
+            "name": true,
+            "parentId": true,
+            "parentName": true,
+            "parentGrandId": true,
+            "parentGrandName": true
         });
     });
 
@@ -732,15 +796,13 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "order": {
-                    "__ref": {
-                        "name": true
-                    }
+        expect(buildShape(view.mapper)).toEqual({
+            "order": {
+                "__ref": {
+                    "name": true
                 }
             },
-            "implicit": {
+            "__implicit": {
                 "_0": true,
                 "_1": true,
                 "_2": true
@@ -800,22 +862,19 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "orderId": {
-                    "x": true,
-                    "y": {
-                        "a": true,
-                        "b": true
-                    }
-                },
-                "order": {
-                    "__ref": {
-                        "name": true
-                    }
+        expect(buildShape(view.mapper)).toEqual({
+            "orderId": {
+                "x": true,
+                "y": {
+                    "a": true,
+                    "b": true
                 }
             },
-            "implicit": {}
+            "order": {
+                "__ref": {
+                    "name": true
+                }
+            }
         });
     });
 
@@ -869,21 +928,19 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "orderId": {
-                    "y": {
-                        "a": true,
-                        "b": true
-                    }
-                },
-                "order": {
-                    "__ref": {
-                        "name": true
-                    }
+        expect(buildShape(view.mapper)).toEqual({
+            "orderId": {
+                "y": {
+                    "a": true,
+                    "b": true
                 }
             },
-            "implicit": {
+            "order": {
+                "__ref": {
+                    "name": true
+                }
+            },
+            "__implicit": {
                 "_2": true
             }
         });
@@ -926,21 +983,19 @@ describe("TestView", () => {
                 }
             ]
         });
-        expect(buildShapeDescriptor(view.mapper)).toEqual({
-            "dto": {
-                "name": true,
-                "parentNode": {
-                    "__ref": {
-                        "__recursive": true
-                    }
-                },
-                "childNodes": {
-                    "__array": {
-                        "__recursive": true
-                    }
+        expect(buildShape(view.mapper)).toEqual({
+            "name": true,
+            "parentNode": {
+                "__ref": {
+                    "__recursive": true
                 }
             },
-            "implicit": {
+            "childNodes": {
+                "__array": {
+                    "__recursive": true
+                }
+            },
+            "__implicit": {
                 "_1": true,
                 "_3": true
             }

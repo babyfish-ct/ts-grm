@@ -1,7 +1,7 @@
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
 import { DtoMapper } from "./dto_mapper";
-import { buildShapeDescriptor, ShapeNode } from "./shape_descriptor";
+import { buildShape, Shape } from "./shape";
 
 export type Row = {
 
@@ -21,16 +21,14 @@ export abstract class RowMapper {
 
 export function createRowMapper(mapper: DtoMapper): RowMapper {
 
-    const shapeDescriptor = buildShapeDescriptor(mapper);
-    const implicit = Object.keys(shapeDescriptor.implicit).length === 0 
-        ? undefined 
-        : shapeDescriptor.implicit;
+    const shape = buildShape(mapper);
+    const implicit = shape.__implicit;
 
     const writer = new CodeWriter();
     writer
         .code("return class extends $baseClass ")
         .scope("CURLY_BRACKETS", () => {
-            writeDtoTemplate(shapeDescriptor.dto, mapper.nullAsUndefined, writer);
+            writeDtoTemplate(shape, mapper.nullAsUndefined, writer);
             writeImplicitTemplate(implicit, mapper.nullAsUndefined, writer);
             writeCreate(mapper, implicit, writer);
         });
@@ -39,7 +37,7 @@ export function createRowMapper(mapper: DtoMapper): RowMapper {
 }
 
 function writeDtoTemplate(
-    shape: ShapeNode, 
+    shape: Shape, 
     nullAsUndefined: boolean, 
     writer: CodeWriter
 ) {
@@ -48,7 +46,7 @@ function writeDtoTemplate(
 
 function writeDtoTemplate0(
     paths: string[],
-    shape: ShapeNode, 
+    shape: Shape, 
     nullAsUndefined: boolean, 
     writer: CodeWriter
 ) {
@@ -59,6 +57,9 @@ function writeDtoTemplate0(
     writer.code(" = ");
     writer.scope("CURLY_BRACKETS", () => {
             for (const key in shape) {
+                if (key === "__implicit") {
+                    continue;
+                }
                 writer.separator();
                 writer.code(key).code(": ");
                 if (nullAsUndefined) {
@@ -70,6 +71,9 @@ function writeDtoTemplate0(
         })
         .newLine(";");
     for (const key in shape) {
+        if (key === "__implicit") {
+            continue;
+        }
         const member = shape[key];
         if (member == null || typeof member === "boolean") {
             continue;
@@ -84,7 +88,7 @@ function writeDtoTemplate0(
         try {
             writeDtoTemplate0(
                 paths, 
-                member as ShapeNode, 
+                member as Shape, 
                 nullAsUndefined, 
                 writer
             );
