@@ -89,7 +89,7 @@ export type {
     Model,
     AnyModel
 } from "./schema/model";
-export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
+export { TABLE_INHERIT, DISCRIMINATOR_VALUE_MODEL_NAME } from "./schema/model";
 export type { 
     TsFormulaFn,
     SqlFormulaFn,

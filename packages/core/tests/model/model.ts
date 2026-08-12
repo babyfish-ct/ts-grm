@@ -1,7 +1,7 @@
 import { dsl } from "@/dsl";
 import { dto } from "@/index";
 import { SqlFormula, TsFormula, Calculator } from "@/schema/computed";
-import { DV_ABSTRACT, DV_MODEL_NAME, model, TB_INHERIT } from "@/schema/model";
+import { DISCRIMINATOR_VALUE_MODEL_NAME, model, TABLE_INHERIT } from "@/schema/model";
 import { prop } from "@/schema/prop";
 import { z } from "zod"; 
 
@@ -72,7 +72,7 @@ export const BOOK_STORE = model("BookStore", "id", class {
 }, ctx => {
     ctx.table({
         discriminator: "TYPE",
-        discriminatorValue: DV_ABSTRACT
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     });
 });
 
@@ -84,8 +84,8 @@ export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
         tags = prop.enumSet("READING_ROOM", "AIR_CONDITION", "BEVERAGE_SALES")
     },
     ctx => ctx.table({
-        name: TB_INHERIT,
-        discriminatorValue: DV_MODEL_NAME
+        name: TABLE_INHERIT,
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
@@ -95,8 +95,8 @@ export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
         url = prop.str(50)
     },
     ctx => ctx.table({
-        name: TB_INHERIT,
-        discriminatorValue: DV_MODEL_NAME
+        name: TABLE_INHERIT,
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
@@ -132,7 +132,7 @@ export const BOOK = model("Book", "id", class {
 }, ctx => {
     ctx.table({
         discriminator: "TYPE",
-        discriminatorValue: DV_MODEL_NAME
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     }).unique("name", "edition");
 });
 
@@ -154,7 +154,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
     },
     ctx => ctx.table({
         name: "THE_PAPER_BOOK",
-        discriminatorValue: DV_MODEL_NAME
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
@@ -168,7 +168,7 @@ export const ELECTRONIC_BOOK = model.extends(BOOK)(
         name: {
             idMapping: "ELECTRONIC_BOOK"
         },
-        discriminatorValue: DV_MODEL_NAME
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
@@ -178,7 +178,7 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
         pdfVersion = prop.str(50).nullable()
     },
     ctx => ctx.table({
-        discriminatorValue: DV_MODEL_NAME
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 

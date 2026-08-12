@@ -1,4 +1,4 @@
-import { dsl, DV_ABSTRACT, DV_MODEL_NAME, model, Calculator, prop, TB_INHERIT, TsFormula, SqlFormula, dto } from "@ts-grm/core";
+import { dsl, DISCRIMINATOR_VALUE_MODEL_NAME, model, Calculator, prop, TABLE_INHERIT, TsFormula, SqlFormula, dto } from "@ts-grm/core";
 import { z } from "zod";
 
 const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
@@ -72,7 +72,7 @@ export const BOOK_STORE = model(
     ctx => {
         ctx.table({
             discriminator: "TYPE",
-            discriminatorValue: DV_ABSTRACT
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
         });
     }
 );
@@ -85,8 +85,8 @@ export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
         tags = prop.enumSet("READING_ROOM", "AIR_CONDITION", "BEVERAGE_SALES")
     },
     ctx => ctx.table({
-        name: TB_INHERIT,
-        discriminatorValue: DV_MODEL_NAME
+        name: TABLE_INHERIT,
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
@@ -96,8 +96,8 @@ export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
         url = prop.str(50)
     },
     ctx => ctx.table({
-        name: TB_INHERIT,
-        discriminatorValue: DV_MODEL_NAME
+        name: TABLE_INHERIT,
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
@@ -138,7 +138,7 @@ export const BOOK = model("Book", "id",
         ctx.unique("name", "edition");
         ctx.table({
             discriminator: "TYPE",
-            discriminatorValue: DV_MODEL_NAME
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
         });
     }
 );
@@ -161,7 +161,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
     },
     ctx => {
         ctx.table({
-            discriminatorValue: DV_MODEL_NAME,
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME,
             name: {
                 idMapping: "PB_ID"
             },
@@ -177,7 +177,7 @@ export const ELECTRONIC_BOOK = model.extends(BOOK)(
     ctx => {
         ctx.table({
             discriminator: "EB_TYPE",
-            discriminatorValue: DV_MODEL_NAME,
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME,
             name: {
                 idMapping: "EB_ID"
             },
@@ -192,7 +192,7 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
     },
     ctx => {
         ctx.table({
-            discriminatorValue: DV_MODEL_NAME,
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME,
             name: {
                 idMapping: "PEB_ID"
             },
@@ -235,7 +235,7 @@ export const TREE_NODE = model(
     ctx => {
         ctx.table({
             discriminator: "TYPE",
-            discriminatorValue: DV_ABSTRACT
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
         })
     }
 );
@@ -248,7 +248,7 @@ export const ORGANIZATION = model.extends(TREE_NODE)(
     },
     ctx => {
         ctx.table({
-            discriminatorValue: DV_MODEL_NAME
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
         });
     }
 )
@@ -260,7 +260,7 @@ export const GROUP = model.extends(TREE_NODE)(
     },
     ctx => {
         ctx.table({
-            discriminatorValue: DV_MODEL_NAME
+            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
         });
     }
 );

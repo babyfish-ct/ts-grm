@@ -88,8 +88,6 @@ export interface Model<
 
 export type AnyModel = Model<any, any, any, any, any>;
 
-export const TB_INHERIT = Symbol("<inherit>");
+export const TABLE_INHERIT = Symbol("<inherit>");
 
-export const DV_ABSTRACT = Symbol("<abstract>");
-
-export const DV_MODEL_NAME = Symbol("<modelName>");
+export const DISCRIMINATOR_VALUE_MODEL_NAME = Symbol("<modelName>");

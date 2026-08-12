@@ -1,7 +1,7 @@
 import { __FlattenMembers } from "@/auxiliary_types";
 import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
-import { AnyModel, DV_ABSTRACT, DV_MODEL_NAME, Model, TB_INHERIT } from "./model";
+import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT } from "./model";
 
 export type __ModelCreator = {
     
@@ -192,12 +192,11 @@ export type __CalculatorSourceKeys<
 
 export type __TableOptions<TSuperModel extends AnyModel | never> = 
     DatabaseIdentifier<string> | {
-        readonly name?: typeof TB_INHERIT
+        readonly name?: typeof TABLE_INHERIT
             | DatabaseIdentifier<string>
             | __IdRemappedTable<TSuperModel>;
         readonly discriminatorValue?: 
-            typeof DV_ABSTRACT
-            | typeof DV_MODEL_NAME
+            | typeof DISCRIMINATOR_VALUE_MODEL_NAME
             | string
             | number;
         readonly discriminator?: string | {

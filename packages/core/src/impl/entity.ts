@@ -1,5 +1,5 @@
 import { ModelError, PropError } from "@/error/metadata_error";
-import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, TB_INHERIT } from "@/schema/model";
+import { DISCRIMINATOR_VALUE_MODEL_NAME, AnyModel, TABLE_INHERIT } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { AnyModelImpl, ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
@@ -512,7 +512,7 @@ export class Entity {
         }
 
         if (options.name != null) {
-            if (options.name === TB_INHERIT) {
+            if (options.name === TABLE_INHERIT) {
                 settings.sharedTable = true;
             } else {
                 settings.explicitName = 
@@ -558,13 +558,11 @@ export class Entity {
                 this.name,
                 dedent `the "discriminatorValue" of table options must be specified 
                 because the current model requires polymorphism". 
-                Even if the model is intended to be abstract, 
-                it must be explicitly specified using the imported constant from
-                "import { DV_ABSTRACT } from '@ts-grm/core'";`  
+                Even if the model is intended to be abstract;`  
             );
         }
-        if (discriminatorValue !== DV_ABSTRACT) {
-            if (discriminatorValue === DV_MODEL_NAME) {
+        if (true) { // TODO: Not abstract
+            if (discriminatorValue === DISCRIMINATOR_VALUE_MODEL_NAME) {
                 discriminatorValue = this.name;
             }
             const discriminatorType = settings.discriminator?.type 

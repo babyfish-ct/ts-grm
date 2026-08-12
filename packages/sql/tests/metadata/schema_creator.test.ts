@@ -72,6 +72,7 @@ describe.sequential("SchemaCreatorTest", () => {
                         "kind": "CHECK",
                         "column": "TYPE",
                         "values": [
+                            "BookStore",
                             "PhysicalBookStore",
                             "OnlineBookStore"
                         ],
@@ -358,6 +359,7 @@ describe.sequential("SchemaCreatorTest", () => {
                         "kind": "CHECK",
                         "column": "TYPE",
                         "values": [
+                            "TreeNode",
                             "Organization",
                             "Group"
                         ],
@@ -876,7 +878,7 @@ describe.sequential("SchemaCreatorTest", () => {
 
                 -- Implicit check constraint for polymorphism
                 constraint BOOK_STORE_constraint_2
-                    check(TYPE in('PhysicalBookStore', 'OnlineBookStore'))
+                    check(TYPE in('BookStore', 'PhysicalBookStore', 'OnlineBookStore'))
             );
 
             -- Entity table for "Book"
@@ -996,7 +998,7 @@ describe.sequential("SchemaCreatorTest", () => {
 
                 -- Implicit check constraint for polymorphism
                 constraint TREE_NODE_constraint_2
-                    check(TYPE in('Organization', 'Group')), 
+                    check(TYPE in('TreeNode', 'Organization', 'Group')), 
 
                 constraint TREE_NODE_constraint_3
                     foreign key(PARENT_NODE_ID)
