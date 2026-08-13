@@ -1,5 +1,5 @@
 import { SqlClient } from "@ts-grm/core";
-import { SqlRecord, useMySqlClient, usePostgresClient, useSqliteClient } from "./utils";
+import { SqlRecord, useMySqlClient, useOracleClient, usePostgresClient, useSqliteClient } from "./utils";
 import { beforeAll } from "vitest";
 import { INITIAL_SQL } from "./data";
 import { SqlClientImplementor } from "@/sql_client";
@@ -18,7 +18,13 @@ export function usePostgresClientWithData(sqlRecord: SqlRecord): SqlClient {
 
 export function useMySqlClientWithData(sqlRecord: SqlRecord): SqlClient {
     const sqlClient = useMySqlClient(sqlRecord) as SqlClientImplementor;
-    initializeDatabase(sqlClient, { oldText: `"ORDER"`, newText: "`ORDER`"});
+    initializeDatabase(sqlClient, { oldRegExp: /"([^"]+)"/g, newText: "`$1`"});
+    return sqlClient;
+}
+
+export function useOracleClientWithData(sqlRecord: SqlRecord): SqlClient {
+    const sqlClient = useOracleClient(sqlRecord) as SqlClientImplementor;
+    initializeDatabase(sqlClient);
     return sqlClient;
 }
 
@@ -51,12 +57,12 @@ function replace(
     replacements: ReadonlyArray<Replacement>
 ): string {
     for (const replacement of replacements) {
-        text = text.replace(replacement.oldText, replacement.newText);
+        text = text.replace(replacement.oldRegExp, replacement.newText);
     }
     return text;
 }
 
 interface Replacement {
-    readonly oldText: string;
+    readonly oldRegExp: RegExp;
     readonly newText: string;
 }

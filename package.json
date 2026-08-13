@@ -32,5 +32,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "p-memoize": "^8.0.0"
   }
 }

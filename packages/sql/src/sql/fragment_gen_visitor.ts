@@ -1,5 +1,5 @@
-import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, ScalarProvider, spi } from "@ts-grm/core";
-import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf } from "./fragment";
+import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
+import { TableAlias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
@@ -404,17 +404,20 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 const sqlFormulaExpr = realTable.sqlFormulaExpr(prop);
                 if (sqlFormulaExpr != null) {
                     sqlFormulaExpr.accept(this);
+                    this._compositeStack.current.add(new RootColumnSuffix());
                     return;
                 }
                 if (prop instanceof spi.TypeNameProp) {
                     const columnName = table.__entity.tableSettings.discriminator!.name;
                     this._compositeStack.current.add(this._createColumn(realTable, columnName));
+                    this._compositeStack.current.add(new RootColumnSuffix());
                     return;
                 }
                 if (prop.isEntityProp) {
                     const entityProp = prop as spi.EntityProp;
                     const column = entityProp.toStorage(this._strategy) as spi.Column;
                     this._compositeStack.current.add(this._createColumn(realTable, column.name));
+                    this._compositeStack.current.add(new RootColumnSuffix());
                 }
             }
         });
@@ -624,18 +627,18 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     private _visitProjection(projection: spi.ProjectionContract): void {
         switch (projection.kind) {
             case "ROOT_SINGLE":
-                (projection.selection as any as spi.Node).accept(this);
+                this._visitRootSelection(projection.selection);
                 break;
             case "ROOT_ARRAY":
                 for (const selection of projection.selections) {
                     this._compositeStack.current.separator();
-                    (selection as any as spi.Node).accept(this);
+                    this._visitRootSelection(selection);
                 }
                 break;
             case "ROOT_MAP":
                 for (const key in projection.selections) {
                     this._compositeStack.current.separator();
-                    (projection.selections[key] as any as spi.Node).accept(this);
+                    this._visitRootSelection(projection.selections[key]!);
                 }
                 break;
             case "SUB_SINGLE":
@@ -659,13 +662,20 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                     } else {
                         const table = projection.args[selection.exportedName] as spi.AbstractEntityTable;
                         const realTable = this._toRealTable(table);
-                        this._compositeStack.current.add(new Alias(realTable)).add(".").add(selection.columnName);
+                        this._compositeStack.current.add(new TableAlias(realTable)).add(".").add(selection.columnName);
                         if (!this._baseQueryMetadata!.isCte) {
                             this._compositeStack.current.add(" ").add(selection.alias);
                         }
                     }
                 }
                 break;
+        }
+    }
+
+    private _visitRootSelection(selection: RootQuerySelection<any>): void {
+        (selection as any as spi.Node).accept(this);
+        if (selection instanceof spi.AbstractExpr) {
+            this._compositeStack.current.add(new RootColumnSuffix());
         }
     }
 

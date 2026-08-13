@@ -11,5 +11,7 @@ export const KEYWORDS: ReadonlySet<string> = new Set<string>([
     "union", "all", "intersect", "except",
 
     "primary", "key", "foreign", "references", "unique", "check", "default", 
-    "constraint", "collate", "on", "conflict", "do", "nothing", "nothing"
+    "constraint", "collate", "on", "conflict", "do", "nothing", "nothing",
+
+    "comment"
 ]);

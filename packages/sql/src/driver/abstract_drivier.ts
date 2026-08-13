@@ -4,11 +4,12 @@ import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { KEYWORDS } from "./keywords";
+import { spi } from "@ts-grm/core";
 
 export abstract class AbstractDriver implements Driver {
-
-    abstract name: string;
     
+    abstract name: string;
+
     abstract nodeRender: NodeRender;
 
     abstract transactionManager: TransactionManager;
@@ -23,10 +24,6 @@ export abstract class AbstractDriver implements Driver {
         return false;
     }
 
-    get isTableCascadeDeletionSupported(): boolean {
-        return false;
-    }
-
     get isRecursiveKeywordRequired(): boolean {
         return true;
     }
@@ -36,6 +33,13 @@ export abstract class AbstractDriver implements Driver {
             return `"${value}"`;
         }
         return value;
+    }
+
+    writeTableDeletion(
+        tableName: string, 
+        writer: spi.CodeWriter
+    ): void {
+        writer.code(`drop table if exists ${tableName}`);
     }
 
     applyPagination(

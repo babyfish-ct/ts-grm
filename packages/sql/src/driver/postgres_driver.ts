@@ -39,8 +39,11 @@ export class PostgresDriver extends AbstractDriver {
         return tn;
     }
 
-    get isTableCascadeDeletionSupported(): boolean {
-        return true;
+    override writeTableDeletion(
+        tableName: string, 
+        writer: spi.CodeWriter
+    ): void {
+        writer.code(`drop table if exists ${tableName} cascade`);
     }
 }
 
@@ -270,22 +273,6 @@ const unitMap: Record<TimeUnit, string> = {
     "CENTURIES": "years"
 };
 
-const keywords = new Set<string>([
-
-    "select", "from", "where", "group", "by", "having", "order", "limit", "offset",
-    "insert", "update", "delete", "into", "values", "set", "create", "table", "drop",
-    "alter", "add", "column", "rename", "to", "view", "trigger",
-
-    "and", "or", "not", "in", "is", "null", "like", "glob", "match", "regexp",
-    "between", "exists", "case", "when", "then", "else", "end",
-
-    "join", "left", "outer", "inner", "cross", "natural", "on", "using",
-    "union", "all", "intersect", "except",
-
-    "primary", "key", "foreign", "references", "unique", "check", "default", 
-    "constraint", "collate", "on", "conflict", "do", "nothing", "nothing"
-]);
-
 function typeName(tp: ScalarType<any>): string | undefined {
     switch (tp.kind) {
         case "BOOL":
@@ -307,6 +294,10 @@ function typeName(tp: ScalarType<any>): string | undefined {
             return "text";
         case "BINARY":
             return "bytea";
+        case "JSON":
+            return "json";
+        case "JSONB":
+            return "jsonb";
         default:
             return undefined;
     }

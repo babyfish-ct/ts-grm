@@ -191,7 +191,6 @@ export class TableDefImpl implements TableDef {
         driver: Driver
     ): ReadonlyArray<string> {
         const arr: Array<string> = [];
-        //const inline = driver.requiresInlineConstraints;
         const writer = new spi.CodeWriter();
         if (this.entity != null) {
             writer
@@ -207,7 +206,7 @@ export class TableDefImpl implements TableDef {
             .code("\"")
             .newLine();
         }
-        writer.code("drop table if exists ").code(this.name).codeIf(" cascade", driver.isTableCascadeDeletionSupported);
+        driver.writeTableDeletion(this.name, writer);
         arr.push(writer.toString());
         return arr;
     }

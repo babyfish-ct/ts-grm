@@ -9,7 +9,8 @@ export type ScalarKind =
     | "F32" | "F64" | "NUM" 
     | "DATE"
     | "BOOL"
-    | "BINARY";
+    | "BINARY"
+    | "JSON" | "JSONB";
 
 export class ScalarType<T> {
 
@@ -39,6 +40,10 @@ export class ScalarType<T> {
     static F64 = new ScalarType<number>("F64", undefined);
 
     static NUM = new ScalarType<number>("NUM", undefined);
+
+    static JSON = new ScalarType<any>("JSON", undefined);
+
+    static JSONB = new ScalarType<any>("JSONB", undefined);
 
     static str(length: number): ScalarType<string> {
         if (length < 1) {

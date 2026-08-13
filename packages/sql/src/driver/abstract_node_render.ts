@@ -231,8 +231,8 @@ export abstract class AbstractNodeRender implements NodeRender {
     }
 
     renderDtPlusExpr(
-        expr: spi.DtPlusExpr,
-        ctx: NodeRenderContext
+        _expr: spi.DtPlusExpr,
+        _ctx: NodeRenderContext
     ): void {
         throw new Error("Unsupported Operation Exception");
     }

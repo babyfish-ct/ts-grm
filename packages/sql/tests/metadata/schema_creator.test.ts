@@ -557,7 +557,7 @@ describe.sequential("SchemaCreatorTest", () => {
                 ]
             },
             {
-                "name": "COMMENT",
+                "name": "\"COMMENT\"",
                 "columns": [
                     {
                         "name": "ID",
@@ -1080,7 +1080,7 @@ describe.sequential("SchemaCreatorTest", () => {
             );
 
             -- Entity table for "Comment"
-            create table COMMENT(
+            create table "COMMENT"(
                 ID integer not null, 
                 NAME text not null, 
                 TEXT text not null, 
@@ -1106,7 +1106,7 @@ describe.sequential("SchemaCreatorTest", () => {
 
                 constraint ORDER_COMMENT_MAPPING_constraint_3
                     foreign key(COMMENT_ID)
-                        references COMMENT(ID)
+                        references "COMMENT"(ID)
             );
 
             -- Entity table for "OrderItem"

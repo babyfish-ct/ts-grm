@@ -1,7 +1,159 @@
-import { spi, TimeUnit } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
-import { NodeRenderContext } from "./node_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
+import { AbstractDriver } from "./abstract_drivier";
+import { TransactionManager } from "@/transaction/transaction_manger";
+import { OraclePool, OracleTransactionManager } from "@/transaction/oracle_transaction_manager";
+import { ColumnDef } from "@/impl/schema_def";
+import { MetadataError } from "@/error/metadata_error";
+import { Composite, RootQueryWrapper, Scope, Value } from "@/sql/fragment";
+import { ApplyPaginationOptions } from "./deriver";
+
+export class OracleDriver extends AbstractDriver {
+
+    readonly nodeRender: NodeRender = nodeRender;
+
+    readonly transactionManager: TransactionManager;
+
+    protected readonly options: OracleDriverOptions;
+
+    constructor(
+        pool: OraclePool,
+        options?: OracleDriverOptions
+    ) {
+        super();
+        this.transactionManager = new OracleTransactionManager(pool);
+        this.options = {
+            defaultStringLength: options?.defaultStringLength ?? 255
+        };
+    }
+
+    get name(): string {
+        return "Oracle";
+    }
+
+    get nameParameterPrefix(): string | undefined {
+        return ":";
+    }
+
+    typeName(columnDef: ColumnDef): string {
+        const options = this.options;
+        switch (columnDef.type.kind) {
+            case "BOOL":
+                return "number(1)";
+            case "I8":
+                return "number(3)";
+            case "I16":
+                return "number(5)";
+            case "I32":
+                return "number(10)";
+            case "I64":
+                return "number(19)";
+            case "F32":
+                return "binary_float";
+            case "F64":
+                return "binary_double";
+            case "NUM":
+                return "number";
+            case "STR":
+                const len = columnDef.length ?? options.defaultStringLength ?? 255;
+                if (len > 4000) {
+                    return "clob";
+                }
+                return `varchar2(${len})`;
+            case "BINARY":
+                return "blob";
+            case "JSON":
+                return "clob";
+            case "JSONB":
+                return "json";
+            default:
+                throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
+        }
+    }
+
+    writeTableDeletion(tableName: string, writer: spi.CodeWriter): void {
+        writer.code("begin");
+        writer.scope({
+            kind: "BLANK",
+            multiline: true
+        }, () => {
+            writer.code(`execute immediate 'drop table ${tableName}'`).newLine(";");
+        });
+        writer.code("exception");
+        writer.scope({
+            kind: "BLANK",
+            multiline: true
+        }, () => {
+            writer.code("when others then");
+            writer.scope({
+                kind: "BLANK",
+                multiline: true
+            }, () => {
+                writer.code("if sqlcode != -942 then");
+                writer.scope({
+                    kind: "BLANK",
+                    multiline: true
+                }, () => {
+                    writer.code("raise").newLine(";");
+                }); 
+                writer.code("end if").newLine(";")
+            });
+        });
+        writer.code("end").newLine(";");
+    }
+
+    applyPagination(
+        original: Composite, 
+        options: ApplyPaginationOptions
+    ): Composite {
+        if (options.offset == null) {
+            return new Composite()
+                .add("select ")
+                .add(new Scope("COMMA").add("core__.*"))
+                .add("\nfrom ")
+                .add(
+                    new RootQueryWrapper().add(
+                        original
+                    )
+                )
+                .add(" core__ \nwhere rownum <= ")
+                .add(new Value(options.limit))
+        }    
+        return new Composite()
+            .add("select")
+            .add(new Scope("COMMA").add("*"))
+            .add("\nfrom ")
+            .add(
+                new RootQueryWrapper()
+                    .add(
+                        new Composite()
+                            .add("select ")
+                            .add(
+                                new Scope("COMMA")
+                                    .add("core__.*")
+                                    .separator()
+                                    .add("rownum rn__")
+                            )
+                            .add("\nfrom ")
+                            .add(
+                                new RootQueryWrapper().add(
+                                    original
+                                )
+                            )
+                            .add(" core__\nwhere rownum <= ")
+                            .add(new Value(options.limit + options.offset))
+                    )
+            )
+            .add("\nwhere rn__ > ")
+            .add(new Value(options.offset));
+    }
+}
+
+export interface OracleDriverOptions {
+    readonly defaultStringLength: number;
+}
 
 const nodeRender = new class extends AbstractNodeRender {
 

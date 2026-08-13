@@ -20,7 +20,10 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     requiresInlineConstraints: boolean;
 
-    isTableCascadeDeletionSupported: boolean;
+    writeTableDeletion(
+        tableName: string, 
+        writer: spi.CodeWriter
+    ): void;
 
     applyPagination(
         original: Composite, 

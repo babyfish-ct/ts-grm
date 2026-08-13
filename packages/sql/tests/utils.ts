@@ -10,6 +10,9 @@ import { Pool as PgPool } from "pg";
 import { createPool as createMySqlPool } from "mysql2/promise";
 import { afterAll, afterEach, expect } from "vitest";
 import { MySqlDriver } from "@/driver/mysql_driver";
+import { OracleDriver } from "@/driver";
+import { OraclePool } from "@/transaction/oracle_transaction_manager";
+import { Driver } from "@/driver/deriver";
 
 export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor,
@@ -52,23 +55,7 @@ export function usePostgresClient(
         idleTimeoutMillis: 0,
         connectionTimeoutMillis: 2000,
     });
-    afterEach(() => {
-        if (sqlRecord != null) {
-            (sqlRecord as SqlRecordImpl).clear();
-        }
-    });
-    return newSqlClient(
-        new PostgresDriver(pool), {
-            entityManager: EntityManager.of(__dirname, "./model"),
-            sqlLogger: {
-                pretty: true
-            },
-            executorCreator: (executor: Executor) => 
-                sqlRecord != null
-                    ? new SqlRecordExecutor(executor, sqlRecord as SqlRecordImpl)
-                    : executor
-        }
-    );
+    return useClientImpl(new PostgresDriver(pool), sqlRecord)
 }
 
 export function useMySqlClient(
@@ -81,13 +68,31 @@ export function useMySqlClient(
         user: 'root',       
         password: '123456'
     });
+    return useClientImpl(new MySqlDriver(pool), sqlRecord)
+}
+
+export function useOracleClient(
+    sqlRecord?: SqlRecord
+): SqlClient {
+    const pool = new OraclePool({
+        user: "system",
+        password: "123456",
+        connectString: "192.168.101.9/FREEPDB1"
+    });
+    return useClientImpl(new OracleDriver(pool), sqlRecord);
+}
+
+function useClientImpl(
+    driver: Driver,
+    sqlRecord: SqlRecord | undefined
+): SqlClient {
     afterEach(() => {
         if (sqlRecord != null) {
             (sqlRecord as SqlRecordImpl).clear();
         }
     });
     return newSqlClient(
-        new MySqlDriver(pool), {
+        driver, {
             entityManager: EntityManager.of(__dirname, "./model"),
             sqlLogger: {
                 pretty: true

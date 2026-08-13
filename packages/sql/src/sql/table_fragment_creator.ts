@@ -1,5 +1,5 @@
 import { AnyModel, dsl, EntityTable, Predicate, spi } from "@ts-grm/core";
-import { Alias, Column, Composite, Scope } from "./fragment";
+import { TableAlias, Column, Composite, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
 import { SqlClientImplementor } from "@/sql_client";
@@ -60,19 +60,19 @@ export class TableFragmentCreator {
             composite
                 .add(table.symbol.__entity.toTableName(this._strategy))
                 .add(" ")
-                .add(new Alias(table));
+                .add(new TableAlias(table));
         } else if (table.symbol.__associationEntity != null) {
             composite
                 .add(table.symbol.__associationEntity.toTableName(this._strategy))
                 .add(" ")
-                .add(new Alias(table));
+                .add(new TableAlias(table));
         } else {
             const baseTable = table.symbol as spi.TypedBaseTable;
             if (baseTable.__isCte) {
-                composite.add(new Alias(table));
+                composite.add(new TableAlias(table));
             } else {
                 composite.add(this.createDefinition(table));
-                composite.add(" ").add(new Alias(table))
+                composite.add(" ").add(new TableAlias(table))
             }
         }
     }
@@ -99,7 +99,7 @@ export class TableFragmentCreator {
                     )
                 )
                 .add(" = ")
-                .add(new Alias(table))
+                .add(new TableAlias(table))
                 .add(".")
                 .add(table.isJoinPropInverse ? storage.name : storage.referencedColumnName!);
         } else if (storage.kind === "COLUMNS") {
@@ -113,7 +113,7 @@ export class TableFragmentCreator {
                         )
                     )
                     .add(" = ")
-                    .add(new Alias(table))
+                    .add(new TableAlias(table))
                     .add(".")
                     .add(table.isJoinPropInverse ? column.name : column.referencedColumnName!);
             }

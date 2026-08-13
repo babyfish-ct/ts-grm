@@ -112,7 +112,7 @@ insert into ORDER_TAG_MAPPING(order_x, order_y_a, order_y_b, tag_low, tag_high) 
     (2, 1, 2, 1, 1),
     (2, 1, 2, 1, 2);
 
-insert into COMMENT(ID, NAME, TEXT) values
+insert into "COMMENT"(ID, NAME, TEXT) values
     (1, 'Delayed', 'Delyaed, delive faster'),
     (2, 'Aborted', 'Aborted, come back'),
     (3, 'Changed', 'Changed, please notify');

@@ -1,8 +1,82 @@
 import { spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
-import { NodeRenderContext } from "./node_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
+import { AbstractDriver } from "./abstract_drivier";
+import { TransactionManager } from "@/transaction/transaction_manger";
+import { ColumnDef } from "@/impl/schema_def";
+import { ConnectionPool } from "mssql";
+import { SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
+import { MetadataError } from "@/error/metadata_error";
+import { KEYWORDS } from "./keywords";
+
+export class SqlServerDriver extends AbstractDriver {
+
+    readonly nodeRender: NodeRender = nodeRender;
+
+    readonly transactionManager: TransactionManager;
+
+    protected readonly options: SqlServerDriverOptions;
+
+    constructor(
+        pool: ConnectionPool, 
+        options: SqlServerDriverOptions
+    ) {
+        super();
+        this.transactionManager = new SqlServerTransactionManager(pool);
+        this.options = {
+            defaultStringLength: options?.defaultStringLength ?? 255
+        };
+    }
+
+    get name(): string {
+        return "SqlServer"; 
+    }
+
+    get nameParameterPrefix(): string | undefined {
+        return "@p";
+    }
+
+    quoteIdentifier(value: string): string {
+        if (KEYWORDS.has(value.toLowerCase())) {
+            return `[${value}]`;
+        }
+        return value;
+    }
+
+    typeName(columnDef: ColumnDef): string {
+        switch (columnDef.type.kind) {
+            case "BOOL":
+                return "bit";
+            case "I8":
+                return "tinyint";
+            case "I16":
+                return "smallint";
+            case "I32":
+                return "int";
+            case "I64":
+                return "bigint";
+            case "F32":
+                return "real"; 
+            case "F64":
+                return "float";
+            case "NUM":
+                return "decimal";
+            case "STR":
+                return `nvarchar(${columnDef.length ?? this.options.defaultStringLength})`;
+            case "BINARY":
+                return "varbinary(max)";
+            default:
+                throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
+        }
+    }
+}
+
+export interface SqlServerDriverOptions {
+    
+    readonly defaultStringLength: number;
+}
 
 const nodeRender = new class extends AbstractNodeRender {
 

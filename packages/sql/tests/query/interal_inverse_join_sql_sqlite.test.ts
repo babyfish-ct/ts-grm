@@ -286,7 +286,7 @@ describe.sequential("InternalInverseJoinSqlTest", () => {
                 select 
                     tb_1_.ID,
                     tb_1_.NAME
-                from COMMENT tb_1_
+                from "COMMENT" tb_1_
                 inner join ORDER_COMMENT_MAPPING tb_2_ on 
                     tb_1_.ID = tb_2_.COMMENT_ID
                 where 

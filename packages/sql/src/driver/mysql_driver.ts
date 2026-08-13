@@ -17,11 +17,11 @@ export class MySqlDriver extends AbstractDriver {
     
     readonly transactionManager: TransactionManager;
 
-    protected readonly options: MySqlServerOptions;
+    protected readonly options: MySqlDriverOptions;
     
     constructor(
         pool: Pool,
-        options?: Partial<MySqlServerOptions>
+        options?: Partial<MySqlDriverOptions>
     ) {
         super();
         this.transactionManager = new MySqlTransactionManager(pool);
@@ -63,13 +63,16 @@ export class MySqlDriver extends AbstractDriver {
                 return `varchar(${columnDef.length ?? this.options.defaultStringLength})`;
             case "BINARY":
                 return "blob";
+            case "JSON":
+            case "JSONB":
+                return "json";
             default:
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
     }
 }
 
-export interface MySqlServerOptions {
+export interface MySqlDriverOptions {
     
     readonly defaultStringLength: number;
 }

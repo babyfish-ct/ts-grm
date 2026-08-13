@@ -864,22 +864,20 @@ __metadata:
   dependencies:
     "@ts-grm/core": "workspace:*"
     "@types/better-sqlite3": "npm:^7.6.13"
+    "@types/mssql": "npm:^12.3.0"
+    "@types/oracledb": "npm:^7.0.2"
     "@types/pg": "npm:^8.20.0"
-    "@types/tedious": "npm:^18.0.0"
     better-sqlite3: "npm:^13.0.3"
     mssql: "npm:^12.7.0"
     mysql2: "npm:^3.23.2"
     oracledb: "npm:^7.0.1"
     pg: "npm:^8.23.0"
-    tedious: "npm:20.0.0"
   peerDependencies:
     better-sqlite3: "*"
     mssql: "*"
     mysql2: "*"
     oracledb: "*"
-    oracledbtedious: "*"
     pg: "*"
-    tedious: "*"
   languageName: unknown
   linkType: soft
 
@@ -916,6 +914,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/mssql@npm:^12.3.0":
+  version: 12.3.0
+  resolution: "@types/mssql@npm:12.3.0"
+  dependencies:
+    "@types/node": "npm:*"
+    tarn: "npm:^3.0.1"
+    tedious: "npm:*"
+  checksum: 10c0/51b19cdc4b063b1f99f89ada8a7e649fe36ad75484d675a47eabdb61fa0ad8d1a077551f7f7217058fdbc2c49b314454dfb69d7d5cc9f629fe2c96e11b5818c3
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*, @types/node@npm:>=18":
   version: 25.7.0
   resolution: "@types/node@npm:25.7.0"
@@ -943,6 +952,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/oracledb@npm:^7.0.2":
+  version: 7.0.2
+  resolution: "@types/oracledb@npm:7.0.2"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/b824d22d9d66e18daa678d025406b036dfac55407880d6b80f939c97dba9eea7c32932727d9cefdf528049882a47fe772f3883a09f92a5eecf2ca5d4808e2bd1
+  languageName: node
+  linkType: hard
+
 "@types/pg@npm:^8.20.0":
   version: 8.20.0
   resolution: "@types/pg@npm:8.20.0"
@@ -960,15 +978,6 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/89ae3f6a53d186252c4c957b715c8dc12b318be30aeb3546f6513163572e5eebe0f61261e70c6d3f7496d63741ed6f92fbc5d17bfe9a72b0abfe720ee8fa471a
-  languageName: node
-  linkType: hard
-
-"@types/tedious@npm:^18.0.0":
-  version: 18.0.0
-  resolution: "@types/tedious@npm:18.0.0"
-  dependencies:
-    tedious: "npm:*"
-  checksum: 10c0/1296ce7301c673473d107a365cddf90b3d35506bdb02eb26e460f3e7023be29ea67a9b72226769e340a507c6d40cf6b7b64252e93e6cb6148550829fa7ad577c
   languageName: node
   linkType: hard
 
@@ -1980,6 +1989,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mimic-function@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "mimic-function@npm:5.0.1"
+  checksum: 10c0/f3d9464dd1816ecf6bdf2aec6ba32c0728022039d992f178237d8e289b48764fee4131319e72eedd4f7f094e22ded0af836c3187a7edc4595d28dd74368fd81d
+  languageName: node
+  linkType: hard
+
 "minimatch@npm:^10.1.2":
   version: 10.1.2
   resolution: "minimatch@npm:10.1.2"
@@ -2244,6 +2260,16 @@ __metadata:
   version: 7.0.4
   resolution: "p-map@npm:7.0.4"
   checksum: 10c0/a5030935d3cb2919d7e89454d1ce82141e6f9955413658b8c9403cfe379283770ed3048146b44cde168aa9e8c716505f196d5689db0ae3ce9a71521a2fef3abd
+  languageName: node
+  linkType: hard
+
+"p-memoize@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "p-memoize@npm:8.0.0"
+  dependencies:
+    mimic-function: "npm:^5.0.1"
+    type-fest: "npm:^4.41.0"
+  checksum: 10c0/cd4333c42f67dee273bff855e18cb974fac61136605ae06c30e779f71fb0e390fbab5c87160dfd8b5f905154b41c3f41bcc2e9870b2ce9b5e5c2c912012261ca
   languageName: node
   linkType: hard
 
@@ -2788,7 +2814,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tarn@npm:^3.0.2":
+"tarn@npm:^3.0.1, tarn@npm:^3.0.2":
   version: 3.1.2
   resolution: "tarn@npm:3.1.2"
   checksum: 10c0/fae37a0f2a9ee4b0ba5c309b213a1111e65bbc72cab5056be26beebcfa2980613aa0dd66f054fa0433e0cc6951875137e37c0ac52edb56812fbf05957130a795
@@ -2810,24 +2836,6 @@ __metadata:
     native-duplexpair: "npm:^1.0.0"
     sprintf-js: "npm:^1.1.3"
   checksum: 10c0/55b2421091dc2933cc91d681f64d35b1b2fba2cc6d32ce6eb15cd3444fad0399c640f2c9fb0b71cc075f08e56b63153de232fd6bc65b379ace55d4ff79f8a5f2
-  languageName: node
-  linkType: hard
-
-"tedious@npm:20.0.0":
-  version: 20.0.0
-  resolution: "tedious@npm:20.0.0"
-  dependencies:
-    "@azure/core-auth": "npm:^1.10.1"
-    "@azure/identity": "npm:^4.13.1"
-    "@azure/keyvault-keys": "npm:^4.10.2"
-    "@js-joda/core": "npm:^6.0.1"
-    "@types/node": "npm:>=22"
-    bl: "npm:^6.1.4"
-    iconv-lite: "npm:^0.7.0"
-    js-md4: "npm:^0.3.2"
-    native-duplexpair: "npm:^1.0.0"
-    sprintf-js: "npm:^1.1.3"
-  checksum: 10c0/a6306899295d1f3d6283ab55218c70c56f386af5c9c99fb347d0550314cf43df6b73d28791ae60bba3eed3bc7adc9e426a80e2bd967a0cb90e9b4ebcb92a685b
   languageName: node
   linkType: hard
 
@@ -2929,6 +2937,7 @@ __metadata:
     "@types/node": "npm:^25.0.3"
     "@vitest/coverage-v8": "npm:4.0.16"
     "@vitest/ui": "npm:4.0.16"
+    p-memoize: "npm:^8.0.0"
     tsup: "npm:^8.5.1"
     typescript: "npm:^6.0.3"
     vitest: "npm:4.0.16"
@@ -2988,6 +2997,13 @@ __metadata:
     tsup: dist/cli-default.js
     tsup-node: dist/cli-node.js
   checksum: 10c0/86b0a5ee5533cf5363431ffaf6a244d06fbc80e3a739f216a121a336b28e663d521bae1d3b2d9ba7d479cb4b5f7dcb5e0722e169d3daf664c78f0d68676fa06a
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.41.0":
+  version: 4.41.0
+  resolution: "type-fest@npm:4.41.0"
+  checksum: 10c0/f5ca697797ed5e88d33ac8f1fec21921839871f808dc59345c9cf67345bfb958ce41bd821165dbf3ae591cedec2bf6fe8882098dfdd8dc54320b859711a2c1e4
   languageName: node
   linkType: hard
 

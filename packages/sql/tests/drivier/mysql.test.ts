@@ -4,7 +4,7 @@ import { useMySqlClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK } from "../model/model";
 
-describe("MySqlTest", () => {
+describe.sequential("MySqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 

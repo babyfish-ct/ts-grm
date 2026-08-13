@@ -410,7 +410,7 @@ describe.sequential("AssociatedSqlTest", () => {
                     (
                         select 
                             count(1)
-                        from COMMENT tb_2_
+                        from "COMMENT" tb_2_
                         inner join ORDER_COMMENT_MAPPING tb_3_ on 
                             tb_2_.ID = tb_3_.COMMENT_ID
                         where 
