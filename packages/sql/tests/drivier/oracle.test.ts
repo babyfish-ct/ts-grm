@@ -25,6 +25,44 @@ describe.sequential("OracleTest", () => {
             q.orderBy(book.name);
             return q.select(book.fetch(view));
         }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.STORE_ID,
+                        tb_1_.ID,
+                        tb_2_.NAME
+                    from BOOK tb_1_
+                    left join BOOK_STORE tb_2_ on 
+                        tb_1_.STORE_ID = tb_2_.ID
+                    where 
+                        tb_1_.EDITION = :1
+                    order by 
+                        tb_1_.NAME asc
+                `,
+                args: [3],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.book_id,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.author_id
+                    where 
+                        tb_2_.book_id in(:1, :2, :3, :4)
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [6, 12, 3, 9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
         expect(rows).toEqual([
             {
                 "name": "Effective TypeScript",
