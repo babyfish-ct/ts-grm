@@ -119,7 +119,7 @@ export const BOOK = model("Book", "id", class {
     id = prop.i64()
     name = prop.str(50)
     edition = prop.i32()
-    price = prop.num()
+    price = prop.num(10, 2)
     store = prop.m2o(BOOK_STORE)
         .joinColumns({cascade: "DELETE"})
         .nullable()
@@ -220,7 +220,7 @@ export const ORDER = model("Order", "id", class {
             b: prop.i16()
         })
     });
-    name = prop.num();
+    name = prop.str(10);
     items = prop.o2m(ORDER_ITEM).mappedBy("order")
     tags = prop.m2m(TAG).joinTable({
         joinThis: {
@@ -261,7 +261,7 @@ export const ORDER = model("Order", "id", class {
 });
 
 export const VIP_ORDER = model.extends(ORDER)("VipOrder", class {
-    vipLevel = prop.num();
+    vipLevel = prop.num(2, 0);
 }, ctx => {
     ctx.table({
         name: {

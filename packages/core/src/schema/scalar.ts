@@ -20,7 +20,9 @@ export class ScalarType<T> {
 
     private constructor(
         readonly kind: ScalarKind,
-        readonly length: number | undefined
+        readonly length: number | undefined,
+        readonly precision = 0,
+        readonly scale = 0
     ) {}
 
     static BOOL = new ScalarType<boolean>("BOOL", undefined);
@@ -39,8 +41,6 @@ export class ScalarType<T> {
 
     static F64 = new ScalarType<number>("F64", undefined);
 
-    static NUM = new ScalarType<number>("NUM", undefined);
-
     static JSON = new ScalarType<any>("JSON", undefined);
 
     static JSONB = new ScalarType<any>("JSONB", undefined);
@@ -50,6 +50,10 @@ export class ScalarType<T> {
             throw new ArgumentError("length cannot be less than 1");
         }
         return new ScalarType<string>("STR", length);
+    }
+
+    static numeric(precision: number, scale: number): ScalarType<number> {
+        return new ScalarType<number>("NUM", undefined, precision, scale);
     }
 
     static text(): ScalarType<string> {

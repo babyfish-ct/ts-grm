@@ -10,38 +10,34 @@ import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager
 import { ColumnDef } from "@/impl/schema_def";
 import { KEYWORDS } from "./keywords";
 import { MetadataError } from "@/error/metadata_error";
+import { Composite } from "@/sql/fragment";
+import { ApplyPaginationOptions } from "./deriver";
 
 export class MySqlDriver extends AbstractDriver {
 
     readonly nodeRender: NodeRender = nodeRender;
     
     readonly transactionManager: TransactionManager;
-
-    protected readonly options: MySqlDriverOptions;
     
     constructor(
-        pool: Pool,
-        options?: Partial<MySqlDriverOptions>
+        pool: Pool
     ) {
         super();
         this.transactionManager = new MySqlTransactionManager(pool);
-        this.options = {
-            defaultStringLength: options?.defaultStringLength ?? 255
-        };
     }
 
     override get name(): string {
         return "MySql";
     }
 
-    quoteIdentifier(value: string): string {
+    override quoteIdentifier(value: string): string {
         if (KEYWORDS.has(value.toLowerCase())) {
             return "`" + value + "`";
         }
         return value;
     }
 
-    typeName(columnDef: ColumnDef): string {
+    override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
             case "BOOL":
                 return "tinyint(1)";
@@ -58,9 +54,9 @@ export class MySqlDriver extends AbstractDriver {
             case "F64":
                 return "double";
             case "NUM":
-                return "float";
+                return `decimal(${columnDef.precision}, ${columnDef.scale})`;
             case "STR":
-                return `varchar(${columnDef.length ?? this.options.defaultStringLength})`;
+                return `varchar(${columnDef.length!})`;
             case "BINARY":
                 return "blob";
             case "JSON":
@@ -70,11 +66,13 @@ export class MySqlDriver extends AbstractDriver {
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
     }
-}
 
-export interface MySqlDriverOptions {
-    
-    readonly defaultStringLength: number;
+    override applyPagination(
+        original: Composite, 
+        options: ApplyPaginationOptions
+    ): Composite {
+        return this.applyOffsetFetch(original, options, false);
+    }
 }
 
 const nodeRender = new class extends AbstractNodeRender {

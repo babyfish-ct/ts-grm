@@ -1,5 +1,5 @@
 import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
-import { TableAlias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix } from "./fragment";
+import { TableAlias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
@@ -37,7 +37,10 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             constructor() {
                 super(undefined);
             }
-            override with(composite: Composite): Disposable {
+            override with(composite: Composite | undefined): Disposable {
+                if (composite == null) {
+                    return super.with(undefined);
+                }
                 const parent = this.currentOrUndefined;
                 if (parent != null) {
                     parent.add(composite);
@@ -193,8 +196,13 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
         const orders = query.orders;
         if (orders.length !== 0 && !query.options.countMode) {
+            using _ = this._compositeStack.with(
+                query.level === "ROOT"
+                    ? new RootOrderByClause()
+                    : undefined
+            );
             this._compositeStack.current.add("\norder by ");
-            using _ = this._compositeStack.with(new Scope("COMMA"));
+            using __ = this._compositeStack.with(new Scope("COMMA"));
             const current = this._compositeStack.current;
             for (const order of query.orders) {
                 current.separator();

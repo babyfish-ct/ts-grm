@@ -3,7 +3,7 @@ import { Value } from "@/sql/fragment";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Executor, Purpose } from "./executor";
 import { Isolation } from "@ts-grm/core";
-import { ConnectionPool, Transaction, Request, ISOLATION_LEVEL, IIsolationLevel, connect, config } from "mssql";
+import { ConnectionPool, Transaction, Request, ISOLATION_LEVEL, IIsolationLevel, connect, config, Int, BigInt } from "mssql";
 import { AbstractSyncPool } from "./abstract_sync_pool";
 
 /**
@@ -112,6 +112,7 @@ class SqlServerExecutor implements Executor {
     ) {}
 
     async execute(sql: string): Promise<void> {
+        console.log(sql);
         await this._requestable.request().query(sql);
     }
 
@@ -120,11 +121,24 @@ class SqlServerExecutor implements Executor {
         args: ReadonlyArray<Value>, 
         _purpose: Purpose
     ): Promise<DataRows> {
-        const values = args.map(v => v.value);
         const request = this._requestable.request();
         request.arrayRowMode = true;
-        for (let i = 0; i < values.length; i++) {
-            request.input(`p${i + 1}`, values[i]);
+        for (let i = 0; i < args.length; i++) {
+            if (args[i]!.explicitType == null) {
+                request.input(`p${i + 1}`, args[i]!.value);
+            } else {
+                switch (args[i]!.explicitType?.kind) {
+                    case "I32":
+                        request.input(`p${i + 1}`, Int, args[i]!.value);
+                        break;
+                    case "I64":
+                        request.input(`p${i + 1}`, BigInt, args[i]!.value);
+                        break;
+                    default:
+                        request.input(`p${i + 1}`, args[i]!.value);
+                        break;
+                }
+            }
         }
         const result = await request.query(sql);
         return result.recordset;

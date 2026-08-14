@@ -16,29 +16,22 @@ export class OracleDriver extends AbstractDriver {
 
     readonly transactionManager: TransactionManager;
 
-    protected readonly options: OracleDriverOptions;
-
     constructor(
-        pool: OraclePool,
-        options?: OracleDriverOptions
+        pool: OraclePool
     ) {
         super();
         this.transactionManager = new OracleTransactionManager(pool);
-        this.options = {
-            defaultStringLength: options?.defaultStringLength ?? 255
-        };
     }
 
-    get name(): string {
+    override get name(): string {
         return "Oracle";
     }
 
-    get nameParameterPrefix(): string | undefined {
+    override get nameParameterPrefix(): string | undefined {
         return ":";
     }
 
-    typeName(columnDef: ColumnDef): string {
-        const options = this.options;
+    override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
             case "BOOL":
                 return "number(1)";
@@ -55,9 +48,9 @@ export class OracleDriver extends AbstractDriver {
             case "F64":
                 return "binary_double";
             case "NUM":
-                return "number";
+                return `number(${columnDef.precision}, ${columnDef.scale})`;
             case "STR":
-                const len = columnDef.length ?? options.defaultStringLength ?? 255;
+                const len = columnDef.length!;
                 if (len > 4000) {
                     return "clob";
                 }
@@ -73,7 +66,7 @@ export class OracleDriver extends AbstractDriver {
         }
     }
 
-    writeTableDeletion(tableName: string, writer: spi.CodeWriter): void {
+    override writeTableDeletion(tableName: string, writer: spi.CodeWriter): void {
         writer.code("begin");
         writer.scope({
             kind: "BLANK",
@@ -104,7 +97,7 @@ export class OracleDriver extends AbstractDriver {
         writer.code("end").newLine(";");
     }
 
-    applyPagination(
+    override applyPagination(
         original: Composite, 
         options: ApplyPaginationOptions
     ): Composite {
@@ -149,10 +142,6 @@ export class OracleDriver extends AbstractDriver {
             .add("\nwhere rn__ > ")
             .add(new Value(options.offset));
     }
-}
-
-export interface OracleDriverOptions {
-    readonly defaultStringLength: number;
 }
 
 const nodeRender = new class extends AbstractNodeRender {

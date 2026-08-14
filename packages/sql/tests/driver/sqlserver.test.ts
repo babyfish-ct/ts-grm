@@ -4,7 +4,7 @@ import { useSqlServerClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK } from "../model/model";
 
-describe.sequential("SqlServerTest", () => {
+describe("SqlServerTest", () => {
 
     const sqlRecord = newSqlRecord();
 

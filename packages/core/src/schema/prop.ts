@@ -59,10 +59,10 @@ export const prop = {
         });
     },
 
-    num(): __ScalarProp<number> {
+    num(precision: number, scale: number): __ScalarProp<number> {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
-            scalarType: ScalarType.NUM,
+            scalarType: ScalarType.numeric(precision, scale),
             numericType: NumericType.FLOAT
         });
     },

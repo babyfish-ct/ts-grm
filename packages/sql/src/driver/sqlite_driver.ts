@@ -8,6 +8,8 @@ import { AbstractNodeRender } from "./abstract_node_render";
 import { Precedence } from "@/sql/precedence";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
+import { Composite } from "@/sql/fragment";
+import { ApplyPaginationOptions } from "./deriver";
 
 export class SqliteDriver extends AbstractDriver {
 
@@ -20,11 +22,11 @@ export class SqliteDriver extends AbstractDriver {
         this.transactionManager = new SqliteTransactionManager(database);
     }
 
-    get name(): string {
+    override get name(): string {
         return "sqlite";
     }
 
-    typeName(columnDef: ColumnDef): string {
+    override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
             case "BOOL":
             case "I8":
@@ -45,8 +47,15 @@ export class SqliteDriver extends AbstractDriver {
         }
     }
 
-    get requiresInlineConstraints(): boolean {
+    override get requiresInlineConstraints(): boolean {
         return true;
+    }
+
+    applyPagination(
+        original: Composite, 
+        options: ApplyPaginationOptions
+    ): Composite {
+        return this.applyOffsetFetch(original, options, false);
     }
 }
 

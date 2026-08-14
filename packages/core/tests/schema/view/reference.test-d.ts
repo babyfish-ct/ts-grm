@@ -45,7 +45,7 @@ describe("ReferenceTest", () => {
                         b: number;
                     };
                 };
-                oname: number;
+                oname: string;
             };
         }>();
     });
@@ -74,7 +74,7 @@ describe("ReferenceTest", () => {
                         b: number;
                     };
                 };
-                oname: number;
+                oname: string;
             } | null;
         }>();
     });

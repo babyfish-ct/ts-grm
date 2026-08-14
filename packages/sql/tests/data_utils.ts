@@ -1,5 +1,5 @@
 import { SqlClient } from "@ts-grm/core";
-import { SqlRecord, useMySqlClient, useOracleClient, usePostgresClient, useSqliteClient, useSqlServerClient } from "./utils";
+import { SqlRecord, useMySqlClient, useOracle12Client, useOracleClient, usePostgresClient, useSqliteClient, useSqlServer2012Client, useSqlServerClient } from "./utils";
 import { beforeAll } from "vitest";
 import { INITIAL_SQL } from "./data";
 import { SqlClientImplementor } from "@/sql_client";
@@ -22,14 +22,34 @@ export function useMySqlClientWithData(sqlRecord: SqlRecord): SqlClient {
     return sqlClient;
 }
 
-export function useOracleClientWithData(sqlRecord: SqlRecord): SqlClient {
+export function useOracleClientWithData(
+    sqlRecord: SqlRecord
+): SqlClient {
     const sqlClient = useOracleClient(sqlRecord) as SqlClientImplementor;
     initializeDatabase(sqlClient);
     return sqlClient;
 }
 
-export function useSqlServerClientWithData(sqlRecord: SqlRecord): SqlClient {
+export function useOracle12ClientWithData(
+    sqlRecord: SqlRecord
+): SqlClient {
+    const sqlClient = useOracle12Client(sqlRecord) as SqlClientImplementor;
+    initializeDatabase(sqlClient);
+    return sqlClient;
+}
+
+export function useSqlServerClientWithData(
+    sqlRecord: SqlRecord
+): SqlClient {
     const sqlClient = useSqlServerClient(sqlRecord) as SqlClientImplementor;
+    initializeDatabase(sqlClient);
+    return sqlClient;
+}
+
+export function useSqlServer2012ClientWithData(
+    sqlRecord: SqlRecord
+): SqlClient {
+    const sqlClient = useSqlServer2012Client(sqlRecord) as SqlClientImplementor;
     initializeDatabase(sqlClient);
     return sqlClient;
 }

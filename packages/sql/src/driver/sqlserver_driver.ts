@@ -9,6 +9,8 @@ import { ColumnDef } from "@/impl/schema_def";
 import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS } from "./keywords";
+import { Composite } from "@/sql/fragment";
+import { ApplyPaginationOptions } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
 
@@ -16,17 +18,11 @@ export class SqlServerDriver extends AbstractDriver {
 
     readonly transactionManager: TransactionManager;
 
-    protected readonly options: SqlServerDriverOptions;
-
     constructor(
-        pool: SqlServerPool, 
-        options?: SqlServerDriverOptions
+        pool: SqlServerPool
     ) {
         super();
         this.transactionManager = new SqlServerTransactionManager(pool);
-        this.options = {
-            defaultStringLength: options?.defaultStringLength ?? 255
-        };
     }
 
     get name(): string {
@@ -37,14 +33,14 @@ export class SqlServerDriver extends AbstractDriver {
         return "@p";
     }
 
-    quoteIdentifier(value: string): string {
+    override quoteIdentifier(value: string): string {
         if (KEYWORDS.has(value.toLowerCase())) {
             return `[${value}]`;
         }
         return value;
     }
 
-    typeName(columnDef: ColumnDef): string {
+    override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
             case "BOOL":
                 return "bit";
@@ -61,20 +57,22 @@ export class SqlServerDriver extends AbstractDriver {
             case "F64":
                 return "float";
             case "NUM":
-                return "decimal";
+                return `decimal(${columnDef.precision}, ${columnDef.scale})`;
             case "STR":
-                return `nvarchar(${columnDef.length ?? this.options.defaultStringLength})`;
+                return `nvarchar(${columnDef.length})`;
             case "BINARY":
                 return "varbinary(max)";
             default:
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
     }
-}
 
-export interface SqlServerDriverOptions {
-    
-    readonly defaultStringLength: number;
+    override applyPagination(
+        original: Composite, 
+        _options: ApplyPaginationOptions
+    ): Composite {
+        return original;
+    }
 }
 
 const nodeRender = new class extends AbstractNodeRender {

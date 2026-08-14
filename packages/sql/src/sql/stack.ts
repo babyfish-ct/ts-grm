@@ -117,17 +117,24 @@ export class Stack<E> {
      * 
      * @see https://github.com/tc39/proposal-explicit-resource-management
      */
-    private _disposable: Disposable = {
+    private readonly _disposable: Disposable = {
         [Symbol.dispose]: () => {
             this._arr[this._size--] = undefined;
         }
+    }
+
+    private static readonly _emptyDisposable: Disposable = {
+        [Symbol.dispose]: () => {}
     }
 
     constructor(
         private readonly defaultValue: E | undefined
     ) {}
 
-    with(e: E): Disposable {
+    with(e: E | undefined): Disposable {
+        if (e == null) {
+            return Stack._emptyDisposable;
+        }
         this._arr[this._size++] = e;
         return this._disposable;
     }

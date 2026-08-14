@@ -121,7 +121,7 @@ export const BOOK = model("Book", "id",
         id = prop.i64()
         name = prop.str(50)
         edition = prop.i32()
-        price = prop.num()
+        price = prop.num(10, 2)
         store = prop.m2o(BOOK_STORE)
             .joinColumns({cascade: "DELETE"})
             .nullable()

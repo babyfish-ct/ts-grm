@@ -14,6 +14,8 @@ import { OracleDriver, SqlServerDriver } from "@/driver";
 import { OraclePool } from "@/transaction/oracle_transaction_manager";
 import { Driver } from "@/driver/deriver";
 import { SqlServerPool } from "@/transaction/sqlserver_transaction_manager";
+import { Oracle12Drivier as Oracle12Drivier } from "@/driver/oracle12_driver";
+import { SqlServer2012Driver } from "@/driver/sqlserver2012_driver";
 
 export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor,
@@ -86,6 +88,20 @@ export function useOracleClient(
     return useClientImpl(new OracleDriver(pool), sqlRecord);
 }
 
+export function useOracle12Client(
+    sqlRecord?: SqlRecord
+): SqlClient {
+    const pool = new OraclePool({
+        user: "system",
+        password: "123456",
+        connectString: "192.168.101.9/FREEPDB1"
+    });
+    afterAll(() => {
+        pool.close();
+    });
+    return useClientImpl(new Oracle12Drivier(pool), sqlRecord);
+}
+
 export function useSqlServerClient(
     sqlRecord?: SqlRecord
 ) {
@@ -103,6 +119,25 @@ export function useSqlServerClient(
         pool.close();
     });
     return useClientImpl(new SqlServerDriver(pool), sqlRecord)
+}
+
+export function useSqlServer2012Client(
+    sqlRecord?: SqlRecord
+) {
+    const pool = new SqlServerPool({
+        user: "sa",
+        password: "Sa@123456",
+        server: '192.168.101.9',
+        options: {
+            encrypt: true,
+            trustServerCertificate: true,
+            enableArithAbort: true
+        }
+    });
+    afterAll(() => {
+        pool.close();
+    });
+    return useClientImpl(new SqlServer2012Driver(pool), sqlRecord)
 }
 
 function useClientImpl(

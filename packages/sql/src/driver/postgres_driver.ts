@@ -8,7 +8,8 @@ import { PostgresTransactionManager } from "@/transaction/postgres_transaction_m
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
-import { Scope, Value, valueOf } from "@/sql/fragment";
+import { Composite, Scope, Value, valueOf } from "@/sql/fragment";
+import { ApplyPaginationOptions } from "./deriver";
 
 export class PostgresDriver extends AbstractDriver {
 
@@ -23,20 +24,27 @@ export class PostgresDriver extends AbstractDriver {
         this.transactionManager = new PostgresTransactionManager(pool);
     }
 
-    get name(): string {
+    override get name(): string {
         return "sqlite";
     }
 
-    get nameParameterPrefix(): string | undefined {
+    override get nameParameterPrefix(): string | undefined {
         return "$";
     }
 
-    typeName(columnDef: ColumnDef): string {
+    override typeName(columnDef: ColumnDef): string {
         const tn = typeName(columnDef.type) 
         if (tn == null) {
             throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
         }
         return tn;
+    }
+
+    override applyPagination(
+        original: Composite, 
+        options: ApplyPaginationOptions
+    ): Composite {
+        return this.applyOffsetFetch(original, options, false);
     }
 
     override writeTableDeletion(
@@ -289,7 +297,7 @@ function typeName(tp: ScalarType<any>): string | undefined {
         case "F64":
             return "double precision";
         case "NUM":
-            return "real";
+            return `numeric(${tp.precision}, ${tp.scale})`;
         case "STR":
             return "text";
         case "BINARY":

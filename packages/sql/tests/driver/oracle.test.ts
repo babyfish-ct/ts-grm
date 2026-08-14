@@ -4,7 +4,7 @@ import { useOracleClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
-describe.sequential("OracleTest", () => {
+describe("OracleTest", () => {
 
     const sqlRecord = newSqlRecord();
 

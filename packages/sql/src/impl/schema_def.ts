@@ -36,6 +36,10 @@ export interface ColumnDef {
 
     readonly length: number | undefined;
 
+    readonly precision: number | undefined;
+
+    readonly scale: number | undefined;
+
     readonly when: ReadonlyArray<spi.Entity> | undefined;
 }
 
@@ -255,6 +259,14 @@ export class ColumnDefImpl implements ColumnDef {
 
     get length(): number | undefined {
         return this.type.length;
+    }
+
+    get precision(): number | undefined {
+        return this.type.precision;
+    }
+
+    get scale(): number | undefined {
+        return this.type.scale;
     }
 
     toJSON(): any {

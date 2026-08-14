@@ -1,4 +1,4 @@
-import { err, ScalarProvider, spi, SqlClient } from "@ts-grm/core";
+import { err, ScalarProvider, ScalarType, spi, SqlClient } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -21,7 +21,10 @@ export class Composite extends Fragment {
         return this._fragments;
     }
 
-    add(fragment: Fragment | string): this {
+    add(fragment: Fragment | string | undefined): this {
+        if (fragment == null) {
+            return this;
+        }
         let fragments = this._fragments;
         if (fragments == null) {
             this._fragments = fragments = [];
@@ -49,6 +52,32 @@ export class Composite extends Fragment {
     }
 
     get kind(): ScopeKind | undefined {
+        return undefined;
+    }
+
+    find(
+        filter: (fragment: Fragment) => boolean,
+        exclude: (compoisite: Composite) => void
+    ): Fragment | undefined {
+        if (exclude != null && exclude(this)) {
+            return undefined;
+        }
+        if (this._fragments != null) {
+            for (const fragment of this._fragments) {
+                if (typeof fragment === "string") {
+                    continue;
+                }
+                if (filter(fragment)) {
+                    return fragment;
+                }
+                if (fragment instanceof Composite) {
+                    const result = fragment.find(filter, exclude);
+                    if (result != null) {
+                        return fragment;
+                    }
+                }
+            }
+        }
         return undefined;
     }
 
@@ -284,6 +313,13 @@ export class RootColumnSuffix extends Fragment {
     }
 }
 
+export class RootOrderByClause extends Composite {
+
+    into(builder: SqlBuilder): void {
+        super.into(builder);
+    }
+}
+
 export class RootColumnIndexAllocator {
     
     private nextId = 0;
@@ -336,22 +372,27 @@ export class Value extends Fragment {
 
     readonly constant: boolean;
 
+    readonly explicitType?: ScalarType<any> | undefined;
+
     constructor(
         value: any,
         readonly originalValue?: any,
-        constant?: boolean
+        extra?: ScalarType<any> | "CONSTANT"    
     ) {
         super();
-        this.constant = constant ?? false;
-        if (this.constant) {
+        if (extra === "CONSTANT") {
             if (value == null) {
                 throw new err.ArgumentError("Constant value cannot be null");
             }
             this.value = typeof value === "string"
                 ? `'${value.replace("'", "''")}'`
                 : value.toString();
+            this.constant = true;
+            this.explicitType = undefined;
         } else {
             this.value = value;
+            this.constant = false;
+            this.explicitType = extra;
         }
     }
 
