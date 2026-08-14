@@ -3,6 +3,11 @@ import { spi } from "@ts-grm/core";
 
 export interface NodeRender {
 
+    renderTupleCmpPred(
+        pred: spi.TupleCmpPred,
+        ctx: NodeRenderContext
+    ): void;
+
     renderInCollectinPred(
         pred: spi.InCollectionPred<any>,
         ctx: NodeRenderContext

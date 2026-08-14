@@ -1,5 +1,5 @@
 import { SqlClient } from "@ts-grm/core";
-import { SqlRecord, useMySqlClient, useOracleClient, usePostgresClient, useSqliteClient } from "./utils";
+import { SqlRecord, useMySqlClient, useOracleClient, usePostgresClient, useSqliteClient, useSqlServerClient } from "./utils";
 import { beforeAll } from "vitest";
 import { INITIAL_SQL } from "./data";
 import { SqlClientImplementor } from "@/sql_client";
@@ -24,6 +24,12 @@ export function useMySqlClientWithData(sqlRecord: SqlRecord): SqlClient {
 
 export function useOracleClientWithData(sqlRecord: SqlRecord): SqlClient {
     const sqlClient = useOracleClient(sqlRecord) as SqlClientImplementor;
+    initializeDatabase(sqlClient);
+    return sqlClient;
+}
+
+export function useSqlServerClientWithData(sqlRecord: SqlRecord): SqlClient {
+    const sqlClient = useSqlServerClient(sqlRecord) as SqlClientImplementor;
     initializeDatabase(sqlClient);
     return sqlClient;
 }

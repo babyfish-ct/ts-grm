@@ -10,9 +10,10 @@ import { Pool as PgPool } from "pg";
 import { createPool as createMySqlPool } from "mysql2/promise";
 import { afterAll, afterEach, expect } from "vitest";
 import { MySqlDriver } from "@/driver/mysql_driver";
-import { OracleDriver } from "@/driver";
+import { OracleDriver, SqlServerDriver } from "@/driver";
 import { OraclePool } from "@/transaction/oracle_transaction_manager";
 import { Driver } from "@/driver/deriver";
+import { SqlServerPool } from "@/transaction/sqlserver_transaction_manager";
 
 export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor,
@@ -79,7 +80,29 @@ export function useOracleClient(
         password: "123456",
         connectString: "192.168.101.9/FREEPDB1"
     });
+    afterAll(() => {
+        pool.close();
+    });
     return useClientImpl(new OracleDriver(pool), sqlRecord);
+}
+
+export function useSqlServerClient(
+    sqlRecord?: SqlRecord
+) {
+    const pool = new SqlServerPool({
+        user: "sa",
+        password: "Sa@123456",
+        server: '192.168.101.9',
+        options: {
+            encrypt: true,
+            trustServerCertificate: true,
+            enableArithAbort: true
+        }
+    });
+    afterAll(() => {
+        pool.close();
+    });
+    return useClientImpl(new SqlServerDriver(pool), sqlRecord)
 }
 
 function useClientImpl(

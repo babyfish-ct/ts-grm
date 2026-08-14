@@ -264,17 +264,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 
     visitTupleCmpPred(pred: spi.TupleCmpPred): void {
-        const span = pred.leftTuple.exprs.length;
-        const providers: Array<ScalarProvider<any, any> | undefined> = [];
-        for (let i = 0; i < span; i++) {
-            providers[i] = 
-                pred.leftTuple.exprs[i]!.scalarProvider 
-                ?? pred.rightTuple.exprs[i]!.scalarProvider;
-        }
-        using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        this._visitTuple(pred.leftTuple, providers);
-        this._compositeStack.current.add(" ").add(pred.op).add(" ");
-        this._visitTuple(pred.rightTuple, providers);
+        this._nodeRender.renderTupleCmpPred(pred, this._nodeRenderContext);
     }
 
     visitTupleInCollectionPred(pred: spi.TupleInCollectionPred): void {

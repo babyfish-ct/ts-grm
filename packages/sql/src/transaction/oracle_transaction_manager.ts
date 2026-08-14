@@ -4,63 +4,35 @@ import { Executor, Purpose } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
 import OracleDB from "oracledb";
-import pMemoize from "p-memoize";
+import { AbstractSyncPool } from "./abstract_sync_pool";
 
 /**
- * The underlying `OracleDB.Pool` provided by Oracle is 
- * completely hidden from users, they only have access 
+ * The underlying `OracleDB.Pool` provided by `oracledb` 
+ * is completely hidden from users, they only have access 
  * to this `OraclePool` provided by ts-grm
  */
-export class OraclePool {
-
-    private readonly _getPool: () => Promise<OracleDB.Pool>;
-
-    private _state: State = { phase: "IDLE" };
+export class OraclePool extends AbstractSyncPool<OracleDB.Pool> {
 
     constructor(poolAttributes: OracleDB.PoolAttributes) {
-        this._getPool = pMemoize(() => OracleDB.createPool(poolAttributes));
+        super(
+            () => OracleDB.createPool(poolAttributes),
+            pool => pool.close()
+        );
     }
 
     async getConnection(): Promise<OracleDB.Connection> {
-        if (this._state.phase === "CLOSING" || this._state.phase === "CLOSED") {
-            throw new Error(`OraclePool is "${this._state.phase}", cannot get a new connection`);
-        }
-        const pool = await this._getPool();
-        this._state = { phase: "READY", pool };
+        const pool = await this.getUnderlyingPool();
         return pool.getConnection();
     }
 
     getStatistics(): OracleDB.Statistics | undefined {
-        return this._state.phase === "READY" ? this._state.pool.getStatistics() : undefined;
+        return this.tryGetUnderlyingPoolSync()?.getStatistics();
     }
 
     async close(drainTime = 0): Promise<void> {
-        if (this._state.phase === "CLOSING") {
-            return this._state.promise;
-        }
-        if (this._state.phase === "CLOSED") {
-            return;
-        }
-        if (this._state.phase === "IDLE") {
-            this._state = { phase: "CLOSED" };
-            return;
-        }
-        const pool = this._state.pool;
-        const promise = pool
-            .close(drainTime)
-            .finally(() => {
-                this._state = { phase: "CLOSED" };
-            });
-        this._state = { phase: "CLOSING", promise };
-        return promise;
+        return this.dispose(pool => pool.close(drainTime));
     }
 }
-
-type State =
-    | { phase: 'IDLE' }
-    | { phase: 'READY'; pool: OracleDB.Pool }
-    | { phase: 'CLOSING'; promise: Promise<void> }
-    | { phase: 'CLOSED' };
 
 export class OracleTransactionManager extends AbstractTransactionManager<OracleTransactionContext> {
 

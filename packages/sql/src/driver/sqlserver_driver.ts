@@ -6,8 +6,7 @@ import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 import { AbstractDriver } from "./abstract_drivier";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { ColumnDef } from "@/impl/schema_def";
-import { ConnectionPool } from "mssql";
-import { SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
+import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS } from "./keywords";
 
@@ -20,8 +19,8 @@ export class SqlServerDriver extends AbstractDriver {
     protected readonly options: SqlServerDriverOptions;
 
     constructor(
-        pool: ConnectionPool, 
-        options: SqlServerDriverOptions
+        pool: SqlServerPool, 
+        options?: SqlServerDriverOptions
     ) {
         super();
         this.transactionManager = new SqlServerTransactionManager(pool);

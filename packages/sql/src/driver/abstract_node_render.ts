@@ -9,6 +9,25 @@ export abstract class AbstractNodeRender implements NodeRender {
         readonly driverName: string
     ) {}
 
+    renderTupleCmpPred(
+        pred: spi.TupleCmpPred, 
+        ctx: NodeRenderContext
+    ): void {
+        const span = pred.leftTuple.exprs.length;
+        const providers: Array<ScalarProvider<any, any> | undefined> = [];
+        for (let i = 0; i < span; i++) {
+            providers[i] = 
+                pred.leftTuple.exprs[i]!.scalarProvider 
+                ?? pred.rightTuple.exprs[i]!.scalarProvider;
+        }
+        using _ = ctx.withPrecedence(Precedence.COMPARISON);
+        this._renderTuple(pred.leftTuple, providers, ctx);
+        ctx.text(" ");
+        ctx.text(pred.op);
+        ctx.text(" ");
+        this._renderTuple(pred.rightTuple, providers, ctx);
+    }
+
     renderInCollectinPred(
         pred: spi.InCollectionPred<any>, 
         ctx: NodeRenderContext
@@ -61,11 +80,11 @@ export abstract class AbstractNodeRender implements NodeRender {
         using ___ = ctx.withComposite(new Scope("VALUES"));
         for (const tuple of pred.tuples) {
             ctx.separator();
-            this._visitTuple(tuple, providers, ctx);
+            this._renderTuple(tuple, providers, ctx);
         }
     }
 
-    private _visitTuple(
+    protected _renderTuple(
         tuple: spi.TupleContract, 
         providers: ReadonlyArray<ScalarProvider<any, any> | undefined>,
         ctx: NodeRenderContext
