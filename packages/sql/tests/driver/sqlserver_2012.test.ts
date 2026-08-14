@@ -29,6 +29,67 @@ describe("SqlServer2012Test", () => {
             pageNo: 2,
             pageSize: 2
         });
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        count(1)
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.EDITION = @p1
+                `,
+                args: [3],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.PRICE,
+                        tb_1_.STORE_ID,
+                        tb_1_.ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.EDITION = @p1
+                    order by 
+                        tb_1_.NAME asc
+                    offset @p2 rows
+                    fetch next @p3 rows only
+                `,
+                args: [3, 2, 2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME
+                    from BOOK_STORE tb_1_
+                    where 
+                        tb_1_.ID = @p1
+                `,
+                args: ["1"],
+                purpose: "loadAssociation(Book.store)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.book_id,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.author_id
+                    where 
+                        tb_2_.book_id in(@p1, @p2)
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [3, 9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
         expect(page).toEqual({
             "totalRowCount": 4,
             "totalPageCount": 2,

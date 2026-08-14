@@ -34,6 +34,13 @@ export class Composite extends Fragment {
         return this;
     }
 
+    remove(fragment: Fragment): void {
+        const index = this._fragments?.indexOf(fragment);
+        if (index != null && index !== -1) {
+            this._fragments?.splice(index, 1);
+        }
+    }
+
     separator() {
         throw new err.StateError(`Cannot invoke "separator", it is not supported by current composite`);
     }
@@ -52,32 +59,6 @@ export class Composite extends Fragment {
     }
 
     get kind(): ScopeKind | undefined {
-        return undefined;
-    }
-
-    find(
-        filter: (fragment: Fragment) => boolean,
-        exclude: (compoisite: Composite) => void
-    ): Fragment | undefined {
-        if (exclude != null && exclude(this)) {
-            return undefined;
-        }
-        if (this._fragments != null) {
-            for (const fragment of this._fragments) {
-                if (typeof fragment === "string") {
-                    continue;
-                }
-                if (filter(fragment)) {
-                    return fragment;
-                }
-                if (fragment instanceof Composite) {
-                    const result = fragment.find(filter, exclude);
-                    if (result != null) {
-                        return fragment;
-                    }
-                }
-            }
-        }
         return undefined;
     }
 
@@ -313,12 +294,14 @@ export class RootColumnSuffix extends Fragment {
     }
 }
 
-export class RootOrderByClause extends Composite {
-
-    into(builder: SqlBuilder): void {
-        super.into(builder);
+export class RootProjectionCaluse extends Scope {
+    
+    constructor() {
+        super("COMMA");
     }
 }
+
+export class RootOrderByClause extends Composite {}
 
 export class RootColumnIndexAllocator {
     

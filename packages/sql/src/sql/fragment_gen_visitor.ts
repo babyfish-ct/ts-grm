@@ -1,5 +1,5 @@
 import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
-import { TableAlias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause } from "./fragment";
+import { TableAlias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause, RootProjectionCaluse } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
@@ -141,7 +141,11 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             if (query.isDistinct) {
                 this._compositeStack.current.add("distinct ");
             }
-            using _ = this._compositeStack.with(new Scope("COMMA"));
+            using _ = this._compositeStack.with(
+                query.level === "ROOT"
+                    ? new RootProjectionCaluse()
+                    : new Scope("COMMA")
+            );
             if (query.options.countMode) {
                 this._compositeStack.current.add("count(1)");
             } else {

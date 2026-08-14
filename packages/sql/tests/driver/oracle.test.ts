@@ -156,7 +156,10 @@ describe("OracleTest", () => {
             {
                 sql: `
                     select 
-                        core__.*
+                        core__.f1,
+                        core__.f2,
+                        core__.f3,
+                        core__.f4
                     from (
                         select 
                             tb_1_.NAME f1,
@@ -242,7 +245,11 @@ describe("OracleTest", () => {
             {
                 sql: `
                     select 
-                        core__.*
+                        core__.f1,
+                        core__.f2,
+                        core__.f3,
+                        core__.f4,
+                        core__.f5
                     from (
                         select 
                             tb_1_.NAME f1,
@@ -357,10 +364,16 @@ describe("OracleTest", () => {
             {
                 sql: `
                     select
-                        *
+                        f1,
+                        f2,
+                        f3,
+                        f4
                     from (
                         select 
-                            core__.*,
+                            core__.f1,
+                            core__.f2,
+                            core__.f3,
+                            core__.f4,
                             rownum rn__
                         from (
                             select 

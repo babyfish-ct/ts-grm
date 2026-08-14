@@ -112,7 +112,6 @@ class SqlServerExecutor implements Executor {
     ) {}
 
     async execute(sql: string): Promise<void> {
-        console.log(sql);
         await this._requestable.request().query(sql);
     }
 

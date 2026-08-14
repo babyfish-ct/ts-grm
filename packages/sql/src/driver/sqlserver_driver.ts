@@ -1,4 +1,4 @@
-import { spi, TimeUnit } from "@ts-grm/core";
+import { err, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -8,8 +8,8 @@ import { TransactionManager } from "@/transaction/transaction_manger";
 import { ColumnDef } from "@/impl/schema_def";
 import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
 import { MetadataError } from "@/error/metadata_error";
-import { KEYWORDS } from "./keywords";
-import { Composite } from "@/sql/fragment";
+import { KEYWORDS, projectionScope } from "./utils";
+import { Composite, Query, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value } from "@/sql/fragment";
 import { ApplyPaginationOptions } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
@@ -69,9 +69,34 @@ export class SqlServerDriver extends AbstractDriver {
 
     override applyPagination(
         original: Composite, 
-        _options: ApplyPaginationOptions
+        options: ApplyPaginationOptions
     ): Composite {
-        return original;
+        const query = original.fragments!.find(f => f instanceof Query) as Query;
+        const orderByClause = query.fragments!.find(f => f instanceof RootOrderByClause) as RootOrderByClause | undefined;
+        if (orderByClause == null) {
+            throw new err.StateError(
+                "Pagination of SqlServerDriver(not SqlServer2012Driver) requires order by clause of root query, " +
+                "please specify the orders or use SqlServer2012Driver"
+            );
+        }
+        const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
+        query.remove(orderByClause);
+        projection
+            .separator()
+            .add("row_number() over")
+            .add(new Scope("SUB_QUERY").add(orderByClause))
+            .add(" rn__")
+        return new Composite()
+            .add("select ")
+            .add(projectionScope(projection))
+            .add("\nfrom ")
+            .add(new RootQueryWrapper().add(original))
+            .add(" core__")
+            .add("\nwhere rn__ between ")
+            .add(new Value((options.offset ?? 0) + 1, undefined, ScalarType.I32))
+            .add(" and ")
+            .add(new Value((options.offset ?? 0) + options.limit, undefined, ScalarType.I32))
+            .add("\norder by rn__");
     }
 }
 

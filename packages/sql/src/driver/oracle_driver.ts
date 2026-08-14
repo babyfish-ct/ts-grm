@@ -7,8 +7,9 @@ import { TransactionManager } from "@/transaction/transaction_manger";
 import { OraclePool, OracleTransactionManager } from "@/transaction/oracle_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
-import { Composite, RootQueryWrapper, Scope, Value } from "@/sql/fragment";
+import { Composite, Query, RootProjectionCaluse, RootQueryWrapper, Value } from "@/sql/fragment";
 import { ApplyPaginationOptions } from "./deriver";
+import { projectionScope } from "./utils";
 
 export class OracleDriver extends AbstractDriver {
 
@@ -101,22 +102,22 @@ export class OracleDriver extends AbstractDriver {
         original: Composite, 
         options: ApplyPaginationOptions
     ): Composite {
+        const query = original.fragments!.find(f => f instanceof Query) as Query;
+        const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
         if (options.offset == null) {
             return new Composite()
                 .add("select ")
-                .add(new Scope("COMMA").add("core__.*"))
+                .add(projectionScope(projection, "core__"))
                 .add("\nfrom ")
                 .add(
-                    new RootQueryWrapper().add(
-                        original
-                    )
+                    new RootQueryWrapper().add(original)
                 )
                 .add(" core__ \nwhere rownum <= ")
                 .add(new Value(options.limit))
         }    
         return new Composite()
             .add("select")
-            .add(new Scope("COMMA").add("*"))
+            .add(projectionScope(projection))
             .add("\nfrom ")
             .add(
                 new RootQueryWrapper()
@@ -124,16 +125,13 @@ export class OracleDriver extends AbstractDriver {
                         new Composite()
                             .add("select ")
                             .add(
-                                new Scope("COMMA")
-                                    .add("core__.*")
+                                projectionScope(projection, "core__")
                                     .separator()
                                     .add("rownum rn__")
                             )
                             .add("\nfrom ")
                             .add(
-                                new RootQueryWrapper().add(
-                                    original
-                                )
+                                new RootQueryWrapper().add(original)
                             )
                             .add(" core__\nwhere rownum <= ")
                             .add(new Value(options.limit + options.offset))

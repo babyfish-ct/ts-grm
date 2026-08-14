@@ -8,7 +8,7 @@ import { TransactionManager } from "@/transaction/transaction_manger";
 import { Pool } from "mysql2/promise";
 import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
-import { KEYWORDS } from "./keywords";
+import { KEYWORDS } from "./utils";
 import { MetadataError } from "@/error/metadata_error";
 import { Composite } from "@/sql/fragment";
 import { ApplyPaginationOptions } from "./deriver";

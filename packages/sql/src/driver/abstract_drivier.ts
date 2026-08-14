@@ -3,7 +3,7 @@ import { ApplyPaginationOptions, Driver } from "./deriver";
 import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
-import { KEYWORDS } from "./keywords";
+import { KEYWORDS } from "./utils";
 import { ScalarType, spi } from "@ts-grm/core";
 
 export abstract class AbstractDriver implements Driver {
