@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { newSqlRecord } from "../utils";
+import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useMySqlClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK } from "../model/model";
 
-describe("MySqlTest", () => {
+describe.runIf(isExternalDbTestEnabled)("MySqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 
@@ -13,7 +13,7 @@ describe("MySqlTest", () => {
     it("simple", async() => {
         const view = dto.view(BOOK, c => [
             c.name,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
             c.authors.with(c => [

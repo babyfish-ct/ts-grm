@@ -12,6 +12,8 @@ export interface SqlClientOptions {
 
     readonly maxJoinFetchDepth: number;
 
+    readonly maxJoinFetchOffset: number;
+
     readonly sqlLogger: SqlLogger;
 
     readonly filterManager: FilterManager;

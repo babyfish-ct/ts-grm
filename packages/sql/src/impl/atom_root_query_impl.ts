@@ -65,7 +65,12 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayPr
         if (!sqlClient.isValidated) {
             await sqlClient.validate();
         }
-        return await executeQuery(this, options?.nullAsUndefined ?? false, finalRangeOptions(undefined, this.options)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            finalRangeOptions(undefined, this.options),
+            sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<
@@ -77,7 +82,12 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayPr
         if (!sqlClient.isValidated) {
             await sqlClient.validate();
         }
-        return await executeQuery(this, options?.nullAsUndefined ?? false, finalRangeOptions(options, this.options)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            finalRangeOptions(options, this.options),
+            sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchPage<
@@ -134,7 +144,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayPr
         if (!sqlClient.isValidated) {
             await sqlClient.validate();
         }
-        const rows = await executeQuery(this, false, "COUNT");
+        const rows = await executeQuery(this, false, "COUNT", undefined);
         return rows[0]!;
     }
 

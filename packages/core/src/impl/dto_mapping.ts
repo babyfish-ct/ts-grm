@@ -570,7 +570,7 @@ export abstract class AssociationMapping implements AbstractDtoMapping {
             ? (c: AbstractDtoContext) => {
                 const flat = c.$flat(middleEntity.joinTargetProp.name)
                     .prefix("")
-                    .fetch("JOIN_UNPAGED_ONLY")
+                    .fetch("JOIN_LOW_OFFSET_ONLY")
                     .with(this._body);
                 return this._filter == null 
                     ? [flat]

@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { newSqlRecord } from "../utils";
+import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useSqlServerClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
-describe("SqlServerTest", () => {
+describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
 
     const sqlRecord = newSqlRecord();
 
@@ -13,7 +13,7 @@ describe("SqlServerTest", () => {
     it("simple", async() => {
         const view = dto.view(BOOK, c => [
             c.name,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
             c.authors.with(c => [
@@ -301,7 +301,7 @@ describe("SqlServerTest", () => {
     it("page1OnAtomQuery", async () => {
         const view = dto.view(BOOK, c => [
             c.name,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
             c.authors.with(c => [

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { newSqlRecord } from "../utils";
+import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useSqlServer2012ClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK } from "../model/model";
 
-describe("SqlServer2012Test", () => {
+describe.runIf(isExternalDbTestEnabled)("SqlServer2012Test", () => {
 
     const sqlRecord = newSqlRecord();
 

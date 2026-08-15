@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { usePostgresClientWithData } from "../data_utils";
-import { newSqlRecord } from "../utils";
+import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
-describe("PostgresTest", () => {
+describe.runIf(isExternalDbTestEnabled)("PostgresTest", () => {
 
     const sqlRecord = newSqlRecord();
 
@@ -13,7 +13,7 @@ describe("PostgresTest", () => {
     it("simple", async() => {
         const view = dto.view(BOOK, c => [
             c.name,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
             c.authors.with(c => [

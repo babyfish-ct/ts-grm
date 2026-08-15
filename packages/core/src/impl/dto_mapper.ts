@@ -408,10 +408,10 @@ class Mapper implements Metadata {
         for (const cachedValue of this._fieldMap.values()) {
             if (Array.isArray(cachedValue)) {
                 for (const mf of cachedValue) {
-                    (mf.fetchType === "JOIN_UNPAGED_ONLY" ? joinFetchFields : fields).push(mf);
+                    (mf.fetchType === "JOIN_LOW_OFFSET_ONLY" ? joinFetchFields : fields).push(mf);
                 }
             } else {
-                (cachedValue.fetchType === "JOIN_UNPAGED_ONLY" ? joinFetchFields : fields).push(cachedValue);
+                (cachedValue.fetchType === "JOIN_LOW_OFFSET_ONLY" ? joinFetchFields : fields).push(cachedValue);
             }
         }
         fields.push(...joinFetchFields);

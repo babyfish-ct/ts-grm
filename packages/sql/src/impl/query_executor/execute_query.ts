@@ -6,7 +6,7 @@ import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { MergedRootQueryImpl } from "../merged_query";
 import { buildStatement, numericTypesOf } from "./sql_gen";
 import { readColumn, readColumnArray, readColumnMap } from "./column_reader";
-import { IllegalPaginationError } from "@/error/illegal_pagination";
+import { IllegalJoinFetchError } from "@/error/illegal_pagination";
 
 const explicitPurposeStorage = new AsyncLocalStorage<Purpose>();
 
@@ -20,10 +20,13 @@ export function usingExplicitPurpose<R>(
 export async function executeQuery<TProjection extends RootQueryProjection<any>>(
     query: RootQuery<TProjection>,
     nullAsUndefined: boolean,
-    options: ExecuteQueryOptions | undefined
+    options: ExecuteQueryOptions | undefined,
+    maxJoinFetchOffset: number | undefined
 ): Promise<ReadonlyArray<any>> {
     const contract = query as any as spi.QueryContract;
-    validateFetchType(contract, options);
+    if (maxJoinFetchOffset != null) {
+        validateFetchType(contract, options, maxJoinFetchOffset);
+    }
     const sqlClient = contract.kind === "ATOM"
         ? (query as AtomRootQueryImpl<TProjection>).mutableQuery.sqlClient
         : (query as any as MergedRootQueryImpl<TProjection>).sqlClient;
@@ -66,38 +69,41 @@ export type ExecuteQueryOptions =
 
 function validateFetchType(
     query: spi.QueryContract,
-    options: ExecuteQueryOptions | undefined
+    options: ExecuteQueryOptions | undefined,
+    maxJoinFetchOffset: number
 ) {
     if (options == null || typeof options === "string") {
         return;
     }
-    if (options.offset == null || options.offset === 0) {
+    if (options.offset == null || options.offset <= maxJoinFetchOffset) {
         return;
     }
     switch (query.projection.kind) {
         case "ROOT_SINGLE":
-            validateFetchTypeImpl(query.projection.selection);
+            validateFetchTypeImpl(query.projection.selection, options.offset, maxJoinFetchOffset);
             break;
         case "ROOT_ARRAY":
             for (const selection of query.projection.selections) {
-                validateFetchTypeImpl(selection);
+                validateFetchTypeImpl(selection, options.offset, maxJoinFetchOffset);
             }
             break;
         case "ROOT_MAP":
             for (const key in query.projection.selections) {
-                validateFetchTypeImpl(query.projection.selections[key]!);
+                validateFetchTypeImpl(query.projection.selections[key]!, options.offset, maxJoinFetchOffset);
             }
             break;
     }
 }
 
 function validateFetchTypeImpl(
-    selection: RootQuerySelection<any>
+    selection: RootQuerySelection<any>,
+    offset: number,
+    maxJoinFetchOffset: number
 ) {
     if (selection instanceof spi.FetchedViewImpl) {
         const joinFetchFields = selection.view.mapper.joinFetchFields;
         if (joinFetchFields.length !== 0) {
-            throw new IllegalPaginationError(joinFetchFields);
+            throw new IllegalJoinFetchError(joinFetchFields, offset, maxJoinFetchOffset);
         }
     }
 }

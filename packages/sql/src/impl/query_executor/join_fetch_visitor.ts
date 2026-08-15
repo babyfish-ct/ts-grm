@@ -28,7 +28,7 @@ export abstract class JoinFetchVisitor {
         } else {
             for (const field of mapper.fields) {
                 const subMapper = field.subMapper;
-                if (subMapper == null || field.fetchType !== "JOIN_UNPAGED_ONLY" || this._sqlClient.isDirectAssociatedField(field)) {
+                if (subMapper == null || field.fetchType !== "JOIN_LOW_OFFSET_ONLY" || this._sqlClient.isDirectAssociatedField(field)) {
                     this.visisitField(field, depth);
                 } else {
                     const enterValue = this.enter(field, depth);

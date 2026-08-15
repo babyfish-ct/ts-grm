@@ -20,35 +20,30 @@ export function newSqlClient(
         options, 
         originalSqlClient?.options ?? createDefaultOptions()
     );
-    if (options.defaultBatchSize != null && options.defaultBatchSize < 2) {
+    if (finalOptions.defaultBatchSize < 2) {
         throw new err.ArgumentError(
             `"options.defaultBatchSize" cannot be less than 2 when it is specified`
         );
     }
-    if (options.defaultListBatchSize != null && options.defaultListBatchSize < 2) {
+    if (finalOptions.defaultListBatchSize < 2) {
         throw new err.ArgumentError(
             `"options.defaultListBatchSize" cannot be less than 2 when it is specified`
         );
     }
-    if (options.defaultListBatchSize != null 
-        && options.defaultBatchSize != null
-        && options.defaultListBatchSize > options.defaultBatchSize
-    ) {
+    if (finalOptions.maxJoinFetchDepth < 0) {
         throw new err.ArgumentError(
-            `"options.defaultListBatchSize" cannot be greator than "options.defaultBatchSize" when both of them are specified`
-        );
+            `"options.maxJoinFetchDepth" cannot be less thatn 0`
+        );  
     }
-    if (options.maxJoinFetchDepth != null) {
-        if (options.maxJoinFetchDepth < 0) {
-            throw new err.ArgumentError(
-                `"options.maxJoinFetchDepth" cannot be less thatn 0`
-            );  
-        }
-        if (options.maxJoinFetchDepth > 10) {
-            throw new err.ArgumentError(
-                `"options.maxJoinFetchDepth" cannot be greater thatn 10`
-            );  
-        }
+    if (finalOptions.maxJoinFetchDepth > 10) {
+        throw new err.ArgumentError(
+            `"options.maxJoinFetchDepth" cannot be greater thatn 10`
+        );  
+    }
+    if (finalOptions.maxJoinFetchOffset < 0) {
+        throw new err.ArgumentError(
+            `"options.maxJoinFetchOffset" cannot be greater thatn 10`
+        );
     }
     return new SqlClientImpl(driver, finalOptions);
 }
@@ -86,6 +81,7 @@ function createDefaultOptions(): SqlClientOptions {
         defaultBatchSize: 128,
         defaultListBatchSize: 16,
         maxJoinFetchDepth: 5,
+        maxJoinFetchOffset: 0,
         sqlLogger: {
             pretty: false,
             parameter: "PLACEHOLDER"

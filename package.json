@@ -18,6 +18,7 @@
     "test:ui": "yarn workspaces foreach -A -p -i run test:ui",
     "test:ui:core": "yarn workspace @ts-grm/core run test:ui",
     "test:ui:sql": "yarn workspace @ts-grm/sql run test:ui",
+    "test:ui:sqlall": "TEST_TARGET=external yarn workspace @ts-grm/sql run test:ui",
     "test:coverage": "yarn workspaces foreach -A run test:coverage",
     "test:typecheck": "yarn workspaces foreach -A run test:typecheck"
   },

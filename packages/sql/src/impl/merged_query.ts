@@ -52,7 +52,12 @@ export class MergedRootQueryImpl<
         if (!this._sqlClient.isValidated) {
             await this._sqlClient.validate();
         }
-        return await executeQuery(this, options?.nullAsUndefined ?? false, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            undefined,
+            this.sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<
@@ -63,7 +68,12 @@ export class MergedRootQueryImpl<
         if (!this._sqlClient.isValidated) {
             await this._sqlClient.validate();
         }
-        return await executeQuery(this, options.nullAsUndefined ?? false, finalRangeOptions(options, undefined)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(
+            this, 
+            options.nullAsUndefined ?? false, 
+            finalRangeOptions(options, undefined),
+            this._sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchPage<
@@ -118,7 +128,7 @@ export class MergedRootQueryImpl<
         if (!this._sqlClient.isValidated) {
             await this._sqlClient.validate();
         }
-        const rows = await executeQuery(this, false, "COUNT");
+        const rows = await executeQuery(this, false, "COUNT", undefined);
         return rows[0];
     }
 

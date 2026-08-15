@@ -511,13 +511,13 @@ describe("FlatTest", () => {
     it("flatChain", () => {
         const view = dto.view(TREE_NODE, c => [
             c.$allScalars,
-            c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+            c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                 c.$allScalars,
-                c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                     c.$allScalars,
-                    c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                    c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                         c.$allScalars,
-                        c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                        c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                             c.$allScalars
                         ])
                     ])

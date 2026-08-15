@@ -15,7 +15,7 @@ describe("JoinFetchTest", () => {
         const view = dto.view(BOOK, c => [
             c.id,
             c.name,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.id,
                 c.name
             ])
@@ -84,7 +84,7 @@ describe("JoinFetchTest", () => {
         const view = dto.view(BOOK, c => [
             c.id,
             c.name,
-            c.$flat("store").fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.$flat("store").fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.id,
                 c.name
             ])
@@ -144,9 +144,9 @@ describe("JoinFetchTest", () => {
     it("multipleLayerFlat", async() => {
         const view = dto.view(TREE_NODE, c => [
             c.$allScalars,
-            c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+            c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                 c.$allScalars,
-                c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("grand")
+                c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("grand")
             ])
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
@@ -191,10 +191,10 @@ describe("JoinFetchTest", () => {
     it("twoJoinFetches", async () => {
         const view = dto.view(LEARNING_LINK, c => [
             c.id,
-            c.student.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.student.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
-            c.course.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.course.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ])
         ]);
@@ -251,9 +251,9 @@ describe("JoinFetchTest", () => {
     it("nullable", async () => {
         const view = dto.view(TREE_NODE, c => [
             c.$allScalars,
-            c.parentNode.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.parentNode.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.$allScalars,
-                c.parentNode.fetch("JOIN_UNPAGED_ONLY")
+                c.parentNode.fetch("JOIN_LOW_OFFSET_ONLY")
             ])
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
@@ -299,9 +299,9 @@ describe("JoinFetchTest", () => {
     it("explicitMixed", async() => {
         const view = dto.view(TREE_NODE, c => [
             c.$allScalars,
-            c.parentNode.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.parentNode.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.$allScalars,
-                c.parentNode.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.parentNode.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                     c.$allScalars,
                     c.parentNode.with(c => [
                         c.$allScalars,
@@ -380,13 +380,13 @@ describe("JoinFetchTest", () => {
     it("implicitMixed", async () => {
         const view = dto.view(TREE_NODE, c => [
             c.$allScalars,
-            c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+            c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                 c.$allScalars,
-                c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                     c.$allScalars,
-                    c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                    c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                         c.$allScalars,
-                        c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                        c.$flat("parentNode").fetch("JOIN_LOW_OFFSET_ONLY").prefix("parent").with(c => [
                             c.$allScalars
                         ])
                     ])
@@ -459,17 +459,21 @@ describe("JoinFetchTest", () => {
         });
     });
 
-    it("illegalPagination", async() => {
+    it("illegalJoinFetch", async() => {
         const view = dto.view(BOOK, c => [
             c.$allScalars,
-            c.store.fetch("JOIN_UNPAGED_ONLY")
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY")
         ]);
-        expect(async () => {
+        await expect(async () => {
             await sqlClient.findPage(view, {pageNo: 2, pageSize: 2})
         }).rejects.toThrowError(
-            "Unable to execute pagination query: the selected DTOs contain association properties " + 
-            "with fetchType \"JOIN_UNPAGED_ONLY\" (Book.store), " + 
-            "which are not supported in paginated queries."
+            "Unable to execute join fetch at a large offset: the selected DTOs contain " + 
+            "association properties with fetchType \"JOIN_LOW_OFFSET_ONLY\" (Book.store), " + 
+            "whose join fetch is only allowed when the query offset does not exceed the configured limit. " + 
+            "Current offset is 2, but the configured maxJoinFetchOffset is 0. " + 
+            "To fix this, either reduce the offset (e.g. use a smaller page number/size), " +
+            "increase \"maxJoinFetchOffset\" in the global configuration, " + 
+            "or change the fetch type of these properties from \"JOIN_LOW_OFFSET_ONLY\" to a \"LOAD\""
         );
     });
 });

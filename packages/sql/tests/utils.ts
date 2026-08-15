@@ -17,6 +17,8 @@ import { SqlServerPool } from "@/transaction/sqlserver_transaction_manager";
 import { Oracle12Drivier as Oracle12Drivier } from "@/driver/oracle12_driver";
 import { SqlServer2012Driver } from "@/driver/sqlserver2012_driver";
 
+export const isExternalDbTestEnabled = process.env.TEST_TARGET === "external";
+
 export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor,
     sqlRecord?: SqlRecord

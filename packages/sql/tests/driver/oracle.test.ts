@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { newSqlRecord } from "../utils";
+import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useOracleClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
-describe("OracleTest", () => {
+describe.runIf(isExternalDbTestEnabled)("OracleTest", () => {
 
     const sqlRecord = newSqlRecord();
 
@@ -13,7 +13,7 @@ describe("OracleTest", () => {
     it("simple", async () => {
         const view = dto.view(BOOK, c => [
             c.name,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
             c.authors.with(c => [
@@ -215,7 +215,7 @@ describe("OracleTest", () => {
         const view = dto.view(BOOK, c => [
             c.name,
             c.price,
-            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+            c.store.fetch("JOIN_LOW_OFFSET_ONLY").with(c => [
                 c.name
             ]),
             c.authors.with(c => [

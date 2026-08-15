@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { newSqlRecord } from "../utils";
+import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useOracle12ClientWithData } from "../data_utils";
 import { BOOK } from "../model/model";
 import { dto } from "@ts-grm/core";
 
-describe("Oracle12Test", () => {
+describe.runIf(isExternalDbTestEnabled)("Oracle12Test", () => {
 
     const sqlRecord = newSqlRecord();
     
