@@ -5,7 +5,7 @@ import { dsl, dto } from "@ts-grm/core";
 import { BOOK, BOOK_STORE } from "../model/model";
 import z from "zod";
 
-describe.sequential("SqlFormulaTest", () => {
+describe("SqlFormulaTest", () => {
 
     const sqlRecord = newSqlRecord();
     

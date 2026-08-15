@@ -299,7 +299,7 @@ class AssociationResolver {
             }
         } else {
             let start = 0;
-            while (start < this._batchSize) {
+            while (start < dependencies.length) {
                 const end = Math.min(dependencies.length, start + this._batchSize);
                 const batchDependencies = dependencies.slice(start, end);
                 const recursiveContext = await this._resolveBatch(batchDependencies, joinFetchExecutor);

@@ -4,7 +4,7 @@ import { AUTHOR, BOOK, BOOK_STORE, STUDENT } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
 
-describe.sequential("SimpleSqliteFetchTest", () => {
+describe("SimpleSqliteFetchTest", () => {
 
     const sqlRecord = newSqlRecord();
     

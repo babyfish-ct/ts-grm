@@ -4,7 +4,7 @@ import { COURSE, STUDENT } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("JoinEntitySqlTest", () => {
+describe("JoinEntitySqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 

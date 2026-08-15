@@ -4,7 +4,7 @@ import { BOOK, TREE_NODE } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("FlatTest", () => {
+describe("FlatTest", () => {
 
     const sqlRecord = newSqlRecord();
 

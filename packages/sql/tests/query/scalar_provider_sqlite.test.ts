@@ -5,7 +5,7 @@ import { AUTHOR, PHYSICAL_BOOK_STORE } from "../model/model";
 import { dsl, dto } from "@ts-grm/core";
 import { SIMPLE_PHYSICAL_BOOK_STORE_VIEW } from "./utils";
 
-describe.sequential("ScalarProviderTest", () => {
+describe("ScalarProviderTest", () => {
 
     const sqlRecord = newSqlRecord();
     
@@ -19,7 +19,6 @@ describe.sequential("ScalarProviderTest", () => {
                     dto.view(AUTHOR, c => [c.$allScalars])
                 )
             );
-            
         }).fetchList();
         sqlRecord.assert({
             sql: `

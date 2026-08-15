@@ -11,7 +11,7 @@ import { useSqliteClientWithData } from "../data_utils";
 // This internal API is used to implements association fetch
 // and primsa/mongo style predicate such as "none", "some", "every" 
 // even it the association is not bidirectional
-describe.sequential("InternalInverseJoinSqlTest", () => {
+describe("InternalInverseJoinSqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 

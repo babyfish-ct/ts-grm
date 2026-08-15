@@ -4,7 +4,7 @@ import { useSqliteClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { ORDER, ORDER_ITEM, TAG } from "../model/model";
 
-describe.sequential("WideKeySqliteTest", () => {
+describe("WideKeySqliteTest", () => {
 
     const sqlRecord = newSqlRecord();
 

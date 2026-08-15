@@ -4,7 +4,7 @@ import { BOOK } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("PageSqliteTest", () => {
+describe("PageSqliteTest", () => {
 
     const sqlRecord = newSqlRecord();
 

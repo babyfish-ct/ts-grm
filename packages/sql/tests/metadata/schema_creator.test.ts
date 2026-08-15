@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { expectCode, removeUndefined } from "../utils";
 import { useSqliteClient } from "../utils";
 
-describe.sequential("SchemaCreatorTest", () => {
+describe("SchemaCreatorTest", () => {
 
     const sqlClient = useSqliteClient(true);
 

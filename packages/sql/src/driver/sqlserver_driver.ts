@@ -1,4 +1,4 @@
-import { err, ScalarType, spi, TimeUnit } from "@ts-grm/core";
+import { err, ScalarProvider, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -9,7 +9,7 @@ import { ColumnDef } from "@/impl/schema_def";
 import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS, projectionScope } from "./utils";
-import { Composite, Query, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value } from "@/sql/fragment";
+import { Composite, Query, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value, valueOf } from "@/sql/fragment";
 import { ApplyPaginationOptions } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
@@ -106,6 +106,43 @@ const nodeRender = new class extends AbstractNodeRender {
         super("SqlServer");
     }
 
+    renderTupleCmpPred(
+        pred: spi.TupleCmpPred, 
+        ctx: NodeRenderContext
+    ): void {
+        renderTupleCmp(
+            pred.op, 
+            pred.leftTuple, 
+            pred.rightTuple, 
+            pred.providers, 
+            ctx
+        );
+    }
+
+    renderTupleInCollectionPred(
+        pred: spi.TupleInCollectionPred, 
+        ctx: NodeRenderContext
+    ): void {
+        const providers = pred.providers;
+        const leftTuple = pred.tuple;
+        const op = pred.neg ? "<>" : "=";
+        using _ = ctx.withComposite(
+            pred.neg
+                ? new Scope("AND")
+                : new Scope("OR")
+        );
+        for (const rightTuple of pred.tuples) {
+            ctx.separator();
+            renderTupleCmp(
+                op, 
+                leftTuple, 
+                rightTuple, 
+                providers, 
+                ctx
+            );
+        }
+    }
+
     override renderDtPlusExpr(
         expr: spi.DtPlusExpr, 
         ctx: NodeRenderContext
@@ -186,6 +223,40 @@ const nodeRender = new class extends AbstractNodeRender {
         ctx.text(", ");
         ctx.render(expr.expr);
         ctx.text(")");
+    }
+}
+
+function renderTupleCmp(
+    op: "=" | "<>",
+    leftTuple: spi.TupleContract,
+    rightTuple: spi.TupleContract,
+    providers: ReadonlyArray<ScalarProvider<any, any> | undefined> | undefined,
+    ctx: NodeRenderContext
+) {
+    const span = leftTuple.exprs.length;
+    using _ = ctx.withComposite(
+        op === "<>"
+            ? new Scope("OR")
+            : new Scope("AND")
+    );
+    for (let i = 0; i < span; i++) {
+        ctx.separator();
+        const provider = providers != null ? providers[i]! : undefined;
+        const leftExpr = leftTuple.exprs[i]!;
+        const rightExpr = rightTuple.exprs[i]!;
+        if (provider != null && leftExpr.isValueExpr) {
+            ctx.render(valueOf(leftExpr, provider));
+        } else {
+            ctx.render(leftExpr);
+        }
+        ctx.text(" ");
+        ctx.text(op);
+        ctx.text(" ");
+        if (provider != null && rightExpr.isValueExpr) {
+            ctx.render(valueOf(rightExpr, provider));
+        } else {
+            ctx.render(rightExpr);
+        }
     }
 }
 

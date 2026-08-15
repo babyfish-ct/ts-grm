@@ -5,7 +5,7 @@ import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 import z from "zod";
 
-describe.sequential("TsFormulaTest", () => {
+describe("TsFormulaTest", () => {
 
     const sqlRecord = newSqlRecord();
 

@@ -4,7 +4,7 @@ import { useSqliteClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK_STORE, PAPER_BOOK, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ONLINE_BOOK_STORE, PHYSICAL_BOOK_STORE } from "../model/model";
 
-describe.sequential("PolymorphismSqliteTest", () => {
+describe("PolymorphismSqliteTest", () => {
 
     const sqlRecord = newSqlRecord();
 

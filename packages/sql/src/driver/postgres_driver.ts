@@ -111,7 +111,9 @@ const nodeRender = new class extends AbstractNodeRender {
         const providers = pred.providers;
         const columns: Array<ReadonlyArray<any>> = [];
         for (let i = 0; i < typeNames.length; i++) {
-            columns[i] = pred.tuples.map(tuple => valueOf(tuple.exprs[i]!, providers[i]).value);
+            columns[i] = pred.tuples.map(tuple => 
+                valueOf(tuple.exprs[i]!, providers != null ? providers[i] : undefined).value
+            );
         }
         using _ = ctx.withPrecedence(Precedence.COMPARISON);
         ctx.render(pred.tuple);

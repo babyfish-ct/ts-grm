@@ -4,7 +4,7 @@ import { BOOK, BOOK_STORE, LIBRARY, TREE_NODE } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("ActionSqliteTest", () => {
+describe("ActionSqliteTest", () => {
     
     const sqlRecord = newSqlRecord();
 

@@ -5,7 +5,7 @@ import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VI
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("InheritanceBaseQuerySqlTest", () => {
+describe("InheritanceBaseQuerySqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { newSqlRecord } from "../utils";
 import { useSqlServerClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
-import { BOOK } from "../model/model";
+import { BOOK, ORDER } from "../model/model";
 
 describe("SqlServerTest", () => {
 
@@ -137,6 +137,163 @@ describe("SqlServerTest", () => {
                 "store": {
                     "name": "O'REILLY"
                 }
+            }
+        ]);
+    });
+
+    it("tupleEq", async() => {
+        const view = dto.view(ORDER, c => [
+            c.name,
+            c.items.with(c => [
+                c.productName
+            ])
+        ]);
+        const row = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.orderBy(order.name);
+            return q.select(order.fetch(view));
+        }).limit(1).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        f1,
+                        f2,
+                        f3,
+                        f4
+                    from (
+                        select 
+                            tb_1_.NAME f1,
+                            tb_1_.X f2,
+                            tb_1_.A f3,
+                            tb_1_.B f4,
+                            row_number() over(
+                                order by 
+                                    tb_1_.NAME asc
+                            ) rn__
+                        from [ORDER] tb_1_
+                    ) core__
+                    where rn__ between @p1 and @p2
+                    order by rn__
+                `,
+                args: [1, 1],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.order_x,
+                        tb_1_.order_y_a,
+                        tb_1_.order_y_b,
+                        tb_1_.PRODUCT_NAME
+                    from ORDER_ITEM tb_1_
+                    where 
+                            tb_1_.order_x = @p1
+                        and
+                            tb_1_.order_y_a = @p2
+                        and
+                            tb_1_.order_y_b = @p3
+                `,
+                args: [1, 1, 1],
+                purpose: "loadAssociation(Order.items)"
+            }
+        );
+        expect(row).toEqual({
+            "name": "order-1",
+            "items": [
+                {
+                    "productName": "Pen"
+                },
+                {
+                    "productName": "Pencil"
+                }
+            ]
+        });
+    });
+
+    it("tupleIn", async () => {
+        const view = dto.view(ORDER, c => [
+            c.name,
+            c.items.with(c => [
+                c.productName
+            ])
+        ]);
+        const rows = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.orderBy(order.name);
+            return q.select(order.fetch(view));
+        }).limit(2).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        f1,
+                        f2,
+                        f3,
+                        f4
+                    from (
+                        select 
+                            tb_1_.NAME f1,
+                            tb_1_.X f2,
+                            tb_1_.A f3,
+                            tb_1_.B f4,
+                            row_number() over(
+                                order by 
+                                    tb_1_.NAME asc
+                            ) rn__
+                        from [ORDER] tb_1_
+                    ) core__
+                    where rn__ between @p1 and @p2
+                    order by rn__
+                `,
+                args: [1, 2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.order_x,
+                        tb_1_.order_y_a,
+                        tb_1_.order_y_b,
+                        tb_1_.PRODUCT_NAME
+                    from ORDER_ITEM tb_1_
+                    where 
+                                tb_1_.order_x = @p1
+                            and
+                                tb_1_.order_y_a = @p2
+                            and
+                                tb_1_.order_y_b = @p3
+                        or
+                                tb_1_.order_x = @p4
+                            and
+                                tb_1_.order_y_a = @p5
+                            and
+                                tb_1_.order_y_b = @p6
+                `,
+                args: [1, 1, 1, 1, 1, 2],
+                purpose: "loadAssociation(Order.items)"
+            }
+        )
+        expect(rows).toEqual([
+            {
+                "name": "order-1",
+                "items": [
+                    {
+                        "productName": "Pen"
+                    },
+                    {
+                        "productName": "Pencil"
+                    }
+                ]
+            },
+            {
+                "name": "order-2",
+                "items": [
+                    {
+                        "productName": "Panio"
+                    },
+                    {
+                        "productName": "Bike"
+                    }
+                ]
             }
         ]);
     });

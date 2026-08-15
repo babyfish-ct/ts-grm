@@ -5,7 +5,7 @@ import { newSqlRecord } from "../utils";
 import { SIMPLE_BOOK_VIEW, SIMPLE_STORE_VIEW } from "./utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("QuerySqlTest", () => {
+describe("QuerySqlTest", () => {
     
     const sqlRecord = newSqlRecord();
 

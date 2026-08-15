@@ -6,7 +6,7 @@ import { FilterManager } from "@/cfg";
 import { newSqlClient } from "@/sql_client";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("FilterSqlTest", () => {
+describe("FilterSqlTest", () => {
 
     const sqlRecord = newSqlRecord();
     const sqlClient = useSqliteClientWithData(sqlRecord);

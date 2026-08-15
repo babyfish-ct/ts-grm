@@ -49,22 +49,42 @@ export function finalRangeOptions(
     options: FetchRangeOptions | undefined,
     atomQueryOptions: spi.AtomQueryOptions | undefined
 ): FetchRangeOptions | undefined {
-    const limitArgs = options?.limit ?? -1;
-    const offsetArgs = options?.offset ?? 0;
-    const limitProp = atomQueryOptions?.limit ?? -1;
-    const offsetProp = atomQueryOptions?.offset ?? 0;
-    if (limitArgs !== -1 && limitProp !== -1) {
-        throw new err.StateError(`Conflict configuration: limit is configured in both query and fetch options`);
+    const offset = finalOffset(options, atomQueryOptions);
+    const limit = finalLimit(options, atomQueryOptions);
+    if (offset > 0 && limit === -1) {
+        throw new err.StateError(`Illegal configuration: offset is configured but limit is not configured`);
     }
-    if (offsetArgs !== 0 && offsetProp !== 0) {
-        throw new err.StateError(`Conflict configuration: offset is configured in both query and fetch options`);
-    }
-    const limit = limitArgs !== -1 ? limitArgs : limitProp;
-    const offset = offsetArgs !== 0 ? offsetArgs : offsetProp;
     return limit === -1 && offset === 0
         ? undefined
         : { 
             limit, 
             offset: offset !== 0 ? offset : undefined
         };
+}
+
+export function finalOffset(
+    options: FetchRangeOptions | undefined,
+    atomQueryOptions: spi.AtomQueryOptions | undefined
+): number {
+    const offsetArgs = options?.offset ?? 0;
+    const offsetProp = atomQueryOptions?.offset ?? 0;
+    if (offsetArgs !== 0 && offsetProp !== 0) {
+        throw new err.StateError(`Conflict configuration: offset is configured in both query and fetch options`);
+    }
+    return Math.max(offsetArgs, offsetProp);
+}
+
+export function finalLimit(
+    options: FetchRangeOptions | undefined,
+    atomQueryOptions: spi.AtomQueryOptions | undefined
+): number {
+    const limitArgs = options?.limit ?? -1;
+    const limitProp = atomQueryOptions?.limit ?? -1;
+    if (limitArgs === -1) {
+        return limitProp;
+    }
+    if (limitProp === -1) {
+        return limitArgs;
+    }
+    return Math.min(limitArgs, limitProp);
 }

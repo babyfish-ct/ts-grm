@@ -1,7 +1,7 @@
 import { EntityManager } from "@ts-grm/core";
 import { describe, expect, it } from "vitest";
 
-describe.sequential("EntityManagerTest", () => {
+describe("EntityManagerTest", () => {
     it("test", async() => {
         const entityManager = EntityManager.of(
             __dirname,

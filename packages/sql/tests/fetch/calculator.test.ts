@@ -4,7 +4,7 @@ import { useSqliteClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { BOOK_STORE } from "../model/model";
 
-describe.sequential("CalculatorTest", async() => {
+describe("CalculatorTest", async() => {
 
     const sqlRecord = newSqlRecord();
 

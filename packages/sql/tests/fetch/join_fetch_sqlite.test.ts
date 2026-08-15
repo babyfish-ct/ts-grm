@@ -5,7 +5,7 @@ import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 import { newSqlClient } from "@/sql_client";
 
-describe.sequential("JoinFetchTest", () => {
+describe("JoinFetchTest", () => {
 
     const sqlRecord = newSqlRecord();
 

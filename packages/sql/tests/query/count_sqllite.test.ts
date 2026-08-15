@@ -4,7 +4,7 @@ import { useSqliteClientWithData } from "../data_utils";
 import { BOOK } from "../model/model";
 import { dsl, dto } from "@ts-grm/core";
 
-describe.sequential("CountSqliteTest", () => {
+describe("CountSqliteTest", () => {
 
     const sqlRecord = newSqlRecord();
 

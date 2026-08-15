@@ -5,7 +5,7 @@ import { AUTHOR, BOOK, ORDER } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("AssociationSqlTest", () => {
+describe("AssociationSqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 

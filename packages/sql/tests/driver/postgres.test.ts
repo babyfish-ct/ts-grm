@@ -4,7 +4,7 @@ import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
-describe.sequential("PostgresTest", () => {
+describe("PostgresTest", () => {
 
     const sqlRecord = newSqlRecord();
 

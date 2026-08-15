@@ -91,7 +91,7 @@ class CalculatorResolver {
             await this._resolveBatch(dependencies);
         } else {
             let start = 0;
-            while (start < batchSize) {
+            while (start < dependencies.length) {
                 const end = Math.min(dependencies.length, start + batchSize);
                 const batchDependencies = dependencies.slice(start, end);
                 await this._resolveBatch(batchDependencies);

@@ -5,7 +5,7 @@ import { dsl } from "@ts-grm/core";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
-describe.sequential("InheritanceSqlTest", () => {
+describe("InheritanceSqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 
