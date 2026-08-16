@@ -10,8 +10,6 @@ import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager
 import { ColumnDef } from "@/impl/schema_def";
 import { KEYWORDS } from "./utils";
 import { MetadataError } from "@/error/metadata_error";
-import { Composite } from "@/sql/fragment";
-import { ApplyPaginationOptions } from "./deriver";
 
 export class MySqlDriver extends AbstractDriver {
 
@@ -65,13 +63,6 @@ export class MySqlDriver extends AbstractDriver {
             default:
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
-    }
-
-    override applyPagination(
-        original: Composite, 
-        options: ApplyPaginationOptions
-    ): Composite {
-        return this.applyOffsetFetch(original, options, false);
     }
 }
 

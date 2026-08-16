@@ -8,8 +8,6 @@ import { AbstractNodeRender } from "./abstract_node_render";
 import { Precedence } from "@/sql/precedence";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
-import { Composite } from "@/sql/fragment";
-import { ApplyPaginationOptions } from "./deriver";
 
 export class SqliteDriver extends AbstractDriver {
 
@@ -49,13 +47,6 @@ export class SqliteDriver extends AbstractDriver {
 
     override get requiresInlineConstraints(): boolean {
         return true;
-    }
-
-    applyPagination(
-        original: Composite, 
-        options: ApplyPaginationOptions
-    ): Composite {
-        return this.applyOffsetFetch(original, options, false);
     }
 }
 

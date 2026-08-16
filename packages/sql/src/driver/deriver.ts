@@ -16,6 +16,8 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly isRecursiveKeywordRequired: boolean;
 
+    readonly paginationStrategy: PaginationStrategy;
+
     typeName(columnDef: ColumnDef): string;
 
     requiresInlineConstraints: boolean;
@@ -24,14 +26,14 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
         tableName: string, 
         writer: spi.CodeWriter
     ): void;
-
-    applyPagination(
-        original: Composite, 
-        options: ApplyPaginationOptions
-    ): Composite;
 }
 
-export interface ApplyPaginationOptions extends FetchRangeOptions {
+export type PaginationStrategy =
+    "STANDARD_OFFSET_FETCH"
+    | "CLASSIC_LIMIT_OFFSET"
+    | CustomizedPagination;
 
-    readonly wrapper: boolean;
-}
+type CustomizedPagination = (
+    composite: Composite, 
+    options: FetchRangeOptions
+) => Composite;

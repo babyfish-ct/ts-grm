@@ -1,4 +1,4 @@
-import { err, ScalarProvider, ScalarType, spi, TimeUnit } from "@ts-grm/core";
+import { err, FetchRangeOptions, ScalarProvider, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -10,7 +10,7 @@ import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlser
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS, projectionScope } from "./utils";
 import { Composite, Query, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value, valueOf } from "@/sql/fragment";
-import { ApplyPaginationOptions } from "./deriver";
+import { PaginationStrategy } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
 
@@ -31,6 +31,10 @@ export class SqlServerDriver extends AbstractDriver {
 
     get nameParameterPrefix(): string | undefined {
         return "@p";
+    }
+
+    get paginationStrategy(): PaginationStrategy {
+        return pagination;
     }
 
     override quoteIdentifier(value: string): string {
@@ -65,38 +69,6 @@ export class SqlServerDriver extends AbstractDriver {
             default:
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
-    }
-
-    override applyPagination(
-        original: Composite, 
-        options: ApplyPaginationOptions
-    ): Composite {
-        const query = original.fragments!.find(f => f instanceof Query) as Query;
-        const orderByClause = query.fragments!.find(f => f instanceof RootOrderByClause) as RootOrderByClause | undefined;
-        if (orderByClause == null) {
-            throw new err.StateError(
-                "Pagination of SqlServerDriver(not SqlServer2012Driver) requires order by clause of root query, " +
-                "please specify the orders or use SqlServer2012Driver"
-            );
-        }
-        const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
-        query.remove(orderByClause);
-        projection
-            .separator()
-            .add("row_number() over")
-            .add(new Scope("SUB_QUERY").add(orderByClause))
-            .add(" rn__")
-        return new Composite()
-            .add("select ")
-            .add(projectionScope(projection))
-            .add("\nfrom ")
-            .add(new RootQueryWrapper().add(original))
-            .add(" core__")
-            .add("\nwhere rn__ between ")
-            .add(new Value((options.offset ?? 0) + 1, undefined, ScalarType.I32))
-            .add(" and ")
-            .add(new Value((options.offset ?? 0) + options.limit, undefined, ScalarType.I32))
-            .add("\norder by rn__");
     }
 }
 
@@ -275,3 +247,35 @@ const unitMap: Record<TimeUnit, string> = {
     "DECADES": "year",
     "CENTURIES": "year"
 };
+
+function pagination(
+    original: Composite,
+    options: FetchRangeOptions
+): Composite {
+    const query = original.fragments!.find(f => f instanceof Query) as Query;
+    const orderByClause = query.fragments!.find(f => f instanceof RootOrderByClause) as RootOrderByClause | undefined;
+    if (orderByClause == null) {
+        throw new err.StateError(
+            "Pagination of SqlServerDriver(not SqlServer2012Driver) requires order by clause of root query, " +
+            "please specify the orders or use SqlServer2012Driver"
+        );
+    }
+    const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
+    query.remove(orderByClause);
+    projection
+        .separator()
+        .add("row_number() over")
+        .add(new Scope("SUB_QUERY").add(orderByClause))
+        .add(" rn__")
+    return new Composite()
+        .add("select ")
+        .add(projectionScope(projection))
+        .add("\nfrom ")
+        .add(new RootQueryWrapper().add(original))
+        .add(" core__")
+        .add("\nwhere rn__ between ")
+        .add(new Value((options.offset ?? 0) + 1, undefined, ScalarType.I32))
+        .add(" and ")
+        .add(new Value((options.offset ?? 0) + options.limit, undefined, ScalarType.I32))
+        .add("\norder by rn__");
+}

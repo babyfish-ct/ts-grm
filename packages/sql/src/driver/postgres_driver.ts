@@ -8,8 +8,7 @@ import { PostgresTransactionManager } from "@/transaction/postgres_transaction_m
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
-import { Composite, Scope, Value, valueOf } from "@/sql/fragment";
-import { ApplyPaginationOptions } from "./deriver";
+import { Scope, Value, valueOf } from "@/sql/fragment";
 
 export class PostgresDriver extends AbstractDriver {
 
@@ -38,13 +37,6 @@ export class PostgresDriver extends AbstractDriver {
             throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
         }
         return tn;
-    }
-
-    override applyPagination(
-        original: Composite, 
-        options: ApplyPaginationOptions
-    ): Composite {
-        return this.applyOffsetFetch(original, options, false);
     }
 
     override writeTableDeletion(

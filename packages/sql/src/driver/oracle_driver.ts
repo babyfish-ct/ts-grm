@@ -1,4 +1,4 @@
-import { spi } from "@ts-grm/core";
+import { FetchRangeOptions, spi } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -8,8 +8,8 @@ import { OraclePool, OracleTransactionManager } from "@/transaction/oracle_trans
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { Composite, Query, RootProjectionCaluse, RootQueryWrapper, Value } from "@/sql/fragment";
-import { ApplyPaginationOptions } from "./deriver";
 import { projectionScope } from "./utils";
+import { PaginationStrategy } from "./deriver";
 
 export class OracleDriver extends AbstractDriver {
 
@@ -30,6 +30,10 @@ export class OracleDriver extends AbstractDriver {
 
     override get nameParameterPrefix(): string | undefined {
         return ":";
+    }
+
+    get paginationStrategy(): PaginationStrategy {
+        return pagination;
     }
 
     override typeName(columnDef: ColumnDef): string {
@@ -98,48 +102,7 @@ export class OracleDriver extends AbstractDriver {
         writer.code("end").newLine(";");
     }
 
-    override applyPagination(
-        original: Composite, 
-        options: ApplyPaginationOptions
-    ): Composite {
-        const query = original.fragments!.find(f => f instanceof Query) as Query;
-        const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
-        if (options.offset == null) {
-            return new Composite()
-                .add("select ")
-                .add(projectionScope(projection, "core__"))
-                .add("\nfrom ")
-                .add(
-                    new RootQueryWrapper().add(original)
-                )
-                .add(" core__ \nwhere rownum <= ")
-                .add(new Value(options.limit))
-        }    
-        return new Composite()
-            .add("select")
-            .add(projectionScope(projection))
-            .add("\nfrom ")
-            .add(
-                new RootQueryWrapper()
-                    .add(
-                        new Composite()
-                            .add("select ")
-                            .add(
-                                projectionScope(projection, "core__")
-                                    .separator()
-                                    .add("rownum rn__")
-                            )
-                            .add("\nfrom ")
-                            .add(
-                                new RootQueryWrapper().add(original)
-                            )
-                            .add(" core__\nwhere rownum <= ")
-                            .add(new Value(options.limit + options.offset))
-                    )
-            )
-            .add("\nwhere rn__ > ")
-            .add(new Value(options.offset));
-    }
+    
 }
 
 const nodeRender = new class extends AbstractNodeRender {
@@ -274,4 +237,47 @@ const nodeRender = new class extends AbstractNodeRender {
         ctx.text(" - ");
         ctx.render(expr.valueExpr);
     }
+}
+
+function pagination(
+    original: Composite,
+    options: FetchRangeOptions
+): Composite {
+    const query = original.fragments!.find(f => f instanceof Query) as Query;
+    const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
+    if (options.offset == null) {
+        return new Composite()
+            .add("select ")
+            .add(projectionScope(projection, "core__"))
+            .add("\nfrom ")
+            .add(
+                new RootQueryWrapper().add(original)
+            )
+            .add(" core__ \nwhere rownum <= ")
+            .add(new Value(options.limit))
+    }    
+    return new Composite()
+        .add("select")
+        .add(projectionScope(projection))
+        .add("\nfrom ")
+        .add(
+            new RootQueryWrapper()
+                .add(
+                    new Composite()
+                        .add("select ")
+                        .add(
+                            projectionScope(projection, "core__")
+                                .separator()
+                                .add("rownum rn__")
+                        )
+                        .add("\nfrom ")
+                        .add(
+                            new RootQueryWrapper().add(original)
+                        )
+                        .add(" core__\nwhere rownum <= ")
+                        .add(new Value(options.limit + options.offset))
+                )
+        )
+        .add("\nwhere rn__ > ")
+        .add(new Value(options.offset));
 }
