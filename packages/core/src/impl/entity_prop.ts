@@ -630,6 +630,9 @@ export class EntityProp {
         if (this._phase >= phase) {
             return;
         }
+        if (phase === 1) {
+            this._targetEntity?.resolve(1);
+        }
         if (phase === 2) {
             this._initOrders();
             this._initMappedBy();

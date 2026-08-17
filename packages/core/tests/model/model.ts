@@ -208,8 +208,21 @@ export const TREE_NODE = model("TreeNode", "id", class {
     name = prop.str(50)
     parentNode = prop.m2o.self(() => TREE_NODE, { joinColumns: { cascade: "DELETE" } })
     childNodes = prop.o2m.self(() => TREE_NODE, { mappedBy: "parentNode", sourceKeyProp: "id", targetKeyProp: "id" })
+    createdBy = prop.m2o(USER).nullable()
 }, ctx => {
     ctx.unique("name", "parentNode");
+    ctx.table({
+        discriminator: "TYPE",
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
+    })
+});
+
+export const USER = model.extends(TREE_NODE)("OrganizationNode", class {
+    emial = prop.str(40)
+}, ctx => {
+    ctx.table({
+        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
+    });
 });
 
 export const ORDER = model("Order", "id", class {

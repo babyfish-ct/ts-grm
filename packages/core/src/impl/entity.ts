@@ -77,7 +77,7 @@ export class Entity {
         }
         const superModel = (model as ModelImpl<any, any, any, any, any>).superModel;
         this.superEntity = superModel !== undefined
-            ? Entity.of(superModel)
+            ? (superModel as AnyModelImpl).toUnresolvedEntity().resolve(1)
             : undefined;
         this.tableSettings = this._createTableSettings(_options.tableOptions);
         this.identity = ++Entity._nextIdentity;
@@ -478,7 +478,6 @@ export class Entity {
     private _createTableSettings(
         options: __TableOptions<AnyModel | never> | undefined
     ): TableSettings {
-
         if (this.superEntity != null) {
             if (this.superEntity.tableSettings.discriminator == null) {
                 throw new ModelError(
