@@ -1,14 +1,11 @@
 {
   "name": "ts-grm",
   "private": true,
-  "version": "0.0.0",
   "packageManager": "yarn@4.1.0",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "sync-versions": "node ./scripts/sync-versions.js",
-    "version-update": "yarn version && yarn sync-versions",
     "build": "yarn workspaces foreach -A run build",
     "dev": "yarn workspaces foreach -p -i run dev",
     "test": "yarn workspaces foreach -A run test",
@@ -20,7 +17,8 @@
     "test:ui:sql": "yarn workspace @ts-grm/sql run test:ui",
     "test:ui:sqlall": "TEST_TARGET=external yarn workspace @ts-grm/sql run test:ui",
     "test:coverage": "yarn workspaces foreach -A run test:coverage",
-    "test:typecheck": "yarn workspaces foreach -A run test:typecheck"
+    "test:typecheck": "yarn workspaces foreach -A run test:typecheck",
+    "publish": "yarn build && yarn test && yarn workspaces foreach -A --no-private --topological npm publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.5",

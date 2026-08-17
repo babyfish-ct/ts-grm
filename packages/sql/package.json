@@ -1,14 +1,21 @@
 {
   "name": "@ts-grm/sql",
-  "main": "index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "0.0.1",
   "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "dependencies": {
@@ -48,5 +55,13 @@
     "mysql2": "*",
     "oracledb": "*",
     "pg": "*"
-  }
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": { "optional": true },
+    "mssql": { "optional": true },
+    "mysql2": { "optional": true },
+    "oracledb": { "optional": true },
+    "pg": { "optional": true }
+  },
+  "publishConfig": { "access": "public" }
 }

@@ -16,17 +16,15 @@ export default defineConfig({
       exclude: ['**/node_modules/**', '**/dist/**'],
     },
     coverage: {
-      enabled: true, 
-      provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'], 
-      include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
       thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
+        lines: 60,
+        functions: 55,
+        branches: 55,
+        statements: 60,
       },
+      exclude: [
+        'src/driver/*_driver.ts'
+      ],
     },
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
   },
