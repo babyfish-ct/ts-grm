@@ -1,3 +1,4 @@
+export type { Driver } from "./deriver";
 export { SqliteDriver } from "./sqlite_driver";
 export { PostgresDriver } from "./postgres_driver";
 export { MySqlDriver } from "./mysql_driver";

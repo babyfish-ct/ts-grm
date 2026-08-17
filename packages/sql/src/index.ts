@@ -1,5 +1,6 @@
-export { newSqlClient } from "@/sql_client";
-export type { SqlClientOptions, Filter, AnyFilter, FilterManager } from "@/cfg";
+export { newSqlClient } from "./sql_client";
+export { sqlerr } from "./error";
+export type { SqlClientOptions, Filter, AnyFilter, FilterManager } from "./cfg";
 export type { 
     SqliteDriver, 
     PostgresDriver, 
@@ -8,9 +9,10 @@ export type {
     Oracle12Drivier, 
     SqlServerDriver, 
     SqlServer2012Driver 
-} from "@/driver";
+} from "./driver";
 export type { 
-    AbstractSyncPool,
     OraclePool,
     SqlServerPool 
-} from "@/transaction";
+} from "./transaction";
+
+export * as spi from "./index_spi";

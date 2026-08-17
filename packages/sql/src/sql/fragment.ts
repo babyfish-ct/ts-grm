@@ -196,28 +196,6 @@ export class Scope extends Composite {
     }
 }
 
-export class RootQueryWrapper extends Scope {
-
-    constructor(
-        pretty?: boolean
-    ) {
-        super("SUB_QUERY", pretty);
-    }
-
-    into(builder: SqlBuilder): void {
-        if (RootColumnSuffix.indexAllocator != null) {
-            super.into(builder);
-            return;
-        }
-        RootColumnSuffix.indexAllocator = new RootColumnIndexAllocator();
-        try {
-            super.into(builder);
-        } finally {
-            RootColumnSuffix.indexAllocator = undefined;
-        }
-    }
-}
-
 export type ScopeKind = 
     "INDENT" 
     | "COMMA" 
@@ -274,50 +252,6 @@ export class TableAlias extends Fragment {
 
     into(builder: SqlBuilder): void {
         builder.sql(this.table.alias);
-    }
-}
-
-export class RootColumnSuffix extends Fragment {
-
-    static indexAllocator: RootColumnIndexAllocator | undefined;
-
-    constructor() {
-        super();
-    }
-
-    into(builder: SqlBuilder): void {
-        const allocator = RootColumnSuffix.indexAllocator;
-        if (allocator != null) {
-            const index = allocator.callocate();
-            builder.sql(" f").sql(index.toString());
-        }
-    }
-}
-
-export class RootProjectionCaluse extends Scope {
-    
-    constructor() {
-        super("COMMA");
-    }
-}
-
-export class RootOrderByClause extends Composite {
-
-    static disabled = false;
-
-    into(builder: SqlBuilder): void {
-        if (!RootOrderByClause.disabled) {
-            super.into(builder);
-        }
-    }
-}
-
-export class RootColumnIndexAllocator {
-    
-    private nextId = 0;
-
-    callocate(): number {
-        return ++this.nextId;
     }
 }
 
@@ -509,4 +443,70 @@ export function valueOf(
     }
     const value = provider.toSql(originalValue);
     return new Value(value, originalValue);
+}
+
+export class RootQueryWrapper extends Scope {
+
+    constructor(
+        pretty?: boolean
+    ) {
+        super("SUB_QUERY", pretty);
+    }
+
+    into(builder: SqlBuilder): void {
+        if (RootColumnSuffix.indexAllocator != null) {
+            super.into(builder);
+            return;
+        }
+        RootColumnSuffix.indexAllocator = new RootColumnIndexAllocator();
+        try {
+            super.into(builder);
+        } finally {
+            RootColumnSuffix.indexAllocator = undefined;
+        }
+    }
+}
+
+export class RootColumnSuffix extends Fragment {
+
+    static indexAllocator: RootColumnIndexAllocator | undefined;
+
+    constructor() {
+        super();
+    }
+
+    into(builder: SqlBuilder): void {
+        const allocator = RootColumnSuffix.indexAllocator;
+        if (allocator != null) {
+            const index = allocator.callocate();
+            builder.sql(" f").sql(index.toString());
+        }
+    }
+}
+
+export class RootProjectionCaluse extends Scope {
+    
+    constructor() {
+        super("COMMA");
+    }
+}
+
+export class RootOrderByClause extends Composite {
+
+    static disabled = false;
+
+    into(builder: SqlBuilder): void {
+        if (!RootOrderByClause.disabled) {
+            super.into(builder);
+        }
+    }
+}
+
+export class RootColumnIndexAllocator {
+    
+    private nextId = 0;
+
+    callocate(): number {
+        return ++this.nextId;
+    }
 }

@@ -4,24 +4,19 @@ import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 import { AbstractDriver } from "./abstract_drivier";
-import { TransactionManager } from "@/transaction/transaction_manger";
 import { Pool } from "mysql2/promise";
 import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
 import { KEYWORDS } from "./utils";
 import { MetadataError } from "@/error/metadata_error";
+import { TransactionManager } from "@/transaction/transaction_manger";
 
 export class MySqlDriver extends AbstractDriver {
-
-    readonly nodeRender: NodeRender = nodeRender;
-    
-    readonly transactionManager: TransactionManager;
     
     constructor(
-        pool: Pool
+        protected readonly pool: Pool
     ) {
         super();
-        this.transactionManager = new MySqlTransactionManager(pool);
     }
 
     override get name(): string {
@@ -64,13 +59,17 @@ export class MySqlDriver extends AbstractDriver {
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
     }
+
+    protected override createTransactionManager(): TransactionManager {
+        return new MySqlTransactionManager(this.pool);
+    }
+
+    protected override createNodeRender(): NodeRender {
+        return new MySqlNodeRender(this);
+    }
 }
 
-const nodeRender = new class extends AbstractNodeRender {
-
-    constructor() {
-        super("MySql");
-    }
+export class MySqlNodeRender extends AbstractNodeRender {
 
     override renderDtPlusExpr(expr: spi.DtPlusExpr, ctx: NodeRenderContext): void {
         

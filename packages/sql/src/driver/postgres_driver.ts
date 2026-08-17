@@ -12,15 +12,10 @@ import { Scope, Value, valueOf } from "@/sql/fragment";
 
 export class PostgresDriver extends AbstractDriver {
 
-    readonly nodeRender: NodeRender = nodeRender;
-
-    readonly transactionManager: TransactionManager;
-
     constructor(
-        pool: Pool
+        protected readonly _pool: Pool
     ) {
         super();
-        this.transactionManager = new PostgresTransactionManager(pool);
     }
 
     override get name(): string {
@@ -45,13 +40,17 @@ export class PostgresDriver extends AbstractDriver {
     ): void {
         writer.code(`drop table if exists ${tableName} cascade`);
     }
+
+    protected override createTransactionManager(): TransactionManager {
+        return new PostgresTransactionManager(this._pool);    
+    }
+
+    protected createNodeRender(): NodeRender {
+        return new PostgresNodeRender(this);
+    }
 }
 
-const nodeRender = new class extends AbstractNodeRender {
-
-    constructor() {
-        super("Postgres");
-    }
+export class PostgresNodeRender extends AbstractNodeRender {
 
     renderInCollectinPred(
         pred: spi.InCollectionPred<any>, 
@@ -257,7 +256,7 @@ const nodeRender = new class extends AbstractNodeRender {
         ctx.render(expr.valueExpr);
         ctx.text(")");
     }
-};
+}
 
 const unitMap: Record<TimeUnit, string> = {
     "NANOSECONDS": "microseconds",

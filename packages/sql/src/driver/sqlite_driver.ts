@@ -11,13 +11,10 @@ import { AbstractDriver } from "./abstract_drivier";
 
 export class SqliteDriver extends AbstractDriver {
 
-    readonly nodeRender: NodeRender = nodeRender;
-
-    readonly transactionManager: TransactionManager;
-
-    constructor(readonly database: Database) {
+    constructor(
+        protected readonly database: Database
+    ) {
         super();
-        this.transactionManager = new SqliteTransactionManager(database);
     }
 
     override get name(): string {
@@ -48,13 +45,17 @@ export class SqliteDriver extends AbstractDriver {
     override get requiresInlineConstraints(): boolean {
         return true;
     }
+
+    protected override createTransactionManager(): TransactionManager {
+        return new SqliteTransactionManager(this.database);
+    }
+    
+    protected override createNodeRender(): NodeRender {
+        return new SqliteNodeRender(this);
+    }
 }
 
-const nodeRender = new class extends AbstractNodeRender {
-
-    constructor() {
-        super("Sqlite");
-    }
+export class SqliteNodeRender extends AbstractNodeRender {
 
     override renderReverseExpr(_expr: spi.ReverseExpr, _ctx: NodeRenderContext): void {
         this.unsupportedFun("reverse");
@@ -189,7 +190,7 @@ const nodeRender = new class extends AbstractNodeRender {
         ctx.render(expr.valueExpr);
         ctx.text(")");
     }
-};
+}
 
 const unitMap: Record<TimeUnit, string> = {
     "NANOSECONDS": "seconds",

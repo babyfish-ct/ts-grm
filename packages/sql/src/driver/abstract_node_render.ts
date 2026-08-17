@@ -2,12 +2,15 @@ import { Precedence } from "@/sql/precedence";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Scope, Value } from "@/sql/fragment";
 import { err, ScalarProvider, spi } from "@ts-grm/core";
+import { Driver } from "./deriver";
 
 export abstract class AbstractNodeRender implements NodeRender {
 
-    constructor(
-        readonly driverName: string
-    ) {}
+    readonly name: string;
+
+    constructor(owner: Driver) {
+        this.name = owner.name;
+    }
 
     renderTupleCmpPred(
         pred: spi.TupleCmpPred, 
@@ -258,7 +261,7 @@ export abstract class AbstractNodeRender implements NodeRender {
     }
 
     protected unsupportedFun(funName: string): never {
-        throw new err.StateError(`The driver "${this.driverName}" does not support the function "${funName}"`);
+        throw new err.StateError(`The driver "${this.name}" does not support the function "${funName}"`);
     }
 };
 

@@ -14,15 +14,10 @@ import { PaginationStrategy, PaginationTransformer } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
 
-    readonly nodeRender: NodeRender = nodeRender;
-
-    readonly transactionManager: TransactionManager;
-
     constructor(
-        pool: SqlServerPool
+        protected pool: SqlServerPool
     ) {
         super();
-        this.transactionManager = new SqlServerTransactionManager(pool);
     }
 
     get name(): string {
@@ -74,13 +69,17 @@ export class SqlServerDriver extends AbstractDriver {
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
         }
     }
+
+    protected createTransactionManager(): TransactionManager {
+        return new SqlServerTransactionManager(this.pool);
+    }
+
+    protected override createNodeRender(): NodeRender {
+        return new SqlServerNodeRender(this);
+    }
 }
 
-const nodeRender = new class extends AbstractNodeRender {
-
-    constructor() {
-        super("SqlServer");
-    }
+export class SqlServerNodeRender extends AbstractNodeRender {
 
     renderTupleCmpPred(
         pred: spi.TupleCmpPred, 

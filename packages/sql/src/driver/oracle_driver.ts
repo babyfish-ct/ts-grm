@@ -14,15 +14,10 @@ import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 
 export class OracleDriver extends AbstractDriver {
 
-    readonly nodeRender: NodeRender = nodeRender;
-
-    readonly transactionManager: TransactionManager;
-
     constructor(
-        pool: OraclePool
+        protected readonly pool: OraclePool
     ) {
         super();
-        this.transactionManager = new OracleTransactionManager(pool);
     }
 
     override get name(): string {
@@ -103,14 +98,16 @@ export class OracleDriver extends AbstractDriver {
         writer.code("end").newLine(";");
     }
 
-    
+    protected override createTransactionManager(): TransactionManager {
+        return new OracleTransactionManager(this.pool);
+    }
+
+    protected override createNodeRender(): NodeRender {
+        return new OracleNodeRender(this);
+    }
 }
 
-const nodeRender = new class extends AbstractNodeRender {
-
-    constructor() {
-        super("Oracle");
-    }
+export class OracleNodeRender extends AbstractNodeRender {
 
     override renderDtPlusExpr(expr: spi.DtPlusExpr, ctx: NodeRenderContext): void {
         
@@ -289,4 +286,4 @@ const paginationTransformer: PaginationTransformer = (original, options) => {
         )
         .add("\nwhere rn__ > ")
         .add(new Value(options.offset));
-}
+};
