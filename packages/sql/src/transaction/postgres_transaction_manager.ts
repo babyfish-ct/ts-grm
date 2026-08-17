@@ -1,9 +1,11 @@
-import { Pool, PoolClient } from "pg";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Isolation } from "@ts-grm/core";
 import { Executor } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
+
+// Only import types
+import type { Pool, PoolClient } from "pg";
 
 export class PostgresTransactionManager extends AbstractTransactionManager<PostgresTransactionContext> {
 

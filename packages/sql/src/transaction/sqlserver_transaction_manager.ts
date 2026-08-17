@@ -3,8 +3,10 @@ import { Value } from "@/sql/fragment";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Executor, Purpose } from "./executor";
 import { Isolation } from "@ts-grm/core";
-import { ConnectionPool, Transaction, Request, ISOLATION_LEVEL, IIsolationLevel, connect, config, Int, BigInt } from "mssql";
 import { AbstractSyncPool } from "./abstract_sync_pool";
+
+// Only import types
+import type { ConnectionPool, Transaction, Request, IIsolationLevel, config, ISqlTypeFactoryWithNoParams } from "mssql";
 
 /**
  * The underlying `ConnectionPool` provided by `mssql` 
@@ -15,7 +17,10 @@ export class SqlServerPool extends AbstractSyncPool<ConnectionPool> {
 
     constructor(config: config) {
         super(
-            () => connect(config),
+            async () => {
+                const runtime = await mssqlRuntime();
+                return runtime.connect(config);
+            },
             pool => pool.close()
         );
     }
@@ -64,9 +69,10 @@ export class SqlServerTransactionManager extends AbstractTransactionManager<SqlS
     protected override async begin(
         ctx: SqlServerTransactionContext
     ): Promise<void> {
+        const runtime = await mssqlRuntime();
         ctx.transaction = await 
-            new Transaction(ctx.con)
-            .begin(isolationLevel(ctx.isolation ?? "READ_COMMITTED"));
+            runtime.createTransaction(ctx.con)
+            .begin(await isolationLevel(ctx.isolation ?? "READ_COMMITTED"));
     }
 
     protected override async commit(
@@ -120,6 +126,7 @@ class SqlServerExecutor implements Executor {
         args: ReadonlyArray<Value>, 
         _purpose: Purpose
     ): Promise<DataRows> {
+        const runtime = await mssqlRuntime();
         const request = this._requestable.request();
         request.arrayRowMode = true;
         for (let i = 0; i < args.length; i++) {
@@ -128,10 +135,10 @@ class SqlServerExecutor implements Executor {
             } else {
                 switch (args[i]!.explicitType?.kind) {
                     case "I32":
-                        request.input(`p${i + 1}`, Int, args[i]!.value);
+                        request.input(`p${i + 1}`, runtime.int, args[i]!.value);
                         break;
                     case "I64":
-                        request.input(`p${i + 1}`, BigInt, args[i]!.value);
+                        request.input(`p${i + 1}`, runtime.bigInt, args[i]!.value);
                         break;
                     default:
                         request.input(`p${i + 1}`, args[i]!.value);
@@ -152,17 +159,49 @@ class SqlServerExecutor implements Executor {
     }
 }
 
-function isolationLevel(
+async function isolationLevel(
     isolation: Isolation
-): IIsolationLevel {
+): Promise<IIsolationLevel> {
+    const runtime = await mssqlRuntime();
     switch (isolation) {
         case "READ_UNCOMMITTED":
-            return ISOLATION_LEVEL.READ_UNCOMMITTED;
+            return runtime.readUncommited;
         case "READ_COMMITTED":
-            return ISOLATION_LEVEL.READ_COMMITTED;
+            return runtime.readCommited;
         case "REPEATABLE_READ":
-            return ISOLATION_LEVEL.REPEATABLE_READ;
+            return runtime.repeatableRead;
         case "SERIALIZABLE":
-            return ISOLATION_LEVEL.SERIALIZABLE;
+            return runtime.serializeable;
     }
+}
+
+let _mssqlRuntime: MssqlRuntime | undefined;
+
+async function mssqlRuntime(): Promise<MssqlRuntime> {
+    let runtime = _mssqlRuntime;
+    if (runtime == null) {
+        const mssql = await import("mssql");
+        _mssqlRuntime = runtime = {
+            int: mssql.Int,
+            bigInt: mssql.BigInt,
+            readUncommited: mssql.ISOLATION_LEVEL.READ_UNCOMMITTED,
+            readCommited: mssql.ISOLATION_LEVEL.READ_COMMITTED,
+            repeatableRead: mssql.ISOLATION_LEVEL.REPEATABLE_READ,
+            serializeable: mssql.ISOLATION_LEVEL.SERIALIZABLE,
+            connect: mssql.connect,
+            createTransaction: con => new mssql.Transaction(con)
+        };
+    }
+    return runtime;
+}
+
+interface MssqlRuntime {
+    readonly int: ISqlTypeFactoryWithNoParams;
+    readonly bigInt: ISqlTypeFactoryWithNoParams;
+    readonly readUncommited: number;
+    readonly readCommited: number;
+    readonly repeatableRead: number;
+    readonly serializeable: number;
+    readonly connect: (config: config | string) => Promise<ConnectionPool>;
+    readonly createTransaction: (connection?: ConnectionPool) => Transaction;
 }

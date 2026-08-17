@@ -3,11 +3,13 @@ import { NodeRender, NodeRenderContext } from "./node_render";
 import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
-import { Database } from "better-sqlite3";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { Precedence } from "@/sql/precedence";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
+
+// Only import types
+import type { Database } from "better-sqlite3";
 
 export class SqliteDriver extends AbstractDriver {
 

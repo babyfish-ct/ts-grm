@@ -3,7 +3,9 @@ import { AbstractTransactionManager, TransactionContext } from "./abstract_trans
 import { Executor, Purpose } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
-import { Pool, PoolConnection } from "mysql2/promise";
+
+// Only important types
+import type { Pool, PoolConnection } from "mysql2/promise";
 
 export class MySqlTransactionManager extends AbstractTransactionManager<MySqlTransactionContext> {
 

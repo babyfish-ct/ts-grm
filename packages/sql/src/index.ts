@@ -1,7 +1,7 @@
 export { newSqlClient } from "./sql_client";
 export { sqlerr } from "./error";
 export type { SqlClientOptions, Filter, AnyFilter, FilterManager } from "./cfg";
-export type { 
+export { 
     SqliteDriver, 
     PostgresDriver, 
     MySqlDriver, 
@@ -10,7 +10,7 @@ export type {
     SqlServerDriver, 
     SqlServer2012Driver 
 } from "./driver";
-export type { 
+export { 
     OraclePool,
     SqlServerPool 
 } from "./transaction";

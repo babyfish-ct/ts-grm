@@ -1,9 +1,11 @@
 import { Isolation, Propagation } from "@ts-grm/core";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
-import { Database } from "better-sqlite3";
 import { Executor } from "./executor";
 import { Value } from "@/sql/fragment";
 import { DataRows } from "@/impl/data_row_reader";
+
+// Only import types
+import type { Database } from "better-sqlite3";
 
 export class SqliteTransactionManager 
 extends AbstractTransactionManager<SqliteTransactionContext> {

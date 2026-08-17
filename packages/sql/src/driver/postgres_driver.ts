@@ -2,13 +2,15 @@ import { ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
-import { Pool } from "pg";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { PostgresTransactionManager } from "@/transaction/postgres_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
 import { Scope, Value, valueOf } from "@/sql/fragment";
+
+// Only import types
+import type { Pool } from "pg";
 
 export class PostgresDriver extends AbstractDriver {
 

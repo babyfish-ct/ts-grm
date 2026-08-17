@@ -3,8 +3,10 @@ import { AbstractTransactionManager, TransactionContext } from "./abstract_trans
 import { Executor, Purpose } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
-import OracleDB from "oracledb";
 import { AbstractSyncPool } from "./abstract_sync_pool";
+
+// Only import types
+import type OracleDB from "oracledb";
 
 /**
  * The underlying `OracleDB.Pool` provided by `oracledb` 
@@ -15,7 +17,10 @@ export class OraclePool extends AbstractSyncPool<OracleDB.Pool> {
 
     constructor(poolAttributes: OracleDB.PoolAttributes) {
         super(
-            () => OracleDB.createPool(poolAttributes),
+            async () => {
+                const runtime = await oracelRuntime(); 
+                return runtime.createPool(poolAttributes);
+            },
             pool => pool.close()
         );
     }
@@ -114,11 +119,12 @@ class OracleExecutor implements Executor {
         args: ReadonlyArray<Value>, 
         _purpose: Purpose
     ): Promise<DataRows> {
+        const runtime = await oracelRuntime(); 
         const values = args.map(v => v.value);
         const result = await this._con.execute(
             sql, 
             values, 
-            { autoCommit: false, outFormat: OracleDB.OUT_FORMAT_ARRAY }
+            { autoCommit: false, outFormat: runtime.outputFormatArray }
         );
         return result.rows as DataRows;
     }
@@ -130,4 +136,23 @@ class OracleExecutor implements Executor {
     ): Promise<ReadonlyArray<DataRows>> {
         throw new Error("UnsupportedOperation");    
     }
+}
+
+let _oracleRuntime: OracelRuntime | undefined = undefined;
+
+async function oracelRuntime(): Promise<OracelRuntime> {
+    let runtime = _oracleRuntime;
+    if (runtime == null) {
+        const oracledb = await import("oracledb"); 
+        _oracleRuntime = runtime = {
+            createPool: oracledb.createPool,
+            outputFormatArray: oracledb.OUT_FORMAT_ARRAY
+        }
+    }
+    return runtime;
+}
+
+interface OracelRuntime {
+    readonly createPool: (attrs: OracleDB.PoolAttributes) => Promise<OracleDB.Pool>;
+    readonly outputFormatArray: number;
 }

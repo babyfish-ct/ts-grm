@@ -4,12 +4,14 @@ import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 import { AbstractDriver } from "./abstract_drivier";
-import { Pool } from "mysql2/promise";
 import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
 import { KEYWORDS } from "./utils";
 import { MetadataError } from "@/error/metadata_error";
 import { TransactionManager } from "@/transaction/transaction_manger";
+
+// Only import types
+import type { Pool } from "mysql2/promise";
 
 export class MySqlDriver extends AbstractDriver {
     
