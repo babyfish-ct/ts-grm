@@ -1,10 +1,11 @@
 import { SqlClientImplementor } from "@/sql_client";
 import { FetchRangeOptions, RootQuery, ScalarType, spi } from "@ts-grm/core";
 import { SqlBuilder } from "@/sql/sql_builder";
-import { Composite, Scope, Value } from "@/sql/fragment";
+import { Composite, RootOrderByClause, Scope, Value } from "@/sql/fragment";
 import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { ExecuteQueryOptions } from "./execute_query";
 import { NumericTypeArrayProvider } from "../numeric_type_array_provider";
+import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 
 export function buildStatement(
     sqlClient: SqlClientImplementor,
@@ -13,7 +14,16 @@ export function buildStatement(
 ): [string, ReadonlyArray<any>] {
     const composite = buildAst(sqlClient, query, options);
     const builder = SqlBuilder.of(sqlClient);
-    composite.into(builder);
+    if (options === "COUNT") {
+        RootOrderByClause.disabled = true;
+        try {
+            composite.into(builder);
+        } finally {
+            RootOrderByClause.disabled = false;
+        }
+    } else {
+        composite.into(builder);
+    }
     const [sql, argumentMap] = builder.build();
     const args = Array.from(argumentMap.values());
     return [sql, args];
@@ -40,6 +50,7 @@ function buildAst(
                 Composite.of(query, sqlClient, undefined)
             )
         );
+        composite.add(" core__");
         return composite;
     }
     if (options != null) {
@@ -86,8 +97,12 @@ function toPaginationOriginal(
     query: RootQuery<any>
 ): Composite {
     if ((query as any as spi.QueryContract).kind == "ATOM") {
+        if ((query as any as spi.AtomQueryContract).orders.length === 0) {
+            unorderedPagination(sqlClient, false);
+        }
         return Composite.of(query, sqlClient, undefined);
     }
+    unorderedPagination(sqlClient, true);
     const composite = new Composite();
     composite.add("select ");
     composite.add(new Scope("INDENT").add("*"));
@@ -96,6 +111,29 @@ function toPaginationOriginal(
         new Scope("SUB_QUERY").add(
             Composite.of(query, sqlClient, undefined)
         )
-    );
+    )
+    composite.add(" core__");
     return composite;
+}
+
+function unorderedPagination(
+    sqlClient: SqlClientImplementor, 
+    mergedQuery: boolean
+): void {
+    if (!sqlClient.driver.isUnorderedPaginationAllowed) {
+        throw new UnsupportedFeatureError(
+            `Pagination without an "order by" clause is not supported by the current driver "${
+                sqlClient.driver.name
+            }"${
+                mergedQuery ? ", please use explicit base query API (Derived table or CTE) instead" : ""
+            }`
+        );
+    }
+    if (sqlClient.options.isUnorderedPaginationDisabled) {
+        throw new UnsupportedFeatureError(
+            `Pagination without an "order by" clause is forbidden by the global configuration "isUnorderedPaginationDisabled"${
+                mergedQuery ? ", please use explicit base query API (Derived table or CTE) instead" : ""
+            }`
+        );
+    }
 }

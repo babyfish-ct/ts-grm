@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useSqlServerClientWithData } from "../data_utils";
-import { dto } from "@ts-grm/core";
+import { dsl, dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
 describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
@@ -556,5 +556,45 @@ describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
                 }
             ]
         });
+    });
+
+    it("pageWithoutOrderByClause", async () => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        await expect(async () => {
+            await sqlClient.findPage(view, {pageNo: 2, pageSize: 2})
+        }).rejects.toThrowError(
+            "Pagination without an \"order by\" clause is not supported by the current driver \"SqlServer\""
+        );
+    });
+
+    it("pageOnMergedQuery", async() => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        await expect(async () => {
+            await dsl.unionAll(
+                sqlClient.createQuery(BOOK, (q, book) => {
+                    q.where(
+                        book.storeId.eq(2),
+                        book.edition.eq(3)
+                    );
+                    return q.select(book.fetch(view));
+                }),
+                sqlClient.createQuery(BOOK, (q, book) => {
+                    q.where(
+                        book.storeId.eq(1),
+                        book.edition.eq(2)
+                    );
+                    return q.select(book.fetch(view));
+                })
+            ).fetchPage({
+                pageSize: 2
+            });
+        }).rejects.toThrowError(
+            "Pagination without an \"order by\" clause is not supported by the current driver \"SqlServer\", " + 
+            "please use explicit base query API (Derived table or CTE) instead"
+        );
     });
 });

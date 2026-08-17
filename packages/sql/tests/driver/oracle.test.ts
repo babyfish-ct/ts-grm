@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useOracleClientWithData } from "../data_utils";
-import { dto } from "@ts-grm/core";
+import { dsl, dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
 describe.runIf(isExternalDbTestEnabled)("OracleTest", () => {
@@ -482,5 +482,110 @@ describe.runIf(isExternalDbTestEnabled)("OracleTest", () => {
                 }
             ]
         });
+    });
+
+    it("pageWithoutOrderByClause", async () => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        const page = await sqlClient.findPage(
+            view, 
+            {pageNo: 2, pageSize: 2}
+        );
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        count(1)
+                    from BOOK tb_1_
+                `,
+                args: [],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select
+                        f1,
+                        f2,
+                        f3,
+                        f4
+                    from (
+                        select 
+                            core__.f1,
+                            core__.f2,
+                            core__.f3,
+                            core__.f4,
+                            rownum rn__
+                        from (
+                            select 
+                                tb_1_.ID f1,
+                                tb_1_.NAME f2,
+                                tb_1_.EDITION f3,
+                                tb_1_.PRICE f4
+                            from BOOK tb_1_
+                        ) core__
+                        where rownum <= :1
+                    )
+                    where rn__ > :2
+                `,
+                args: [4, 2],
+                purpose: "query"
+            }
+        )
+        expect(page).toEqual({
+            "totalRowCount": 12,
+            "totalPageCount": 6,
+            "pageNo": 2,
+            "isFirstPage": false,
+            "isLastPage": false,
+            "rows": [
+                {
+                    "id": 3,
+                    "name": "Learning GraphQL",
+                    "edition": 3,
+                    "price": 33.99
+                },
+                {
+                    "id": 4,
+                    "name": "Effective TypeScript",
+                    "edition": 1,
+                    "price": 43.99
+                }
+            ]
+        });
+    });
+
+    it("pageOnMergedQuery", async() => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        await expect(async () => {
+            await dsl.unionAll(
+                sqlClient.createQuery(BOOK, (q, book) => {
+                    q.where(
+                        book.storeId.eq(2),
+                        book.edition.eq(3)
+                    );
+                    return q.select(book.fetch(view));
+                }),
+                sqlClient.createQuery(BOOK, (q, book) => {
+                    q.where(
+                        book.storeId.eq(1),
+                        book.edition.eq(2)
+                    );
+                    return q.select(book.fetch(view));
+                })
+            ).fetchPage({
+                pageSize: 2
+            });
+        }).rejects.toThrowError(
+            "Unable to paginate a set operation query (UNION, UNION ALL, EXCEPT, EXCEPT ALL, INTERSECT, or INTERSECT ALL) " + 
+            "using \"OracleDriver\": pagination for SQL Server 2005~2008 relies on wrapping the query with " + 
+            "\"ROW_NUMBER() OVER(...)\", which cannot be applied directly on top of a set operation query. " + 
+            "To fix this, either use \"Oracle12Driver\" (or a later version), which supports " + 
+            "\"OFFSET ... FETCH NEXT ... ROWS ONLY\" and can paginate set operation queries directly, " + 
+            "or restructure the query so pagination is applied to each sub-query individually " + 
+            "before the set operation is performed."
+        );
     });
 });

@@ -296,7 +296,7 @@ describe("PageSqliteTest", () => {
                         from BOOK tb_2_
                         where 
                             lower(tb_2_.NAME) like ?
-                    )
+                    ) core__
                 `,
                 args: [3, "%typescript%"],
                 purpose: "query",
@@ -321,7 +321,7 @@ describe("PageSqliteTest", () => {
                         from BOOK tb_2_
                         where 
                             lower(tb_2_.NAME) like ?
-                    )
+                    ) core__
                     limit ?
                 `,
                 args: [3, "%typescript%", 2],

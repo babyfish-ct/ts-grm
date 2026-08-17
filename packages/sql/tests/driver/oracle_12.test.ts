@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useOracle12ClientWithData } from "../data_utils";
 import { BOOK } from "../model/model";
-import { dto } from "@ts-grm/core";
+import { dsl, dto } from "@ts-grm/core";
 
 describe.runIf(isExternalDbTestEnabled)("Oracle12Test", () => {
 
@@ -144,6 +144,171 @@ describe.runIf(isExternalDbTestEnabled)("Oracle12Test", () => {
                             }
                         }
                     ]
+                }
+            ]
+        });
+    });
+
+    it("pageWithoutOrderByClause", async () => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        const page = await sqlClient.findPage(view, {pageNo: 2, pageSize: 2});
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        count(1)
+                    from BOOK tb_1_
+                `,
+                args: [],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.PRICE
+                    from BOOK tb_1_
+                    offset :1 rows
+                    fetch next :2 rows only
+                `,
+                args: [2, 2],
+                purpose: "query"
+            }
+        )
+        expect(page).toEqual({
+            "totalRowCount": 12,
+            "totalPageCount": 6,
+            "pageNo": 2,
+            "isFirstPage": false,
+            "isLastPage": false,
+            "rows": [
+                {
+                    "id": 3,
+                    "name": "Learning GraphQL",
+                    "edition": 3,
+                    "price": 33.99
+                },
+                {
+                    "id": 4,
+                    "name": "Effective TypeScript",
+                    "edition": 1,
+                    "price": 43.99
+                }
+            ]
+        });
+    });
+
+    it("pageOnMergedQuery", async() => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        const page = await dsl.unionAll(
+            sqlClient.createQuery(BOOK, (q, book) => {
+                q.where(
+                    book.storeId.eq(2),
+                    book.edition.eq(3)
+                );
+                return q.select(book.fetch(view));
+            }),
+            sqlClient.createQuery(BOOK, (q, book) => {
+                q.where(
+                    book.storeId.eq(1),
+                    book.edition.eq(2)
+                );
+                return q.select(book.fetch(view));
+            })
+        ).fetchPage({
+            pageNo: 2,
+            pageSize: 2
+        });
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        count(1)
+                    from (
+                        select 
+                            tb_1_.ID,
+                            tb_1_.NAME,
+                            tb_1_.EDITION,
+                            tb_1_.PRICE
+                        from BOOK tb_1_
+                        where 
+                                tb_1_.STORE_ID = :1
+                            and
+                                tb_1_.EDITION = :2
+                        union all
+                        select 
+                            tb_2_.ID,
+                            tb_2_.NAME,
+                            tb_2_.EDITION,
+                            tb_2_.PRICE
+                        from BOOK tb_2_
+                        where 
+                                tb_2_.STORE_ID = :3
+                            and
+                                tb_2_.EDITION = :4
+                    ) core__
+                `,
+                args: [2, 3, 1, 2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        *
+                    from (
+                        select 
+                            tb_1_.ID,
+                            tb_1_.NAME,
+                            tb_1_.EDITION,
+                            tb_1_.PRICE
+                        from BOOK tb_1_
+                        where 
+                                tb_1_.STORE_ID = :1
+                            and
+                                tb_1_.EDITION = :2
+                        union all
+                        select 
+                            tb_2_.ID,
+                            tb_2_.NAME,
+                            tb_2_.EDITION,
+                            tb_2_.PRICE
+                        from BOOK tb_2_
+                        where 
+                                tb_2_.STORE_ID = :3
+                            and
+                                tb_2_.EDITION = :4
+                    ) core__
+                    offset :5 rows
+                    fetch next :6 rows only
+                `,
+                args: [2, 3, 1, 2, 2, 2],
+                purpose: "query"
+            }
+        );
+        expect(page).toEqual({
+            "totalRowCount": 4,
+            "totalPageCount": 2,
+            "pageNo": 2,
+            "isFirstPage": false,
+            "isLastPage": true,
+            "rows": [
+                {
+                    "id": 5,
+                    "name": "Effective TypeScript",
+                    "edition": 2,
+                    "price": 53.99
+                },
+                {
+                    "id": 8,
+                    "name": "YugabyteDB: The Definitive Guide",
+                    "edition": 2,
+                    "price": 79.99
                 }
             ]
         });

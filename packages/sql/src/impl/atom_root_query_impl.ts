@@ -144,7 +144,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayPr
         if (!sqlClient.isValidated) {
             await sqlClient.validate();
         }
-        const rows = await executeQuery(this, false, "COUNT", undefined);
+        const rows = await executeQuery(this, false, "COUNT", undefined); 
         return rows[0]!;
     }
 

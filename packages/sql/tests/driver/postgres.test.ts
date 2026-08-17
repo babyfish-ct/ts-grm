@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { usePostgresClientWithData } from "../data_utils";
 import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
-import { dto } from "@ts-grm/core";
+import { dsl, dto } from "@ts-grm/core";
 import { BOOK, ORDER } from "../model/model";
 
 describe.runIf(isExternalDbTestEnabled)("PostgresTest", () => {
@@ -340,6 +340,118 @@ describe.runIf(isExternalDbTestEnabled)("PostgresTest", () => {
                             }
                         }
                     ]
+                }
+            ]
+        });
+    });
+
+    it("pageOnMergedQuery", async () => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars
+        ]);
+        const page = await dsl.unionAll(
+            sqlClient.createQuery(BOOK, (q, book) => {
+                q.where(
+                    book.storeId.eq(2),
+                    book.edition.eq(3)
+                );
+                return q.select(book.fetch(view));
+            }),
+            sqlClient.createQuery(BOOK, (q, book) => {
+                q.where(
+                    book.storeId.eq(1),
+                    book.edition.eq(2)
+                );
+                return q.select(book.fetch(view));
+            })
+        ).fetchPage({
+            pageNo: 2,
+            pageSize: 2
+        });
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        count(1)
+                    from (
+                        select 
+                            tb_1_.ID,
+                            tb_1_.NAME,
+                            tb_1_.EDITION,
+                            tb_1_.PRICE
+                        from BOOK tb_1_
+                        where 
+                                tb_1_.STORE_ID = $1
+                            and
+                                tb_1_.EDITION = $2
+                        union all
+                        select 
+                            tb_2_.ID,
+                            tb_2_.NAME,
+                            tb_2_.EDITION,
+                            tb_2_.PRICE
+                        from BOOK tb_2_
+                        where 
+                                tb_2_.STORE_ID = $3
+                            and
+                                tb_2_.EDITION = $4
+                    ) core__
+                `,
+                args: [2, 3, 1, 2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        *
+                    from (
+                        select 
+                            tb_1_.ID,
+                            tb_1_.NAME,
+                            tb_1_.EDITION,
+                            tb_1_.PRICE
+                        from BOOK tb_1_
+                        where 
+                                tb_1_.STORE_ID = $1
+                            and
+                                tb_1_.EDITION = $2
+                        union all
+                        select 
+                            tb_2_.ID,
+                            tb_2_.NAME,
+                            tb_2_.EDITION,
+                            tb_2_.PRICE
+                        from BOOK tb_2_
+                        where 
+                                tb_2_.STORE_ID = $3
+                            and
+                                tb_2_.EDITION = $4
+                    ) core__
+                    limit $5
+                    offset $6
+                `,
+                args: [2, 3, 1, 2, 2, 2],
+                purpose: "query"
+            }
+        );
+        expect(page).toEqual({
+            "totalRowCount": 4,
+            "totalPageCount": 2,
+            "pageNo": 2,
+            "isFirstPage": false,
+            "isLastPage": true,
+            "rows": [
+                {
+                    "id": 5,
+                    "name": "Effective TypeScript",
+                    "edition": 2,
+                    "price": 53.99
+                },
+                {
+                    "id": 8,
+                    "name": "YugabyteDB: The Definitive Guide",
+                    "edition": 2,
+                    "price": 79.99
                 }
             ]
         });

@@ -301,7 +301,16 @@ export class RootProjectionCaluse extends Scope {
     }
 }
 
-export class RootOrderByClause extends Composite {}
+export class RootOrderByClause extends Composite {
+
+    static disabled = false;
+
+    into(builder: SqlBuilder): void {
+        if (!RootOrderByClause.disabled) {
+            super.into(builder);
+        }
+    }
+}
 
 export class RootColumnIndexAllocator {
     

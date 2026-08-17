@@ -51,7 +51,7 @@ describe("CountSqliteTest", () => {
                     select 
                         max(tb_1_.EDITION)
                     from BOOK tb_1_
-                )
+                ) core__
             `,
             args: [],
             purpose: "query"
@@ -74,7 +74,7 @@ describe("CountSqliteTest", () => {
                     from BOOK tb_1_
                     group by 
                         tb_1_.EDITION
-                )
+                ) core__
             `,
             args: [],
             purpose: "query"
@@ -118,7 +118,7 @@ describe("CountSqliteTest", () => {
                     from BOOK tb_2_
                     where 
                         lower(tb_2_.NAME) like ?
-                )
+                ) core__
             `,
             args: [3, "%graphql%"],
             purpose: "query"

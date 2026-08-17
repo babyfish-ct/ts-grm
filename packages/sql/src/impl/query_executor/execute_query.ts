@@ -6,7 +6,7 @@ import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { MergedRootQueryImpl } from "../merged_query";
 import { buildStatement, numericTypesOf } from "./sql_gen";
 import { readColumn, readColumnArray, readColumnMap } from "./column_reader";
-import { IllegalJoinFetchError } from "@/error/illegal_pagination";
+import { IllegalJoinFetchError } from "@/error/illegal_join_fetch";
 
 const explicitPurposeStorage = new AsyncLocalStorage<Purpose>();
 

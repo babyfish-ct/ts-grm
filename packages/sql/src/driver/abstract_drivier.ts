@@ -27,6 +27,10 @@ export abstract class AbstractDriver implements Driver {
         return true;
     }
 
+    get isUnorderedPaginationAllowed(): boolean {
+        return true;
+    }
+
     get paginationStrategy(): PaginationStrategy {
         return "CLASSIC_LIMIT_OFFSET";
     }

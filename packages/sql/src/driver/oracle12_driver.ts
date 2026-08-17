@@ -3,6 +3,10 @@ import { OracleDriver } from "./oracle_driver";
 
 export class Oracle12Drivier extends OracleDriver {
 
+    get name():string {
+        return "Oracle12";
+    }
+
     get paginationStrategy(): PaginationStrategy {
         return "STANDARD_OFFSET_FETCH";
     }

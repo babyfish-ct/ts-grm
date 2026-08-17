@@ -14,6 +14,12 @@ export interface SqlClientOptions {
 
     readonly maxJoinFetchOffset: number;
 
+    /**
+     * No matter {@link Driver.isUnorderedPaginationAllowed},
+     * Forbie the unordered pagination
+     */
+    readonly isUnorderedPaginationDisabled: boolean;
+
     readonly sqlLogger: SqlLogger;
 
     readonly filterManager: FilterManager;

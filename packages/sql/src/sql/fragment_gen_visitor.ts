@@ -381,6 +381,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
     visitFetchedView(fetchedView: spi.FetchedViewContract): void {
         let table = fetchedView.table;
+        const complexPagination = typeof this.sqlClient.driver.paginationStrategy !== "string";
         const joinFetchVisitor = new LambdaJoinFetchVisitor(this.sqlClient, {
             enter: field => {
                 const prop = field.prop.asEntityProp;
@@ -406,20 +407,20 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 const sqlFormulaExpr = realTable.sqlFormulaExpr(prop);
                 if (sqlFormulaExpr != null) {
                     sqlFormulaExpr.accept(this);
-                    this._compositeStack.current.add(new RootColumnSuffix());
+                    this._compositeStack.current.add(complexPagination ? new RootColumnSuffix() : undefined);
                     return;
                 }
                 if (prop instanceof spi.TypeNameProp) {
                     const columnName = table.__entity.tableSettings.discriminator!.name;
                     this._compositeStack.current.add(this._createColumn(realTable, columnName));
-                    this._compositeStack.current.add(new RootColumnSuffix());
+                    this._compositeStack.current.add(complexPagination ? new RootColumnSuffix() : undefined);
                     return;
                 }
                 if (prop.isEntityProp) {
                     const entityProp = prop as spi.EntityProp;
                     const column = entityProp.toStorage(this._strategy) as spi.Column;
                     this._compositeStack.current.add(this._createColumn(realTable, column.name));
-                    this._compositeStack.current.add(new RootColumnSuffix());
+                    this._compositeStack.current.add(complexPagination ? new RootColumnSuffix() : undefined);
                 }
             }
         });
@@ -677,7 +678,11 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     private _visitRootSelection(selection: RootQuerySelection<any>): void {
         (selection as any as spi.Node).accept(this);
         if (selection instanceof spi.AbstractExpr) {
-            this._compositeStack.current.add(new RootColumnSuffix());
+            this._compositeStack.current.add(
+                typeof this.sqlClient.driver.paginationStrategy !== "string"
+                    ? new RootColumnSuffix()
+                    : undefined
+            );
         }
     }
 

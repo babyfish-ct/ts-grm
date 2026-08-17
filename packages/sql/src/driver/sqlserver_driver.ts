@@ -1,4 +1,4 @@
-import { err, FetchRangeOptions, ScalarProvider, ScalarType, spi, TimeUnit } from "@ts-grm/core";
+import { ScalarProvider, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -10,7 +10,7 @@ import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlser
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS, projectionScope } from "./utils";
 import { Composite, Query, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value, valueOf } from "@/sql/fragment";
-import { PaginationStrategy } from "./deriver";
+import { PaginationStrategy, PaginationTransformer } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
 
@@ -33,8 +33,12 @@ export class SqlServerDriver extends AbstractDriver {
         return "@p";
     }
 
+    get isUnorderedPaginationAllowed(): boolean {
+        return false;
+    }
+
     get paginationStrategy(): PaginationStrategy {
-        return pagination;
+        return paginationTransformer;
     }
 
     override quoteIdentifier(value: string): string {
@@ -248,16 +252,29 @@ const unitMap: Record<TimeUnit, string> = {
     "CENTURIES": "year"
 };
 
-function pagination(
-    original: Composite,
-    options: FetchRangeOptions
-): Composite {
-    const query = original.fragments!.find(f => f instanceof Query) as Query;
+const paginationTransformer: PaginationTransformer = (original, options) => {
+    const query = original.fragments!.find(f => f instanceof Query) as Query | undefined;
+    if (query == null) {
+        throw new UnsupportedFeatureError(
+            `Unable to paginate a set operation query (UNION, UNION ALL, EXCEPT, EXCEPT ALL, ` +
+            `INTERSECT, or INTERSECT ALL) using "SqlServerDriver": pagination for SQL Server 2005~2008 ` +
+            `relies on wrapping the query with "ROW_NUMBER() OVER(...)", which cannot be applied directly ` +
+            `on top of a set operation query. To fix this, either use "SqlServer2012Driver" (or a later ` +
+            `version), which supports "OFFSET ... FETCH NEXT ... ROWS ONLY" and can paginate set operation ` +
+            `queries directly, or restructure the query so pagination is applied to each sub-query ` +
+            `individually before the set operation is performed.`
+        );
+    }
     const orderByClause = query.fragments!.find(f => f instanceof RootOrderByClause) as RootOrderByClause | undefined;
     if (orderByClause == null) {
-        throw new err.StateError(
-            "Pagination of SqlServerDriver(not SqlServer2012Driver) requires order by clause of root query, " +
-            "please specify the orders or use SqlServer2012Driver"
+        throw new UnsupportedFeatureError(
+            `Unable to paginate a query without an "order by" clause using "SqlServerDriver": ` +
+            `pagination for SQL Server 2005~2008 relies on wrapping the query with ` +
+            `"ROW_NUMBER() OVER(order by ...)", which requires an explicit ordering to produce ` +
+            `a well-defined row order. To fix this, either use "SqlServer2012Driver" (or a later ` +
+            `version), which supports "OFFSET ... FETCH NEXT ... ROWS ONLY" and does not strictly ` +
+            `require an "order by" clause, or specify an explicit ordering (e.g. via "orderBy(...)") ` +
+            `on the query.`
         );
     }
     const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;

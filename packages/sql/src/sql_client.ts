@@ -88,6 +88,7 @@ function createDefaultOptions(): SqlClientOptions {
         },
         filterManager: new FilterManager(),
         entityManager: undefined,
+        isUnorderedPaginationDisabled: false,
         executorCreator: defaultExecutor => defaultExecutor
     };
 }

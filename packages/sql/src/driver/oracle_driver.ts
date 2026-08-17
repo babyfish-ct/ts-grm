@@ -1,4 +1,4 @@
-import { FetchRangeOptions, spi } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -9,7 +9,8 @@ import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { Composite, Query, RootProjectionCaluse, RootQueryWrapper, Value } from "@/sql/fragment";
 import { projectionScope } from "./utils";
-import { PaginationStrategy } from "./deriver";
+import { PaginationStrategy, PaginationTransformer } from "./deriver";
+import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 
 export class OracleDriver extends AbstractDriver {
 
@@ -33,7 +34,7 @@ export class OracleDriver extends AbstractDriver {
     }
 
     get paginationStrategy(): PaginationStrategy {
-        return pagination;
+        return paginationTransformer;
     }
 
     override typeName(columnDef: ColumnDef): string {
@@ -239,11 +240,19 @@ const nodeRender = new class extends AbstractNodeRender {
     }
 }
 
-function pagination(
-    original: Composite,
-    options: FetchRangeOptions
-): Composite {
-    const query = original.fragments!.find(f => f instanceof Query) as Query;
+const paginationTransformer: PaginationTransformer = (original, options) => {
+    const query = original.fragments!.find(f => f instanceof Query) as Query | undefined;
+    if (query == null) {
+        throw new UnsupportedFeatureError(
+            `Unable to paginate a set operation query (UNION, UNION ALL, EXCEPT, EXCEPT ALL, ` +
+            `INTERSECT, or INTERSECT ALL) using "OracleDriver": pagination for SQL Server 2005~2008 ` +
+            `relies on wrapping the query with "ROW_NUMBER() OVER(...)", which cannot be applied directly ` +
+            `on top of a set operation query. To fix this, either use "Oracle12Driver" (or a later ` +
+            `version), which supports "OFFSET ... FETCH NEXT ... ROWS ONLY" and can paginate set operation ` +
+            `queries directly, or restructure the query so pagination is applied to each sub-query ` +
+            `individually before the set operation is performed.`
+        );
+    }
     const projection = query.fragments!.find(f => f instanceof RootProjectionCaluse) as RootProjectionCaluse;
     if (options.offset == null) {
         return new Composite()
