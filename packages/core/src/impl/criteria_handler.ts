@@ -177,8 +177,8 @@ function createMemberHandler(
             case "F64":
             case "NUM":
                 return prop.scalarProvider != null
-                    ? new CmpMemberHandler(predicateCombinder, prop)
-                    : new StrMemberHandler(predicateCombinder, prop);
+                    ? new ScalarMemberHandler(predicateCombinder, prop)
+                    : new CmpMemberHandler(predicateCombinder, prop);
                 break;
             default:
                 return new ScalarMemberHandler(predicateCombinder, prop);
@@ -397,6 +397,17 @@ class ScalarMemberHandler extends MemberHandler {
         }
         if (hasOwn(value, "$ninIf")) {
             predicates.push(astOf(ast, this.prop).ninIf(value.$ninIf));
+        }
+        
+        if (hasOwn(value, "$isNull")) {
+            const v = value.$isNull;
+            if (typeof v === "boolean") {
+                if (v) {
+                    predicates.push(astOf(ast, this.prop).isNull());
+                } else {
+                    predicates.push(astOf(ast, this.prop).isNotNull());
+                }
+            }
         }
     }
 }

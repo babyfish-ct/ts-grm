@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
-import { criteria } from "@ts-grm/core";
-import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK } from "../model/model";
+import { criteria, dto } from "@ts-grm/core";
+import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK, TREE_NODE } from "../model/model";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW } from "./utils";
 
 describe("CriteriaSqliteTest", () => {
@@ -324,5 +324,36 @@ describe("CriteriaSqliteTest", () => {
                 "edition": 3
             }
         ]);
+    });
+
+    it("fkIsNull", async() => {
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars
+        ]);
+        const rows = await sqlClient.findMany(view, {
+            criteria: {
+                parentNodeId: {
+                    $isNull: true
+                }
+            }
+        });
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.PARENT_NODE_ID is null
+                `,
+                args: [],
+                purpose: "query"
+            }
+        );
+        expect(rows).toEqual([{
+            "id":1, 
+            "name":"Home"
+        }])
     });
 });

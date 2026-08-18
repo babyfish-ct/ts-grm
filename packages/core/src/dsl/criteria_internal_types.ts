@@ -90,7 +90,9 @@ export interface __CriteriaInstanceOfBinding<
 export type __CriteriaMember<TProp, TNullity extends __NullityType> =
     TProp extends __PropContract<any, infer Nullity>
         ? Nullity extends "NULLABLE"
-            ? { readonly $isNull: boolean } | __NonNullCriteriaMember<TProp, TNullity>
+            ? TProp extends __ScalarPropContract<any, any, any>
+                ? { readonly $isNull: boolean } | __NonNullCriteriaMember<TProp, TNullity>
+                : __NonNullCriteriaMember<TProp, TNullity>
             : __NonNullCriteriaMember<TProp, TNullity>
         : never;
 
