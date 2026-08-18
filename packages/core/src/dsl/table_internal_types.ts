@@ -1,3 +1,17 @@
+/*
+ * ts-grm is a pure TypeScript database ORM built on type-level programming.
+ * 
+ * Design principles:
+ * - Zero code generation, pure TypeScript type inference
+ * - No entity object instantiation — maps database rows directly to DTOs
+ * - No runtime reflection — performance on par with handwritten SQL
+ * - Full type safety, full SQL features
+ * - Like GraphQL, clients can query exact shape of data they need
+ * - Like the inversed GraphQL, clients can save exact shape of data they need
+ * 
+ * @author 陈涛 (Chen Tao)
+ */
+
 import { __AllModelMembers, __DerivedModel, __RequiredModelKey } from "@/schema/model_internal_types";
 import { DateExpression, Expression, NumExpression, Predicate, StrExpression, EnumSetExpression, CmpExpression } from "./expression";
 import { View } from "@/schema/dto/api";
@@ -436,7 +450,7 @@ export interface __CollectionExistenceAction<TModelMembers> {
         fn: __AssociatedFilter<TModelMembers[TKey]>
     ): Predicate | undefined;
 
-    size<TKey extends __CollectionKeys<TModelMembers>>(
+    count<TKey extends __CollectionKeys<TModelMembers>>(
         key: TKey,
         fn?: __AssociatedFilter<TModelMembers[TKey]>
     ): NumExpression<number>;

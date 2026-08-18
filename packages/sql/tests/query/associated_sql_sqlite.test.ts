@@ -395,7 +395,7 @@ describe("AssociatedSqlTest", () => {
 
     it("sizeWithoutFilter", async () => {
         const rows = await sqlClient.createQuery(ORDER, (q, order) => {
-            q.where(order.size("comments").between(10, 20));
+            q.where(order.count("comments").between(10, 20));
             return q.select(order.fetch(SIMPLE_ORDER_VIEW));
         }).fetchList();
         sqlRecord.assert({
@@ -425,7 +425,7 @@ describe("AssociatedSqlTest", () => {
 
     it("sizeWithFilter", async () => {
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
-            q.where(author.size("books", book => book.name.ilike("sql")).gt(1))
+            q.where(author.count("books", book => book.name.ilike("sql")).gt(1))
             return q.select(author.fetch(SIMPLE_AUTHOR_VIEW));
         }).fetchList();
         sqlRecord.assert({
