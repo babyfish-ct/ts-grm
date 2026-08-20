@@ -28,7 +28,7 @@ import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
 import { View } from "@/schema/dto/api";
-import { __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
+import { __ForeignKeyData, __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
 import { MapperFn } from "./dto_mapping";
 import { NumericType } from "./numeric";
 
@@ -144,11 +144,11 @@ export class EntityProp {
             } else {
                 this._targetEntity = undefined;
             }
-        } else if (_data.targetModel != null) {
+        } else if (_data.targetModelRef != null) {
             const targetModel: ModelImpl<any, any, any, any, any> =
-                typeof _data.targetModel === "function"
-                    ? _data.targetModel() as ModelImpl<any, any, any, any, any>
-                    : _data.targetModel as ModelImpl<any, any, any, any, any>;
+                typeof _data.targetModelRef === "function"
+                    ? _data.targetModelRef() as ModelImpl<any, any, any, any, any>
+                    : _data.targetModelRef as ModelImpl<any, any, any, any, any>;
             if (targetModel == null) {
                 this.raise `The associated model must be specified`
             }
@@ -568,7 +568,7 @@ export class EntityProp {
         if (data.orders != null) {
             this.raise `The "orders" cannot be specified for non-association property.`;
         }
-        if (data.targetModel != null) {
+        if (data.targetModelRef != null) {
             this.raise `The "targetModel" cannot be specified for non-association property.`;
         }
         if (data.mappedBy != null) {
@@ -655,6 +655,7 @@ export class EntityProp {
         if (phase === 2) {
             this._resolveTargetKeyProps();
             this._resolveReferenceKeyProp();
+            this._validateTargetModelRef();
         }
     }
 
@@ -748,6 +749,23 @@ export class EntityProp {
         this._scalarType = referenceProp.targetKeyProp!.scalarType;
         this._numericType = referenceProp.targetKeyProp!.numericType;
         this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
+    }
+
+    private _validateTargetModelRef() {
+        let targetEntity = this.targetEntity;
+        if (targetEntity == null) {
+            return;
+        }
+        let isRecursive = false;
+        for (let te = this.targetEntity; te != null; te = te.superEntity) {
+            if (te === this.declaringEntity) {
+                isRecursive = true;
+                break;
+            }
+        }
+        if (!isRecursive && typeof this._data.targetModelRef === "function") {
+            this.raise `Lambda argument can only be used for recursive assocaitions, please specify the target model directly`;
+        }
     }
 
     // @ts-ignore

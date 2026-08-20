@@ -196,7 +196,7 @@ implements __AssociatedPropContract<
     }
 
     get targetModel(): TModel {
-        return this.__data.targetModel as TModel;
+        return this.__data.targetModelRef as TModel;
     }
 }
 
@@ -238,7 +238,8 @@ export class __ConfigurableOneToOneProp<
     TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
-    TTargetOptionalModelKey extends string
+    TTargetOptionalModelKey extends string,
+    TSelf extends boolean = false
 > extends __OneToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
@@ -256,7 +257,11 @@ export class __ConfigurableOneToOneProp<
         return new __ConfigurableOneToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    mappedBy<TMappedBy extends __OneToOneMappedByKeys<TModel>>(
+    mappedBy<
+        TMappedBy extends TSelf extends true
+            ? __OptionalModelKey<TModel>
+            : __OneToOneMappedByKeys<TModel>
+    >(
         mappedBy: TMappedBy
     ): __OneToOneProp<
         TModel, 
@@ -307,7 +312,7 @@ export class __ConfigurableOneToOneProp<
     > {
         return new __OneToOneProp({
             ...this.__data, 
-            joinColumns: __joinColumnsDataOf(data, this.__data.targetModel)
+            joinColumns: __joinColumnsDataOf(data, this.__data.targetModelRef)
         });
     }
 
@@ -455,7 +460,7 @@ export class __ConfigurableManyToOneProp<
     > {
         return new __ManyToOneProp({
             ...this.__data,
-            joinColumns: __joinColumnsDataOf(options, this.__data.targetModel)
+            joinColumns: __joinColumnsDataOf(options, this.__data.targetModelRef)
         });
     }
 
@@ -474,7 +479,7 @@ export class __ConfigurableManyToOneProp<
     > {
         return new __ManyToOneProp({
             ...this.__data,
-            joinColumns: __joinColumnsDataOf(options, this.__data.targetModel)
+            joinColumns: __joinColumnsDataOf(options, this.__data.targetModelRef)
         });
     }
 
@@ -562,7 +567,8 @@ export class __ConfigurableOneToManyProp<
     TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
-    TTargetOptionalModelKey extends string
+    TTargetOptionalModelKey extends string,
+    TSelf extends boolean = false
 > extends __OneToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
@@ -598,7 +604,11 @@ export class __ConfigurableOneToManyProp<
         });
     }
 
-    mappedBy<TMappedBy extends __OneToManyMappedByKeys<TModel>>(
+    mappedBy<
+        TMappedBy extends TSelf extends true
+            ? __OptionalModelKey<TModel>
+            : __OneToManyMappedByKeys<TModel>
+    >(
         mappedBy: TMappedBy
     ): __OneToManyProp<
         TModel, 
@@ -662,14 +672,19 @@ export class __ConfigurableManyToManyProp<
     TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
-    TTargetOptionalModelKey extends string
+    TTargetOptionalModelKey extends string,
+    TSelf extends boolean = false
 > extends __ManyToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
         super(data);
     }
 
-    mappedBy<TMappedBy extends __ManyToManyMappedByKeys<TModel>>(
+    mappedBy<
+        TMappedBy extends TSelf extends true
+            ? __OptionalModelKey<TModel>
+            : __ManyToManyMappedByKeys<TModel>
+    >(
         mappedBy: TMappedBy
     ): __ManyToManyProp<
         TModel, 
@@ -695,7 +710,7 @@ export class __ConfigurableManyToManyProp<
     > {
         return new __ManyToManyProp({
             ...this.__data,
-            joinTable: __joinTableDataOf(options, this.__data.targetModel)
+            joinTable: __joinTableDataOf(options, this.__data.targetModelRef)
         });
     }
 
@@ -965,7 +980,7 @@ export type __PropData = {
     readonly numericType: NumericType;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
     readonly props: Record<string, __PropContract<any, any>> | undefined;
-    readonly targetModel: __ModelRef<AnyModel> | undefined;
+    readonly targetModelRef: __ModelRef<AnyModel> | undefined;
     readonly associationType: __AssociationType | undefined;
     readonly columnName: string | undefined;
     readonly joinColumns: __ForeignKeyData | undefined;
@@ -1028,7 +1043,7 @@ export const __EMPTY_PROP_DEFINITION_DATA: __PropData = {
     numericType: NumericType.NONE,
     scalarProvider: undefined,
     props: undefined,
-    targetModel: undefined,
+    targetModelRef: undefined,
     associationType: undefined,
     columnName: undefined,
     joinColumns: undefined,
@@ -1059,10 +1074,11 @@ function __joinTableDataOf(
     };
 }
 
-function __joinColumnsDataOf(data: any, targetModel: any): __ForeignKeyData | undefined {
+function __joinColumnsDataOf(data: any, targetModelRef: any): __ForeignKeyData | undefined {
     if (data === undefined) {
         return undefined;
     }
+    const keyProp = targetModelRef?._idKey;
     if (Array.isArray(data)) {
         const arr = data as JoinColumns;
         const columns = arr.map(__joinColumnDataOf);
@@ -1078,13 +1094,13 @@ function __joinColumnsDataOf(data: any, targetModel: any): __ForeignKeyData | un
             }
         }
         return {
-            keyProp: targetModel?._idKey,
+            keyProp: keyProp,
             columns,
             cascade: "NONE"
         };
     }
     return {
-        keyProp: data.keyProp ?? targetModel?._idKey,
+        keyProp: data.keyProp ?? keyProp,
         columns: data.columns?.map((c: any) => __joinColumnDataOf(c)),
         cascade: data.cascade ?? "NONE"
     };
@@ -1115,55 +1131,20 @@ export type __O2OCreator = {
         __ModelIdKey<TModel>
     >;
 
-    self<
-        TSelf extends AnyModel, 
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinColumnsOptions<TTargetKeyProp> 
-    ): __OneToOneProp<
-        TSelf,
-        "NULLABLE",
-        "OWNING",
+    <TModel extends AnyModel>(
+        selfGetter: () => TModel
+    ): __ConfigurableOneToOneProp<
+        TModel, 
+        "NULLABLE", 
+        "OWNING", 
         false,
         "",
-        TTargetKeyProp
-    >;
-
-    self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): __OneToOneProp<
-        TSelf,
-        "NULLABLE",
-        "OWNING",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
-    >;
-
-    self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): __OneToOneProp<
-        TSelf,
-        "NULLABLE",
-        "INVERSE",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
+        __ModelIdKey<TModel>,
+        true
     >;
 };
 
-export type __M2OCreator = {
+export interface __M2OCreator {
 
     <TModel extends AnyModel>(
         targetModel: TModel
@@ -1176,39 +1157,19 @@ export type __M2OCreator = {
         __ModelIdKey<TModel>
     >;
 
-    self<
-        TSelf extends AnyModel, 
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinColumnsOptions<TTargetKeyProp>
-    ): __ManyToOneProp<
-        TSelf,
-        "NULLABLE",
-        "OWNING",
+    <TModel extends AnyModel>(
+        selfGetter: () => TModel
+    ): __ConfigurableManyToOneProp<
+        TModel, 
+        "NULLABLE", 
+        "OWNING", 
         false,
         "",
-        TTargetKeyProp
-    >;
-
-    self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): __ManyToOneProp<
-        TSelf,
-        "NULLABLE",
-        "OWNING",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
+        __ModelIdKey<TModel>
     >;
 };
 
-export type __O2MCreator = {
+export interface __O2MCreator {
 
     <TModel extends AnyModel>(
         targetModel: TModel
@@ -1220,23 +1181,19 @@ export type __O2MCreator = {
         __ModelIdKey<TModel>
     >;
 
-    self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options: __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): __OneToManyProp<
-        TSelf,
-        "INVERSE",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
+    <TModel extends AnyModel>(
+        selfGetter: () => TModel
+    ): __ConfigurableOneToManyProp<
+        TModel, 
+        "OWNING", 
+        false, 
+        "", 
+        __ModelIdKey<TModel>,
+        true
     >;
 };
 
-export type __M2MCreator = {
+export interface __M2MCreator {
 
     <TModel extends AnyModel>(
         targetModel: TModel
@@ -1248,33 +1205,15 @@ export type __M2MCreator = {
         __ModelIdKey<TModel>
     >;
 
-    self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options:__SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): __ManyToManyProp<
-        TSelf,
-        "INVERSE",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
-    >;
-
-    self<TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): __ManyToManyProp<
-        TSelf,
+    <TModel extends AnyModel>(
+        selfGetter: () => TModel
+    ): __ConfigurableManyToManyProp<
+        TModel,
         "OWNING",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
+        true,
+        "",
+        __ModelIdKey<TModel>,
+        true
     >;
 };
 
@@ -1366,96 +1305,19 @@ export type __CalculatedCreator = {
     ): __ParameterizedCalculatedCollectionProp<TParameter, TTargetModel>;
 };
 
-type __SelfJoinColumnsOptions<
-    TTargetKeyProp extends string
-> = {
-    readonly joinColumns?: JoinColumns | {
-        readonly targetKeyProp?: TTargetKeyProp | undefined;
-        readonly cascade?: CascadeType | undefined;
-        readonly columns?: JoinColumns | undefined;
-    } | undefined;
-};
-
-type __SelfJoinTableOptions<
-    TSourceKeyProp extends string, 
-    TTargetKeyProp extends string
-> = {
-    readonly joinTable: {
-        readonly name?: string | undefined;
-        readonly joinThisColumns?: JoinColumns | undefined;
-        readonly joinTargetColumns?: JoinColumns | undefined; 
-    } | {
-        readonly name?: string | undefined;
-        readonly joinThis?: {
-            readonly sourceKeyProp?: TSourceKeyProp | undefined;
-            readonly cascadeType?: CascadeType | undefined;
-            readonly columns?: JoinColumns | undefined;
-        } | undefined;
-        readonly joinTarget?: {
-            readonly targetKeyProp?: TTargetKeyProp | undefined;
-            readonly cascadeType?: CascadeType | undefined;
-            readonly columns?: JoinColumns | undefined;
-        }
-    };
-};
-
-type __SelfMappedByOptions<
-    TSelf extends AnyModel,
-    TSourceKeyProp extends __OptionalModelKey<TSelf> = "", 
-    TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-> = {
-    readonly mappedBy: __OptionalModelKey<TSelf>;
-    readonly sourceKeyProp?: TSourceKeyProp | undefined;
-    readonly targetKeyProp?: TTargetKeyProp | undefined;
-};
-
 export function __o2oCreator(): __O2OCreator {
 
     function o2o<TModel extends AnyModel>(
         targetModel: __ModelRef<TModel>
-    ): __ConfigurableOneToOneProp<TModel, "NONNULL", "OWNING", false, "", __ModelIdKey<TModel>> {
+    ): __ConfigurableOneToOneProp<TModel, any, "OWNING", false, "", __ModelIdKey<TModel>> {
         return new __ConfigurableOneToOneProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel, 
+            targetModelRef: targetModel, 
+            nullity: typeof targetModel === "function" ? "NULLABLE" : "NONNULL",
             associationType: "ONE_TO_ONE"
         });
     }
-
-    function self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinColumnsOptions<TTargetKeyProp>
-            | __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-            | __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): __OneToManyProp<
-        TSelf,
-        any,
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
-    > {
-        const mappedBy = (options as any)?.mappedBy;
-        return new __OneToManyProp({
-            ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel: selfModelGetter, 
-            associationType: "ONE_TO_MANY",
-            mappedBy: mappedBy != null && typeof mappedBy === "string"
-                ? mappedBy
-                : mappedBy.opposite,
-            joinTable: (options as any)?.joinTable != null 
-                ? __joinTableDataOf((options as any).joinTable, undefined)
-                : undefined,
-            joinColumns: (options as any)?.joinColumns != null
-                ? __joinColumnsDataOf((options as any).joinColumns, undefined)
-                : undefined
-        });
-    }
-
-    (o2o as any).self = self;
-    return o2o as __O2OCreator;
+    return o2o;
 }
 
 export function __m2oCreator(): __M2OCreator {
@@ -1464,7 +1326,7 @@ export function __m2oCreator(): __M2OCreator {
         targetModel: __ModelRef<TModel>
     ): __ConfigurableManyToOneProp<
         TModel, 
-        "NONNULL", 
+        any, 
         "OWNING", 
         false,
         "",
@@ -1472,41 +1334,12 @@ export function __m2oCreator(): __M2OCreator {
     > {
         return new __ConfigurableManyToOneProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel, 
+            targetModelRef: targetModel, 
+            nullity: typeof targetModel === "function" ? "NULLABLE" : "NONNULL",
             associationType: "MANY_TO_ONE"
         });
     }
-
-    function self<TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinColumnsOptions<TTargetKeyProp> 
-            | __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): __ManyToOneProp<
-        TSelf,
-        any,
-        "OWNING",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
-    > {
-        return new __ManyToOneProp({
-            ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel: selfModelGetter, 
-            associationType: "MANY_TO_ONE",
-            joinTable: (options as any)?.joinTable != null 
-                ? __joinTableDataOf((options as any).joinTable, undefined) 
-                : undefined,
-            joinColumns: (options as any)?.joinColumns != null 
-                ? __joinColumnsDataOf((options as any).joinColumns, undefined) 
-                : undefined
-        });
-    }
-
-    (m2o as any).self = self;
-    return m2o as any as __M2OCreator;
+    return m2o;
 }
 
 export function __o2mCreator(): __O2MCreator {
@@ -1522,35 +1355,11 @@ export function __o2mCreator(): __O2MCreator {
     > {
         return new __ConfigurableOneToManyProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel, 
+            targetModelRef: targetModel, 
             associationType: "ONE_TO_MANY"
         });
     }
-
-    function self<TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options: __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): __OneToManyProp<
-        TSelf,
-        "INVERSE",
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
-    > {
-        const self = selfModelGetter();
-        return new __OneToManyProp({
-            ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel: self, 
-            associationType: "ONE_TO_MANY",
-            mappedBy: options.mappedBy
-        });
-    }
-
-    (o2m as any).self = self;
-    return o2m as __O2MCreator;
+    return o2m;
 }
 
 export function __m2mCreator(): __M2MCreator {
@@ -1566,41 +1375,11 @@ export function __m2mCreator(): __M2MCreator {
     > {
         return new __ConfigurableManyToManyProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel, 
+            targetModelRef: targetModel, 
             associationType: "MANY_TO_MANY"
         });
     }
-
-    function self<
-        TSelf extends AnyModel, 
-        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
-    >(
-        selfModelGetter: () => TSelf,
-        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-            | __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): __ManyToManyProp<
-        TSelf,
-        any,
-        false,
-        TSourceKeyProp,
-        TTargetKeyProp
-    > {
-        const mappedBy = (options as any)?.mappedBy;
-        const self = selfModelGetter();
-        return new __ManyToManyProp({
-            ...__EMPTY_PROP_DEFINITION_DATA, 
-            targetModel: self, 
-            associationType: "MANY_TO_MANY",
-            mappedBy: mappedBy,
-            joinTable: (options as any)?.joinTable != null 
-                ? __joinTableDataOf((options as any).joinTable, undefined)
-                : undefined 
-        });
-    }
-
-    (m2m as any).self = self;
-    return m2m as __M2MCreator;
+    return m2m;
 }
 
 export function __formulaCreator(): __FormulaCreator {

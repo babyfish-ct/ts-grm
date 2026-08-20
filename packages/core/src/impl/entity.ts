@@ -318,7 +318,7 @@ export class Entity {
                 numericType: NumericType.NONE,
                 scalarProvider: undefined,
                 props: undefined,
-                targetModel: undefined,
+                targetModelRef: undefined,
                 associationType: undefined,
                 columnName: undefined,
                 joinColumns: undefined,

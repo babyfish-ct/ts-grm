@@ -206,8 +206,8 @@ export const AUTHOR = model("Author", "id", class {
 export const TREE_NODE = model("TreeNode", "id", class {
     id = prop.i64()
     name = prop.str(50)
-    parentNode = prop.m2o.self(() => TREE_NODE, { joinColumns: { cascade: "DELETE" } })
-    childNodes = prop.o2m.self(() => TREE_NODE, { mappedBy: "parentNode", sourceKeyProp: "id", targetKeyProp: "id" })
+    parentNode = prop.m2o(() => TREE_NODE).joinColumns({ cascade: "DELETE" })
+    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
     createdBy = prop.m2o(USER).nullable()
 }, ctx => {
     ctx.unique("name", "parentNode");
@@ -344,14 +344,10 @@ export const LIBRARY = model("Library", "id", class {
     id = prop.i64()
     name = prop.str(50)
     version = prop.str(50)
-    dependencies = prop.m2m.self(() => LIBRARY, {
-        joinTable: {
-            name: "LIBRARY_DEPENDENCY_MAPPING",
-            joinThisColumns: ["DEPENDENT_ID"],
-            joinTargetColumns: ["DEPENDENCY_ID"]
-        }
+    dependencies = prop.m2m(() => LIBRARY).joinTable({
+        name: "LIBRARY_DEPENDENCY_MAPPING",
+        joinThisColumns: ["DEPENDENT_ID"],
+        joinTargetColumns: ["DEPENDENCY_ID"]
     });
-    dependents = prop.m2m.self(() => LIBRARY, {
-        mappedBy: "dependencies"
-    });
+    dependents = prop.m2m(() => LIBRARY).mappedBy("dependencies");
 });

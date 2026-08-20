@@ -229,8 +229,8 @@ export const TREE_NODE = model(
         class {
         id = prop.i64()
         name = prop.str(50)
-        parentNode = prop.m2o.self(() => TREE_NODE).nullable()
-        childNodes = prop.o2m.self(() => TREE_NODE, { mappedBy: "parentNode" })
+        parentNode = prop.m2o(() => TREE_NODE)
+        childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
     },
     ctx => {
         ctx.table({
@@ -365,14 +365,10 @@ export const LIBRARY = model("Library", "id", class {
     id = prop.i64()
     name = prop.str(50)
     version = prop.str(50)
-    dependencies = prop.m2m.self(() => LIBRARY, {
-        joinTable: {
-            name: "LIBRARY_DEPENDENCY_MAPPING",
-            joinThisColumns: ["DEPENDENT_ID"],
-            joinTargetColumns: ["DEPENDENCY_ID"]
-        }
+    dependencies = prop.m2m(() => LIBRARY).joinTable({
+        name: "LIBRARY_DEPENDENCY_MAPPING",
+        joinThisColumns: ["DEPENDENT_ID"],
+        joinTargetColumns: ["DEPENDENCY_ID"]
     });
-    dependents = prop.m2m.self(() => LIBRARY, {
-        mappedBy: "dependencies"
-    });
+    dependents = prop.m2m(() => LIBRARY).mappedBy("dependencies")
 });
