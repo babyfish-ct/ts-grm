@@ -14,7 +14,8 @@
 
 export { newSqlClient } from "./sql_client";
 export { sqlerr } from "./error";
-export type { SqlClientOptions, Filter, AnyFilter, FilterManager } from "./cfg";
+export type { SqlClientOptions, Filter, AnyFilter } from "./cfg";
+export { FilterManager } from "./cfg";
 export { 
     SqliteDriver, 
     PostgresDriver, 
