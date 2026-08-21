@@ -30,6 +30,8 @@ import { NumericType } from "./numeric";
 
 export class Entity {
 
+    readonly isAbstract: boolean;
+
     readonly superEntity: Entity | undefined;
 
     private _phase = 0;
@@ -89,6 +91,7 @@ export class Entity {
                 "${CAMEL_CASE_REGEX.source}"`
             )
         }
+        this.isAbstract = (model as ModelImpl<any, any, any, any, any, any>).isAbstract;
         const superModel = (model as ModelImpl<any, any, any, any, any, any>).superModel;
         this.superEntity = superModel !== undefined
             ? (superModel as AnyModelImpl).toUnresolvedEntity().resolve(1)

@@ -21,6 +21,7 @@ import { DtoMapper,DtoMapperField } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape, ShapeMember } from "./shape";
 import { ArgumentError } from "@/error/common";
 import { MapperFn } from "./dto_mapping";
+import { DataError } from "@/error/data_error";
 
 export type DtoRow = {
 
@@ -108,8 +109,8 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
             }
         });
     return new Function(
-        "$baseClass", "$entity", "$argumentError", writer.toString()
-    )(DtoRowReader, mapper.entity, ArgumentError);
+        "$baseClass", "$entity", "$argumentError", "$dataError", writer.toString()
+    )(DtoRowReader, mapper.entity, ArgumentError, DataError);
 }
 
 function writeConstructor(
@@ -168,8 +169,16 @@ function writeRead(
                 for (const downcastEntity of downcastEntities!) {
                     writer.code("case '").code(downcastEntity.name).code("':");
                     writer.scope("BLANK", () => {
-                        writeDtoDeclaration(downcastEntity, shape, mapper, writer);
-                        writer.code("break").newLine(";");
+                        if (downcastEntity.isAbstract) {
+                            writer.code(
+                                `throw new $dataError("Illegal type name '${
+                                    downcastEntity.name
+                                }' because it is abstract model")`
+                            ).newLine(";");
+                        } else {
+                            writeDtoDeclaration(downcastEntity, shape, mapper, writer);
+                            writer.code("break").newLine(";");
+                        }
                     });
                 }
             }).newLine();
@@ -183,8 +192,16 @@ function writeRead(
                     for (const downcastEntity of downcastEntities!) {
                         writer.code("case '").code(downcastEntity.name).code("':");
                         writer.scope("BLANK", () => {
-                            writieImplicitDeclaration(downcastEntity, implicit, mapper, writer);
-                            writer.code("break").newLine(";");
+                            if (downcastEntity.isAbstract) {
+                                writer.code(
+                                    `throw new $dataError("Illegal type name '${
+                                        downcastEntity.name
+                                    }' because it is abstract model")`
+                                ).newLine(";");
+                            } else {
+                                writieImplicitDeclaration(downcastEntity, implicit, mapper, writer);
+                                writer.code("break").newLine(";");
+                            }
                         });
                     }
                 }).newLine();
@@ -199,8 +216,16 @@ function writeRead(
                     for (const downcastEntity of downcastEntities!) {
                         writer.code("case '").code(downcastEntity.name).code("':");
                         writer.scope("BLANK", () => {
-                            writeDepthAssignments(downcastEntity, mapper, writer);
-                            writer.code("break").newLine(";");
+                            if (downcastEntity.isAbstract) {
+                                writer.code(
+                                    `throw new $dataError("Illegal type name '${
+                                        downcastEntity.name
+                                    }' because it is abstract model")`
+                                ).newLine(";");
+                            } else {
+                                writeDepthAssignments(downcastEntity, mapper, writer);
+                                writer.code("break").newLine(";");
+                            }
                         });
                     }
                 }).newLine();

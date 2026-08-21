@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
-import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, PHYSICAL_BOOK_STORE } from "../../model/model";
+import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, ONLINE_BOOK_STORE, PAPER_BOOK, PDF_ELECTRONIC_BOOK, PHYSICAL_BOOK_STORE } from "../../model/model";
 import { dto, TypeOf } from "@/index";
 
 describe("PolymorephismTest", () => {
@@ -11,15 +11,19 @@ describe("PolymorephismTest", () => {
             c.id,
             c.$instanceOf(PHYSICAL_BOOK_STORE, c => [
                 c.city
+            ]),
+            c.$instanceOf(ONLINE_BOOK_STORE, c => [
+                c.url
             ])
         ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
-            __typename: "BookStore";
+            __typename: "OnlineBookStore";
             id: string;
+            url: string;
         } | {
             __typename: "PhysicalBookStore";
-            id: string;
             city: string;
+            id: string;
         }>();
     });
 

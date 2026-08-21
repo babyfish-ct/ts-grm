@@ -12,18 +12,11 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { ArgumentError, StateError } from "./common";
-import { DataError } from "./data_error";
 import { GrmError } from "./grm_error";
-import { ModelError, PropError } from "./metadata_error";
-import { makeErr } from "./util";
 
-export const err = {
-    ArgumentError,
-    StateError,
-    GrmError,
-    ModelError,
-    PropError,
-    DataError,
-    makeErr,
-} as const;
+export abstract class DataError extends GrmError {
+
+    constructor(message: string) {
+        super(message);
+    }
+}

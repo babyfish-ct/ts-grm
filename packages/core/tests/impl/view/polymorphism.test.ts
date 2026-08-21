@@ -57,11 +57,7 @@ describe("PolymorphismTest", () => {
                     let dto;
                     switch (typeName) {
                         case 'BookStore':
-                            dto = {
-                                name: reader.get(0), 
-                                __typename: typeName
-                            };
-                            break;
+                            throw new $dataError("Illegal type name 'BookStore' because it is abstract model");
                         case 'OnlineBookStore':
                             dto = {
                                 name: reader.get(0), 

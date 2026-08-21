@@ -16,7 +16,7 @@ import { __UnionToIntersection } from "@/auxiliary_types";
 import { __DeclaredModelMembers, __DerivedModel, __ModelName, __ModelSuperNames } from "../model_internal_types";
 import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
 import { __SelfMappings } from "./utils";
-import { AnyModel } from "../model";
+import { AnyModel, Model } from "../model";
 
 export interface __InstanceOfContext<
     TModel extends AnyModel,
@@ -83,9 +83,13 @@ export type __DerivedType<
                     __ModelSuperNames<TDerivedModel>
                 >
     ) | (
-        TSuper extends { __typename: string; }
-            ? TSuper
-            : { __typename: __ModelName<TModel> } & TSuper
+        TModel extends Model<any, any, any, any, any, infer Abstract>
+            ? Abstract extends false
+                ? TSuper extends { __typename: string; }
+                    ? TSuper
+                    : { __typename: __ModelName<TModel> } & TSuper
+                : never
+        : never 
     );
 
 export type __SuperFields<
