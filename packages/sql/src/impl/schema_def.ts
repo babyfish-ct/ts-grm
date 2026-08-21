@@ -148,8 +148,9 @@ export class TableDefImpl implements TableDef {
     }
 
     findColumnDefByProp(prop: spi.EntityProp): ColumnDefImpl {
+        const finalProp = prop?.referenceKeyProp ?? prop;
         for (const columnDef of this._columnMap.values()) {
-            if (columnDef.prop === prop) {
+            if (columnDef.prop === finalProp) {
                 return columnDef;
             }
         }

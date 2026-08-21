@@ -25,9 +25,9 @@ import {
     __SuperIdKey 
 } from "./model_internal_types";
 
-export const model: __ModelCreator = modelImpl();
+export const model: __ModelCreator<false> = modelCreator();
 
-function modelImpl(): __ModelCreator {
+function modelCreator(): __ModelCreator<false> {
 
     function create<
         TName extends string, 
@@ -38,19 +38,36 @@ function modelImpl(): __ModelCreator {
         idKey: TIdKey,
         ctor: TCtor,
         configurator?: (ctx: __ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never> {
+    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never, any> {
         const ctx = new ModelContextImpl<TCtor, never>();
         if (configurator != null) {
             configurator(ctx);
         }
-        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions());
+        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions(), false);
+    }
+
+    function absCreate<
+        TName extends string, 
+        TIdKey extends keyof __CtorMembers<TCtor> & string,
+        TCtor extends __Ctor
+    >(
+        name: TName,
+        idKey: TIdKey,
+        ctor: TCtor,
+        configurator?: (ctx: __ModelContext<TCtor, never>) => void
+    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never, any> {
+        const ctx = new ModelContextImpl<TCtor, never>();
+        if (configurator != null) {
+            configurator(ctx);
+        }
+        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions(), true);
     }
 
     function ext<
         TSuperModel extends AnyModel
     >(
         superModel: TSuperModel
-    ): __InheritanceModelCreator<TSuperModel> {
+    ): __InheritanceModelCreator<TSuperModel, any> {
         return <
             TName extends string, 
             TCtor extends __Ctor
@@ -63,7 +80,8 @@ function modelImpl(): __ModelCreator {
             __SuperIdKey<TSuperModel>, 
             TCtor, 
             __MakeAllModelMembers<TCtor, TSuperModel>,
-            __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>
+            __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
+            any
         > => {
             const ctx = new ModelContextImpl<TCtor, TSuperModel>();
             if (configurator != null) {
@@ -74,33 +92,81 @@ function modelImpl(): __ModelCreator {
                 __SuperIdKey<TSuperModel>, 
                 TCtor, 
                 __MakeAllModelMembers<TCtor, TSuperModel>,
-                __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>
+                __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
+                any
             >(
                 name, 
                 undefined, 
                 ctor, 
                 superModel,
-                ctx.toModelOptions()
+                ctx.toModelOptions(),
+                false
             );
         }
     }
+
+    function absExt<
+        TSuperModel extends AnyModel
+    >(
+        superModel: TSuperModel
+    ): __InheritanceModelCreator<TSuperModel, any> {
+        return <
+            TName extends string, 
+            TCtor extends __Ctor
+        >(
+            name: TName,
+            ctor: TCtor,
+            configurator?: (ctx: __ModelContext<TCtor, TSuperModel>) => void
+        ): Model<
+            TName, 
+            __SuperIdKey<TSuperModel>, 
+            TCtor, 
+            __MakeAllModelMembers<TCtor, TSuperModel>,
+            __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
+            any
+        > => {
+            const ctx = new ModelContextImpl<TCtor, TSuperModel>();
+            if (configurator != null) {
+                configurator(ctx);
+            }
+            return new ModelImpl<
+                TName, 
+                __SuperIdKey<TSuperModel>, 
+                TCtor, 
+                __MakeAllModelMembers<TCtor, TSuperModel>,
+                __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
+                any
+            >(
+                name, 
+                undefined, 
+                ctor, 
+                superModel,
+                ctx.toModelOptions(),
+                false
+            );
+        }
+    }
+
+    create.abstract = absCreate;
     create.extends = ext;
-    return create as any as __ModelCreator;
+    absCreate.extends = absExt;
+    return create as any as __ModelCreator<false>;
 }
 
 export interface Model<
     TName extends string, 
-    TIdKey extends string = string,
-    TCtor extends __Ctor = __Ctor,
-    TAllMembers extends object = object,
-    TSuperNames extends string | never = never
+    TIdKey extends string,
+    TCtor extends __Ctor,
+    TAllMembers extends object,
+    TSuperNames extends string | never,
+    TAbstract extends boolean
 > {
     __type(): {
-        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | true
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames, TAbstract] | true
     }
 }
 
-export type AnyModel = Model<any, any, any, any, any>;
+export type AnyModel = Model<any, any, any, any, any, any>;
 
 export const TABLE_INHERIT = Symbol("<inherit>");
 

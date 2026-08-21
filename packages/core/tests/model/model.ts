@@ -59,7 +59,7 @@ const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
         fn: data => data.books.map(book => `${book.name}(${book.edition})`)
     });
 
-export const BOOK_STORE = model("BookStore", "id", class {
+export const BOOK_STORE = model.abstract("BookStore", "id", class {
     id = prop.i64().asString()
     name = prop.str(50)
     version = prop.i32()

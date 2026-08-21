@@ -98,7 +98,7 @@ describe("RecursiveTest", () => {
     it("down", async () => {
         const view = dto.view(TREE_NODE, c => [
             c.name,
-            c.$recursive("childNodes")
+            c.$recursive("childNodes").sort("id")
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(1));
@@ -146,6 +146,9 @@ describe("RecursiveTest", () => {
                         tb_1_.c3,
                         tb_1_.c4
                     from tb_1_
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c3 asc
                 `,
                 args: [1],
                 purpose: "loadRecursiveTree(TreeNode.childNodes)"
@@ -158,19 +161,6 @@ describe("RecursiveTest", () => {
                     "name": "Food",
                     "childNodes": [
                         {
-                            "name": "Bread",
-                            "childNodes": [
-                                {
-                                    "name": "Baguette",
-                                    "childNodes": []
-                                },
-                                {
-                                    "name": "Ciabatta",
-                                    "childNodes": []
-                                }
-                            ]
-                        },
-                        {
                             "name": "Drinks",
                             "childNodes": [
                                 {
@@ -182,43 +172,25 @@ describe("RecursiveTest", () => {
                                     "childNodes": []
                                 }
                             ]
+                        },
+                        {
+                            "name": "Bread",
+                            "childNodes": [
+                                {
+                                    "name": "Baguette",
+                                    "childNodes": []
+                                },
+                                {
+                                    "name": "Ciabatta",
+                                    "childNodes": []
+                                }
+                            ]
                         }
                     ]
                 },
                 {
                     "name": "Clothing",
                     "childNodes": [
-                        {
-                            "name": "Man",
-                            "childNodes": [
-                                {
-                                    "name": "Casual wear",
-                                    "childNodes": [
-                                        {
-                                            "name": "Jacket",
-                                            "childNodes": []
-                                        },
-                                        {
-                                            "name": "Jeans",
-                                            "childNodes": []
-                                        }
-                                    ]
-                                },
-                                {
-                                    "name": "Formal wear",
-                                    "childNodes": [
-                                        {
-                                            "name": "Shirt",
-                                            "childNodes": []
-                                        },
-                                        {
-                                            "name": "Suit",
-                                            "childNodes": []
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
                         {
                             "name": "Woman",
                             "childNodes": [
@@ -230,11 +202,11 @@ describe("RecursiveTest", () => {
                                             "childNodes": []
                                         },
                                         {
-                                            "name": "Jeans",
+                                            "name": "Miniskirt",
                                             "childNodes": []
                                         },
                                         {
-                                            "name": "Miniskirt",
+                                            "name": "Jeans",
                                             "childNodes": []
                                         }
                                     ]
@@ -243,12 +215,51 @@ describe("RecursiveTest", () => {
                                     "name": "Formal wear",
                                     "childNodes": [
                                         {
-                                            "name": "Shirt",
+                                            "name": "Suit",
                                             "childNodes": []
                                         },
                                         {
-                                            "name": "Suit",
+                                            "name": "Shirt",
                                             "childNodes": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Man",
+                            "childNodes": [
+                                {
+                                    "name": "Casual wear",
+                                    "childNodes": [
+                                        {
+                                            "name": "Jacket",
+                                            "childNodes": [
+
+                                            ]
+                                        },
+                                        {
+                                            "name": "Jeans",
+                                            "childNodes": [
+
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "Formal wear",
+                                    "childNodes": [
+                                        {
+                                            "name": "Suit",
+                                            "childNodes": [
+
+                                            ]
+                                        },
+                                        {
+                                            "name": "Shirt",
+                                            "childNodes": [
+
+                                            ]
                                         }
                                     ]
                                 }
@@ -397,7 +408,7 @@ describe("RecursiveTest", () => {
     it("withDepth", async() => {
         const view = dto.view(TREE_NODE, c => [
             c.name,
-            c.$recursive("childNodes").as("childList").depth(2)
+            c.$recursive("childNodes").as("childList").depth(2).sort("name")
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(1));
@@ -447,6 +458,9 @@ describe("RecursiveTest", () => {
                     from tb_1_
                     where 
                         tb_1_.c4 < ?
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c2 asc
                 `,
                 args: [1, 2],
                 purpose: "loadRecursiveTree(TreeNode.childNodes)"
@@ -457,19 +471,6 @@ describe("RecursiveTest", () => {
             "childNodes": null,
             "childList": [
                 {
-                    "name": "Food",
-                    "childList": [
-                        {
-                            "name": "Bread",
-                            "childList": null
-                        },
-                        {
-                            "name": "Drinks",
-                            "childList": null
-                        }
-                    ]
-                },
-                {
                     "name": "Clothing",
                     "childList": [
                         {
@@ -478,6 +479,19 @@ describe("RecursiveTest", () => {
                         },
                         {
                             "name": "Woman",
+                            "childList": null
+                        }
+                    ]
+                },
+                {
+                    "name": "Food",
+                    "childList": [
+                        {
+                            "name": "Bread",
+                            "childList": null
+                        },
+                        {
+                            "name": "Drinks",
                             "childList": null
                         }
                     ]

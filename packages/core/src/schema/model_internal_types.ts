@@ -17,7 +17,7 @@ import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT } from "./model";
 
-export type __ModelCreator = {
+export interface __ModelCreator<TAbstract extends boolean> {
     
     <
         TName extends string, 
@@ -28,17 +28,20 @@ export type __ModelCreator = {
         idKey: TIdKey,
         ctor: TCtor,
         configurator?: (ctx: __ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never>;
+    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never, TAbstract>;
+
+    readonly abstract: __ModelCreator<true>;
 
     extends<
         TSuperModel extends AnyModel
     >(
         superModel: TSuperModel
-    ): __InheritanceModelCreator<TSuperModel>;
+    ): __InheritanceModelCreator<TSuperModel, TAbstract>;
 };
 
 export type __InheritanceModelCreator<
-    TSuperModel extends AnyModel
+    TSuperModel extends AnyModel,
+    TAbstract extends boolean
 > = {
     
     <
@@ -53,7 +56,8 @@ export type __InheritanceModelCreator<
         __SuperIdKey<TSuperModel>, 
         TCtor, 
         __MakeAllModelMembers<TCtor, TSuperModel>,
-        __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>
+        __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
+        TAbstract
     >;
 };
 
@@ -72,7 +76,7 @@ export interface __ModelContext<TCtor extends __Ctor, TSuperModel extends AnyMod
 }
 
 export type __SuperIdKey<TSuperModel extends AnyModel> =
-    TSuperModel extends Model<any, infer IdKey, any, any, any>
+    TSuperModel extends Model<any, infer IdKey, any, any, any, any>
         ? IdKey
         : never;
 
@@ -84,39 +88,39 @@ export interface __Ctor {
 }
 
 export type __ModelName<TModel extends AnyModel> =
-    TModel extends Model<infer TName, any, any, any, any>
+    TModel extends Model<infer TName, any, any, any, any, any>
         ? TName
         : never;
 
 export type __ModelIdKey<TModel extends AnyModel> =
-    TModel extends Model<any, infer TId, any, any, any>
+    TModel extends Model<any, infer TId, any, any, any, any>
         ? TId
         : never;
 
 export type __ModelSuperNames<TModel extends AnyModel> =
-    TModel extends Model<any, any, any, any, infer TSuperNames>
+    TModel extends Model<any, any, any, any, infer TSuperNames, any>
         ? TSuperNames
         : never;
 
 export type __ModelCtor<TModel extends AnyModel> =
-    TModel extends Model<any, any, infer TCtor, any, any>
+    TModel extends Model<any, any, infer TCtor, any, any, any>
         ? TCtor
         : never;
 
 export type __DeclaredModelMembers<TModel extends AnyModel> =
-    TModel extends Model<any, any, infer TCtor, any, any>
+    TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __CtorMembers<TCtor>
         : never;
 
 export type __AllModelMembers<TModel extends AnyModel> =
-    TModel extends Model<any, any, any, infer TAllMembers, any>
+    TModel extends Model<any, any, any, infer TAllMembers, any, any>
         ? TAllMembers
         : never;
 
 export type __MakeAllModelMembers<TCtor extends __Ctor, TSuperModel extends AnyModel | undefined> =
     TSuperModel extends undefined 
         ? __CtorMembers<TCtor>
-        : TSuperModel extends Model<any, any, any, infer TAllMembers, any>
+        : TSuperModel extends Model<any, any, any, infer TAllMembers, any, any>
             ? TAllMembers & __CtorMembers<TCtor>
             : never;
 
@@ -124,7 +128,7 @@ export type __CtorMembers<TCtor extends __Ctor> =
     TCtor["prototype"];
 
 export type __OneToOneMappedByKeys<TModel extends AnyModel> =
-    TModel extends Model<any, any, infer TCtor, any, any>
+    TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             __OneToOnePropContract<any, any, "OWNING", any, any, any>
@@ -132,7 +136,7 @@ export type __OneToOneMappedByKeys<TModel extends AnyModel> =
         never;
 
 export type __OneToManyMappedByKeys<TModel extends AnyModel> =
-    TModel extends Model<any, any, infer TCtor, any, any>
+    TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             __ManyToOnePropContract<any, any, "OWNING", any, any, any>
@@ -140,7 +144,7 @@ export type __OneToManyMappedByKeys<TModel extends AnyModel> =
         never;
 
 export type __ManyToManyMappedByKeys<TModel extends AnyModel> =
-    TModel extends Model<any, any, infer TCtor, any, any>
+    TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             __ManyToManyPropContract<any, "OWNING", any, any, any>
@@ -151,7 +155,7 @@ export type __MiddleEntityJoinThisKeys<
     TModel extends AnyModel, 
     TAssociationType extends __AssociationType
 > =
-    TModel extends Model<any, any, infer TCtor, any, any>
+    TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             TAssociationType extends "ONE_TO_ONE"
@@ -166,7 +170,7 @@ export type __MiddleEntityJoinTargetKeys<
     TMiddleModel extends AnyModel,
     TTargetModel extends AnyModel,
     TAssociationType extends __AssociationType
-> = TMiddleModel extends Model<any, any, infer TCtor, any, any>
+> = TMiddleModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             TAssociationType extends "ONE_TO_ONE"

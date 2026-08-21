@@ -366,6 +366,13 @@ describe("SchemaCreatorTest", () => {
                         "implicit": "POLYMORPHISM"
                     },
                     {
+                        "kind": "UNIQUE",
+                        "columns": [
+                            "PARENT_NODE_ID",
+                            "NAME",
+                        ],
+                    },
+                    {
                         "kind": "FOREIGN_KEY",
                         "columns": ["PARENT_NODE_ID"],
                         "referencedColumns": ["ID"],
@@ -1001,6 +1008,9 @@ describe("SchemaCreatorTest", () => {
                     check(TYPE in('TreeNode', 'Organization', 'Group')), 
 
                 constraint TREE_NODE_constraint_3
+                    unique(PARENT_NODE_ID, NAME), 
+
+                constraint TREE_NODE_constraint_4
                     foreign key(PARENT_NODE_ID)
                         references TREE_NODE(ID)
             );

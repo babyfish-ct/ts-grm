@@ -23,13 +23,15 @@ export class ModelImpl<
     TIdKey extends string,
     TCtor extends __Ctor,
     TAllMembers extends object,
-    TSuperNames extends string | never
+    TSuperNames extends string | never,
+    TAbstract extends boolean
 > implements Model<
     TName,
     TIdKey,
     TCtor,
     TAllMembers,
-    TSuperNames
+    TSuperNames,
+    TAbstract
 >, ModelContract {
 
     readonly identifier: number = allocateModelIdentifier();
@@ -39,7 +41,7 @@ export class ModelImpl<
     private _derivedModels: Set<AnyModelImpl> | undefined;
 
     __type(): {
-        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | true
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames, TAbstract] | true
     } {
         return { model: true };
     }
@@ -49,14 +51,15 @@ export class ModelImpl<
         readonly idKey: TIdKey | undefined,
         readonly ctor: TCtor,
         readonly superModel: AnyModel | undefined,
-        readonly options: ModelOptions
+        readonly options: ModelOptions,
+        readonly isAbstract: TAbstract
     ) {
         if (ALL_MODEL_MAP.has(name)) {
             throw new StateError(`Duplicate models with same name: "${name}"`);
         }
         ALL_MODEL_MAP.set(name, this);
         if (superModel != null) {
-            const superImpl = superModel as ModelImpl<any, any, any, any, any>;
+            const superImpl = superModel as ModelImpl<any, any, any, any, any, any>;
             let derivedModels = superImpl._derivedModels;
             if (derivedModels == null) {
                 superImpl._derivedModels = derivedModels = new Set();
@@ -88,7 +91,7 @@ export class ModelImpl<
     }
 }
 
-export type AnyModelImpl = ModelImpl<any, any, any, any, any>;
+export type AnyModelImpl = ModelImpl<any, any, any, any, any, any>;
 
 export type ModelOptions = {
     readonly tableOptions: __TableOptions<AnyModel | never> | undefined;

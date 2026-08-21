@@ -69,7 +69,7 @@ export class Entity {
     private _typeMapByTypeName: Map<string, Entity> | undefined = undefined;
 
     static of(model: AnyModel): Entity {
-        return (model as ModelImpl<any, any, any, any, any>).toEntity()
+        return (model as ModelImpl<any, any, any, any, any, any>).toEntity()
     }
 
     constructor(
@@ -89,7 +89,7 @@ export class Entity {
                 "${CAMEL_CASE_REGEX.source}"`
             )
         }
-        const superModel = (model as ModelImpl<any, any, any, any, any>).superModel;
+        const superModel = (model as ModelImpl<any, any, any, any, any, any>).superModel;
         this.superEntity = superModel !== undefined
             ? (superModel as AnyModelImpl).toUnresolvedEntity().resolve(1)
             : undefined;

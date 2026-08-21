@@ -233,6 +233,7 @@ export const TREE_NODE = model(
         childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
     },
     ctx => {
+        ctx.unique("parentNode", "name");
         ctx.table({
             discriminator: "TYPE",
             discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME

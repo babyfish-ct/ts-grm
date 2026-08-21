@@ -145,10 +145,10 @@ export class EntityProp {
                 this._targetEntity = undefined;
             }
         } else if (_data.targetModelRef != null) {
-            const targetModel: ModelImpl<any, any, any, any, any> =
+            const targetModel: ModelImpl<any, any, any, any, any, any> =
                 typeof _data.targetModelRef === "function"
-                    ? _data.targetModelRef() as ModelImpl<any, any, any, any, any>
-                    : _data.targetModelRef as ModelImpl<any, any, any, any, any>;
+                    ? _data.targetModelRef() as ModelImpl<any, any, any, any, any, any>
+                    : _data.targetModelRef as ModelImpl<any, any, any, any, any, any>;
             if (targetModel == null) {
                 this.raise `The associated model must be specified`
             }
