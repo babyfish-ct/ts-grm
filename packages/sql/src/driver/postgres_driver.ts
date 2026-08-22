@@ -35,7 +35,7 @@ export class PostgresDriver extends AbstractDriver {
     }
 
     override get name(): string {
-        return "sqlite";
+        return "postgres";
     }
 
     override get nameParameterPrefix(): string | undefined {
