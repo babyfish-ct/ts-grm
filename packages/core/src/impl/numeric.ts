@@ -14,9 +14,10 @@
 
 export enum NumericType {
     NONE = 0,
-    INTEGER = 1,
-    FLOAT = 2,
-    STRING = 3
+    BOOL = 1,
+    INTEGER = 2,
+    FLOAT = 3,
+    STRING = 4
 }
 
 export function mergeNumericType(

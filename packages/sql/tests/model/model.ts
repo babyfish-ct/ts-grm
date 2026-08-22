@@ -351,6 +351,8 @@ export const STUDENT = model("Student", "id", class {
 export const COURSE = model("Course", "id", class {
     id = prop.i64()
     name = prop.str(50)
+    description = prop.text()
+    isOnline = prop.bool()
     students = prop.m2m(STUDENT).mappedBy("courses")
     // Without learningLinks
 });

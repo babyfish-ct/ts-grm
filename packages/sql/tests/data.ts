@@ -247,11 +247,11 @@ insert into STUDENT(ID, NAME) values
     (3, 'Tom'),
     (4, 'Jim');
 
-insert into COURSE(ID, NAME) values
-    (1, 'Psychology and Life'),
-    (2, 'Film Appreciation'),
-    (3, 'Workplace Communication and Presentation'),
-    (4, 'Introduction to Artificial Intelligence');
+insert into COURSE(ID, NAME, DESCRIPTION, IS_ONLINE) values
+    (1, 'Psychology and Life', 'Explore the intersection of psychology and everyday life.', true),
+    (2, 'Film Appreciation', 'Analyze classic and contemporary films from a critical perspective.', false),
+    (3, 'Workplace Communication and Presentation', 'Develop essential communication skills for professional environments.', true),
+    (4, 'Introduction to Artificial Intelligence', 'Overview of AI concepts, algorithms, and real-world applications.', true);
 
 insert into LEARNING_LINK(ID, STUDENT_ID, COURSE_ID, SCORE) values
     (1, 1, 2, NULL),

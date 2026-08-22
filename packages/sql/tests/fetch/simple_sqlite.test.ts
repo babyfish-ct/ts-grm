@@ -507,7 +507,9 @@ describe("SimpleSqliteFetchTest", () => {
         const view = dto.view(STUDENT, c => [
             c.name,
             c.courses.with(c => [
-                c.name
+                c.name,
+                c.description,
+                c.isOnline
             ])
         ]);
         const rows = await sqlClient.createQuery(STUDENT, (q, student) => {
@@ -535,7 +537,9 @@ describe("SimpleSqliteFetchTest", () => {
                     select 
                         tb_1_.STUDENT_ID,
                         tb_1_.COURSE_ID,
-                        tb_2_.NAME
+                        tb_2_.NAME,
+                        tb_2_.DESCRIPTION,
+                        tb_2_.IS_ONLINE
                     from LEARNING_LINK tb_1_
                     inner join COURSE tb_2_ on 
                         tb_1_.COURSE_ID = tb_2_.ID
@@ -551,10 +555,14 @@ describe("SimpleSqliteFetchTest", () => {
                 "name": "Jim",
                 "courses": [
                     {
-                        "name": "Psychology and Life"
+                        "name": "Psychology and Life",
+                        "description": "Explore the intersection of psychology and everyday life.",
+                        "isOnline": true
                     },
                     {
-                        "name": "Introduction to Artificial Intelligence"
+                        "name": "Introduction to Artificial Intelligence",
+                        "description": "Overview of AI concepts, algorithms, and real-world applications.",
+                        "isOnline": true
                     }
                 ]
             },
@@ -562,10 +570,14 @@ describe("SimpleSqliteFetchTest", () => {
                 "name": "Tim",
                 "courses": [
                     {
-                        "name": "Film Appreciation"
+                        "name": "Film Appreciation",
+                        "description": "Analyze classic and contemporary films from a critical perspective.",
+                        "isOnline": false,
                     },
                     {
-                        "name": "Workplace Communication and Presentation"
+                        "name": "Workplace Communication and Presentation",
+                        "description": "Develop essential communication skills for professional environments.",
+                        "isOnline": true
                     }
                 ]
             }

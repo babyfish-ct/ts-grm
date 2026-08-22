@@ -66,6 +66,8 @@ export class MySqlDriver extends AbstractDriver {
                 return `decimal(${columnDef.precision}, ${columnDef.scale})`;
             case "STR":
                 return `varchar(${columnDef.length!})`;
+            case "TEXT":
+                return "text";
             case "BINARY":
                 return "blob";
             case "JSON":

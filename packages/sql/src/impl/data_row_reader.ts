@@ -75,6 +75,9 @@ export class DataRowReader implements spi.DataReader {
                 ? numericTypes[colIndex]
                 : undefined;
             const value = row[colIndex];
+            if (numericType === spi.NumericType.BOOL) {
+                return toBoolean(value);
+            }
             if (numericType === spi.NumericType.INTEGER && typeof value === "string") {
                 return parseInt(value);
             }
@@ -203,4 +206,23 @@ class RowIndex {
     reset() {
         this._val = -1;
     }
+}
+
+function toBoolean(value: any): boolean {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    if (Buffer.isBuffer(value)) {
+        return value.length === 1 ? value[0] === 1 : value.some(b => b > 0);
+    }
+    if (typeof value === 'number') {
+        return !isNaN(value) && value !== 0;
+    }
+    if (typeof value === 'string') {
+        const v = value.trim().toLowerCase();
+        if (v === '' || v === '0' || v === 'false' || v === 'no') {
+            return false;
+        }
+    }
+    return value != '0' && value !== 'false';
 }

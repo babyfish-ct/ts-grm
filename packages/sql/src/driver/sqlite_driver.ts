@@ -50,6 +50,7 @@ export class SqliteDriver extends AbstractDriver {
             case "NUM":
                 return "real";
             case "STR":
+            case "TEXT":
                 return "text";
             case "BINARY":
                 return "blob";
@@ -96,7 +97,7 @@ export class SqliteNodeRender extends AbstractNodeRender {
         let value = expr.neg ? -expr.value : expr.value;
         const unit = expr.unit;
         
-        let finalUnit = unitMap[unit];
+        let finalUnit = unitMap[unit]!;
         let absValue = Math.abs(value);
         
         if (unit === "WEEKS") {

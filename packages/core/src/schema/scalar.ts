@@ -18,7 +18,7 @@ import { acceptsNullOrUndefined } from "@/impl/util";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 
 export type ScalarKind = 
-    "STR" 
+    "STR" | "TEXT"
     | "I8" | "I16" | "I32" | "I64" 
     | "F32" | "F64" | "NUM" 
     | "DATE"
@@ -55,12 +55,14 @@ export class ScalarType<T> {
 
     static F64 = new ScalarType<number>("F64", undefined);
 
+    static TEXT = new ScalarType<any>("TEXT", undefined);
+
     static JSON = new ScalarType<any>("JSON", undefined);
 
     static JSONB = new ScalarType<any>("JSONB", undefined);
 
     static str(length: number): ScalarType<string> {
-        if (length < 1) {
+        if (length == null || length < 1) {
             throw new ArgumentError("length cannot be less than 1");
         }
         return new ScalarType<string>("STR", length);

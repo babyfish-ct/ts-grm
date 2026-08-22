@@ -576,15 +576,22 @@ export class Entity {
         let discriminatorValue = typeof options === "string"
             ? null
             : options?.discriminatorValue;
-        if (discriminatorValue == null || discriminatorValue === "") {
-            throw new ModelError(
-                this.name,
-                dedent `the "discriminatorValue" of table options must be specified 
-                because the current model requires polymorphism". 
-                Even if the model is intended to be abstract;`  
-            );
-        }
-        if (true) { // TODO: Not abstract
+        if (this.isAbstract) {
+            if (discriminatorValue != null) {
+                throw new ModelError(
+                    this.name,
+                    dedent `the "discriminatorValue" of table options cannot be specified 
+                    because the current model is abstract"` 
+                );    
+            }
+        } else {
+            if (discriminatorValue == null || discriminatorValue === "") {
+                throw new ModelError(
+                    this.name,
+                    dedent `the "discriminatorValue" of table options must be specified 
+                    because the current model requires polymorphism and ist not abstract"` 
+                );
+            }
             if (discriminatorValue === DISCRIMINATOR_VALUE_MODEL_NAME) {
                 discriminatorValue = this.name;
             }

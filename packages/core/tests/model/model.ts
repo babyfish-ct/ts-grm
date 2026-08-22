@@ -71,8 +71,7 @@ export const BOOK_STORE = model.abstract("BookStore", "id", class {
     specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR)
 }, ctx => {
     ctx.table({
-        discriminator: "TYPE",
-        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
+        discriminator: "TYPE"
     });
 });
 
@@ -329,6 +328,8 @@ export const STUDENT = model("Student", "id", class {
 export const COURSE = model("Course", "id", class {
     id = prop.i64()
     name = prop.str(50)
+    description = prop.text()
+    isOnline = prop.bool()
     students = prop.m2m(STUDENT).mappedBy("courses")
     // Without learningLinks
 });

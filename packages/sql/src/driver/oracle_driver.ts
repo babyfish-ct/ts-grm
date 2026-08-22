@@ -70,6 +70,8 @@ export class OracleDriver extends AbstractDriver {
                     return "clob";
                 }
                 return `varchar2(${len})`;
+            case "TEXT":
+                return "clob";
             case "BINARY":
                 return "blob";
             case "JSON":

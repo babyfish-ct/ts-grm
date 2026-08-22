@@ -308,6 +308,7 @@ function typeName(tp: ScalarType<any>): string | undefined {
         case "NUM":
             return `numeric(${tp.precision}, ${tp.scale})`;
         case "STR":
+        case "TEXT":
             return "text";
         case "BINARY":
             return "bytea";

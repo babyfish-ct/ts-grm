@@ -727,6 +727,16 @@ describe("SchemaCreatorTest", () => {
                         "type": "STR",
                         "nullable": false,
                         "length": 50
+                    },
+                    {
+                        "name": "DESCRIPTION",
+                        "nullable": false,
+                        "type": "TEXT",
+                    },
+                    {
+                        "name": "IS_ONLINE",
+                        "nullable": false,
+                        "type": "BOOL",
                     }
                 ],
                 "constraints": [
@@ -1149,6 +1159,8 @@ describe("SchemaCreatorTest", () => {
             create table COURSE(
                 ID integer not null, 
                 NAME text not null, 
+                DESCRIPTION text not null, 
+                IS_ONLINE integer not null, 
 
                 constraint COURSE_constraint_1
                     primary key(ID)

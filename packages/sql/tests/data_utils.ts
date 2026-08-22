@@ -42,7 +42,7 @@ export function useSqlServerClientWithData(
     sqlRecord: SqlRecord
 ): SqlClient {
     const sqlClient = useSqlServerClient(sqlRecord) as SqlClientImplementor;
-    initializeDatabase(sqlClient);
+    initializeDatabase(sqlClient, { oldRegExp: /true/g, newText: "1"}, { oldRegExp: /false/g, newText: "0"});
     return sqlClient;
 }
 
@@ -50,7 +50,7 @@ export function useSqlServer2012ClientWithData(
     sqlRecord: SqlRecord
 ): SqlClient {
     const sqlClient = useSqlServer2012Client(sqlRecord) as SqlClientImplementor;
-    initializeDatabase(sqlClient);
+    initializeDatabase(sqlClient, { oldRegExp: /true/g, newText: "1"}, { oldRegExp: /false/g, newText: "0"});
     return sqlClient;
 }
 

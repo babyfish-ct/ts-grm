@@ -25,6 +25,18 @@ export const prop = {
         return new __StrProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.str(length)});
     },
 
+    text(): __StrProp {
+        return new __StrProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.TEXT});
+    },
+
+    bool(): __ScalarProp<boolean> {
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.BOOL, 
+            numericType: NumericType.BOOL
+        });
+    },
+
     i8(): __ScalarProp<number> {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 

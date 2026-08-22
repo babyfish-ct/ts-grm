@@ -56,8 +56,6 @@ describe("PolymorphismTest", () => {
                     const typeName = $entity.findByDiscriminatorValue(reader.get(1)).name;
                     let dto;
                     switch (typeName) {
-                        case 'BookStore':
-                            throw new $dataError("Illegal type name 'BookStore' because it is abstract model");
                         case 'OnlineBookStore':
                             dto = {
                                 name: reader.get(0), 

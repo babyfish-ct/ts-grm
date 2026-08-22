@@ -77,6 +77,8 @@ export class SqlServerDriver extends AbstractDriver {
                 return `decimal(${columnDef.precision}, ${columnDef.scale})`;
             case "STR":
                 return `nvarchar(${columnDef.length})`;
+            case "TEXT":
+                return "text";
             case "BINARY":
                 return "varbinary(max)";
             default:
@@ -152,7 +154,7 @@ export class SqlServerNodeRender extends AbstractNodeRender {
         
         const finalUnit = unit === "DECADES" || unit === "CENTURIES" 
             ? "year" 
-            : unitMap[unit];
+            : unitMap[unit]!;
         
         using _ = ctx.withPrecedence(Precedence.ROOT);
         ctx.text("DATEADD(");
@@ -204,7 +206,7 @@ export class SqlServerNodeRender extends AbstractNodeRender {
         ctx: NodeRenderContext
     ): void {
         using _ = ctx.withPrecedence(Precedence.ROOT);
-        const finalUnit = unitMap[expr.unit];
+        const finalUnit = unitMap[expr.unit]!;
         ctx.text("DATEDIFF(");
         ctx.text(finalUnit);
         ctx.text(", ");

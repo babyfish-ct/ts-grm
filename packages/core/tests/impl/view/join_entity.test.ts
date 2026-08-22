@@ -59,6 +59,20 @@ describe("JoinEntityTest", () => {
                                                 ["..", "name"]
                                             ],
                                             "columnIndex": 1
+                                        },
+                                        {
+                                            "prop": "Course.description",
+                                            "paths": [
+                                                ["..", "description"]
+                                            ],
+                                            "columnIndex": 2
+                                        },
+                                        {
+                                            "prop": "Course.isOnline",
+                                            "paths": [
+                                                ["..", "isOnline"]
+                                            ],
+                                            "columnIndex": 3
                                         }
                                     ]
                                 },
@@ -79,7 +93,9 @@ describe("JoinEntityTest", () => {
                         "_0": 0
                     },
                     "id": 0,
-                    "name": 1
+                    "name": 1,
+                    "description": 2,
+                    "isOnline": 3
                 }
             }
         });
@@ -146,7 +162,9 @@ describe("JoinEntityTest", () => {
                 read(parents, reader) {
                     const dto = {
                         id: null, 
-                        name: null
+                        name: null, 
+                        description: null, 
+                        isOnline: null
                     };
                     const implicit = {
                         _0: reader.get(0)
@@ -193,7 +211,9 @@ describe("JoinEntityTest", () => {
         );
         expect(linkRow.dto).toEqual({
             id: null,
-            name: null
+            name: null,
+            description: null,
+            isOnline: null
         });
         expect(linkRow.implicit).toEqual({_0: 2});
 
@@ -211,17 +231,27 @@ describe("JoinEntityTest", () => {
                     for (const parent of parents) {
                         parent.dto.name = reader_1;
                     }
+                    const reader_2 = reader.get(2);
+                    for (const parent of parents) {
+                        parent.dto.description = reader_2;
+                    }
+                    const reader_3 = reader.get(3);
+                    for (const parent of parents) {
+                        parent.dto.isOnline = reader_3;
+                    }
                     return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
         courseMapper.dtoRowReader.read(
             [linkRow],
-            makeReader(3, "English")
+            makeReader(3, "English", "English I, 4 credits, 2800 words.", true)
         );
         expect(linkRow.dto).toEqual({
             id: 3,
-            name: "English"
+            name: "English",
+            description: "English I, 4 credits, 2800 words.",
+            isOnline: true
         });
     });
 
