@@ -18,7 +18,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { DataRowReader } from "../data_row_reader";
 import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { MergedRootQueryImpl } from "../merged_query";
-import { buildStatement, numericTypesOf } from "./sql_gen";
+import { buildStatement, explicitDataTypesOf } from "./sql_gen";
 import { readColumn, readColumnArray, readColumnMap } from "./column_reader";
 import { IllegalJoinFetchError } from "@/error/illegal_join_fetch";
 
@@ -52,7 +52,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
             args, 
             explicitPurposeStorage.getStore() ?? { kind: "QUERY" }
         );
-        const dataRowReader = DataRowReader.of(dataRows, numericTypesOf(query, options === "COUNT"));
+        const dataRowReader = DataRowReader.of(dataRows, explicitDataTypesOf(query, options === "COUNT"));
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
                 return await readColumn(

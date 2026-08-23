@@ -5,7 +5,7 @@ import { makeErr } from "@/error/util";
 import { EMPTY_KEYWORD_STRATEGY, expectStorage } from "./utils";
 import { DatabaseStrategy, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl/strategy";
 import { Column } from "@/impl/storage";
-import { NumericType } from "@/impl/numeric";
+import { ExplicitDataType } from "@/impl/explicit";
 import { AssociationEntity } from "@/impl";
 import { associationModel } from "@/dsl/association";
 
@@ -344,22 +344,22 @@ describe("EntityTest", () => {
         });
     });
 
-    it("numericType", () => {
+    it("explicitDataType", () => {
         const storeIdProp = Entity.of(BOOK_STORE).declaredPropMap.get("id")!;
         const storeIdRefProp = Entity.of(BOOK).declaredPropMap.get("storeId")!;
-        expect(storeIdProp.numericType).toEqual(NumericType.STRING);
-        expect(storeIdRefProp.numericType).toEqual(NumericType.STRING);
+        expect(storeIdProp.explicitDataType).toEqual(ExplicitDataType.STRING);
+        expect(storeIdRefProp.explicitDataType).toEqual(ExplicitDataType.STRING);
 
         const treeNodeIdProp = Entity.of(BOOK).declaredPropMap.get("id")!;
         const treeNodeIdRefProp = Entity.of(TREE_NODE).declaredPropMap.get("parentNodeId")!;
-        expect(treeNodeIdProp.numericType).toEqual(NumericType.INTEGER);
-        expect(treeNodeIdRefProp.numericType).toEqual(NumericType.INTEGER);
+        expect(treeNodeIdProp.explicitDataType).toEqual(ExplicitDataType.INTEGER);
+        expect(treeNodeIdRefProp.explicitDataType).toEqual(ExplicitDataType.INTEGER);
 
         const middleEntity = AssociationEntity.of(associationModel(BOOK, "authors"));
         const bookIdRefProp = middleEntity.sourceKeyProp;
         const authorIdRefProp = middleEntity.targetKeyProp;
-        expect(bookIdRefProp.numericType).toEqual(NumericType.INTEGER);
-        expect(authorIdRefProp.numericType).toEqual(NumericType.INTEGER);
+        expect(bookIdRefProp.explicitDataType).toEqual(ExplicitDataType.INTEGER);
+        expect(authorIdRefProp.explicitDataType).toEqual(ExplicitDataType.INTEGER);
     });
 
     it("inheritance", () => {

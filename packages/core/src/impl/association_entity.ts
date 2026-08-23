@@ -24,7 +24,7 @@ import { ScalarType } from "@/schema/scalar";
 import { DatabaseStrategy } from "./strategy";
 import { JoinOperation } from "./entity_table";
 import { Column, Columns, MiddleTable, StorageType } from "./storage";
-import { NumericType } from "./numeric";
+import { ExplicitDataType } from "./explicit";
 
 export class AssociationEntity {
 
@@ -182,7 +182,7 @@ export interface AssociationProp {
 
     readonly scalarType: ScalarType<any> | undefined;
 
-    readonly numericType: NumericType;
+    readonly explicitDataType: ExplicitDataType;
 
     readonly props: ReadonlyMap<string, AssociationProp> | undefined;
 
@@ -238,7 +238,7 @@ class AssociationPropImpl implements AssociationProp {
 
     scalarType: ScalarType<any> | undefined = undefined;
 
-    numericType: NumericType = NumericType.NONE;
+    explicitDataType: ExplicitDataType = ExplicitDataType.NONE;
 
     targetKeyProp: EntityProp | undefined = undefined;
 
@@ -356,7 +356,7 @@ class AssociationPropImpl implements AssociationProp {
     fillProps(entityProp: EntityProp) {
         if (entityProp.props == null) {
             this.scalarType = entityProp.scalarType;
-            this.numericType = entityProp.numericType;
+            this.explicitDataType = entityProp.explicitDataType;
             return;
         }
         const subProps = new Map<string, AssociationProp>();

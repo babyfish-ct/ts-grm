@@ -14,6 +14,6 @@
 
 import { spi } from "@ts-grm/core";
 
-export interface NumericTypeArrayProvider {
-    readonly numericTypes: ReadonlyArray<spi.NumericType> | undefined;
+export interface ExplicitDataTypeArrayProvider {
+    readonly explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined;
 }

@@ -30,7 +30,7 @@ import { ScalarProvider, ScalarType } from "@/schema/scalar";
 import { View } from "@/schema/dto/api";
 import { __ForeignKeyData, __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
 import { MapperFn } from "./dto_mapping";
-import { NumericType } from "./numeric";
+import { ExplicitDataType } from "./explicit";
 
 export class EntityProp {
 
@@ -42,7 +42,7 @@ export class EntityProp {
 
     private _scalarType: ScalarType<any> | undefined = undefined;
 
-    private _numericType = NumericType.NONE;
+    private _explicitDataType = ExplicitDataType.NONE;
 
     readonly associationType: __AssociationType | undefined = undefined;
 
@@ -119,7 +119,7 @@ export class EntityProp {
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this._scalarType = _data.scalarType; 
-        this._numericType = _data.numericType;
+        this._explicitDataType = _data.explicitDataType;
         this.associationType = _data.associationType;
         if (_data.props != null) {
             this._props = this._createProps(_data.props);
@@ -184,8 +184,8 @@ export class EntityProp {
         return this._scalarType;
     }
 
-    get numericType(): NumericType {
-        return this._numericType;
+    get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 
     get props(): ReadonlyMap<string, EntityProp> | undefined {
@@ -747,7 +747,7 @@ export class EntityProp {
             return;
         }
         this._scalarType = referenceProp.targetKeyProp!.scalarType;
-        this._numericType = referenceProp.targetKeyProp!.numericType;
+        this._explicitDataType = referenceProp.targetKeyProp!.explicitDataType;
         this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
     }
 

@@ -275,6 +275,7 @@ export const ORDER = model("Order", "id", class {
         })
     });
     name = prop.str(50)
+    //createdTime = prop.date()
     items = prop.o2m(ORDER_ITEM).mappedBy("order")
     tags = prop.m2m(TAG).joinTable({
         joinThis: {

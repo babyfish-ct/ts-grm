@@ -22,7 +22,7 @@ import { Visitor } from "./visitor";
 import { ScalarProvider } from "@/schema/scalar";
 import { ExpressionOrder } from "@/dsl/utils";
 import { ExpressionSubQuery } from "@/dsl/sub_query";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export abstract class AbstractExpr<T> extends AbstractSelection implements Node {
 
@@ -234,8 +234,8 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
         return undefined;
     }
 
-    get numericType(): NumericType {
-        return NumericType.NONE;
+    get explicitDataType(): ExplicitDataType {
+        return ExplicitDataType.NONE;
     }
 }
 

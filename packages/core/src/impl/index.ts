@@ -57,4 +57,4 @@ export {
     SqlFormulaProp
 } from "./dto";
 export type { FetchProp } from "./dto";
-export { NumericType, mergeNumericType } from "./numeric";
+export { ExplicitDataType, mergeExplicitDataType } from "./explicit";

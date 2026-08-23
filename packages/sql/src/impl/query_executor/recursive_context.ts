@@ -23,7 +23,7 @@ export class RecursiveContext {
         private readonly _keySpan: number,
         private readonly _valueSpan: number,
         private readonly _orderSpan: number,
-        private readonly _numericTypes: ReadonlyArray<spi.NumericType> | undefined,
+        private readonly _explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined,
         private readonly _targetRowMapData: TargetRowMapData | undefined,
         private readonly _maxDepth: number,
         private readonly _depth: number,
@@ -33,7 +33,7 @@ export class RecursiveContext {
         const depth = this._depth;
         const dci = this._keySpan + this._valueSpan + this._orderSpan;
         const rows = this._allDataRows.filter(row => row[dci] === depth);
-        return DataRowReader.of(rows, this._numericTypes);
+        return DataRowReader.of(rows, this._explicitDataTypes);
     }
 
     toDeeperContext() {
@@ -42,7 +42,7 @@ export class RecursiveContext {
             this._keySpan,
             this._valueSpan,
             this._orderSpan,
-            this._numericTypes,
+            this._explicitDataTypes,
             this._targetRowMapData,
             this._maxDepth,
             this._depth + 1
@@ -91,7 +91,7 @@ export class RecursiveContext {
             firstContext._keySpan,
             firstContext._valueSpan,
             firstContext._orderSpan,
-            firstContext._numericTypes,
+            firstContext._explicitDataTypes,
             firstContext._targetRowMapData,
             firstContext._maxDepth,
             firstContext._depth

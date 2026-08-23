@@ -17,7 +17,7 @@ import { StandardSchemaV1 } from "@standard-schema/spec";
 import { scalars, ScalarType } from "./scalar";
 import { __calculatedCreator, __EmbeddedProp, __EMPTY_PROP_DEFINITION_DATA, __enumCreator, __enumSetCreator, __formulaCreator, __I64Prop, __m2mCreator, __m2oCreator, __o2mCreator, __o2oCreator, __ScalarProp, __scalarPropCreator, __StrProp } from "./prop_internal_behavior";
 import { __EmbeddedMember } from "./prop_internal_types";
-import { NumericType } from "@/impl/numeric";
+import { ExplicitDataType } from "@/impl/explicit";
 
 export const prop = {
 
@@ -33,7 +33,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.BOOL, 
-            numericType: NumericType.BOOL
+            explicitDataType: ExplicitDataType.BOOL
         });
     },
 
@@ -41,7 +41,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I8, 
-            numericType: NumericType.INTEGER
+            explicitDataType: ExplicitDataType.INTEGER
         });
     },
 
@@ -49,7 +49,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I16,
-            numericType: NumericType.INTEGER
+            explicitDataType: ExplicitDataType.INTEGER
         });
     },
 
@@ -57,7 +57,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I32,
-            numericType: NumericType.INTEGER
+            explicitDataType: ExplicitDataType.INTEGER
         });
     },
 
@@ -65,7 +65,7 @@ export const prop = {
         return new __I64Prop({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I64,
-            numericType: NumericType.INTEGER
+            explicitDataType: ExplicitDataType.INTEGER
         });
     },
 
@@ -73,7 +73,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.F32,
-            numericType: NumericType.FLOAT
+            explicitDataType: ExplicitDataType.FLOAT
         });
     },
 
@@ -81,7 +81,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.F64,
-            numericType: NumericType.FLOAT
+            explicitDataType: ExplicitDataType.FLOAT
         });
     },
 
@@ -89,7 +89,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.numeric(precision, scale),
-            numericType: NumericType.FLOAT
+            explicitDataType: ExplicitDataType.FLOAT
         });
     },
 

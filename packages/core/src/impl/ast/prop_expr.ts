@@ -23,7 +23,7 @@ import { Visitor } from "./visitor";
 import { AssociationProp } from "../association_entity";
 import { AbstractAssociationTable } from "../association_table";
 import { EnumSetProvider, ScalarProvider } from "@/schema/scalar";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export interface PropExprContract {
     readonly table: AbstractEntityTable | AbstractAssociationTable;
@@ -82,7 +82,7 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 
     private readonly _provider: ScalarProvider<any, any> | undefined;
 
-    private readonly _numericType: NumericType;
+    private readonly _explicitDataType: ExplicitDataType;
 
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
@@ -92,10 +92,10 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         super();
         if (prop instanceof EntityProp) {
             this._provider = prop.scalarProvider;
-            this._numericType = prop.numericType;
+            this._explicitDataType = prop.explicitDataType;
         } else {
             this._provider = undefined;
-            this._numericType = prop.numericType;
+            this._explicitDataType = prop.explicitDataType;
         }
     }
 
@@ -103,8 +103,8 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         return this._provider;
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 
     override get isPropExpr(): boolean {

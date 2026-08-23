@@ -21,7 +21,7 @@ import { Visitor } from "./visitor";
 import { Node } from "./node";
 import { TypedBaseTable } from "../base_table";
 import { StateError } from "@/error/common";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export interface ShadowExprContract extends Node {
 
@@ -94,7 +94,7 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
 
     constructor(
         readonly anchor: ShadowAnchor,
-        private readonly _numericType: NumericType
+        private readonly _explicitDataType: ExplicitDataType
     ) {
         super();
     }
@@ -116,8 +116,8 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
         visitor.visitShadowExpr(this);
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

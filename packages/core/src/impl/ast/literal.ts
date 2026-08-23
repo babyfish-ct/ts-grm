@@ -19,7 +19,7 @@ import { AbstractStrExpr } from "./str_expr";
 import { AbstractEsExpr } from "./es_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { Visitor } from "./visitor";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export function createLiteral(
     value: any,
@@ -31,12 +31,12 @@ export function createLiteral(
     switch (typeof value) {
         case "string":
             return as === "AS_NUMBER"
-                    ? new LiteralNumExpr(value, NumericType.STRING)
+                    ? new LiteralNumExpr(value, ExplicitDataType.STRING)
                 : as === "AS_ENUM_SET"
                     ? new LiteralEsExpr(value)
                 : new LiteralStrExpr(value);
         case "number":
-            return new LiteralNumExpr(value, NumericType.INTEGER);
+            return new LiteralNumExpr(value, ExplicitDataType.INTEGER);
         default:
             if (value instanceof Date) {
                 return new LiteralDtExpr(value);
@@ -73,7 +73,7 @@ class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> imple
 
     constructor(
         readonly value: T, 
-        private readonly _numericType: NumericType
+        private readonly _explicitDataType: ExplicitDataType
     ) {
         super();
     }
@@ -90,8 +90,8 @@ class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> imple
         visitor.visitLiteral(this.value);
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

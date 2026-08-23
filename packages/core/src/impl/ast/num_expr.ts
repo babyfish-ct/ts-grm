@@ -17,7 +17,7 @@ import { AbstractCmpExpr } from "./expr";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceNumExpr } from "./coalesce_expr";
 import { Visitor } from "./visitor";
-import { mergeNumericType, NumericType } from "../numeric";
+import { mergeExplicitDataType, ExplicitDataType } from "../explicit";
 
 export abstract class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
 
@@ -108,7 +108,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
         return getInternalFactory().createCoalesceNumExpr(this, arr);
     }
 
-    abstract override get numericType(): NumericType;
+    abstract override get explicitDataType(): ExplicitDataType;
 }
 
 export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T> {
@@ -127,14 +127,14 @@ export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T
         visitor.visitUnaryMinusExpr(this);
     }
 
-    override get numericType(): NumericType {
-        return this.expr.numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this.expr.explicitDataType;
     }
 }
 
 export class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T> {
 
-    private readonly _numericType: NumericType;
+    private readonly _explicitDataType: ExplicitDataType;
 
     constructor(
         readonly op: BinaryNumOp,
@@ -142,15 +142,15 @@ export class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T>
         readonly rightExpr: AbstractNumExpr<any>
     ) {
         super();
-        this._numericType = mergeNumericType(leftExpr.numericType, rightExpr.numericType);
+        this._explicitDataType = mergeExplicitDataType(leftExpr.explicitDataType, rightExpr.explicitDataType);
     }
 
     override accept(visitor: Visitor): void {
         visitor.visitBinaryNumExpr(this);
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

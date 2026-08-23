@@ -26,7 +26,7 @@ import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
 import { __PropData } from "@/index_internal";
-import { NumericType } from "./numeric";
+import { ExplicitDataType } from "./explicit";
 
 export class Entity {
 
@@ -318,7 +318,7 @@ export class Entity {
                         : "NULLABLE"
                     : "NONNULL",
                 scalarType: undefined,
-                numericType: NumericType.NONE,
+                explicitDataType: ExplicitDataType.NONE,
                 scalarProvider: undefined,
                 props: undefined,
                 targetModelRef: undefined,

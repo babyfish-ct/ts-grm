@@ -19,7 +19,7 @@ import { TimeUnit } from "@/dsl/expression";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceDtExpr } from "./coalesce_expr";
 import { Visitor } from "./visitor";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export abstract class AbstractDtExpr extends AbstractCmpExpr<Date> {
 
@@ -105,7 +105,7 @@ export class DtDiffExpr extends AbstractNumExpr<number> {
         visitor.visitDtDiffExpr(this);
     }
 
-    get numericType(): NumericType {
-        return NumericType.FLOAT;
+    get explicitDataType(): ExplicitDataType {
+        return ExplicitDataType.FLOAT;
     }
 }

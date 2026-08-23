@@ -18,7 +18,7 @@ import { SqlBuilder } from "@/sql/sql_builder";
 import { Composite, RootOrderByClause, Scope, Value } from "@/sql/fragment";
 import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { ExecuteQueryOptions } from "./execute_query";
-import { NumericTypeArrayProvider } from "../numeric_type_array_provider";
+import { ExplicitDataTypeArrayProvider } from "../numeric_type_array_provider";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 
 export function buildStatement(
@@ -73,14 +73,14 @@ function buildAst(
     return Composite.of(query, sqlClient, undefined);
 }
 
-export function numericTypesOf(
+export function explicitDataTypesOf(
     query: RootQuery<any>, 
     countMode: boolean
-) : ReadonlyArray<spi.NumericType> | undefined {
+) : ReadonlyArray<spi.ExplicitDataType> | undefined {
     if (countMode) {
-        return [spi.NumericType.INTEGER];
+        return [spi.ExplicitDataType.INTEGER];
     }
-    return (query as any as NumericTypeArrayProvider).numericTypes;
+    return (query as any as ExplicitDataTypeArrayProvider).explicitDataTypes;
 }
 
 function applyPagination(

@@ -19,7 +19,7 @@ import { AbstractCmpExpr, AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./str_expr";
 import { Visitor } from "./visitor";
-import { mergeNumericType, NumericType } from "../numeric";
+import { mergeExplicitDataType, ExplicitDataType } from "../explicit";
 
 export interface CoalesceExprContract {
     readonly expr: AbstractExpr<any>,
@@ -64,18 +64,18 @@ export class CoalesceCmpExpr<T> extends AbstractCmpExpr<T> implements CoalesceEx
 
 export class CoalesceNumExpr<T extends number | string> extends AbstractNumExpr<T> implements CoalesceExprContract {
 
-    private readonly _numericType: NumericType;
+    private readonly _explicitDataType: ExplicitDataType;
 
     constructor(
         readonly expr: AbstractNumExpr<T>,
         readonly defaultExprs: ReadonlyArray<AbstractNumExpr<T>>
     ) {
         super();
-        this._numericType = mergeNumericType(
-            expr.numericType,
-            defaultExprs.reduce((max: NumericType, item: AbstractNumExpr<any>) => {
-                return item.numericType > max ? item.numericType : max;
-            }, NumericType.NONE)
+        this._explicitDataType = mergeExplicitDataType(
+            expr.explicitDataType,
+            defaultExprs.reduce((max: ExplicitDataType, item: AbstractNumExpr<any>) => {
+                return item.explicitDataType > max ? item.explicitDataType : max;
+            }, ExplicitDataType.NONE)
         );
     }
 
@@ -87,8 +87,8 @@ export class CoalesceNumExpr<T extends number | string> extends AbstractNumExpr<
         visitor.visitCoalesceExpr(this);
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

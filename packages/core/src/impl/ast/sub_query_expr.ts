@@ -20,7 +20,7 @@ import { QueryContract } from "./query";
 import { AbstractStrExpr } from "./str_expr";
 import { Visitor } from "./visitor";
 import { AbstractPred } from "./pred";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export interface SubQueryExprContract extends Node {
     readonly op: SubQueryExprOp;
@@ -47,24 +47,24 @@ export function subQueryExpr(
 
 class NumSubQueryExpr extends AbstractNumExpr<any> implements SubQueryExprContract {
 
-    private readonly _numericType: NumericType;
+    private readonly _explicitDataType: ExplicitDataType;
 
     constructor(
         readonly op: SubQueryExprOp,
         readonly subQuery: QueryContract
     ) {
         super();
-        this._numericType = subQuery.projection.kind === "SUB_SINGLE"
-                ? (subQuery.projection.selection as AbstractNumExpr<any>).numericType
-                : NumericType.INTEGER;
+        this._explicitDataType = subQuery.projection.kind === "SUB_SINGLE"
+                ? (subQuery.projection.selection as AbstractNumExpr<any>).explicitDataType
+                : ExplicitDataType.INTEGER;
     }
 
     override accept(visitor: Visitor): void {
         visitor.visitSubQueryExpr(this);
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

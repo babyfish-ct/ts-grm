@@ -20,11 +20,11 @@ export class DataRowReader implements spi.DataReader {
 
     private readonly _rowIndex: RowIndex;
 
-    protected readonly _numericTypes: ReadonlyArray<spi.NumericType> | undefined
+    protected readonly _explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined
 
     protected constructor(
         data: DataRowReader | DataRows,
-        numericTypes: ReadonlyArray<spi.NumericType> | undefined
+        explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined
     ) {
         if (data instanceof DataRowReader) {
             this._rows = data._rows;
@@ -33,15 +33,15 @@ export class DataRowReader implements spi.DataReader {
             this._rows = data;
             this._rowIndex = new RowIndex();
         }
-        if (numericTypes != null && numericTypes.length !== 0) {
-            this._numericTypes = numericTypes;
+        if (explicitDataTypes != null && explicitDataTypes.length !== 0) {
+            this._explicitDataTypes = explicitDataTypes;
         } else {
-            this._numericTypes = undefined;
+            this._explicitDataTypes = undefined;
         }
     }
 
-    static of(rows: DataRows, numericTypes: ReadonlyArray<spi.NumericType> | undefined): DataRowReader {
-        return new DataRowReader(rows, numericTypes);
+    static of(rows: DataRows, explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined): DataRowReader {
+        return new DataRowReader(rows, explicitDataTypes);
     }
 
     next(): boolean {
@@ -69,39 +69,39 @@ export class DataRowReader implements spi.DataReader {
         if (colIndex < 0 || colIndex + span > row.length) {
             throw new err.ArgumentError("Illegal width");
         }
-        const numericTypes = this._numericTypes;
+        const explicitDataTypes = this._explicitDataTypes;
         if (span === 1) {
-            const numericType = numericTypes != null 
-                ? numericTypes[colIndex]
+            const explicitDataType = explicitDataTypes != null 
+                ? explicitDataTypes[colIndex]
                 : undefined;
             const value = row[colIndex];
-            if (numericType === spi.NumericType.BOOL) {
+            if (explicitDataType === spi.ExplicitDataType.BOOL) {
                 return toBoolean(value);
             }
-            if (numericType === spi.NumericType.INTEGER && typeof value === "string") {
+            if (explicitDataType === spi.ExplicitDataType.INTEGER && typeof value === "string") {
                 return parseInt(value);
             }
-            if (numericType === spi.NumericType.FLOAT && typeof value === "string") {
+            if (explicitDataType === spi.ExplicitDataType.FLOAT && typeof value === "string") {
                 return parseFloat(value);
             }
-            if (numericType === spi.NumericType.STRING && typeof value === "number") {
+            if (explicitDataType === spi.ExplicitDataType.STRING && typeof value === "number") {
                 return value.toString();
             }
             return value;
         }
-        if (numericTypes == null) {
+        if (explicitDataTypes == null) {
             return row.slice(colIndex, colIndex + span);
         }
         const values: Array<any> = [];
         const max = colIndex + span;
         for (let i = colIndex; i < max; i++) {
-            const numericType = numericTypes[i];
+            const explicitDataType = explicitDataTypes[i];
             const value = row[i];
-            if (numericType === spi.NumericType.INTEGER && typeof value === "string") {
+            if (explicitDataType === spi.ExplicitDataType.INTEGER && typeof value === "string") {
                 values.push(parseInt(value));
-            } else if (numericType === spi.NumericType.FLOAT && typeof value === "string") {
+            } else if (explicitDataType === spi.ExplicitDataType.FLOAT && typeof value === "string") {
                 values.push(parseFloat(value));
-            } else if (numericType === spi.NumericType.STRING && typeof value === "number") {
+            } else if (explicitDataType === spi.ExplicitDataType.STRING && typeof value === "number") {
                 values.push(value.toString());
             } else {
                 values.push(value);
@@ -114,14 +114,14 @@ export class DataRowReader implements spi.DataReader {
         if (offset === 0) {
             return this;
         }
-        return new OffsetDataReader(this, this._numericTypes, offset);
+        return new OffsetDataReader(this, this._explicitDataTypes, offset);
     }
 
     mapColIndices(indices: ReadonlyArray<number> | undefined): DataRowReader {
         if (indices == null) {
             return this;
         }
-        return new ColIndexMappedDataReader(this, this._numericTypes, indices);
+        return new ColIndexMappedDataReader(this, this._explicitDataTypes, indices);
     }
 
     get rowIndex(): number {
@@ -141,10 +141,10 @@ class OffsetDataReader extends DataRowReader {
 
     constructor(
         parent: DataRowReader,
-        numericTypes: ReadonlyArray<spi.NumericType> | undefined,
+        explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined,
         private readonly _offset: number
     ) {
-        super(parent, numericTypes);
+        super(parent, explicitDataTypes);
     }
 
     protected override translateCol(col: number): number {
@@ -155,7 +155,7 @@ class OffsetDataReader extends DataRowReader {
         if (offset == 0) {
             return this;
         }
-        return new OffsetDataReader(this, this._numericTypes, this._offset + offset);
+        return new OffsetDataReader(this, this._explicitDataTypes, this._offset + offset);
     }
 }
 
@@ -163,10 +163,10 @@ class ColIndexMappedDataReader extends DataRowReader {
 
     constructor(
         parent: DataRowReader,
-        numericTypes: ReadonlyArray<spi.NumericType> | undefined,
+        explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined,
         private readonly _indices: ReadonlyArray<number>
     ) {
-        super(parent, numericTypes);
+        super(parent, explicitDataTypes);
     }
 
     protected override translateCol(col: number): number {
@@ -184,7 +184,7 @@ class ColIndexMappedDataReader extends DataRowReader {
             return this;
         }
         const newIndicies = indices.map(i => this.translateCol(i));
-        return new ColIndexMappedDataReader(this, this._numericTypes, newIndicies);
+        return new ColIndexMappedDataReader(this, this._explicitDataTypes, newIndicies);
     }
 }
 

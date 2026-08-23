@@ -20,15 +20,15 @@ import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
-import { NumericTypeArrayProvider } from "./numeric_type_array_provider";
+import { ExplicitDataTypeArrayProvider } from "./numeric_type_array_provider";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
-> implements RootQuery<TProjection>, spi.MergedQueryContract, NumericTypeArrayProvider {
+> implements RootQuery<TProjection>, spi.MergedQueryContract, ExplicitDataTypeArrayProvider {
 
     private readonly _sqlClient: SqlClientImplementor;
 
-    private readonly _numericTypes: ReadonlyArray<spi.NumericType> | undefined;
+    private readonly _explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined;
 
     constructor(
         readonly kind: spi.MergedQueryKind,
@@ -49,7 +49,7 @@ export class MergedRootQueryImpl<
                 throw new err.ArgumentError("Cannot merge difference root queries created by different sqlClient");
             }
         }
-        this._numericTypes = (queries[0] as any as NumericTypeArrayProvider).numericTypes;
+        this._explicitDataTypes = (queries[0] as any as ExplicitDataTypeArrayProvider).explicitDataTypes;
         this._sqlClient = sqlClient!;
     }
 
@@ -167,8 +167,8 @@ export class MergedRootQueryImpl<
         return (q as MergedRootQueryImpl<any>).sqlClient;
     }
 
-    get numericTypes(): ReadonlyArray<spi.NumericType> | undefined {
-        return this._numericTypes;
+    get explicitDataTypes(): ReadonlyArray<spi.ExplicitDataType> | undefined {
+        return this._explicitDataTypes;
     }
 }
 
@@ -257,7 +257,7 @@ export class MergedNumSubQueryImpl
 extends AbstractNumSubQueryImpl
 implements spi.MergedQueryContract {
     
-    private readonly _numericType: spi.NumericType;
+    private readonly _explicitDataType: spi.ExplicitDataType;
 
     constructor(
         readonly kind: spi.MergedQueryKind,
@@ -265,15 +265,15 @@ implements spi.MergedQueryContract {
     ) {
         super();
         validateNoOrderClause(kind, queries);
-        this._numericType = queries.reduce(
-            (max: spi.NumericType, query: spi.QueryContract) => 
-                spi.mergeNumericType(
+        this._explicitDataType = queries.reduce(
+            (max: spi.ExplicitDataType, query: spi.QueryContract) => 
+                spi.mergeExplicitDataType(
                     max, 
                     query.projection.kind === "SUB_SINGLE"
-                        ? (query.projection.selection as spi.AbstractExpr<any>).numericType
-                        : spi.NumericType.NONE
+                        ? (query.projection.selection as spi.AbstractExpr<any>).explicitDataType
+                        : spi.ExplicitDataType.NONE
                 ),
-            spi.NumericType.NONE
+            spi.ExplicitDataType.NONE
         )
     }
 
@@ -285,8 +285,8 @@ implements spi.MergedQueryContract {
         visitor.visitMergedQuery(this);
     }
 
-    override get numericType(): spi.NumericType {
-        return this._numericType;
+    override get explicitDataType(): spi.ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

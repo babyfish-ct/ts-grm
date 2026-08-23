@@ -21,7 +21,7 @@ import { AbstractStrExpr } from "./str_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { NativeValueType } from "@/dsl/native";
 import { getInternalFactory } from "./internal_factory";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export interface NativeExprContract {
 
@@ -83,13 +83,13 @@ export class NativeNumExpr<T extends string | number> extends AbstractNumExpr<T>
 
     constructor(
         readonly parts: ReadonlyArray<NativePart>,
-        private readonly _numericType: NumericType
+        private readonly _explicitDataType: ExplicitDataType
     ) {
         super();
     }
 
-    override get numericType(): NumericType {
-        return this._numericType;
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 }
 

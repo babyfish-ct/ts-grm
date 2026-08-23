@@ -22,7 +22,7 @@ import { __MemberType } from "./dto/all_scalars";
 import { AnyModel } from "./model";
 import { Entity } from "@/impl";
 import { AbstractExpr } from "@/spi";
-import { NumericType } from "@/impl/numeric";
+import { ExplicitDataType } from "@/impl/explicit";
 
 export class TsFormula<TValue> {
 
@@ -59,7 +59,7 @@ export type TsFormulaFn<
 
 export class SqlFormula<TValue> {
 
-    private _numericType: NumericType | undefined = undefined;
+    private _explicitDataType: ExplicitDataType | undefined = undefined;
 
     private constructor(
         readonly valueType: StandardSchemaV1,
@@ -68,15 +68,15 @@ export class SqlFormula<TValue> {
     ) {
     }
 
-    get numericType(): NumericType {
-        let numbericType = this._numericType;
-        if (numbericType == null) {
+    get explicitDataType(): ExplicitDataType {
+        let explicitDataType = this._explicitDataType;
+        if (explicitDataType == null) {
             const entity = Entity.of(this.sourceModel());
             const table = entity.table(undefined);
             const expr = this.fn(table as any);
-            this._numericType = numbericType = (expr as AbstractExpr<any>).numericType;
+            this._explicitDataType = explicitDataType = (expr as AbstractExpr<any>).explicitDataType;
         }
-        return numbericType;
+        return explicitDataType;
     }
 
     static of<

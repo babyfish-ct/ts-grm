@@ -239,11 +239,11 @@ export class AtomNumSubQueryImpl extends AbstractNumSubQueryImpl implements spi.
         return this._projection as any as spi.ProjectionContract;
     }
 
-    get numericType(): spi.NumericType {
+    get explicitDataType(): spi.ExplicitDataType {
         const projection = this.projection;
         return projection.kind === "SUB_SINGLE"
-            ? (projection.selection as spi.AbstractExpr<any>).numericType
-            : spi.NumericType.NONE;
+            ? (projection.selection as spi.AbstractExpr<any>).explicitDataType
+            : spi.ExplicitDataType.NONE;
     }
 
     accept(visitor: spi.Visitor): void {

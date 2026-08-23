@@ -20,14 +20,14 @@ import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_pa
 import { NoDataError, TooManyDataError } from "@/error/data_error";
 import { LambdaJoinFetchVisitor } from "./query_executor/join_fetch_visitor";
 import { SqlClientImplementor } from "@/sql_client";
-import { NumericTypeArrayProvider } from "./numeric_type_array_provider";
+import { ExplicitDataTypeArrayProvider } from "./numeric_type_array_provider";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
-implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayProvider {
+implements AtomRootQuery<TProjection>, spi.AtomQueryContract, ExplicitDataTypeArrayProvider {
 
     readonly options: spi.AtomQueryOptions;
 
-    private _numericTypes: ReadonlyArray<spi.NumericType> | undefined = undefined;
+    private _explicitDataTypes: ReadonlyArray<spi.ExplicitDataType> | undefined = undefined;
 
     constructor(
         readonly mutableQuery: MutableRootQueryImpl,
@@ -238,37 +238,37 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayPr
         );
     }
 
-    get numericTypes(): ReadonlyArray<spi.NumericType> | undefined {
-        let numericTypes = this._numericTypes;
-        if (numericTypes == null) {
+    get explicitDataTypes(): ReadonlyArray<spi.ExplicitDataType> | undefined {
+        let explicitDataTypes = this._explicitDataTypes;
+        if (explicitDataTypes == null) {
             const projection = this.projection;
-            const numericTypeArrayCreator = new NumericTypeArrayCreator(this.mutableQuery.sqlClient);
+            const explicitDataTypeArrayCreator = new ExplicitDataTypeArrayCreator(this.mutableQuery.sqlClient);
             switch (projection.kind) {
                 case "ROOT_SINGLE":
-                    numericTypeArrayCreator.add(projection.selection);
+                    explicitDataTypeArrayCreator.add(projection.selection);
                     break;
                 case "ROOT_ARRAY":
                     for (const selection of projection.selections) {
-                        numericTypeArrayCreator.add(selection);
+                        explicitDataTypeArrayCreator.add(selection);
                     }
                     break;
                 case "ROOT_MAP":
                     for (const key in projection.selections) {
-                        numericTypeArrayCreator.add(projection.selections[key]!);
+                        explicitDataTypeArrayCreator.add(projection.selections[key]!);
                     }
                     break;
                 default:
                     throw new Error("Internal bug");
             }
-            this._numericTypes = numericTypes = numericTypeArrayCreator.create();
+            this._explicitDataTypes = explicitDataTypes = explicitDataTypeArrayCreator.create();
         }
-        return numericTypes.length === 0 ? undefined : numericTypes;
+        return explicitDataTypes.length === 0 ? undefined : explicitDataTypes;
     }
 }
 
-class NumericTypeArrayCreator {
+class ExplicitDataTypeArrayCreator {
 
-    private _numericTypes: Array<spi.NumericType> | undefined = undefined;
+    private _explicitDataTypes: Array<spi.ExplicitDataType> | undefined = undefined;
 
     private _index = 0;
 
@@ -281,7 +281,7 @@ class NumericTypeArrayCreator {
             this._addFetchedView(selection);
         } else {
             if (selection instanceof spi.AbstractNumExpr) {
-                this._addNumericType(selection.numericType);
+                this._addExplicitDataType(selection.explicitDataType);
             }
             this._index++;
         }
@@ -296,9 +296,9 @@ class NumericTypeArrayCreator {
                     return;
                 }
                 if (field.prop instanceof spi.EntityProp) {
-                    this._addNumericType(field.prop.numericType);
+                    this._addExplicitDataType(field.prop.explicitDataType);
                 } else if (field.prop instanceof spi.SqlFormulaProp) {
-                    this._addNumericType(field.prop.formula.numericType)
+                    this._addExplicitDataType(field.prop.formula.explicitDataType)
                 }
                 this._index++;
             }
@@ -306,20 +306,20 @@ class NumericTypeArrayCreator {
         joinFetchVisitor.visit(fetchedView.view.mapper);
     }
 
-    private _addNumericType(
-        numericType: spi.NumericType
+    private _addExplicitDataType(
+        explicitDataType: spi.ExplicitDataType
     ): void {
-        if (numericType == null) {
+        if (explicitDataType == null) {
             return;
         }
-        let numericTypes = this._numericTypes;
-        if (numericTypes == null) {
-            this._numericTypes = numericTypes = Array.from({length: this._index}, () => spi.NumericType.NONE);
+        let explicitDataTypes = this._explicitDataTypes;
+        if (explicitDataTypes == null) {
+            this._explicitDataTypes = explicitDataTypes = Array.from({length: this._index}, () => spi.ExplicitDataType.NONE);
         }
-        numericTypes[this._index] = numericType;
+        explicitDataTypes[this._index] = explicitDataType;
     }
 
-    create(): ReadonlyArray<spi.NumericType> {
-        return this._numericTypes ?? [];
+    create(): ReadonlyArray<spi.ExplicitDataType> {
+        return this._explicitDataTypes ?? [];
     }
 }

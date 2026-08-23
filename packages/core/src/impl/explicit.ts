@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-export enum NumericType {
+export enum ExplicitDataType {
     NONE = 0,
     BOOL = 1,
     INTEGER = 2,
@@ -20,9 +20,9 @@ export enum NumericType {
     STRING = 4
 }
 
-export function mergeNumericType(
-    a: NumericType,
-    b: NumericType
-): NumericType {
+export function mergeExplicitDataType(
+    a: ExplicitDataType,
+    b: ExplicitDataType
+): ExplicitDataType {
     return a > b ? a : b;
 }

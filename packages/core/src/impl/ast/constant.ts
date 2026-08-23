@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 import { ValueExprContract } from "./literal";
 import { AbstractNumExpr } from "./num_expr";
 import { Visitor } from "./visitor";
@@ -37,7 +37,7 @@ export class ConstantExpr extends AbstractNumExpr<number> implements ValueExprCo
         visitor.visitConstant(this.value);
     }
 
-    get numericType(): NumericType {
-        return NumericType.INTEGER;
+    get explicitDataType(): ExplicitDataType {
+        return ExplicitDataType.INTEGER;
     }
 }

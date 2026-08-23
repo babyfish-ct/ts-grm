@@ -20,7 +20,7 @@ import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceStrExpr } from "./coalesce_expr";
 import { Visitor } from "./visitor";
-import { NumericType } from "../numeric";
+import { ExplicitDataType } from "../explicit";
 
 export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
 
@@ -305,8 +305,8 @@ export class LengthExpr extends AbstractNumExpr<number> {
         visitor.visitLengthExpr(this);
     }
 
-    get numericType(): NumericType {
-        return NumericType.INTEGER;
+    get explicitDataType(): ExplicitDataType {
+        return ExplicitDataType.INTEGER;
     }
 }
 

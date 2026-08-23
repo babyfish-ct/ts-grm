@@ -214,7 +214,7 @@ class InternalFactoryImpl implements InternalFactory {
             return new ShadowStrExpr(anchor) as AbstractExpr<T>;
         }
         if (expr instanceof AbstractNumExpr) {
-            return new ShadowNumExpr(anchor, expr.numericType) as AbstractExpr<T>;
+            return new ShadowNumExpr(anchor, expr.explicitDataType) as AbstractExpr<T>;
         }
         if (expr instanceof AbstractCmpExpr) {
             return new ShadowCmpExpr(anchor) as AbstractExpr<T>;
