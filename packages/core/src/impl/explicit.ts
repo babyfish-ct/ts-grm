@@ -17,7 +17,8 @@ export enum ExplicitDataType {
     BOOL = 1,
     INTEGER = 2,
     FLOAT = 3,
-    STRING = 4
+    STRING = 4,
+    DATETIME = 5
 }
 
 export function mergeExplicitDataType(

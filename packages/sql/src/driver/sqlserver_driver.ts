@@ -59,6 +59,10 @@ export class SqlServerDriver extends AbstractDriver {
 
     override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
+            case "STR":
+                return `nvarchar(${columnDef.length})`;
+            case "TEXT":
+                return "text";
             case "BOOL":
                 return "bit";
             case "I8":
@@ -75,11 +79,13 @@ export class SqlServerDriver extends AbstractDriver {
                 return "float";
             case "NUM":
                 return `decimal(${columnDef.precision}, ${columnDef.scale})`;
-            case "STR":
-                return `nvarchar(${columnDef.length})`;
-            case "TEXT":
-                return "text";
+            case "DATETIME":
+                return "datetime2(3)";
             case "BINARY":
+                return "varbinary(max)";
+            case "JSON":
+                return "nvarchar(max)";
+            case "JSONB":
                 return "varbinary(max)";
             default:
                 throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);

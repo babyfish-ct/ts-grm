@@ -21,7 +21,7 @@ export type ScalarKind =
     "STR" | "TEXT"
     | "I8" | "I16" | "I32" | "I64" 
     | "F32" | "F64" | "NUM" 
-    | "DATE"
+    | "DATETIME"
     | "BOOL"
     | "BINARY"
     | "JSON" | "JSONB";
@@ -41,7 +41,7 @@ export class ScalarType<T> {
 
     static BOOL = new ScalarType<boolean>("BOOL", undefined);
 
-    static DATE = new ScalarType<Date>("DATE", undefined);
+    static DATETIME = new ScalarType<Date>("DATETIME", undefined);
 
     static I8 = new ScalarType<number>("I8", undefined);
 

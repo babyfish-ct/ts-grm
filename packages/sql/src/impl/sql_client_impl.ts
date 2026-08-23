@@ -67,7 +67,7 @@ import { TableDef } from "./schema_def";
 import { createSchema } from "./schema_creator";
 import { Executor } from "@/transaction/executor";
 import { toExpressionOrders } from "./expression_orders";
-import { NoDataError, TooManyDataError } from "@/error/data_error";
+import { NoDataError, TooManyDataError } from "@/error/data_count_error";
 import { Validator } from "./validator";
 
 export class SqlClientImpl implements SqlClientImplementor {

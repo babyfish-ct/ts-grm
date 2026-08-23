@@ -292,6 +292,9 @@ const unitMap: Record<TimeUnit, string> = {
 
 function typeName(tp: ScalarType<any>): string | undefined {
     switch (tp.kind) {
+        case "STR":
+        case "TEXT":
+            return "text";
         case "BOOL":
             return "boolean";
         case "I8":
@@ -307,9 +310,8 @@ function typeName(tp: ScalarType<any>): string | undefined {
             return "double precision";
         case "NUM":
             return `numeric(${tp.precision}, ${tp.scale})`;
-        case "STR":
-        case "TEXT":
-            return "text";
+        case "DATETIME":
+            return "timestamptz";
         case "BINARY":
             return "bytea";
         case "JSON":

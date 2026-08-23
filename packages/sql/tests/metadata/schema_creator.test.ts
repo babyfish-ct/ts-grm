@@ -467,7 +467,12 @@ describe("SchemaCreatorTest", () => {
                         "type": "STR",
                         "nullable": false,
                         "length": 50
-                    }
+                    },
+                    {
+                        "name": "CREATED_TIME",
+                        "nullable": false,
+                        "type": "DATETIME",
+                    },
                 ],
                 "constraints": [
                     {
@@ -1062,6 +1067,7 @@ describe("SchemaCreatorTest", () => {
                 A integer not null, 
                 B integer not null, 
                 NAME text not null, 
+                CREATED_TIME text not null, 
 
                 constraint ORDER_constraint_1
                     primary key(X, A, B)

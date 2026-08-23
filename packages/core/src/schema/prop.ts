@@ -93,8 +93,12 @@ export const prop = {
         });
     },
 
-    date(): __ScalarProp<Date> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.DATE});
+    dt(): __ScalarProp<Date> {
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.DATETIME,
+            explicitDataType: ExplicitDataType.DATETIME
+        });
     },
 
     scalar: __scalarPropCreator(),

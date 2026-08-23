@@ -12,7 +12,8 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { NoDataError, TooManyDataError } from "./data_error";
+import { NoDataError, TooManyDataError } from "./data_count_error";
+import { DataError } from "./data_error";
 import { IllegalJoinFetchError } from "./illegal_join_fetch";
 import { MetadataError } from "./metadata_error";
 import { TimeoutError } from "./transaction_error";
@@ -21,6 +22,7 @@ import { UnsupportedFeatureError } from "./unsupported_feature_error";
 export const sqlerr = {
     NoDataError,
     TooManyDataError,
+    DataError,
     TimeoutError,
     UnsupportedFeatureError,
     MetadataError,

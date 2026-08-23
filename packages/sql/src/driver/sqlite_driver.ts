@@ -39,6 +39,9 @@ export class SqliteDriver extends AbstractDriver {
 
     override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
+            case "STR":
+            case "TEXT":
+                return "text";
             case "BOOL":
             case "I8":
             case "I16":
@@ -49,10 +52,13 @@ export class SqliteDriver extends AbstractDriver {
             case "F64":
             case "NUM":
                 return "real";
-            case "STR":
-            case "TEXT":
+            case "DATETIME":
                 return "text";
             case "BINARY":
+                return "blob";
+            case "JSON":
+                return "text";
+            case "JSONB":
                 return "blob";
             default:
                 throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);

@@ -19,7 +19,7 @@ import { SqlClientImplementor } from "@/sql_client";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
-import { NoDataError, TooManyDataError } from "@/error/data_error";
+import { NoDataError, TooManyDataError } from "@/error/data_count_error";
 import { ExplicitDataTypeArrayProvider } from "./numeric_type_array_provider";
 
 export class MergedRootQueryImpl<

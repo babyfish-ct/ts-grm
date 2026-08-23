@@ -12,6 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { DataError } from "@/error/data_error";
 import { err, spi } from "@ts-grm/core";
 
 export class DataRowReader implements spi.DataReader {
@@ -77,6 +78,9 @@ export class DataRowReader implements spi.DataReader {
             const value = row[colIndex];
             if (explicitDataType === spi.ExplicitDataType.BOOL) {
                 return toBoolean(value);
+            }
+            if (explicitDataType === spi.ExplicitDataType.DATETIME) {
+                return toDateTime(value);
             }
             if (explicitDataType === spi.ExplicitDataType.INTEGER && typeof value === "string") {
                 return parseInt(value);
@@ -225,4 +229,67 @@ function toBoolean(value: any): boolean {
         }
     }
     return value != '0' && value !== 'false';
+}
+
+function toDateTime(value: any): Date {
+    if (value instanceof Date) {
+        return value;
+    }
+    if (typeof value === 'number') {
+        if (value.toString().length === 10) {
+            return new Date(value * 1000);
+        }
+        return new Date(value);
+    }
+    if (typeof value === 'string') {
+        // ISO 8601
+        const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?/);
+        if (isoMatch) {
+            const [, year, month, day, hour, minute, second, fractional] = isoMatch;
+            let milliseconds = 0;
+            if (fractional) {
+                const padded = fractional.padEnd(3, '0').slice(0, 3);
+                milliseconds = parseInt(padded, 10);
+            }
+            const date = new Date(Date.UTC(
+                parseInt(year!, 10),
+                parseInt(month!, 10) - 1,
+                parseInt(day!, 10),
+                parseInt(hour!, 10),
+                parseInt(minute!, 10),
+                parseInt(second!, 10),
+                milliseconds
+            ));
+            if (!isNaN(date.getTime())) {
+                return date;
+            }
+        }
+        // JS standard
+        const parsed = new Date(value);
+        if (!isNaN(parsed.getTime())) {
+            return parsed;
+        }
+        const numValue = Number(value);
+        if (!isNaN(numValue) && value.trim() !== '') {
+            return toDateTime(numValue);
+        }
+    }
+    // Some driver returns buffer
+    if (Buffer.isBuffer(value)) {
+        const str = value.toString('utf-8');
+        return toDateTime(str);
+    }
+
+    // Special DB drivers
+
+    if (value && typeof value === 'object' && typeof value.getTime === 'function') {
+        return new Date(value.getTime());
+    }
+    if (typeof value === 'bigint') {
+        const numValue = Number(value);
+        if (!isNaN(numValue)) {
+            return toDateTime(numValue);
+        }
+    }
+    throw new DataError(`Unable to parse datetime value: ${value} (${typeof value})`);
 }

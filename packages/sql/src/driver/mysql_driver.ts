@@ -48,6 +48,10 @@ export class MySqlDriver extends AbstractDriver {
 
     override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
+            case "STR":
+                return `varchar(${columnDef.length!})`;
+            case "TEXT":
+                return "text";
             case "BOOL":
                 return "tinyint(1)";
             case "I8":
@@ -64,10 +68,8 @@ export class MySqlDriver extends AbstractDriver {
                 return "double";
             case "NUM":
                 return `decimal(${columnDef.precision}, ${columnDef.scale})`;
-            case "STR":
-                return `varchar(${columnDef.length!})`;
-            case "TEXT":
-                return "text";
+            case "DATETIME":
+                return "datetime(3)";
             case "BINARY":
                 return "blob";
             case "JSON":

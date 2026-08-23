@@ -46,7 +46,8 @@ describe("WideKeySqliteTest", () => {
                         tb_1_.X,
                         tb_1_.A,
                         tb_1_.B,
-                        tb_1_.NAME
+                        tb_1_.NAME,
+                        tb_1_.CREATED_TIME
                     from "ORDER" tb_1_
                     where 
                         (tb_1_.X, tb_1_.A, tb_1_.B) in(
@@ -70,7 +71,8 @@ describe("WideKeySqliteTest", () => {
                             "b": 1
                         }
                     },
-                    "name": "order-1"
+                    "name": "order-1",
+                    "createdTime": new Date("2026-08-22T07:54:23.000Z")
                 }
             },
             {
@@ -84,7 +86,8 @@ describe("WideKeySqliteTest", () => {
                             "b": 1
                         }
                     },
-                    "name": "order-1"
+                    "name": "order-1",
+                    "createdTime": new Date("2026-08-22T07:54:23.000Z")
                 }
             },
             {
@@ -98,7 +101,8 @@ describe("WideKeySqliteTest", () => {
                             "b": 2
                         }
                     },
-                    "name": "order-2"
+                    "name": "order-2",
+                    "createdTime": new Date("2026-08-22T18:01:56.000Z")
                 }
             },
             {
@@ -112,7 +116,8 @@ describe("WideKeySqliteTest", () => {
                             "b": 2
                         }
                     },
-                    "name": "order-2"
+                    "name": "order-2",
+                    "createdTime": new Date("2026-08-22T18:01:56.000Z")
                 }
             }
         ]);
@@ -136,7 +141,8 @@ describe("WideKeySqliteTest", () => {
                         tb_1_.X,
                         tb_1_.A,
                         tb_1_.B,
-                        tb_1_.NAME
+                        tb_1_.NAME,
+                        tb_1_.CREATED_TIME
                     from "ORDER" tb_1_
                     where 
                         tb_1_.X = ?
@@ -173,6 +179,7 @@ describe("WideKeySqliteTest", () => {
                     }
                 },
                 "name": "order-3",
+                "createdTime": new Date("2026-08-23T09:00:16.000Z"),
                 "items": [
                     {
                         "id": 5,
@@ -193,6 +200,7 @@ describe("WideKeySqliteTest", () => {
                     }
                 },
                 "name": "order-4",
+                "createdTime": new Date("2026-08-23T13:47:37.000Z"),
                 "items": [
                     {
                         "id": 7,

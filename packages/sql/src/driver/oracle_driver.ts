@@ -48,6 +48,14 @@ export class OracleDriver extends AbstractDriver {
 
     override typeName(columnDef: ColumnDef): string {
         switch (columnDef.type.kind) {
+            case "STR":
+                const len = columnDef.length!;
+                if (len > 4000) {
+                    return "clob";
+                }
+                return `varchar2(${len})`;
+            case "TEXT":
+                return "clob";
             case "BOOL":
                 return "number(1)";
             case "I8":
@@ -64,14 +72,8 @@ export class OracleDriver extends AbstractDriver {
                 return "binary_double";
             case "NUM":
                 return `number(${columnDef.precision}, ${columnDef.scale})`;
-            case "STR":
-                const len = columnDef.length!;
-                if (len > 4000) {
-                    return "clob";
-                }
-                return `varchar2(${len})`;
-            case "TEXT":
-                return "clob";
+            case "DATETIME":
+                return "timpstamp";
             case "BINARY":
                 return "blob";
             case "JSON":

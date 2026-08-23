@@ -77,11 +77,11 @@ insert into book_author_mapping(book_id, author_id) values
     (11, 7),
     (12, 7);
 
-insert into "ORDER"(X, A, B, NAME) values
-    (1, 1, 1, 'order-1'),
-    (1, 1, 2, 'order-2'),
-    (2, 1, 1, 'order-3'),
-    (2, 1, 2, 'order-4');
+insert into "ORDER"(X, A, B, NAME, CREATED_TIME) values
+    (1, 1, 1, 'order-1', '2026-08-22 07:54:23'),
+    (1, 1, 2, 'order-2', '2026-08-22 18:01:56'),
+    (2, 1, 1, 'order-3', '2026-08-23 09:00:16'),
+    (2, 1, 2, 'order-4', '2026-08-23 13:47:37');
 
 insert into ORDER_ITEM(ID, PRODUCT_NAME, order_x, order_y_a, order_y_b) values
     (1, 'Pen', 1, 1, 1),

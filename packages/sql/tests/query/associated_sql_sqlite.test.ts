@@ -404,7 +404,8 @@ describe("AssociatedSqlTest", () => {
                     tb_1_.X,
                     tb_1_.A,
                     tb_1_.B,
-                    tb_1_.NAME
+                    tb_1_.NAME,
+                    tb_1_.CREATED_TIME
                 from "ORDER" tb_1_
                 where 
                     (

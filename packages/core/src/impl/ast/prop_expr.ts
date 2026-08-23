@@ -67,7 +67,7 @@ export function createTableProp(
             return new PropNumExpr(directTable, prop, isAssociation);
         case "STR":
             return new PropStrExpr(directTable, prop, isAssociation);
-        case "DATE":
+        case "DATETIME":
             return new PropDtExpr(directTable, prop, isAssociation);
         default:
             throw new ArgumentError(
