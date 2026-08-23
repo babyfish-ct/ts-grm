@@ -73,7 +73,7 @@ export class OracleDriver extends AbstractDriver {
             case "NUM":
                 return `number(${columnDef.precision}, ${columnDef.scale})`;
             case "DATETIME":
-                return "timpstamp";
+                return "timestamp";
             case "BINARY":
                 return "blob";
             case "JSON":

@@ -26,7 +26,10 @@ export function useOracleClientWithData(
     sqlRecord: SqlRecord
 ): SqlClient {
     const sqlClient = useOracleClient(sqlRecord) as SqlClientImplementor;
-    initializeDatabase(sqlClient);
+    initializeDatabase(sqlClient, { 
+        oldRegExp: /'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?)'/g, 
+        newText: "TIMESTAMP '$1'"
+    });
     return sqlClient;
 }
 
@@ -34,7 +37,10 @@ export function useOracle12ClientWithData(
     sqlRecord: SqlRecord
 ): SqlClient {
     const sqlClient = useOracle12Client(sqlRecord) as SqlClientImplementor;
-    initializeDatabase(sqlClient);
+    initializeDatabase(sqlClient, { 
+        oldRegExp: /'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?)'/g, 
+        newText: "TIMESTAMP '$1'"
+    });
     return sqlClient;
 }
 
