@@ -16,7 +16,7 @@ import { RootColumnSuffix, RootProjectionCaluse, Scope } from "@/sql/fragment";
 
 export const KEYWORDS: ReadonlySet<string> = new Set<string>([
 
-    "select", "from", "where", "group", "by", "having", "order", "limit", "offset",
+    "select", "from", "where", "group", "by", "having", "order", "asc", "desc", "limit", "offset",
     "insert", "update", "delete", "into", "values", "set", "create", "table", "drop",
     "alter", "add", "column", "rename", "to", "view", "trigger",
 
@@ -29,7 +29,7 @@ export const KEYWORDS: ReadonlySet<string> = new Set<string>([
     "primary", "key", "foreign", "references", "unique", "check", "default", 
     "constraint", "collate", "on", "conflict", "do", "nothing", "nothing",
 
-    "comment"
+    "comment", "user"
 ]);
 
 export function projectionScope(
