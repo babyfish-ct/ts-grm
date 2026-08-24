@@ -185,73 +185,70 @@ export class OracleNodeRender extends AbstractNodeRender {
         expr: spi.DtDiffExpr, 
         ctx: NodeRenderContext
     ): void {
-        
-        const unit = expr.unit;
-        let multiplier: number | undefined = undefined;
-        let divisor: number | undefined = undefined;
-
-        switch (unit) {
-            case "NANOSECONDS": 
-                multiplier = 86400000000000; 
-                break;
-            case "MICROSECONDS": 
-                multiplier = 86400000000; 
-                break;
-            case "MILLISECONDS": 
-                multiplier = 86400000; 
-                break;
-            case "SECONDS": 
-                multiplier = 86400; 
-                break;
-            case "MINUTES": 
-                multiplier = 1440; 
-                break;
-            case "HOURS": 
-                multiplier = 24; 
-                break;
-            case "WEEKS": 
-                divisor = 7; 
-                break;
-            case "MONTHS": 
-                divisor = 30.4375; 
-                break;
-            case "QUARTERS": 
-                divisor = 91.3125; 
-                break;
-            case "YEARS": 
-                divisor = 365.25; 
-                break;
-            case "DECADES": 
-                divisor = 3652.5; 
-                break;
-            case "CENTURIES": 
-                divisor = 36525; 
-                break;
+        if (expr.unit === "DAYS") {
+            this._renderDtDiffExpr(expr, ctx);
+            return;
         }
-        
-        if (multiplier != null) {
-            using _ = ctx.withPrecedence(Precedence.TIMES);
-            this._renderDtDiffExpr(expr, ctx);
-            ctx.text(" * ");
-            ctx.text(multiplier.toString());
-        } else if (divisor != null) {
-            using _ = ctx.withPrecedence(Precedence.TIMES);
-            this._renderDtDiffExpr(expr, ctx);
-            ctx.text(" / ");
-            ctx.text(divisor.toString());
-        } else {
-            this._renderDtDiffExpr(expr, ctx);
+        using _ = ctx.withPrecedence(Precedence.TIMES);
+        this._renderDtDiffExpr(expr, ctx);
+        switch (expr.unit) {
+            case "NANOSECONDS":
+                ctx.text(" * 86400000000000");
+                break;
+            case "MICROSECONDS":
+                ctx.text(" * 86400000000");
+                break;
+            case "MILLISECONDS":
+                ctx.text(" * 86400000");
+                break;
+            case "SECONDS":
+                ctx.text(" * 86400");
+                break;
+            case "MINUTES":
+                ctx.text(" * 1440");
+                break;
+            case "HOURS":
+                ctx.text(" * 24");
+                break;
+            case "WEEKS":
+                ctx.text(" / 7");
+                break;
+            case "MONTHS":
+                ctx.text(" / 30.436875");
+                break;
+            case "QUARTERS":
+                ctx.text(" / 91.310625");
+                break;
+            case "YEARS":
+                ctx.text(" / 365.2425");
+                break;
+            case "DECADES":
+                ctx.text(" / 3652.425");
+                break;
+            case "CENTURIES":
+                ctx.text(" / 36524.25");
+                break;
         }
     }
 
     private _renderDtDiffExpr(
         expr: spi.DtDiffExpr, 
         ctx: NodeRenderContext
-    ): void {
+    ) {
         using _ = ctx.withPrecedence(Precedence.PLUS);
-        ctx.render(expr.expr);
+        this._renderToDate(expr.expr, ctx);
         ctx.text(" - ");
-        ctx.render(expr.valueExpr);
+        this._renderToDate(expr.valueExpr, ctx);
+    }
+
+    private _renderToDate(
+        expr: spi.AbstractDtExpr,
+        ctx: NodeRenderContext
+    ) {
+        ctx.render("cast (")
+        using _ = ctx.withPrecedence(Precedence.ROOT);
+        ctx.render(expr);
+        ctx.render(" as date)");
     }
 }
 

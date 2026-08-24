@@ -629,8 +629,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 
     visitDtDiffExpr(expr: spi.DtDiffExpr): void {
-        expr.expr.accept(this);
-        expr.valueExpr.accept(this);
+        this._nodeRender.renderDtDiffExpr(expr, this._nodeRenderContext);
     }
 
     visitLiteral(value: any): void {

@@ -597,4 +597,147 @@ describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
             "please use explicit base query API (Derived table or CTE) instead"
         );
     });
+
+    it("timeMinus", async () => {
+        const view = dto.view(ORDER, c => [
+            c.$allScalars,
+            c.items.with(c => [
+                c.productName
+            ])
+        ]);
+        const time = new Date("2026-08-23T12:00:00.000Z");
+        const row = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.where(order.createdTime.minus(2, "HOURS").lt(time));
+            q.where(order.createdTime.minus(1, "HOURS").gt(time));
+            return q.select(order.fetch(view));
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.X,
+                        tb_1_.A,
+                        tb_1_.B,
+                        tb_1_.NAME,
+                        tb_1_.CREATED_TIME
+                    from [ORDER] tb_1_
+                    where 
+                            DATEADD(hour, -2, tb_1_.CREATED_TIME) < @p1
+                        and
+                            DATEADD(hour, -1, tb_1_.CREATED_TIME) > @p2
+                `,
+                args: [
+                    new Date("2026-08-23T12:00:00.000Z"),
+                    new Date("2026-08-23T12:00:00.000Z")
+                ],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.order_x,
+                        tb_1_.order_y_a,
+                        tb_1_.order_y_b,
+                        tb_1_.PRODUCT_NAME
+                    from ORDER_ITEM tb_1_
+                    where 
+                            tb_1_.order_x = @p1
+                        and
+                            tb_1_.order_y_a = @p2
+                        and
+                            tb_1_.order_y_b = @p3
+                `,
+                args: [2, 1, 2],
+                purpose: "loadAssociation(Order.items)"
+            }
+        );
+        expect(row).toEqual({
+            "id": {
+                "x": 2,
+                "y": {
+                    "a": 1,
+                    "b": 2
+                }
+            },
+            "name": "order-4",
+            "createdTime": new Date("2026-08-23T13:47:37.000Z"),
+            "items": [
+                { "productName": "Computer" },
+                { "productName": "iPhone" }
+            ]
+        });
+    });
+
+    it("timeDiff", async () => {
+        const view = dto.view(ORDER, c => [
+            c.$allScalars,
+            c.items.with(c => [
+                c.productName
+            ])
+        ]);
+        const time = new Date("2026-08-23T12:00:00.000Z");
+        const row = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.where(order.createdTime.diff(time, "HOURS").between(1.1, 1.9));
+            return q.select(order.fetch(view));
+        }).fetchRequired();
+        sqlRecord.log();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.X,
+                        tb_1_.A,
+                        tb_1_.B,
+                        tb_1_.NAME,
+                        tb_1_.CREATED_TIME
+                    from [ORDER] tb_1_
+                    where 
+                        datediff(
+                            millisecond,
+                            @p1,
+                            tb_1_.CREATED_TIME
+                        ) / 3600000.0 between @p2 and @p3
+                `,
+                args: [
+                    new Date("2026-08-23T12:00:00.000Z"),
+                    1.1,
+                    1.9
+                ],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.order_x,
+                        tb_1_.order_y_a,
+                        tb_1_.order_y_b,
+                        tb_1_.PRODUCT_NAME
+                    from ORDER_ITEM tb_1_
+                    where 
+                            tb_1_.order_x = @p1
+                        and
+                            tb_1_.order_y_a = @p2
+                        and
+                            tb_1_.order_y_b = @p3
+                `,
+                args: [2, 1, 2],
+                purpose: "loadAssociation(Order.items)"
+            }
+        );
+        expect(row).toEqual({
+            "id": {
+                "x": 2,
+                "y": {
+                    "a": 1,
+                    "b": 2
+                }
+            },
+            "name": "order-4",
+            "createdTime": new Date("2026-08-23T13:47:37.000Z"),
+            "items": [
+                { "productName": "Computer" },
+                { "productName": "iPhone" }
+            ]
+        });
+    });
 });

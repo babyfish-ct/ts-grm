@@ -20,6 +20,7 @@ import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { ExecuteQueryOptions } from "./execute_query";
 import { ExplicitDataTypeArrayProvider } from "../numeric_type_array_provider";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
+import { finalRangeOptions } from "./execute_page_query";
 
 export function buildStatement(
     sqlClient: SqlClientImplementor,
@@ -66,6 +67,22 @@ function buildAst(
         );
         composite.add(" core__");
         return composite;
+    }
+    if (options === "UNIQUE") {
+        const qc = query as any as spi.QueryContract;
+        if (!sqlClient.driver.isUnorderedPaginationAllowed) {
+            let hasOrder = qc.kind === "ATOM" && qc.orders.length !== 0;
+            if (!hasOrder) {
+                return Composite.of(query, sqlClient, undefined);
+            }
+        }
+        const finalOptions = finalRangeOptions(
+            {limit: 2}, 
+            qc.kind === "ATOM" 
+                ? (qc as AtomRootQueryImpl<any>).options
+                : undefined
+        );
+        return applyPagination(sqlClient, query, finalOptions!);
     }
     if (options != null) {
         return applyPagination(sqlClient, query, options);

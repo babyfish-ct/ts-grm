@@ -80,7 +80,7 @@ export class SqlServerDriver extends AbstractDriver {
             case "NUM":
                 return `decimal(${columnDef.precision}, ${columnDef.scale})`;
             case "DATETIME":
-                return "datetime2(3)";
+                return "datetime2";
             case "BINARY":
                 return "varbinary(max)";
             case "JSON":
@@ -176,50 +176,64 @@ export class SqlServerNodeRender extends AbstractNodeRender {
         expr: spi.DtDiffExpr, 
         ctx: NodeRenderContext
     ): void {
-
-        let unit = expr.unit;
-        let multiplier: number | undefined = undefined;
-        let divisor: number | undefined = undefined;
-     
-        if (unit === "NANOSECONDS") {
-            unit = "MICROSECONDS";
-            multiplier = 1000;
-        } else if (unit === "DECADES") {
-            unit = "YEARS";
-            divisor = 10;
-        } else if (unit === "CENTURIES") {
-            unit = "YEARS";
-            divisor = 100;
+        if (expr.unit === "MILLISECONDS") {
+            this._renderDtDiffExpr(expr, ctx);
+            return;
         }
-        
-        if (multiplier !== undefined) {
-            using _ = ctx.withPrecedence(Precedence.TIMES);
-            this._renderDtDiffExpr(expr, ctx);
-            ctx.text(" * ");
-            ctx.text(multiplier.toString());
-        } else if (divisor !== undefined) {
-            using _ = ctx.withPrecedence(Precedence.TIMES);
-            this._renderDtDiffExpr(expr, ctx);
-            ctx.text(" / ");
-            ctx.text(divisor.toString());
-        } else {
-            this._renderDtDiffExpr(expr, ctx);
+        using _ = ctx.withPrecedence(Precedence.TIMES);
+        this._renderDtDiffExpr(expr, ctx);
+        switch (expr.unit) {
+            case "NANOSECONDS":
+                ctx.text(" * 1000000");
+                break;
+            case "MICROSECONDS":
+                ctx.text(" * 1000");
+                break;
+            case "SECONDS":
+                ctx.text(" / 1000.0");
+                break;
+            case "MINUTES":
+                ctx.text(" / 60000.0");
+                break;
+            case "HOURS":
+                ctx.text(" / 3600000.0");
+                break;
+            case "DAYS":
+                ctx.text("/ 86400000.0");
+                break;
+            case "WEEKS":
+                ctx.text(` / ${86400000 * 7.0}`);
+                break;
+            case "MONTHS":
+                ctx.text(` / ${86400000 * 30.436875}`);
+                break;
+            case "QUARTERS":
+                ctx.text(` / ${86400000 * 91.310625}`);
+                break;
+            case "YEARS":
+                ctx.text(` / ${86400000 * 365.2425}`);
+                break;
+            case "DECADES":
+                ctx.text(` / ${86400000 * 3652.425}`);
+                break;
+            case "CENTURIES":
+                ctx.text(` / ${86400000 * 36524.25}`);
+                break;
         }
     }
 
     private _renderDtDiffExpr(
         expr: spi.DtDiffExpr, 
         ctx: NodeRenderContext
-    ): void {
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        const finalUnit = unitMap[expr.unit]!;
-        ctx.text("DATEDIFF(");
-        ctx.text(finalUnit);
-        ctx.text(", ");
+    ) {
+        ctx.text("datediff");
+        using _ = ctx.withComposite(new Scope("VALUES"));
+        using __ = ctx.withPrecedence(Precedence.ROOT);
+        ctx.render("millisecond");
+        ctx.separator();
         ctx.render(expr.valueExpr);
-        ctx.text(", ");
+        ctx.separator();
         ctx.render(expr.expr);
-        ctx.text(")");
     }
 }
 

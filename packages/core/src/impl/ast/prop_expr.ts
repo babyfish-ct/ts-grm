@@ -92,11 +92,10 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         super();
         if (prop instanceof EntityProp) {
             this._provider = prop.scalarProvider;
-            this._explicitDataType = prop.explicitDataType;
         } else {
             this._provider = undefined;
-            this._explicitDataType = prop.explicitDataType;
         }
+        this._explicitDataType = prop.explicitDataType;
     }
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {
@@ -120,6 +119,8 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 
     private readonly _provider: ScalarProvider<any, any> | undefined;
 
+    private readonly _explicitDataType: ExplicitDataType;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
@@ -131,17 +132,22 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
         } else {
             this._provider = undefined;
         }
+        this._explicitDataType = prop.explicitDataType;
     }
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {
         return this._provider;
+    }
+    
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
     }
 
     override get isPropExpr(): boolean {
         return true;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
     }
 }
@@ -150,6 +156,8 @@ class PropEsExpr<T extends string> extends AbstractEsExpr<T> implements PropExpr
 
     private readonly _provider: ScalarProvider<any, any> | undefined;
 
+    private readonly _explicitDataType: ExplicitDataType;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
@@ -161,17 +169,22 @@ class PropEsExpr<T extends string> extends AbstractEsExpr<T> implements PropExpr
         } else {
             this._provider = undefined;
         }
+        this._explicitDataType = prop.explicitDataType;
     }
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {
         return this._provider;
     }
 
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
+    }
+
     override get isPropExpr(): boolean {
         return true;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
     }
 }
@@ -180,6 +193,8 @@ class PropDtExpr extends AbstractDtExpr implements PropExprContract {
     
     private readonly _provider: ScalarProvider<any, any> | undefined;
 
+    private readonly _explicitDataType: ExplicitDataType;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
@@ -191,17 +206,22 @@ class PropDtExpr extends AbstractDtExpr implements PropExprContract {
         } else {
             this._provider = undefined;
         }
+        this._explicitDataType = prop.explicitDataType;
     }
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {
         return this._provider;
     }
 
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
+    }
+
     override get isPropExpr(): boolean {
         return true;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
     }
 }

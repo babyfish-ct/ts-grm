@@ -73,6 +73,10 @@ export abstract class AbstractDtExpr extends AbstractCmpExpr<Date> {
         });
         return factory.createCoalesceDtExpr(this, arr);
     }
+
+    get explicitDataType(): ExplicitDataType {
+        return ExplicitDataType.DATETIME;
+    }
 }
 
 export class DtPlusExpr extends AbstractDtExpr {

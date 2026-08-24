@@ -111,7 +111,7 @@ class SqliteExecutor implements Executor {
     ): Promise<DataRows> {
         const stmt = this._database.prepare(sql);
         stmt.raw(true);
-        const values = args.map(v => v.value);
+        const values = args.map(v => v.value instanceof Date ? v.value.toISOString().replace('T', ' ').slice(0, 19) : v.value);
         return stmt.all(values) as DataRows;
     }
 
@@ -123,7 +123,7 @@ class SqliteExecutor implements Executor {
         const stmt = this._database.prepare(sql);
         stmt.raw(true);
         for (const args of binds) {
-            const values = args.map(v => v.value);
+            const values = args.map(v => v.value instanceof Date ? v.value.toISOString().replace('T', ' ').slice(0, 19) : v.value);
             const rows = stmt.all(values) as DataRows;
             results.push(rows);
         }

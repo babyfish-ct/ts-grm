@@ -109,11 +109,11 @@ export class SqlClientImpl implements SqlClientImplementor {
         });
         switch (rows.length) {
             case 0:
-                throw new NoDataError(`"fetchOne" does not accpet empty result set`);
+                throw new NoDataError(`"fetchOne" does not accept empty result set`);
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchOne" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchOne" does not accept multiple rows`);
         }
     }
 
@@ -136,7 +136,7 @@ export class SqlClientImpl implements SqlClientImplementor {
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchOneOrNull" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchOneOrNull" does not accept multiple rows`);
         }
     }
 
@@ -159,7 +159,7 @@ export class SqlClientImpl implements SqlClientImplementor {
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchOneOrUndefined" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchOneOrUndefined" does not accept multiple rows`);
         }
     }
 

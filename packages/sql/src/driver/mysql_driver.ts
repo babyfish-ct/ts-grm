@@ -137,48 +137,85 @@ export class MySqlNodeRender extends AbstractNodeRender {
         expr: spi.DtDiffExpr, 
         ctx: NodeRenderContext
     ): void {
-    
         let unit = expr.unit;
-        let multiplier: number | undefined = undefined;
         let divisor: number | undefined = undefined;
+        let multiplier: number | undefined = undefined;
         
-        if (unit === "NANOSECONDS") {
-            unit = "MICROSECONDS";
-            multiplier = 1000.0;
-        } else if (unit === "MILLISECONDS") {
-            unit = "MICROSECONDS";
-            divisor = 1000;
-        } else if (unit === "DECADES") {
-            unit = "YEARS";
-            divisor = 10;
-        } else if (unit === "CENTURIES") {
-            unit = "YEARS";
-            divisor = 100;
+        switch (unit) {
+            case "NANOSECONDS":
+                unit = "MICROSECONDS";
+                multiplier = 1000;
+                break;
+            case "MICROSECONDS":
+                unit = "MICROSECONDS";
+                break;
+            case "MILLISECONDS":
+                unit = "MICROSECONDS";
+                divisor = 1000;
+                break;
+            case "SECONDS":
+                unit = "MICROSECONDS";
+                divisor = 1000 * 1000;
+                break;
+            case "MINUTES":
+                unit = "MICROSECONDS";
+                divisor = 60 * 1000 * 1000;
+                break;
+            case "HOURS":
+                unit = "SECONDS";
+                divisor = 3600;
+                break;
+            case "DAYS":
+                unit = "DAYS";
+                divisor = 24 * 3600;
+                break;
+            case "WEEKS":
+                unit = "DAYS";
+                divisor = 7 * 24 * 3600;
+                break;
+            case "MONTHS":
+                unit = "MONTHS";
+                break;
+            case "QUARTERS":
+                unit = "QUARTERS";
+                break;
+            case "YEARS":
+                unit = "YEARS";
+                break;
+            case "DECADES":
+                unit = "YEARS";
+                divisor = 10;
+                break;
+            case "CENTURIES":
+                unit = "YEARS";
+                divisor = 100;
+                break;
+            default:
+                throw new Error(`Unsupported unit: ${unit}`);
         }
-        
         if (multiplier != null) {
             using _ = ctx.withPrecedence(Precedence.TIMES);
-            this._renderDtDiffExpr(expr, ctx);
+            this._renderDtDiffExpr(expr, ctx, unit);
             ctx.text(" * ");
             ctx.text(multiplier.toString());
         } else if (divisor != null) {
             using _ = ctx.withPrecedence(Precedence.TIMES);
-            this._renderDtDiffExpr(expr, ctx);
+            this._renderDtDiffExpr(expr, ctx, unit);
             ctx.text(" / ");
             ctx.text(divisor.toString());
         } else {
-            this._renderDtDiffExpr(expr, ctx);
+            this._renderDtDiffExpr(expr, ctx, unit);
         }
     }
 
     private _renderDtDiffExpr(
         expr: spi.DtDiffExpr, 
-        ctx: NodeRenderContext
+        ctx: NodeRenderContext,
+        unit: TimeUnit
     ): void {
         using _ = ctx.withPrecedence(Precedence.ROOT);
-        const finalUnit = unitMap[expr.unit];
         ctx.text("TIMESTAMPDIFF(");
-        ctx.text(finalUnit);
+        ctx.text(unitMap[unit]);
         ctx.text(", ");
         ctx.render(expr.valueExpr);
         ctx.text(", ");

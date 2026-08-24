@@ -119,17 +119,23 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, ExplicitDataTypeAr
     async fetchRequired<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<RowTypeOf<TProjection, TNullAsUndefined>> {
-        const rows = await this.fetchRange({
-            ...options,
-            limit: 2
-        });
+        const sqlClient = this.mutableQuery.sqlClient;
+        if (!sqlClient.isValidated) {
+            await sqlClient.validate();
+        }
+        const rows = await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            "UNIQUE",
+            sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
         switch (rows.length) {
             case 0:
-                throw new NoDataError(`"fetchRequired" does not accpet empty result set`);
+                throw new NoDataError(`"fetchRequired" does not accept empty result set`);
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchRequired" does not accept multiple rows`);
         }
     }
 
@@ -139,17 +145,23 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, ExplicitDataTypeAr
         RowTypeOf<TProjection, TNullAsUndefined> 
         | TNullAsUndefined extends true ? undefined : null
     > {
-        const rows = await this.fetchRange({
-            ...options,
-            limit: 2
-        });
+        const sqlClient = this.mutableQuery.sqlClient;
+        if (!sqlClient.isValidated) {
+            await sqlClient.validate();
+        }
+        const rows = await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            "UNIQUE",
+            sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
         switch (rows.length) {
             case 0:
                 return ((options?.nullAsUndefined ?? false) ? undefined : null) as any;
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchOptional" does not accept multiple rows`);
         }
     }
 
@@ -280,7 +292,7 @@ class ExplicitDataTypeArrayCreator {
         if (selection instanceof spi.FetchedViewImpl) {
             this._addFetchedView(selection);
         } else {
-            if (selection instanceof spi.AbstractNumExpr) {
+            if (selection instanceof spi.AbstractExpr) {
                 this._addExplicitDataType(selection.explicitDataType);
             }
             this._index++;
@@ -309,7 +321,7 @@ class ExplicitDataTypeArrayCreator {
     private _addExplicitDataType(
         explicitDataType: spi.ExplicitDataType
     ): void {
-        if (explicitDataType == null) {
+        if (explicitDataType == spi.ExplicitDataType.NONE) {
             return;
         }
         let explicitDataTypes = this._explicitDataTypes;

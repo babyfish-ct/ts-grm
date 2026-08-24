@@ -24,6 +24,9 @@ export default defineConfig({
         'src/driver/*_driver.ts'
       ],
     },
+    env: {
+      TZ: 'UTC',
+    },
     projects: [
       {
         resolve: { alias },

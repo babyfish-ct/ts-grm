@@ -588,4 +588,154 @@ describe.runIf(isExternalDbTestEnabled)("OracleTest", () => {
             "before the set operation is performed."
         );
     });
+
+    it("timeMinus", async () => {
+        const view = dto.view(ORDER, c => [
+            c.$allScalars,
+            c.items.with(c => [
+                c.productName
+            ])
+        ]);
+        const time = new Date("2026-08-23T12:00:00.000Z");
+        const row = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.where(order.createdTime.minus(2, "HOURS").lt(time));
+            q.where(order.createdTime.minus(1, "HOURS").gt(time));
+            return q.select(order.fetch(view));
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        core__.f1,
+                        core__.f2,
+                        core__.f3,
+                        core__.f4,
+                        core__.f5
+                    from (
+                        select 
+                            tb_1_.X f1,
+                            tb_1_.A f2,
+                            tb_1_.B f3,
+                            tb_1_.NAME f4,
+                            tb_1_.CREATED_TIME f5
+                        from "ORDER" tb_1_
+                        where 
+                                tb_1_.CREATED_TIME - NUMTODSINTERVAL(7200, 'SECOND') < :1
+                            and
+                                tb_1_.CREATED_TIME - NUMTODSINTERVAL(3600, 'SECOND') > :2
+                    ) core__ 
+                    where rownum <= :3
+                `,
+                args: [
+                    new Date("2026-08-23T12:00:00.000Z"),
+                    new Date("2026-08-23T12:00:00.000Z"),
+                    2
+                ],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.order_x,
+                        tb_1_.order_y_a,
+                        tb_1_.order_y_b,
+                        tb_1_.PRODUCT_NAME
+                    from ORDER_ITEM tb_1_
+                    where 
+                        (tb_1_.order_x, tb_1_.order_y_a, tb_1_.order_y_b) = (:1, :2, :3)
+                `,
+                args: [2, 1, 2],
+                purpose: "loadAssociation(Order.items)"
+            }
+        );
+        expect(row).toEqual({
+            "id": {
+                "x": 2,
+                "y": {
+                    "a": 1,
+                    "b": 2
+                }
+            },
+            "name": "order-4",
+            "createdTime": new Date("2026-08-23T13:47:37.000Z"),
+            "items": [
+                { "productName": "Computer" },
+                { "productName": "iPhone" }
+            ]
+        });
+    });
+
+    it("timeDiff", async () => {
+        const view = dto.view(ORDER, c => [
+            c.$allScalars,
+            c.items.with(c => [
+                c.productName
+            ])
+        ]);
+        const time = new Date("2026-08-23T12:00:00.000Z");
+        const row = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.where(order.createdTime.diff(time, "HOURS").between(1.1, 1.9));
+            return q.select(order.fetch(view));
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        core__.f1,
+                        core__.f2,
+                        core__.f3,
+                        core__.f4,
+                        core__.f5
+                    from (
+                        select 
+                            tb_1_.X f1,
+                            tb_1_.A f2,
+                            tb_1_.B f3,
+                            tb_1_.NAME f4,
+                            tb_1_.CREATED_TIME f5
+                        from "ORDER" tb_1_
+                        where 
+                            (cast (tb_1_.CREATED_TIME as date) - cast (:1 as date)) * 24 between :2 and :3
+                    ) core__ 
+                    where rownum <= :4
+                `,
+                args: [
+                    new Date("2026-08-23T12:00:00.000Z"),
+                    1.1,
+                    1.9,
+                    2
+                ],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.order_x,
+                        tb_1_.order_y_a,
+                        tb_1_.order_y_b,
+                        tb_1_.PRODUCT_NAME
+                    from ORDER_ITEM tb_1_
+                    where 
+                        (tb_1_.order_x, tb_1_.order_y_a, tb_1_.order_y_b) = (:1, :2, :3)
+                `,
+                args: [2, 1, 2],
+                purpose: "loadAssociation(Order.items)"
+            }
+        );
+        expect(row).toEqual({
+            "id": {
+                "x": 2,
+                "y": {
+                    "a": 1,
+                    "b": 2
+                }
+            },
+            "name": "order-4",
+            "createdTime": new Date("2026-08-23T13:47:37.000Z"),
+            "items": [
+                { "productName": "Computer" },
+                { "productName": "iPhone" }
+            ]
+        });
+    });
 });

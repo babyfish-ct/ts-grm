@@ -71,7 +71,8 @@ export function useMySqlClient(
         port: 5511,        
         database: 'ts_grm',      
         user: 'root',       
-        password: '123456'
+        password: '123456', 
+        timezone: "Z"
     });
     return useClientImpl(new MySqlDriver(pool), sqlRecord)
 }

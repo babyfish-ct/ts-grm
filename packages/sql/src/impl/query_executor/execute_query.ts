@@ -79,7 +79,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
 }
 
 export type ExecuteQueryOptions =
-    "COUNT" | FetchRangeOptions;
+    "COUNT" | "UNIQUE" | FetchRangeOptions;
 
 function validateFetchType(
     query: spi.QueryContract,

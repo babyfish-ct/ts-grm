@@ -105,17 +105,22 @@ export class MergedRootQueryImpl<
     async fetchRequired<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<RowTypeOf<TProjection, TNullAsUndefined>> {
-        const rows = await this.fetchRange({
-            ...options,
-            limit: 2
-        });
+        if (!this._sqlClient.isValidated) {
+            await this._sqlClient.validate();
+        }
+        const rows = await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            "UNIQUE",
+            this._sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
         switch (rows.length) {
             case 0:
-                throw new NoDataError(`"fetchRequired" does not accpet empty result set`);
+                throw new NoDataError(`"fetchRequired" does not accept empty result set`);
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchRequired" does not accept multiple rows`);
         }
     }
 
@@ -125,17 +130,22 @@ export class MergedRootQueryImpl<
         RowTypeOf<TProjection, TNullAsUndefined> 
         | TNullAsUndefined extends true ? undefined : null
     > {
-        const rows = await this.fetchRange({
-            ...options,
-            limit: 2
-        });
+        if (!this._sqlClient.isValidated) {
+            await this._sqlClient.validate();
+        }
+        const rows = await executeQuery(
+            this, 
+            options?.nullAsUndefined ?? false, 
+            "UNIQUE",
+            this._sqlClient.options.maxJoinFetchOffset
+        ) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
         switch (rows.length) {
             case 0:
                 return ((options?.nullAsUndefined ?? false) ? undefined : null) as any;
             case 1:
                 return rows[0] as any;
             default:
-                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchRequired" does not accept multiple rows`);
         }
     }
 
