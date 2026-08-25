@@ -21,6 +21,7 @@ import { __TargetMappings, __TargetMembersOf, __PropModelOf } from "./utils";
 
 export interface __CollectionMapping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
@@ -31,27 +32,27 @@ export interface __CollectionMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __CollectionMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
+    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 
     filter(
         filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
-    ): __CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 
     sort(
         ...orders: ReadonlyArray<ModelOrder<__PropModelOf<TModel, TMember>>>
-    ): __CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 
     limit(
         maxRows: number
-    ): __CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 }
 
 export type __CollectionDtoType<TMapping> =
-    TMapping extends __CollectionMapping<any, any, infer Key, any, infer Mappings>
+    TMapping extends __CollectionMapping<any, any, any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: Array<
                 __DtoType<Mappings>

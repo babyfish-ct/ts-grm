@@ -13,7 +13,7 @@
  */
 
 import { __UnionToIntersection } from "@/auxiliary_types";
-import { __DeclaredModelMembers, __DerivedModel, __ModelName, __ModelSuperNames } from "../model_internal_types";
+import { __DeclaredModelMembers, __DeclaringModelName, __DerivedModel, __ModelName, __ModelSuperNames } from "../model_internal_types";
 import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
 import { __SelfMappings } from "./utils";
 import { AnyModel, Model } from "../model";
@@ -30,6 +30,7 @@ export interface __InstanceOfContext<
         body: __DtoBody<TDerivedModel, TDtoKind, "DERIVED_ENTITY", __DeclaredModelMembers<TDerivedModel>, TMappings>
     ): __InstanceOfMappping<
         TModel,
+        __ModelName<TModel>,
         TDtoKind,
         TDerivedModel,
         TMappings
@@ -38,11 +39,13 @@ export interface __InstanceOfContext<
 
 export interface __InstanceOfMappping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TDerivedModel extends AnyModel,
     TMappings extends __SelfMappings<TDerivedModel>
 > {
     readonly __mappingType: "INSTANCE_OF";
+    readonly __declaring?: TDeclaring;
     readonly __model?: TModel;
     readonly __dtoKind?: TDtoKind;
     readonly __derivedModel?: TDerivedModel;
@@ -55,7 +58,7 @@ export type __ApplyInstanceOfMappings<
     THasInstanceOf extends boolean = false
 > = 
     TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
-        ? First extends __InstanceOfMappping<infer Model, any, infer DerivedModel, infer DerivedMappings>
+        ? First extends __InstanceOfMappping<infer Model, any, any, infer DerivedModel, infer DerivedMappings>
             ? __DerivedType<TPrevData, __DtoType<DerivedMappings>, Model, DerivedModel>
                 | __ApplyInstanceOfMappings<TPrevData, Rest, true>
             : __ApplyInstanceOfMappings<TPrevData, Rest, THasInstanceOf>

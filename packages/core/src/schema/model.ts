@@ -93,7 +93,7 @@ function modelCreator(): __ModelCreator<false> {
             TName, 
             __SuperIdKey<TSuperModel>, 
             TCtor, 
-            __MakeAllModelMembers<TCtor, TSuperModel>,
+            __MakeAllModelMembers<TName, TCtor, TSuperModel>,
             __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
             any
         > => {
@@ -105,7 +105,7 @@ function modelCreator(): __ModelCreator<false> {
                 TName, 
                 __SuperIdKey<TSuperModel>, 
                 TCtor, 
-                __MakeAllModelMembers<TCtor, TSuperModel>,
+                __MakeAllModelMembers<TName, TCtor, TSuperModel>,
                 __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
                 any
             >(
@@ -135,7 +135,7 @@ function modelCreator(): __ModelCreator<false> {
             TName, 
             __SuperIdKey<TSuperModel>, 
             TCtor, 
-            __MakeAllModelMembers<TCtor, TSuperModel>,
+            __MakeAllModelMembers<TName, TCtor, TSuperModel>,
             __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
             any
         > => {
@@ -147,7 +147,7 @@ function modelCreator(): __ModelCreator<false> {
                 TName, 
                 __SuperIdKey<TSuperModel>, 
                 TCtor, 
-                __MakeAllModelMembers<TCtor, TSuperModel>,
+                __MakeAllModelMembers<TName, TCtor, TSuperModel>,
                 __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
                 any
             >(

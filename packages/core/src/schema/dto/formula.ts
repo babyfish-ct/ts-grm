@@ -20,6 +20,7 @@ import { IsNull } from "@/dsl/utils";
 import { __NullityType } from "../prop_internal_types";
 import { __WithNullity } from "./utils";
 import { __ScalarLikeMapping } from "./scalar_like";
+import { __DeclaringModelName, __ModelName } from "../model_internal_types";
 
 export type __FormulaContext<
     TModel extends AnyModel,
@@ -62,6 +63,7 @@ export interface __FormulaCreator<
         >
     ): __ScalarLikeMapping<
         TModel,
+        __ModelName<TModel>,
         TDtoKind,
         TAlias,
         NonNullable<StandardSchemaV1.InferOutput<TValueType>>,
@@ -81,6 +83,7 @@ export interface __FormulaCreator<
         >
     ): __ScalarLikeMapping<
         TModel,
+        __ModelName<TModel>,
         TDtoKind,
         TAlias,
         NonNullable<StandardSchemaV1.InferOutput<TValueType>>,

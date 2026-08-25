@@ -13,6 +13,7 @@
  */
 
 import { AnyModel } from "../model";
+import { __DeclaringModelName } from "../model_internal_types";
 import { 
     __NullityType, 
     __ParameterizedCalculatedCollectionPropContract, 
@@ -51,6 +52,7 @@ export interface __ParameterizedContextImpl<
     ): TMembers[TKey & keyof TMembers] extends __ParameterizedCalculatedValuePropContract<any, infer Value, infer Nullity>
         ? __ScalarLikeMapping<
             TModel, 
+            __DeclaringModelName<TMembers[TKey & keyof TMembers]>,
             TDtoKind, 
             TKey & string, 
             Value, 
@@ -59,6 +61,7 @@ export interface __ParameterizedContextImpl<
     : TMembers[TKey & keyof TMembers] extends __ParameterizedCalculatedReferencePropContract<any, any, infer Nullity>
         ? __CalculatedReferenceMapping<
             TModel, 
+            __DeclaringModelName<TMembers[TKey & keyof TMembers]>,
             TDtoKind,
             TKey & string,
             TMembers[TKey & keyof TMembers],
@@ -68,6 +71,7 @@ export interface __ParameterizedContextImpl<
     : TMembers[TKey & keyof TMembers] extends __ParameterizedCalculatedCollectionPropContract<any, any>
         ? __CalculatedCollectionMapping<
             TModel, 
+            __DeclaringModelName<TMembers[TKey & keyof TMembers]>,
             TDtoKind,
             TKey & string,
             TMembers[TKey & keyof TMembers],
@@ -97,6 +101,7 @@ export type __ParameterMap<TMembers> = {
 
 export interface __CalculatedReferenceMapping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
@@ -108,15 +113,16 @@ export interface __CalculatedReferenceMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __CalculatedReferenceMapping<TModel, TDtoKind, TAlias, TMember, TMappings, TNullity>;
+    ): __CalculatedReferenceMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __CalculatedReferenceMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __CalculatedReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
 export interface __CalculatedCollectionMapping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
@@ -127,15 +133,15 @@ export interface __CalculatedCollectionMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __CalculatedCollectionMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
+    ): __CalculatedCollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __CalculatedCollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    ): __CalculatedCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 }
 
 export type __CalculatedReferenceDtoType<TMapping> =
-    TMapping extends __CalculatedReferenceMapping<any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+    TMapping extends __CalculatedReferenceMapping<any, any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
         ? {
             [K in Key]: __WithNullity<
                 __DtoType<Mappings>,
@@ -146,7 +152,7 @@ export type __CalculatedReferenceDtoType<TMapping> =
         : never;
 
 export type __CalculatedCollectionDtoType<TMapping> =
-    TMapping extends __CalculatedCollectionMapping<any, any, infer Key, any, infer Mappings>
+    TMapping extends __CalculatedCollectionMapping<any, any, any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: ReadonlyArray<
                 __DtoType<Mappings>

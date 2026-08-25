@@ -96,28 +96,33 @@ export type __DtoMapping<
 > = 
     __AllScalarsMapping<TModel, any, any, any> 
     | __FoldMapping<TModel, any, any, any>
-    | __FlatMapping<TModel, any, any, any, any, any>
-    | __InstanceOfMappping<TModel, any, any, any>
+    | __FlatMapping<TModel, any, any, any, any, any, any>
+    | __InstanceOfMappping<TModel, any, any, any, any>
     | __RecursiveMapping<TModel, any, any>
-    | __ScalarLikeMapping<TModel, any, any, any, any>
-    | __EmbeddedMapping<TModel, any, any, any, any>
-    | __ReferenceKeyMapping<TModel, any, any, any>
-    | __AssociatedKeysMapping<TModel, any, any, any>
-    | __ReferenceMapping<TModel, any, any, any, any, any>
-    | __CollectionMapping<TModel, any, any, any, any>
-    | __CalculatedReferenceMapping<TModel, any, any, any, any, any>
-    | __CalculatedCollectionMapping<TModel, any, any, any, any>;
+    | __ScalarLikeMapping<TModel, any, any, any, any, any>
+    | __EmbeddedMapping<TModel, any, any, any, any, any>
+    | __ReferenceKeyMapping<TModel, any, any, any, any>
+    | __AssociatedKeysMapping<TModel, any, any, any, any>
+    | __ReferenceMapping<TModel, any, any, any, any, any, any>
+    | __CollectionMapping<TModel, any, any, any, any, any>
+    | __CalculatedReferenceMapping<TModel, any, any, any, any, any, any>
+    | __CalculatedCollectionMapping<TModel, any, any, any, any, any>;
 
 export type __DtoType<
     TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 
     __ApplyRecursiveMappings<
-        __ApplyInstanceOfMappings<
-            __UnionToIntersection<{
-                [K in keyof TMappings]: __DtoMappingType<TMappings[K]>
-            }[number]>,
-            TMappings
-        >,
+        __UnrecursiveDtoType<TMappings>,
+        TMappings
+    >;
+
+export type __UnrecursiveDtoType<
+    TMappings extends ReadonlyArray<__DtoMapping<any>>
+> = 
+    __ApplyInstanceOfMappings<
+        __UnionToIntersection<{
+            [K in keyof TMappings]: __DtoMappingType<TMappings[K]>
+        }[number]>,
         TMappings
     >;
     

@@ -13,6 +13,7 @@
  */
 
 import { AnyModel } from "../model";
+import { __DeclaringModelName } from "../model_internal_types";
 import { 
     __CalculatedCollectionPropContract, 
     __CalculatedReferencePropContract, 
@@ -58,6 +59,7 @@ export type __DirectContext<
         __IsScalarLikeProp<TMembers[K], TDtoKind> extends true
             ? __ScalarLikeMapping<
                 TModel, 
+                __DeclaringModelName<TMembers[K]>,
                 TDtoKind,
                 K & string, 
                 __ScalarTypeOf<TMembers[K]>,
@@ -66,6 +68,7 @@ export type __DirectContext<
         : TMembers[K] extends __EmbeddedPropContract<any, any, any>
             ? __EmbeddedMapping<
                 TModel, 
+                __DeclaringModelName<TMembers[K]>,
                 TDtoKind,
                 K & string, 
                 TMembers[K], 
@@ -74,6 +77,7 @@ export type __DirectContext<
         : TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
             ? __ReferenceMapping<
                 TModel, 
+                __DeclaringModelName<TMembers[K]>,
                 TDtoKind,
                 K & string, 
                 TMembers[K],
@@ -83,6 +87,7 @@ export type __DirectContext<
         : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
             ? __CollectionMapping<
                 TModel, 
+                __DeclaringModelName<TMembers[K]>,
                 TDtoKind,
                 K & string, 
                 TMembers[K],
@@ -92,6 +97,7 @@ export type __DirectContext<
             ? __IfView<
                 __ScalarLikeMapping<
                     TModel, 
+                    __DeclaringModelName<TMembers[K]>,
                     TDtoKind,
                     K & string, 
                     Value, 
@@ -103,6 +109,7 @@ export type __DirectContext<
             ? __IfView<
                 __CalculatedReferenceMapping<
                     TModel, 
+                    __DeclaringModelName<TMembers[K]>,
                     TDtoKind,
                     K & string, 
                     TMembers[K],
@@ -115,6 +122,7 @@ export type __DirectContext<
             ? __IfView<
                 __CalculatedCollectionMapping<
                     TModel, 
+                    __DeclaringModelName<TMembers[K]>,
                     TDtoKind,
                     K & string, 
                     TMembers[K],

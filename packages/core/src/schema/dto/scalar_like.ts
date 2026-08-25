@@ -20,6 +20,7 @@ import { __WithNullity } from "./utils";
 
 export type __ScalarLikeMapping<
     TModel extends AnyModel, 
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TValue,
@@ -28,6 +29,7 @@ export type __ScalarLikeMapping<
     TDtoKind extends "INPUT"
         ? __InputScalarLikeMapping<
             TModel, 
+            TDeclaring,
             TDtoKind,
             TKey, 
             TValue,
@@ -35,6 +37,7 @@ export type __ScalarLikeMapping<
         >
         : __OutputScalarLikeMapping<
             TModel, 
+            TDeclaring,
             TDtoKind, 
             TKey, 
             TValue,
@@ -43,6 +46,7 @@ export type __ScalarLikeMapping<
 
 export interface __OutputScalarLikeMapping<
     TModel extends AnyModel, 
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TValue,
@@ -54,18 +58,19 @@ export interface __OutputScalarLikeMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __OutputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
+    ): __OutputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TAlias, TValue, TNullity>;
 
     mapOutput<TOutputSchema extends StandardSchemaV1>(
         schema: __RequiredSchema<TOutputSchema>,
         mapper: (
             value: TValue
         ) => StandardSchemaV1.InferOutput<TOutputSchema>
-    ): __OutputScalarLikeMapping<TModel, TDtoKind, TKey, StandardSchemaV1.InferOutput<TOutputSchema>, TNullity>;
+    ): __OutputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, StandardSchemaV1.InferOutput<TOutputSchema>, TNullity>;
 }
 
 export interface __InputScalarLikeMapping<
     TModel extends AnyModel, 
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TValue,
@@ -77,18 +82,18 @@ export interface __InputScalarLikeMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __InputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
+    ): __InputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TAlias, TValue, TNullity>;
 
     mapInput<TInputSchema extends StandardSchemaV1>(
         schema: __RequiredSchema<TInputSchema>,
         mapper: (
             value: StandardSchemaV1.InferOutput<TInputSchema>
         ) => TValue
-    ): __InputScalarLikeMapping<TModel, TDtoKind, TKey, StandardSchemaV1.InferOutput<TInputSchema>, TNullity>;
+    ): __InputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, StandardSchemaV1.InferOutput<TInputSchema>, TNullity>;
 }
 
 export type __ScalarLikeDtoType<TMapping> =
-    TMapping extends __ScalarLikeMapping<any, infer DtoKind, infer Key, infer Value, infer Nullity>
+    TMapping extends __ScalarLikeMapping<any, any, infer DtoKind, infer Key, infer Value, infer Nullity>
         ? {
             [K in Key]: __WithNullity<
                 Value,

@@ -19,6 +19,7 @@ import { __EmbeddedPropContract, __NullityOf, __NullityType, __ReferencePropCont
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity } from "./utils";
 import { ReferenceFetchType } from "./api";
+import { __DeclaringModelName } from "../model_internal_types";
 
 export interface __FlatContext<
     TModel extends AnyModel,
@@ -32,6 +33,7 @@ export interface __FlatContext<
     ): TMembers[TKey] extends __ReferencePropContract<any, any, any, any, any, any>
         ? __ReferenceFlatMapping<
             TModel,
+            __DeclaringModelName<TMembers[TKey]>,
             TDtoKind,
             TKey & string,
             TMembers[TKey],
@@ -40,6 +42,7 @@ export interface __FlatContext<
         >
         : __EmbeddedFlatMapping<
             TModel,
+            __DeclaringModelName<TMembers[TKey]>,
             TDtoKind,
             TKey & string,
             TMembers[TKey],
@@ -62,6 +65,7 @@ export type __FlatableKeys<TMembers> =
 
 export type __FlatMapping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
@@ -70,6 +74,7 @@ export type __FlatMapping<
 > = 
     __EmbeddedFlatMapping<
         TModel,
+        TDeclaring,
         TDtoKind,
         TKey,
         TMember,
@@ -78,6 +83,7 @@ export type __FlatMapping<
     > 
     | __ReferenceFlatMapping<
         TModel,
+        TDeclaring,
         TDtoKind,
         TKey,
         TMember,
@@ -88,6 +94,7 @@ export type __FlatMapping<
 
 export interface __EmbeddedFlatMapping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
@@ -100,15 +107,16 @@ export interface __EmbeddedFlatMapping<
     
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): __EmbeddedFlatMapping<TModel, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
+    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
-    ): __EmbeddedFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
 export interface __ReferenceFlatMapping<
     TModel extends AnyModel,
+    TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
@@ -121,23 +129,23 @@ export interface __ReferenceFlatMapping<
 
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): __ReferenceFlatMapping<TModel, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
+    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 
     filter(
         filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
-    ): __ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
+    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
 
     fetch(
         fetchType: ReferenceFetchType
-    ): __ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
 export type __FlatDtoType<TMapping> =
-    TMapping extends __FlatMapping<any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+    TMapping extends __FlatMapping<any, any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
         ? __Flat<
             __DtoType<Mappings>,
             Key,

@@ -1,4 +1,4 @@
-import { dto } from "@ts-grm/core";
+import { __AllModelMembers, dto } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
 import { CATEGORY, LIBRARY, TREE_NODE } from "../model/model";
 import { useSqliteClientWithData } from "../data_utils";
