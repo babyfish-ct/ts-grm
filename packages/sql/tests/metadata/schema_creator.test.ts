@@ -335,7 +335,7 @@ describe("SchemaCreatorTest", () => {
                         "name": "TYPE",
                         "type": "STR",
                         "nullable": false,
-                        "length": 12
+                        "length": 8
                     },
                     {
                         "name": "NAME",
@@ -360,8 +360,8 @@ describe("SchemaCreatorTest", () => {
                         "column": "TYPE",
                         "values": [
                             "TreeNode",
-                            "Organization",
-                            "Group"
+                            "Category",
+                            "Item"
                         ],
                         "implicit": "POLYMORPHISM"
                     },
@@ -381,7 +381,7 @@ describe("SchemaCreatorTest", () => {
                 ]
             },
             {
-                "name": "ORGANIZATION",
+                "name": "CATEGORY",
                 "columns": [
                     {
                         "name": "ID",
@@ -389,13 +389,7 @@ describe("SchemaCreatorTest", () => {
                         "nullable": false
                     },
                     {
-                        "name": "LOCATION",
-                        "type": "STR",
-                        "nullable": false,
-                        "length": 50
-                    },
-                    {
-                        "name": "KIND",
+                        "name": "MANAGER",
                         "type": "STR",
                         "nullable": false,
                         "length": 50
@@ -416,7 +410,7 @@ describe("SchemaCreatorTest", () => {
                 ]
             },
             {
-                "name": "\"GROUP\"",
+                "name": "ITEM",
                 "columns": [
                     {
                         "name": "ID",
@@ -424,10 +418,9 @@ describe("SchemaCreatorTest", () => {
                         "nullable": false
                     },
                     {
-                        "name": "EMAIL",
-                        "type": "STR",
-                        "nullable": false,
-                        "length": 50
+                        "name": "PRICE",
+                        "type": "NUM",
+                        "nullable": false
                     }
                 ],
                 "constraints": [
@@ -1020,7 +1013,7 @@ describe("SchemaCreatorTest", () => {
 
                 -- Implicit check constraint for polymorphism
                 constraint TREE_NODE_constraint_2
-                    check(TYPE in('TreeNode', 'Organization', 'Group')), 
+                    check(TYPE in('TreeNode', 'Category', 'Item')), 
 
                 constraint TREE_NODE_constraint_3
                     unique(PARENT_NODE_ID, NAME), 
@@ -1030,32 +1023,31 @@ describe("SchemaCreatorTest", () => {
                         references TREE_NODE(ID)
             );
 
-            -- Entity table for "Organization"
-            create table ORGANIZATION(
+            -- Entity table for "Category"
+            create table CATEGORY(
                 ID integer not null, 
-                LOCATION text not null, 
-                KIND text not null, 
+                MANAGER text not null, 
 
-                constraint ORGANIZATION_constraint_1
+                constraint CATEGORY_constraint_1
                     primary key(ID), 
 
                 -- Implicit foreign key constraint for inheritance
-                constraint ORGANIZATION_constraint_2
+                constraint CATEGORY_constraint_2
                     foreign key(ID)
                         references TREE_NODE(ID)
                             on delete cascade
             );
 
-            -- Entity table for "Group"
-            create table "GROUP"(
+            -- Entity table for "Item"
+            create table ITEM(
                 ID integer not null, 
-                EMAIL text not null, 
+                PRICE real not null, 
 
-                constraint GROUP_constraint_1
+                constraint ITEM_constraint_1
                     primary key(ID), 
 
                 -- Implicit foreign key constraint for inheritance
-                constraint GROUP_constraint_2
+                constraint ITEM_constraint_2
                     foreign key(ID)
                         references TREE_NODE(ID)
                             on delete cascade

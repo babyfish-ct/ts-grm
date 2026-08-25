@@ -28,7 +28,14 @@ export interface __ModelCreator<TAbstract extends boolean> {
         idKey: TIdKey,
         ctor: TCtor,
         configurator?: (ctx: __ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never, TAbstract>;
+    ): Model<
+        TName, 
+        TIdKey, 
+        TCtor, 
+        __CtorMembers<TCtor>, 
+        never, 
+        TAbstract
+    >;
 
     readonly abstract: __ModelCreator<true>;
 

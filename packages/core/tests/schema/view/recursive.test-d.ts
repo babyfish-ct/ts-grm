@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from "vitest";
-import { TREE_NODE } from "../../model/model";
+import { CATEGORY, TREE_NODE } from "../../model/model";
 import { dto, TypeOf } from "@/index";
 
 describe("RecursiveTest", () => {
@@ -77,6 +77,14 @@ describe("RecursiveTest", () => {
 
         make<ViewType>().upObj?.upObj?.upObj;
         make<ViewType>().downObjs![0]!.downObjs![0]!.downObjs![0];
+    });
+
+    it("drivedRoot", () => {
+        const view = dto.view(CATEGORY, c => [
+            c.name,
+            c.manager,
+            c.$recursive("childNodes")
+        ])
     });
 });
 

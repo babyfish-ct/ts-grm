@@ -111,7 +111,7 @@ export type __IsRecursiveProp<TModel extends AnyModel, TProp> =
             : false
         : false;
 
-export type ApplyRecursiveMappings<
+export type __ApplyRecursiveMappings<
     TPrevData,
     TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 

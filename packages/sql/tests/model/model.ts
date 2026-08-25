@@ -241,11 +241,10 @@ export const TREE_NODE = model(
     }
 );
 
-export const ORGANIZATION = model.extends(TREE_NODE)(
-    "Organization",
+export const CATEGORY = model.extends(TREE_NODE)(
+    "Category",
     class {
-        location = prop.str(50);
-        kind = prop.str(50);
+        manager = prop.str(50)
     },
     ctx => {
         ctx.table({
@@ -254,10 +253,10 @@ export const ORGANIZATION = model.extends(TREE_NODE)(
     }
 )
 
-export const GROUP = model.extends(TREE_NODE)(
-    "Group",
+export const ITEM = model.extends(TREE_NODE)(
+    "Item",
     class {
-        email = prop.str(50)
+        price = prop.num(10, 2)
     },
     ctx => {
         ctx.table({

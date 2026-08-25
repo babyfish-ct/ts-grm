@@ -1,5 +1,5 @@
 import { dsl } from "@ts-grm/core";
-import { AUTHOR, BOOK, BOOK_STORE, ELECTRONIC_BOOK, ORGANIZATION, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, CATEGORY, ELECTRONIC_BOOK, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, SIMPLE_TREE_NODE_VIEW } from "./utils";
 import { newSqlRecord } from "../utils";
@@ -728,7 +728,7 @@ describe("InheritanceBaseQuerySqlTest", () => {
     it("recursiveCteOfMultipleTables", async () => {
         const baseTreeNodeModel = dsl.cteModel(
             dsl.baseQuery(TREE_NODE, (q, treeNode) => {
-                q.where(treeNode.as(ORGANIZATION).location.eq("ChengDu"));
+                q.where(treeNode.as(CATEGORY).manager.eq("Sam"));
                 return q.select({
                     _: treeNode,
                     depth: dsl.constant(1)
@@ -738,7 +738,7 @@ describe("InheritanceBaseQuerySqlTest", () => {
                     return treeNode.parentNodeId.eq(prev._.id);
                 },
                 query: (q, treeNode) => {
-                    q.where(treeNode.as(ORGANIZATION).location.eq("ChengDu"));
+                    q.where(treeNode.as(CATEGORY).manager.eq("Tim"));
                     return q.select({
                         _: treeNode,
                         depth: q.prev.depth.plus(dsl.constant(1))
@@ -751,7 +751,7 @@ describe("InheritanceBaseQuerySqlTest", () => {
                 baseTreeNode.depth.lte(10),
                 dsl.or(
                     baseTreeNode._.name.like("org"),
-                    baseTreeNode._.as(ORGANIZATION).kind.eq("A")
+                    baseTreeNode._.as(CATEGORY).manager.like("S", "STARTS_WITH")
                 )
             );
             return q.select(
@@ -769,12 +769,12 @@ describe("InheritanceBaseQuerySqlTest", () => {
                             1,
                             tb_3_.TYPE
                         from TREE_NODE tb_3_
-                        left join ORGANIZATION tb_4_ on 
-                            tb_3_.TYPE = 'Organization'
+                        left join CATEGORY tb_4_ on 
+                            tb_3_.TYPE = 'Category'
                         and
                             tb_3_.ID = tb_4_.ID
                         where 
-                            tb_4_.LOCATION = ?
+                            tb_4_.MANAGER = ?
                         union all
                         select 
                             tb_5_.ID,
@@ -782,22 +782,22 @@ describe("InheritanceBaseQuerySqlTest", () => {
                             tb_1_.c3 + 1,
                             tb_5_.TYPE
                         from TREE_NODE tb_5_
-                        left join ORGANIZATION tb_6_ on 
-                            tb_5_.TYPE = 'Organization'
+                        left join CATEGORY tb_6_ on 
+                            tb_5_.TYPE = 'Category'
                         and
                             tb_5_.ID = tb_6_.ID
                         inner join tb_1_ on 
                             tb_5_.PARENT_NODE_ID = tb_1_.c1
                         where 
-                            tb_6_.LOCATION = ?
+                            tb_6_.MANAGER = ?
                     )
                 select 
                     tb_1_.c1,
                     tb_1_.c2,
                     tb_1_.c3
                 from tb_1_
-                left join ORGANIZATION tb_2_ on 
-                    tb_1_.c4 = 'Organization'
+                left join CATEGORY tb_2_ on 
+                    tb_1_.c4 = 'Category'
                 and
                     tb_1_.c1 = tb_2_.ID
                 where 
@@ -806,10 +806,10 @@ describe("InheritanceBaseQuerySqlTest", () => {
                         (
                             tb_1_.c2 like ?
                         or
-                            tb_2_.KIND = ?
+                            tb_2_.MANAGER like ?
                         )
             `,
-            args: ["ChengDu", "ChengDu", 10, "%org%", "A"],
+            args: ["Sam", "Tim", 10, "%org%", "S%"],
             purpose: "query"
         });
         expect(rows).toEqual([]);

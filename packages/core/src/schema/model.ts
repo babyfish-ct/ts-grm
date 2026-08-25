@@ -38,7 +38,14 @@ function modelCreator(): __ModelCreator<false> {
         idKey: TIdKey,
         ctor: TCtor,
         configurator?: (ctx: __ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never, any> {
+    ): Model<
+        TName, 
+        TIdKey, 
+        TCtor, 
+        __CtorMembers<TCtor>, 
+        never, 
+        any
+    > {
         const ctx = new ModelContextImpl<TCtor, never>();
         if (configurator != null) {
             configurator(ctx);
@@ -55,7 +62,14 @@ function modelCreator(): __ModelCreator<false> {
         idKey: TIdKey,
         ctor: TCtor,
         configurator?: (ctx: __ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never, any> {
+    ): Model<
+        TName, 
+        TIdKey, 
+        TCtor, 
+        __CtorMembers<TCtor>, 
+        never, 
+        any
+    > {
         const ctx = new ModelContextImpl<TCtor, never>();
         if (configurator != null) {
             configurator(ctx);

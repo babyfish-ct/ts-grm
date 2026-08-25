@@ -83,7 +83,7 @@ export function useOracleClient(
     const pool = new OraclePool({
         user: "system",
         password: "123456",
-        connectString: "192.168.101.9/FREEPDB1"
+        connectString: `${REMOTE_HOST}/FREEPDB1`
     });
     afterAll(() => {
         pool.close();
@@ -97,7 +97,7 @@ export function useOracle12Client(
     const pool = new OraclePool({
         user: "system",
         password: "123456",
-        connectString: "192.168.101.9/FREEPDB1"
+        connectString: `${REMOTE_HOST}/FREEPDB1`
     });
     afterAll(() => {
         pool.close();
@@ -111,7 +111,7 @@ export function useSqlServerClient(
     const pool = new SqlServerPool({
         user: "sa",
         password: "Sa@123456",
-        server: '192.168.101.9',
+        server: REMOTE_HOST,
         options: {
             encrypt: true,
             trustServerCertificate: true,
@@ -130,7 +130,7 @@ export function useSqlServer2012Client(
     const pool = new SqlServerPool({
         user: "sa",
         password: "Sa@123456",
-        server: '192.168.101.9',
+        server: REMOTE_HOST,
         options: {
             encrypt: true,
             trustServerCertificate: true,
@@ -317,3 +317,5 @@ function purposeString(purpose: Purpose): string {
             })`;
     }
 }
+
+const REMOTE_HOST = "192.168.101.3";

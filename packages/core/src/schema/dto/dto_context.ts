@@ -25,7 +25,7 @@ import { __ReferenceKeyContext, __ReferenceKeyDtoType, __ReferenceKeyMapping } f
 import { __ScalarLikeDtoType, __ScalarLikeMapping } from "./scalar_like";
 import { __DirectContext } from "./direct";
 import { __ApplyInstanceOfMappings, __InstanceOfContext, __InstanceOfMappping } from "./instance_of";
-import { ApplyRecursiveMappings, __RecursiveContext, __RecursiveMapping } from "./recursive";
+import { __ApplyRecursiveMappings, __RecursiveContext, __RecursiveMapping } from "./recursive";
 import { __CalculatedCollectionDtoType, __CalculatedCollectionMapping, __CalculatedReferenceDtoType, __CalculatedReferenceMapping, __ParameterizedContext } from "./calculator";
 import { __FormulaContext } from "./formula";
 
@@ -111,7 +111,7 @@ export type __DtoMapping<
 export type __DtoType<
     TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 
-    ApplyRecursiveMappings<
+    __ApplyRecursiveMappings<
         __ApplyInstanceOfMappings<
             __UnionToIntersection<{
                 [K in keyof TMappings]: __DtoMappingType<TMappings[K]>
