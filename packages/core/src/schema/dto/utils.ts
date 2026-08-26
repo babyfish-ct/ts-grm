@@ -77,3 +77,16 @@ export type __WithNullity<T, TNullity extends __NullityType, TDtoKind extends __
 export type __SelfMappings<
     TModel extends AnyModel, 
 > = ReadonlyArray<__DtoMapping<TModel>>;
+
+export type __IsFetchable<
+    TActualDeclaring extends string,
+    TDeclaringModelName extends string | undefined,
+    TSuperDeclaringModelNames extends string | undefined
+> = 
+    TDeclaringModelName extends undefined
+        ? true
+        : TActualDeclaring extends TDeclaringModelName
+            ? true
+            : TActualDeclaring extends TSuperDeclaringModelNames
+                ? true
+                : false;

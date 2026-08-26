@@ -32,7 +32,7 @@ export interface __ModelCreator<TAbstract extends boolean> {
         TName, 
         TIdKey, 
         TCtor, 
-        __Decl<TName, TCtor>, 
+        __Decl<TName, TCtor, undefined>, 
         never, 
         TAbstract
     >;
@@ -125,23 +125,29 @@ export type __AllModelMembers<TModel extends AnyModel> =
         : never;
 
 export type __DeclaringModelName<TProp> =
-    TProp extends __DeclaringArware<infer DeclaringModelName>
+    TProp extends __DeclaringArware<infer DeclaringModelName, any>
         ? DeclaringModelName
+        : never;
+
+export type __SuperDeclaringModelNames<TProp> =
+    TProp extends __DeclaringArware<any, infer SuperDeclaringModelNames>
+        ? SuperDeclaringModelNames
         : never;
 
 export type __MakeAllModelMembers<TName extends string, TCtor extends __Ctor, TSuperModel extends AnyModel | undefined> =
     TSuperModel extends undefined 
-        ? __Decl<TName, TCtor>
-        : TSuperModel extends Model<any, any, any, infer SuperMembers, any, any>
+        ? __Decl<TName, TCtor, undefined>
+        : TSuperModel extends Model<any, any, any, infer SuperMembers, infer SuperNames, any>
             ? __All<
                 SuperMembers, 
-                __Decl<TName, TCtor>
+                __Decl<TName, TCtor, SuperNames>
             >
             : never;
 
-export type __Decl<TName extends string, TCtor extends __Ctor> =
+export type __Decl<TName extends string, TCtor extends __Ctor, TSuperModelNames extends string | undefined> =
     { 
-        readonly [K in keyof __CtorMembers<TCtor>]: __CtorMembers<TCtor>[K] & __DeclaringArware<TName>
+        readonly [K in keyof __CtorMembers<TCtor>]: __CtorMembers<TCtor>[K] & 
+            __DeclaringArware<TName, TSuperModelNames>
     };
 
 type __All<Map1, Map2> = 
@@ -156,9 +162,12 @@ type __All<Map1, Map2> =
 export type __CtorMembers<TCtor extends __Ctor> =
     TCtor["prototype"];
 
-export interface __DeclaringArware<TDeclaringModelName extends string> {
-
+export interface __DeclaringArware<
+    TDeclaringModelName extends string,
+    TSuperModelNames extends string | undefined
+> {
     readonly declaringModelName: TDeclaringModelName;
+    readonly superModelName: TSuperModelNames;
 }
 
 export type __OneToOneMappedByKeys<TModel extends AnyModel> =

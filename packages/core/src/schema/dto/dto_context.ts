@@ -98,7 +98,7 @@ export type __DtoMapping<
     | __FoldMapping<TModel, any, any, any>
     | __FlatMapping<TModel, any, any, any, any, any, any>
     | __InstanceOfMappping<TModel, any, any, any, any>
-    | __RecursiveMapping<TModel, any, any>
+    | __RecursiveMapping<TModel, any, any, any, any>
     | __ScalarLikeMapping<TModel, any, any, any, any, any>
     | __EmbeddedMapping<TModel, any, any, any, any, any>
     | __ReferenceKeyMapping<TModel, any, any, any, any>
@@ -112,25 +112,33 @@ export type __DtoType<
     TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 
     __ApplyRecursiveMappings<
-        __UnrecursiveDtoType<TMappings>,
+        __UnrecursiveDtoType<TMappings, undefined, undefined>,
         TMappings
     >;
 
 export type __UnrecursiveDtoType<
-    TMappings extends ReadonlyArray<__DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMapping<any>>,
+    TDeclaringModelName extends string | undefined,
+    TSuperDeclaringModelNames extends string | undefined
 > = 
     __ApplyInstanceOfMappings<
         __UnionToIntersection<{
-            [K in keyof TMappings]: __DtoMappingType<TMappings[K]>
+            [K in keyof TMappings]: __DtoMappingType<
+                TMappings[K], 
+                TDeclaringModelName, 
+                TSuperDeclaringModelNames
+            >
         }[number]>,
         TMappings
     >;
     
 export type __DtoMappingType<
-    TMapping extends __DtoMapping<any>
+    TMapping extends __DtoMapping<any>,
+    TDeclaringModelName extends string | undefined,
+    TSuperDeclaringModelNames extends string | undefined
 > =
     TMapping["__mappingType"] extends "SCALAR_LIKE"
-        ? __ScalarLikeDtoType<TMapping>
+        ? __ScalarLikeDtoType<TMapping, TDeclaringModelName, TSuperDeclaringModelNames>
     : TMapping["__mappingType"] extends "ALL_SCALARS"
         ? __AllScalarsDtoType<TMapping>
     : TMapping["__mappingType"] extends "EMBEDDED"

@@ -16,7 +16,7 @@ import { StandardSchemaV1 } from "@standard-schema/spec";
 import { AnyModel } from "../model";
 import { __DtoKind } from "./dto_context";
 import { __NullityType } from "../prop_internal_types";
-import { __WithNullity } from "./utils";
+import { __IsFetchable, __WithNullity } from "./utils";
 
 export type __ScalarLikeMapping<
     TModel extends AnyModel, 
@@ -92,15 +92,21 @@ export interface __InputScalarLikeMapping<
     ): __InputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, StandardSchemaV1.InferOutput<TInputSchema>, TNullity>;
 }
 
-export type __ScalarLikeDtoType<TMapping> =
-    TMapping extends __ScalarLikeMapping<any, any, infer DtoKind, infer Key, infer Value, infer Nullity>
-        ? {
-            [K in Key]: __WithNullity<
-                Value,
-                Nullity,
-                DtoKind
-            >;
-        }
+export type __ScalarLikeDtoType<
+    TMapping,
+    TDeclaringModelName extends string | undefined,
+    TSuperDeclaringModelNames extends string | undefined
+> =
+    TMapping extends __ScalarLikeMapping<any, infer Declaring, infer DtoKind, infer Key, infer Value, infer Nullity>
+        ? __IsFetchable<Declaring, TDeclaringModelName, TSuperDeclaringModelNames> extends true
+            ? {
+                [K in Key]: __WithNullity<
+                    Value,
+                    Nullity,
+                    DtoKind
+                >;
+            }
+            : never
         : never;
 
 type __RequiredSchema<
