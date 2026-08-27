@@ -22,7 +22,7 @@ import {
 } from "../prop_internal_types";
 import { __DtoBody, __DtoKind, __DtoType } from "./dto_context";
 import { __ScalarLikeMapping } from "./scalar_like";
-import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity } from "./utils";
+import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 
 export type __ParameterizedContext<
     TModel extends AnyModel,
@@ -140,22 +140,30 @@ export interface __CalculatedCollectionMapping<
     ): __CalculatedCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 }
 
-export type __CalculatedReferenceDtoType<TMapping> =
-    TMapping extends __CalculatedReferenceMapping<any, any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
-        ? {
-            [K in Key]: __WithNullity<
-                __DtoType<Mappings>,
-                Nullity,
-                DtoKind
-            >
-        }
+export type __CalculatedReferenceDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
+    TMapping extends __CalculatedReferenceMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: __WithNullity<
+                    __DtoType<Mappings, undefined>,
+                    Nullity,
+                    DtoKind
+                >
+            }
+            : never
         : never;
 
-export type __CalculatedCollectionDtoType<TMapping> =
-    TMapping extends __CalculatedCollectionMapping<any, any, any, infer Key, any, infer Mappings>
-        ? {
-            [K in Key]: ReadonlyArray<
-                __DtoType<Mappings>
-            >
-        }
+export type __CalculatedCollectionDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
+    TMapping extends __CalculatedCollectionMapping<any, infer Declaring, any, infer Key, any, infer Mappings>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: ReadonlyArray<__DtoType<Mappings, undefined>>
+            }
+            : never
         : never;

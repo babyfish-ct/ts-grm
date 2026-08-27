@@ -17,7 +17,7 @@ import { EntityTable } from "@/dsl/table";
 import { AnyModel } from "../model";
 import { __EmbeddedPropContract, __NullityOf, __NullityType, __ReferencePropContract } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
-import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity } from "./utils";
+import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
 import { __DeclaringModelName } from "../model_internal_types";
 
@@ -144,14 +144,19 @@ export interface __ReferenceFlatMapping<
     ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
-export type __FlatDtoType<TMapping> =
-    TMapping extends __FlatMapping<any, any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
-        ? __Flat<
-            __DtoType<Mappings>,
-            Key,
-            Nullity,
-            DtoKind
-        >
+export type __FlatDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
+    TMapping extends __FlatMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? __Flat<
+                __DtoType<Mappings, undefined>,
+                Key,
+                Nullity,
+                DtoKind
+            >
+            : never
         : never;
 
 export type __Flat<

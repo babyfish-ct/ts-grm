@@ -17,7 +17,7 @@ import { Predicate } from "@/dsl/expression";
 import { AnyModel } from "../model";
 import { __NullityType } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind} from "./dto_context";
-import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity } from "./utils";
+import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
 
 export interface __ReferenceMapping<
@@ -49,14 +49,19 @@ export interface __ReferenceMapping<
     ): __ReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
-export type __ReferenceDtoType<TMapping> =
-    TMapping extends __ReferenceMapping<any, any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
-        ? { 
-            [K in Key]: 
-                __WithNullity<
-                    __DtoType<Mappings>,
-                    Nullity,
-                    DtoKind
-                >
-        }
+export type __ReferenceDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
+    TMapping extends __ReferenceMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? { 
+                [K in Key]: 
+                    __WithNullity<
+                        __DtoType<Mappings, undefined>,
+                        Nullity,
+                        DtoKind
+                    >
+            }
+            : never
         : never;

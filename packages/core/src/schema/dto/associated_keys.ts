@@ -18,7 +18,7 @@ import { __CollectionPropContract, __EmbeddedPropContract } from "../prop_intern
 import { __AllScalarsMapping, __MemberType } from "./all_scalars";
 import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
 import { __TargetKeyMembersOf, __TargetKeyPropOf } from "./reference_key";
-import { __PropModelOf, __TargetMappings } from "./utils";
+import { __IsAllowed, __PropModelOf, __TargetMappings } from "./utils";
 
 export interface __AssociatedKeysContext<
     TModel extends AnyModel,
@@ -114,20 +114,27 @@ export interface __EmbeddedAssociatedKeysMapping<
     ): __EmbeddedAssociatedKeysMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 }
 
-export type __AssociatedKeysDtoType<TMapping> = 
-    TMapping extends __ScalarAssociatedKeysMapping<any, any, infer DtoKind, infer Key, infer Member>
-        ? {
-            [K in Key]: Member extends __CollectionPropContract<infer TargetModel, any, any, any, infer TargetKey>
-                ? ReadonlyArray<
-                    __MemberType<
-                        __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>], 
-                        DtoKind
+export type __AssociatedKeysDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> = 
+    TMapping extends __ScalarAssociatedKeysMapping<any, infer Declaring, infer DtoKind, infer Key, infer Member>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: Member extends __CollectionPropContract<infer TargetModel, any, any, any, infer TargetKey>
+                    ? ReadonlyArray<
+                        __MemberType<
+                            __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>], 
+                            DtoKind
+                        >
                     >
-                >
-                : never
-        }
-    : TMapping extends __EmbeddedAssociatedKeysMapping<any, any, any, infer Key, any, infer Mappings>
-        ? {
-            [K in Key]: ReadonlyArray<__DtoType<Mappings>>
-        }
+                    : never
+            }
+        : never
+    : TMapping extends __EmbeddedAssociatedKeysMapping<any, infer Declaring, any, infer Key, any, infer Mappings>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: ReadonlyArray<__DtoType<Mappings, undefined>>
+            }
+            : never
     : never;

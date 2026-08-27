@@ -152,7 +152,7 @@ export type __WithRecursiveMappings<
                 infer Key
             >
                 ? __WithRecursiveReference<
-                    __UnrecursiveDtoType<TOriginalMappings, Declaring, SuperDeclarings>, 
+                    __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings>, 
                     DtoKind, 
                     Key
                 > & __WithRecursiveMappings<TPrevData, Rest, TOriginalMappings>
@@ -165,7 +165,7 @@ export type __WithRecursiveMappings<
                 infer HasDepth
             >
                 ? __WithRecursiveCollection<
-                    __UnrecursiveDtoType<TOriginalMappings, Declaring, SuperDeclarings>, 
+                    __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings>, 
                     DtoKind, 
                     Key, 
                     HasDepth

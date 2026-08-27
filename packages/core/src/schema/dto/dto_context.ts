@@ -109,54 +109,49 @@ export type __DtoMapping<
     | __CalculatedCollectionMapping<TModel, any, any, any, any, any>;
 
 export type __DtoType<
-    TMappings extends ReadonlyArray<__DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMapping<any>>,
+    TAllowedDeclarings extends string | undefined
 > = 
     __ApplyRecursiveMappings<
-        __UnrecursiveDtoType<TMappings, undefined, undefined>,
+        __UnrecursiveDtoType<TMappings, TAllowedDeclarings>,
         TMappings
     >;
 
 export type __UnrecursiveDtoType<
     TMappings extends ReadonlyArray<__DtoMapping<any>>,
-    TDeclaringModelName extends string | undefined,
-    TSuperDeclaringModelNames extends string | undefined
+    TAllowedDeclarings extends string | undefined
 > = 
     __ApplyInstanceOfMappings<
         __UnionToIntersection<{
-            [K in keyof TMappings]: __DtoMappingType<
-                TMappings[K], 
-                TDeclaringModelName, 
-                TSuperDeclaringModelNames
-            >
+            [K in keyof TMappings]: __DtoMappingType<TMappings[K], TAllowedDeclarings>
         }[number]>,
         TMappings
     >;
     
 export type __DtoMappingType<
     TMapping extends __DtoMapping<any>,
-    TDeclaringModelName extends string | undefined,
-    TSuperDeclaringModelNames extends string | undefined
+    TAllowedDeclarings extends string | undefined
 > =
     TMapping["__mappingType"] extends "SCALAR_LIKE"
-        ? __ScalarLikeDtoType<TMapping, TDeclaringModelName, TSuperDeclaringModelNames>
+        ? __ScalarLikeDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "ALL_SCALARS"
-        ? __AllScalarsDtoType<TMapping>
+        ? __AllScalarsDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "EMBEDDED"
-        ? __EmbeddedDtoType<TMapping>
+        ? __EmbeddedDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "REFERENCE"
-        ? __ReferenceDtoType<TMapping>
+        ? __ReferenceDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? __CollectionDtoType<TMapping>
+        ? __CollectionDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "REFERENCE_KEY"
-        ? __ReferenceKeyDtoType<TMapping>
+        ? __ReferenceKeyDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "ASSOCIATED_KEYS"
-        ? __AssociatedKeysDtoType<TMapping>
+        ? __AssociatedKeysDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "FOLD"
-        ? __FoldDtoType<TMapping>
+        ? __FoldDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "FLAT"
-        ? __FlatDtoType<TMapping>
+        ? __FlatDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "CALCULATED_REFERENCE"
-        ? __CalculatedReferenceDtoType<TMapping>
+        ? __CalculatedReferenceDtoType<TMapping, TAllowedDeclarings>
     : TMapping["__mappingType"] extends "CALCULATED_COLLECTION"
-        ? __CalculatedCollectionDtoType<TMapping>
+        ? __CalculatedCollectionDtoType<TMapping, TAllowedDeclarings>
     : never;

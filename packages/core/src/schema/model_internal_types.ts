@@ -32,7 +32,7 @@ export interface __ModelCreator<TAbstract extends boolean> {
         TName, 
         TIdKey, 
         TCtor, 
-        __Decl<TName, TCtor, undefined>, 
+        __Decl<TName, TCtor, never>, 
         never, 
         TAbstract
     >;
@@ -135,8 +135,8 @@ export type __SuperDeclaringModelNames<TProp> =
         : never;
 
 export type __MakeAllModelMembers<TName extends string, TCtor extends __Ctor, TSuperModel extends AnyModel | undefined> =
-    TSuperModel extends undefined 
-        ? __Decl<TName, TCtor, undefined>
+    TSuperModel extends never 
+        ? __Decl<TName, TCtor, never>
         : TSuperModel extends Model<any, any, any, infer SuperMembers, infer SuperNames, any>
             ? __All<
                 SuperMembers, 
@@ -144,11 +144,34 @@ export type __MakeAllModelMembers<TName extends string, TCtor extends __Ctor, TS
             >
             : never;
 
-export type __Decl<TName extends string, TCtor extends __Ctor, TSuperModelNames extends string | undefined> =
+export type __Decl<TName extends string, TCtor extends __Ctor, TSuperModelNames extends string | never> =
     { 
-        readonly [K in keyof __CtorMembers<TCtor>]: __CtorMembers<TCtor>[K] & 
-            __DeclaringArware<TName, TSuperModelNames>
+        readonly [K in keyof __CtorMembers<TCtor>]: 
+            __MakeDeclaringArware<
+                __CtorMembers<TCtor>[K],
+                TName, 
+                TSuperModelNames
+            >
     };
+
+export type __MakeDeclaringArware<
+    TProp, 
+    TDeclaring extends string, 
+    TSuperDeclaringModelNames extends string | never
+> =
+    TProp extends __EmbeddedPropContract<infer Props, infer Nullity, infer FlattenProps>
+        ? __EmbeddedPropContract<
+            {
+                readonly [K in keyof Props]: __MakeDeclaringArware<
+                    Props[K], 
+                    TDeclaring, 
+                    TSuperDeclaringModelNames
+                >
+            },
+            Nullity,
+            FlattenProps
+        > & __DeclaringArware<TDeclaring, TSuperDeclaringModelNames>
+        : TProp & __DeclaringArware<TDeclaring, TSuperDeclaringModelNames>;
 
 type __All<Map1, Map2> = 
     {
@@ -164,7 +187,7 @@ export type __CtorMembers<TCtor extends __Ctor> =
 
 export interface __DeclaringArware<
     TDeclaringModelName extends string,
-    TSuperModelNames extends string | undefined
+    TSuperModelNames extends string | never
 > {
     readonly declaringModelName: TDeclaringModelName;
     readonly superModelName: TSuperModelNames;

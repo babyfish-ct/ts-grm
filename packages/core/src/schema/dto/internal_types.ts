@@ -46,7 +46,7 @@ export type __ViewCreator = {
         fn: __DtoBody<TModel, "NULL_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
     ): View<
         TModel, 
-        __Prettify<__DtoType<TMappings>>
+        __Prettify<__DtoType<TMappings, undefined>>
     >;
 
     nullAsUndefined<
@@ -59,7 +59,7 @@ export type __ViewCreator = {
         fn: __DtoBody<TModel, "UNDEFINED_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
     ): View<
         TModel, 
-        __Prettify<__DtoType<TMappings>>
+        __Prettify<__DtoType<TMappings, undefined>>
     >;
 };
 

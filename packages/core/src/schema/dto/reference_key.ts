@@ -18,7 +18,7 @@ import { __TargetKeyOf } from "../prop_internal_types";
 import { __EmbeddedPropContract, __ReferencePropContract } from "../prop_internal_types";
 import { __AllScalarsMapping, __MemberType } from "./all_scalars";
 import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
-import { __TargetMappings, __PropModelOf, __WithNullity } from "./utils";
+import { __TargetMappings, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 
 export type __ReferenceKeyContext<
     TModel extends AnyModel,
@@ -128,29 +128,36 @@ export type __TargetKeyMembersOf<
         ? Props
         : never;
 
-export type __ReferenceKeyDtoType<TMapping> =
-    TMapping extends __ScalarReferenceKeyMapping<any, any, infer DtoKind, infer Key, infer Member>
-        ? {
-            [K in Key]: Member extends __ReferencePropContract<infer TargetModel, infer Nullity, any, any, any, infer TargetKey>
-                ? __WithNullity<
-                    __MemberType<
-                        __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>], 
+export type __ReferenceKeyDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
+    TMapping extends __ScalarReferenceKeyMapping<any, infer Declaring, infer DtoKind, infer Key, infer Member>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: Member extends __ReferencePropContract<infer TargetModel, infer Nullity, any, any, any, infer TargetKey>
+                    ? __WithNullity<
+                        __MemberType<
+                            __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>], 
+                            DtoKind
+                        >,
+                        Nullity,
                         DtoKind
-                    >,
-                    Nullity,
-                    DtoKind
-                >
-                : never
-        }
-    : TMapping extends __EmbeddedReferenceKeyMapping<any, any, infer DtoKind, infer Key, infer Member, infer Mappings>
-        ? {
-            [K in Key]: Member extends __ReferencePropContract<any, infer Nullity, any, any, any, any>
-                ? __WithNullity<
-                    __DtoType<Mappings>,
-                    Nullity,
-                    DtoKind
-                >
-                : never
-        }
+                    >
+                    : never
+            }
+            : never
+    : TMapping extends __EmbeddedReferenceKeyMapping<any, infer Declaring, infer DtoKind, infer Key, infer Member, infer Mappings>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: Member extends __ReferencePropContract<any, infer Nullity, any, any, any, any>
+                    ? __WithNullity<
+                        __DtoType<Mappings, undefined>,
+                        Nullity,
+                        DtoKind
+                    >
+                    : never
+            }
+            : never
         : never;
 

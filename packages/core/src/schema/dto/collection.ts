@@ -17,7 +17,7 @@ import { Predicate } from "@/dsl/expression";
 import { AnyModel } from "../model";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
-import { __TargetMappings, __TargetMembersOf, __PropModelOf } from "./utils";
+import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
 
 export interface __CollectionMapping<
     TModel extends AnyModel,
@@ -51,11 +51,14 @@ export interface __CollectionMapping<
     ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 }
 
-export type __CollectionDtoType<TMapping> =
-    TMapping extends __CollectionMapping<any, any, any, infer Key, any, infer Mappings>
-        ? {
-            [K in Key]: Array<
-                __DtoType<Mappings>
-            >
-        }
+export type __CollectionDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
+    TMapping extends __CollectionMapping<any, infer Declaring, any, infer Key, any, infer Mappings>
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+            ? {
+                [K in Key]: Array<__DtoType<Mappings, undefined>>
+            }
+            : never
         : never

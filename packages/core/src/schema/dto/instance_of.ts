@@ -59,7 +59,7 @@ export type __ApplyInstanceOfMappings<
 > = 
     TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
         ? First extends __InstanceOfMappping<infer Model, any, any, infer DerivedModel, infer DerivedMappings>
-            ? __DerivedType<TPrevData, __DtoType<DerivedMappings>, Model, DerivedModel>
+            ? __DerivedType<TPrevData, __DtoType<DerivedMappings, undefined>, Model, DerivedModel>
                 | __ApplyInstanceOfMappings<TPrevData, Rest, true>
             : __ApplyInstanceOfMappings<TPrevData, Rest, THasInstanceOf>
         : THasInstanceOf extends true

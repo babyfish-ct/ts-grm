@@ -16,7 +16,8 @@ import { AtLeastOne } from "@/dsl/utils";
 import { AnyModel } from "../model";
 import { __EmbeddedPropContract, __ScalarPropContract } from "../prop_internal_types";
 import { __DtoKind } from "./dto_context";
-import { __WithNullity } from "./utils";
+import { __IsAllowed, __WithNullity } from "./utils";
+import { __DeclaringModelName } from "../model_internal_types";
 
 export type __AllScalarsContext<
     TModel extends AnyModel,
@@ -58,14 +59,19 @@ type __ScalarKeys<TMembers> =
         ]: never
     } & string;
 
-export type __AllScalarsDtoType<TMapping> =
+export type __AllScalarsDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
     TMapping extends __AllScalarsMapping<any, infer DtoKind, infer Members, infer ExcludedKeys>
         ? { 
             [
                 K in __ScalarKeys<Members> as 
                     K extends ExcludedKeys
                         ? never
-                        : K
+                        : __IsAllowed<__DeclaringModelName<Members[K]>, TAllowedDeclarings> extends true
+                            ? K
+                            : never
             ]: 
             __MemberType<Members[K], DtoKind> 
         }

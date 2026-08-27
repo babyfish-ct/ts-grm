@@ -78,15 +78,12 @@ export type __SelfMappings<
     TModel extends AnyModel, 
 > = ReadonlyArray<__DtoMapping<TModel>>;
 
-export type __IsFetchable<
-    TActualDeclaring extends string,
-    TDeclaringModelName extends string | undefined,
-    TSuperDeclaringModelNames extends string | undefined
-> = 
-    TDeclaringModelName extends undefined
+export type __IsAllowed<
+    TDeclaring extends any,
+    TAllowedDeclarings extends string | undefined
+> =
+    TAllowedDeclarings extends undefined
         ? true
-        : TActualDeclaring extends TDeclaringModelName
+        : TDeclaring extends TAllowedDeclarings
             ? true
-            : TActualDeclaring extends TSuperDeclaringModelNames
-                ? true
-                : false;
+            : false;

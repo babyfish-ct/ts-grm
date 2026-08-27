@@ -58,7 +58,7 @@ function newView<
     fn: __DtoBody<TModel, "NULL_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    __Prettify<__DtoType<TMappings>>
+    __Prettify<__DtoType<TMappings, undefined>>
 > {
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, false) as any;
@@ -77,7 +77,7 @@ function newViewByNullAsUndefined<
     fn: __DtoBody<TModel, "UNDEFINED_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    __Prettify<__DtoType<TMappings>>
+    __Prettify<__DtoType<TMappings, undefined>>
 > {
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, false) as any;

@@ -16,7 +16,7 @@ import { StandardSchemaV1 } from "@standard-schema/spec";
 import { AnyModel } from "../model";
 import { __DtoKind } from "./dto_context";
 import { __NullityType } from "../prop_internal_types";
-import { __IsFetchable, __WithNullity } from "./utils";
+import { __WithNullity, __IsAllowed } from "./utils";
 
 export type __ScalarLikeMapping<
     TModel extends AnyModel, 
@@ -94,11 +94,10 @@ export interface __InputScalarLikeMapping<
 
 export type __ScalarLikeDtoType<
     TMapping,
-    TDeclaringModelName extends string | undefined,
-    TSuperDeclaringModelNames extends string | undefined
+    TAllowedDeclarings extends string | undefined
 > =
     TMapping extends __ScalarLikeMapping<any, infer Declaring, infer DtoKind, infer Key, infer Value, infer Nullity>
-        ? __IsFetchable<Declaring, TDeclaringModelName, TSuperDeclaringModelNames> extends true
+        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? {
                 [K in Key]: __WithNullity<
                     Value,

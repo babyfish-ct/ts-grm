@@ -46,7 +46,10 @@ export interface __FoldMapping<
     readonly __mappings?: TMappings;
 }
 
-export type __FoldDtoType<TMapping> =
+export type __FoldDtoType<
+    TMapping,
+    TAllowedDeclarings extends string | undefined
+> =
     TMapping extends __FoldMapping<any, any, infer Name, infer Mappings>
-        ? { [K in Name]: __DtoType<Mappings> }
+        ? { [K in Name]: __DtoType<Mappings, TAllowedDeclarings> }
         : never;

@@ -79,12 +79,39 @@ describe("RecursiveTest", () => {
         }>();
     });
 
-    it("drivedRoot", () => {
+    it("drivedRootWithExplicitProps", () => {
         const view = dto.view(CATEGORY, c => {
             return [
                 c.id,
                 c.name,
                 c.manager,
+                c.$recursive("parentNode"),
+                c.$recursive("childNodes")
+            ]
+        });
+        type ParentNodeBody = {
+            id: number;
+            name: string;
+            parentNode: ParentNodeBody | null;
+        };
+        type ChildNodeBody = {
+            id: number;
+            name: string;
+            childNodes: Array<ChildNodeBody>;
+        };
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            id: number;
+            name: string;
+            manager: string;
+            parentNode: ParentNodeBody | null;
+            childNodes: Array<ChildNodeBody>;
+        }>();
+    });
+
+    it("drivedRootWithAllScalars", () => {
+        const view = dto.view(CATEGORY, c => {
+            return [
+                c.$allScalars,
                 c.$recursive("parentNode"),
                 c.$recursive("childNodes")
             ]

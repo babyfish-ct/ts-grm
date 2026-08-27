@@ -105,7 +105,7 @@ export interface __TsFormulaMappingOptions<
     readonly alias: TAlias;
     readonly valueType: TValueType;
     readonly dependency: __DtoBody<TModel, TDtoKind, TContextKind, TMembers, TMappings>;
-    readonly fn: TsFormulaFn<__DtoType<TMappings>, StandardSchemaV1.InferOutput<TValueType>>;
+    readonly fn: TsFormulaFn<__DtoType<TMappings, undefined>, StandardSchemaV1.InferOutput<TValueType>>;
 }
 
 export interface __SqlFormulaMappingOptions<
