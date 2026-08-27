@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from "vitest";
-import { CATEGORY, TREE_NODE } from "../../model/model";
+import { CATEGORY, ITEM, TREE_NODE } from "../../model/model";
 import { __AllModelMembers, __DtoMapping, __DtoType, __UnionToIntersection, __UnrecursiveDtoType, dto, TypeOf } from "@/index";
 
 describe("RecursiveTest", () => {
@@ -108,7 +108,65 @@ describe("RecursiveTest", () => {
         }>();
     });
 
-    it("drivedRootWithAllScalars", () => {
+    it("recursiveWithPolymorphism", () => {
+        const view = dto.view(TREE_NODE, c => [
+            c.id,
+            c.name,
+            c.$instanceOf(CATEGORY, c => [
+                c.manager
+            ]),
+            c.$instanceOf(ITEM, c => [
+                c.price
+            ]),
+            c.$recursive("parentNode"),
+            c.$recursive("childNodes").sort("name")
+        ]);
+        type ParentNodeBody = {
+            __typename: "Category";
+            id: number;
+            name: string;
+            manager: string;
+            parentNode: ParentNodeBody | null;
+        } | {
+            __typename: "Item";
+            id: number;
+            name: string;
+            price: number;
+            parentNode: ParentNodeBody | null;
+        };
+        type ChildNodeBody = {
+            __typename: "Category";
+            id: number;
+            name: string;
+            manager: string;
+            childNodes: Array<ChildNodeBody>;
+        } | {
+            __typename: "Item";
+            id: number;
+            name: string;
+            price: number;
+            childNodes: Array<ChildNodeBody>;
+        };
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<
+            {
+                __typename: "Category";
+                id: number;
+                name: string;
+                manager: string;
+                parentNode: ParentNodeBody | null;
+                childNodes: Array<ChildNodeBody>;
+            } | {
+                __typename: "Item";
+                id: number;
+                name: string;
+                price: number;
+                parentNode: ParentNodeBody | null;
+                childNodes: Array<ChildNodeBody>;
+            }
+        >();
+    });
+
+    it("recusiveWithDrivedRootWithAllScalars", () => {
         const view = dto.view(CATEGORY, c => {
             return [
                 c.$allScalars,

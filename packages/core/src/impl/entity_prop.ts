@@ -160,6 +160,10 @@ export class EntityProp {
         this._targetKeyProp = undefined;
     }
 
+    get isIdProp(): boolean {
+        return this.declaringEntity.idProp === this;
+    }
+
     get isEntityProp(): true {
         return true;
     }

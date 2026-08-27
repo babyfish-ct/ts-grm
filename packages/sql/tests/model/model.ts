@@ -223,7 +223,7 @@ export const AUTHOR = model("Author", "id", class {
     })
 });
 
-export const TREE_NODE = model(
+export const TREE_NODE = model.abstract(
     "TreeNode", 
     "id", 
         class {
@@ -235,8 +235,7 @@ export const TREE_NODE = model(
     ctx => {
         ctx.unique("parentNode", "name");
         ctx.table({
-            discriminator: "TYPE",
-            discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
+            discriminator: "TYPE"
         })
     }
 );
@@ -257,6 +256,15 @@ export const ITEM = model.extends(TREE_NODE)(
     "Item",
     class {
         price = prop.num(10, 2)
+        tags = prop.m2m(TAG).joinTable({
+            name: "ITEM_TAG_MAPPING",
+            joinTarget: {
+                columns: [
+                    { columnName: "TAG_LOW_ID", referencedSubPath: "low" },
+                    { columnName: "TAG_HIGH_ID", referencedSubPath: "high" }
+                ]
+            }
+        })
     },
     ctx => {
         ctx.table({

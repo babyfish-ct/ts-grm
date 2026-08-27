@@ -403,7 +403,7 @@ export class Source extends Composite {
         const withScope = new Scope("COMMA");
         for (const cteTable of cteTables) {
             withScope.separator();
-            if (cteTable.symbol.__baseModel!.__isRecursive) {
+            if (builder.sqlClient.driver.isRecursiveKeywordRequired && cteTable.symbol.__baseModel!.__isRecursive) {
                 withScope.add("\nrecursive ");
             }
             withScope.add(cteTable.alias);

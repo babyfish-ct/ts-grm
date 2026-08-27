@@ -656,8 +656,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         if (prop.targetEntity == null) {
             throw new ArgumentError(`The property "${prop.toString()}" is not association entity`);
         }
-        if (prop.targetEntity != this.__entity 
-            && this.__entity.ancestors.has(prop.targetEntity)) {
+        if (this.__entity !== prop.targetEntity && !this.__entity.ancestors.has(prop.targetEntity)) {
             throw new ArgumentError(
                 `The target table of "${
                     this.__entity.name

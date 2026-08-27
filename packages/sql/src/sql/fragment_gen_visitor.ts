@@ -451,7 +451,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 .joinProp!.sub(prop.subPath)
                 .toStorage(this._strategy) as spi.Column;
         } else {
-            if (!prop.isMiddleTableProp) {
+            if (!prop.isMiddleTableProp && !prop.isIdProp) {
                 table = (table as spi.AbstractEntityTable).__to(
                     (prop as spi.EntityProp).declaringEntity
                 );

@@ -34,20 +34,24 @@ export class SqlServerDriver extends AbstractDriver {
         super();
     }
 
-    get name(): string {
+    override get name(): string {
         return "SqlServer"; 
     }
 
-    get nameParameterPrefix(): string | undefined {
+    override get nameParameterPrefix(): string | undefined {
         return "@p";
     }
 
-    get isUnorderedPaginationAllowed(): boolean {
+    override get isUnorderedPaginationAllowed(): boolean {
         return false;
     }
 
-    get paginationStrategy(): PaginationStrategy {
+    override get paginationStrategy(): PaginationStrategy {
         return paginationTransformer;
+    }
+
+    override get isRecursiveKeywordRequired(): boolean {
+        return false;
     }
 
     override quoteIdentifier(value: string): string {

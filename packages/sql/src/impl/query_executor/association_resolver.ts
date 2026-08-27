@@ -157,7 +157,7 @@ class AssociationResolver {
             return keyProps.map(p => entityTable.__expression(p)) as any;
         }
         return targetTable.__inverseAssociatedKeyArr(
-            this._sourceMapper.entity.model, 
+            this._unresolvedField.prop.declaringEntity.model, 
             this._unresolvedField.prop.name
         );
     }

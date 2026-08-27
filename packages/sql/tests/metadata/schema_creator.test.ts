@@ -359,7 +359,6 @@ describe("SchemaCreatorTest", () => {
                         "kind": "CHECK",
                         "column": "TYPE",
                         "values": [
-                            "TreeNode",
                             "Category",
                             "Item"
                         ],
@@ -438,6 +437,79 @@ describe("SchemaCreatorTest", () => {
                 ]
             },
             {
+                "name": "TAG",
+                "columns": [
+                    {
+                        "name": "LOW",
+                        "type": "I32",
+                        "nullable": false
+                    },
+                    {
+                        "name": "HIGH",
+                        "type": "I32",
+                        "nullable": false
+                    },
+                    {
+                        "name": "NAME",
+                        "type": "STR",
+                        "nullable": false,
+                        "length": 50
+                    }
+                ],
+                "constraints": [
+                    {
+                        "kind": "PRIMARY_KEY",
+                        "columns": ["LOW", "HIGH"]
+                    }
+                ]
+            },
+            {
+                "name": "ITEM_TAG_MAPPING",
+                "columns": [
+                    {
+                        "name": "ITEM_ID",
+                        "referenceName": "ID",
+                        "type": "I64",
+                        "nullable": false
+                    },
+                    {
+                        "name": "TAG_LOW_ID",
+                        "referenceName": "LOW",
+                        "type": "I32",
+                        "nullable": false
+                    },
+                    {
+                        "name": "TAG_HIGH_ID",
+                        "referenceName": "HIGH",
+                        "type": "I32",
+                        "nullable": false
+                    }
+                ],
+                "constraints": [
+                    {
+                        "kind": "PRIMARY_KEY",
+                        "columns": [
+                            "ITEM_ID",
+                            "TAG_LOW_ID",
+                            "TAG_HIGH_ID"
+                        ],
+                        "implicit": "MIDDLE_TABLE"
+                    },
+                    {
+                        "kind": "FOREIGN_KEY",
+                        "columns": ["ITEM_ID"],
+                        "referencedColumns": ["ID"],
+                        "cascade": "NONE"
+                    },
+                    {
+                        "kind": "FOREIGN_KEY",
+                        "columns": ["TAG_LOW_ID", "TAG_HIGH_ID"],
+                        "referencedColumns": ["LOW", "HIGH"],
+                        "cascade": "NONE"
+                    }
+                ]
+            },
+            {
                 "name": "\"ORDER\"",
                 "columns": [
                     {
@@ -471,33 +543,6 @@ describe("SchemaCreatorTest", () => {
                     {
                         "kind": "PRIMARY_KEY",
                         "columns": ["X", "A", "B"]
-                    }
-                ]
-            },
-            {
-                "name": "TAG",
-                "columns": [
-                    {
-                        "name": "LOW",
-                        "type": "I32",
-                        "nullable": false
-                    },
-                    {
-                        "name": "HIGH",
-                        "type": "I32",
-                        "nullable": false
-                    },
-                    {
-                        "name": "NAME",
-                        "type": "STR",
-                        "nullable": false,
-                        "length": 50
-                    }
-                ],
-                "constraints": [
-                    {
-                        "kind": "PRIMARY_KEY",
-                        "columns": ["LOW", "HIGH"]
                     }
                 ]
             },
@@ -1013,7 +1058,7 @@ describe("SchemaCreatorTest", () => {
 
                 -- Implicit check constraint for polymorphism
                 constraint TREE_NODE_constraint_2
-                    check(TYPE in('TreeNode', 'Category', 'Item')), 
+                    check(TYPE in('Category', 'Item')), 
 
                 constraint TREE_NODE_constraint_3
                     unique(PARENT_NODE_ID, NAME), 
@@ -1053,6 +1098,35 @@ describe("SchemaCreatorTest", () => {
                             on delete cascade
             );
 
+            -- Entity table for "Tag"
+            create table TAG(
+                LOW integer not null, 
+                HIGH integer not null, 
+                NAME text not null, 
+
+                constraint TAG_constraint_1
+                    primary key(LOW, HIGH)
+            );
+
+            -- Middle table for "Item.tags"
+            create table ITEM_TAG_MAPPING(
+                ITEM_ID integer not null, 
+                TAG_LOW_ID integer not null, 
+                TAG_HIGH_ID integer not null, 
+
+                -- Implicit primary key constraint for middle table
+                constraint ITEM_TAG_MAPPING_constraint_1
+                    primary key(ITEM_ID, TAG_LOW_ID, TAG_HIGH_ID), 
+
+                constraint ITEM_TAG_MAPPING_constraint_2
+                    foreign key(ITEM_ID)
+                        references ITEM(ID), 
+
+                constraint ITEM_TAG_MAPPING_constraint_3
+                    foreign key(TAG_LOW_ID, TAG_HIGH_ID)
+                        references TAG(LOW, HIGH)
+            );
+
             -- Entity table for "Order"
             create table "ORDER"(
                 X integer not null, 
@@ -1063,16 +1137,6 @@ describe("SchemaCreatorTest", () => {
 
                 constraint ORDER_constraint_1
                     primary key(X, A, B)
-            );
-
-            -- Entity table for "Tag"
-            create table TAG(
-                LOW integer not null, 
-                HIGH integer not null, 
-                NAME text not null, 
-
-                constraint TAG_constraint_1
-                    primary key(LOW, HIGH)
             );
 
             -- Middle table for "Order.tags"

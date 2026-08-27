@@ -202,7 +202,7 @@ export const AUTHOR = model("Author", "id", class {
     fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA)
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
 
-export const TREE_NODE = model("TreeNode", "id", class {
+export const TREE_NODE = model.abstract("TreeNode", "id", class {
     id = prop.i64()
     name = prop.str(50)
     parentNode = prop.m2o(() => TREE_NODE).joinColumns({ cascade: "DELETE" })
@@ -210,8 +210,7 @@ export const TREE_NODE = model("TreeNode", "id", class {
 }, ctx => {
     ctx.unique("name", "parentNode");
     ctx.table({
-        discriminator: "TYPE",
-        discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
+        discriminator: "TYPE"
     })
 });
 

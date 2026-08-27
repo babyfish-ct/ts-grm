@@ -459,10 +459,14 @@ class Mapper implements Metadata {
         const usedArr: boolean[] = new Array(fields.length).fill(false);
         for (let i = 0; i < fields.length; i++) {
             const field = fields[i]!;
-            if (field === recursiveField) {
-                Mapper.useField(i, fields, usedArr);
-            } else if (field.recursiveDepth == null && field.paths.length != 0) {
-                Mapper.useField(i, fields, usedArr);
+            if (field.downcastTo != null ||
+                field.prop.declaringEntity.isAssignableFrom(recursiveField.prop.declaringEntity)
+            ) {
+                if (field === recursiveField) {
+                    Mapper.useField(i, fields, usedArr);
+                } else if (field.recursiveDepth == null && field.paths.length != 0) {
+                    Mapper.useField(i, fields, usedArr);
+                }
             }
         }
         const newFields: Array<DtoMapperField> = [];
@@ -494,7 +498,7 @@ class Mapper implements Metadata {
             newFields.push(newField);
         }
         return new DtoMapper(
-            this.entity,
+            recursiveField.prop.targetEntity!,
             this.nullAsUndefined,
             recursiveField.prop,
             recursiveField.bridgeProp,

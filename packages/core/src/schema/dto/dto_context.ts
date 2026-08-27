@@ -98,7 +98,7 @@ export type __DtoMapping<
     | __FoldMapping<TModel, any, any, any>
     | __FlatMapping<TModel, any, any, any, any, any, any>
     | __InstanceOfMappping<TModel, any, any, any, any>
-    | __RecursiveMapping<TModel, any, any, any, any>
+    | __RecursiveMapping<TModel, any, any, any, any, any>
     | __ScalarLikeMapping<TModel, any, any, any, any, any>
     | __EmbeddedMapping<TModel, any, any, any, any, any>
     | __ReferenceKeyMapping<TModel, any, any, any, any>

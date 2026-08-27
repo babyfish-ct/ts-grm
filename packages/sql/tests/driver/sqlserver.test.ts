@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { isExternalDbTestEnabled, newSqlRecord } from "../utils";
 import { useSqlServerClientWithData } from "../data_utils";
 import { dsl, dto } from "@ts-grm/core";
-import { BOOK, ORDER } from "../model/model";
+import { BOOK, CATEGORY, ORDER } from "../model/model";
 
 describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
 
@@ -739,5 +739,179 @@ describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
                 { "productName": "iPhone" }
             ]
         });
+    });
+
+    it("recursiveWithDerivedRoot", async () => {
+        const view = dto.view(CATEGORY, c => [
+            c.name,
+            c.manager,
+            c.$recursive("childNodes").sort("name")
+        ]);
+        const rows = await sqlClient.createQuery(CATEGORY, (q, category) => {
+            q.where(category.parentNodeId.isNull());
+            return q.select(category.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_2_.NAME,
+                        tb_1_.MANAGER,
+                        tb_2_.ID
+                    from CATEGORY tb_1_
+                    inner join TREE_NODE tb_2_ on 
+                        tb_1_.ID = tb_2_.ID
+                    where 
+                        tb_2_.PARENT_NODE_ID is null
+                `,
+                args: [],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.PARENT_NODE_ID,
+                                tb_2_.NAME,
+                                tb_2_.ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.PARENT_NODE_ID = @p1
+                            union all
+                            select 
+                                tb_3_.PARENT_NODE_ID,
+                                tb_3_.NAME,
+                                tb_3_.ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.PARENT_NODE_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c2 asc
+                `,
+                args: [1],
+                purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "Home",
+                "manager": "Michael",
+                "childNodes": [
+                    {
+                        "name": "Clothing",
+                        "childNodes": [
+                            {
+                                "name": "Man",
+                                "childNodes": [
+                                    {
+                                        "name": "Casual wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Jacket",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Jeans",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Formal wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Shirt",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Suit",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Woman",
+                                "childNodes": [
+                                    {
+                                        "name": "Casual wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Dress",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Jeans",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Miniskirt",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Formal wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Shirt",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Suit",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Food",
+                        "childNodes": [
+                            {
+                                "name": "Bread",
+                                "childNodes": [
+                                    {
+                                        "name": "Baguette",
+                                        "childNodes": []
+                                    },
+                                    {
+                                        "name": "Ciabatta",
+                                        "childNodes": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Drinks",
+                                "childNodes": [
+                                    {
+                                        "name": "Coca Cola",
+                                        "childNodes": []
+                                    },
+                                    {
+                                        "name": "Fanta",
+                                        "childNodes": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]);
     });
 });

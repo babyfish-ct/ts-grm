@@ -52,8 +52,9 @@ export function baseQuerySelectionMapArgs(
             for (const selection of partial) {
                 args[`_${autoIndex++}`] = selection;
             }
+        } else {
+            Object.assign(args, partial);
         }
-        Object.assign(args, partial);
     }
     return args;
 }

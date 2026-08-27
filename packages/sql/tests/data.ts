@@ -151,6 +151,51 @@ insert into TREE_NODE(
                     (23, 'Item', 'Suit', 22),
                     (24, 'Item', 'Shirt', 22);
 
+insert into CATEGORY(ID, MANAGER) values
+    (1, 'Michael'),
+    (2, 'Sarah'),
+    (3, 'David'),
+    (6, 'Emily'),
+    (9, 'James'),
+    (10, 'Jessica'),
+    (11, 'Robert'),
+    (15, 'Ashley'),
+    (18, 'William'),
+    (19, 'Jennifer'),
+    (22, 'Christopher');
+
+insert into ITEM(ID, PRICE) values
+    (4, 2),
+    (5, 2),
+    (7, 4),
+    (8, 5),
+    (12, 45),
+    (13, 35),
+    (14, 50),
+    (16, 120),
+    (17, 60),
+    (20, 80),
+    (21, 50),
+    (23, 130),
+    (24, 65);
+
+insert into ITEM_TAG_MAPPING(ITEM_ID, TAG_LOW_ID, TAG_HIGH_ID) values
+    (4, 1, 1),
+    (4, 1, 2),
+    (4, 2, 2),
+    (7, 2, 1),
+    (8, 2, 2),
+    (12, 2, 3),
+    (12, 2, 1),
+    (13, 1, 2),
+    (13, 2, 1),
+    (14, 1, 3),
+    (20, 1, 1),
+    (21, 1, 3),
+    (21, 2, 3),
+    (24, 1, 4),
+    (24, 2, 1);
+
 -- Library table data (bottom layer libraries have smaller IDs)
 insert into LIBRARY(ID, NAME, VERSION) values
     -- Bottom layer root nodes (IDs 1-10)

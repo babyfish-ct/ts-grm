@@ -17,7 +17,7 @@ import { __AssociatedPropContract, __CollectionPropContract } from "../prop_inte
 import { __DtoKind, __DtoMapping, __UnrecursiveDtoType } from "./dto_context";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
-import { __WithNullity } from "./utils";
+import { __PropModelOf, __WithNullity } from "./utils";
 import { ModelOrder } from "../order";
 import { AnyModel } from "../model";
 
@@ -38,6 +38,7 @@ export interface __RecursiveContext<
             __SuperDeclaringModelNames<TMembers[TKey]>,
             TDtoKind, 
             TKey, 
+            TMembers[TKey],
             false
         >
         : __ReferenceRecursiveMapping<
@@ -45,7 +46,8 @@ export interface __RecursiveContext<
             __DeclaringModelName<TMembers[TKey]>,
             __SuperDeclaringModelNames<TMembers[TKey]>,
             TDtoKind, 
-            TKey
+            TKey,
+            TMembers[TKey]
         >;
 }
 
@@ -55,9 +57,10 @@ export type __RecursiveMapping<
     TSuperDeclarings extends string | undefined,
     TDtoKind extends __DtoKind,
     TKey extends string,
+    TMember
 > = 
-    __ReferenceRecursiveMapping<TModel,  TDeclaring, TSuperDeclarings, TDtoKind, TKey>
-    | __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, any>;
+    __ReferenceRecursiveMapping<TModel,  TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember>
+    | __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember, any>;
 
 export interface __ReferenceRecursiveMapping<
     TModel extends AnyModel,
@@ -65,21 +68,22 @@ export interface __ReferenceRecursiveMapping<
     TSuperDeclarings extends string | undefined,
     TDtoKind extends __DtoKind,
     TKey extends string,
+    TMember
 > {
     readonly __mappingType: "RECURSIVE";
     readonly __recursiveType: "REFERENCE";
 
     as<TAlias extends string>(
         alias: TAlias
-    ): __ReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TAlias>;
+    ): __ReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TAlias, TMember>;
 
     depth(
         depth: number
-    ): __ReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey>;
+    ): __ReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember>;
 
     filter(
-        filter: (table: EntityTable<TModel>) => Predicate | undefined
-    ): __ReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey>;
+        filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
+    ): __ReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember>;
 }
 
 export interface __CollectionRecursiveMapping<
@@ -88,6 +92,7 @@ export interface __CollectionRecursiveMapping<
     TSuperDeclarings extends string | undefined,
     TDtoKind extends __DtoKind,
     TKey extends string,
+    TMember,
     THasDepth extends boolean
 > {
     readonly __mappingType: "RECURSIVE";
@@ -95,23 +100,23 @@ export interface __CollectionRecursiveMapping<
 
     as<TAlias extends string>(
         alias: TAlias
-    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TAlias, THasDepth>;
+    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TAlias, TMember, THasDepth>;
 
     depth(
         depth: number
-    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, true>;
+    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember, true>;
 
     filter(
-        filter: (table: EntityTable<TModel>) => Predicate | undefined
-    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, THasDepth>;
+        filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
+    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember, THasDepth>;
 
     sort(
-        ...orders: ReadonlyArray<ModelOrder<TModel>>
-    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, THasDepth>;
+        ...orders: ReadonlyArray<ModelOrder<__PropModelOf<TModel, TMember>>>
+    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember, THasDepth>;
     
     limit(
         maxRows: number
-    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, THasDepth>;
+    ): __CollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TKey, TMember, THasDepth>;
 }
 
 export type __RecursiveKeys<TModel extends AnyModel, TMembers> = 
@@ -149,7 +154,8 @@ export type __WithRecursiveMappings<
                 infer Declaring, 
                 infer SuperDeclarings, 
                 infer DtoKind, 
-                infer Key
+                infer Key,
+                any
             >
                 ? __WithRecursiveReference<
                     __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings>, 
@@ -162,6 +168,7 @@ export type __WithRecursiveMappings<
                 infer SuperDeclarings, 
                 infer DtoKind, 
                 infer Key, 
+                any,
                 infer HasDepth
             >
                 ? __WithRecursiveCollection<

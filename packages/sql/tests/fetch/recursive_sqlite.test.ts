@@ -1,6 +1,6 @@
 import { __AllModelMembers, dto } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
-import { CATEGORY, LIBRARY, TREE_NODE } from "../model/model";
+import { CATEGORY, ITEM, LIBRARY, TREE_NODE } from "../model/model";
 import { useSqliteClientWithData } from "../data_utils";
 import { newSqlRecord } from "../utils";
 
@@ -1356,11 +1356,443 @@ describe("RecursiveTest", () => {
         });
     });
 
-    it("derivedRoot", async () => {
+    it("recursiveWithPolymorphism", async() => {
+        console.warn("The tags has not be fetched");
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$instanceOf(CATEGORY, c => [
+                c.manager
+            ]),
+            c.$instanceOf(ITEM, c => [
+                c.price,
+                c.tags.with(c => [
+                    c.name
+                ]).sort("name")
+            ]),
+            c.$recursive("childNodes").sort("name")
+        ]);
+        const rows = await sqlClient.createQuery(TREE_NODE, (q, category) => {
+            q.where(category.parentNodeId.isNull());
+            return q.select(category.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.TYPE,
+                        tb_2_.MANAGER,
+                        tb_3_.PRICE,
+                        tb_3_.ID,
+                        tb_1_.ID
+                    from TREE_NODE tb_1_
+                    left join CATEGORY tb_2_ on 
+                        tb_1_.TYPE = 'Category'
+                    and
+                        tb_1_.ID = tb_2_.ID
+                    left join ITEM tb_3_ on 
+                        tb_1_.TYPE = 'Item'
+                    and
+                        tb_1_.ID = tb_3_.ID
+                    where 
+                        tb_1_.PARENT_NODE_ID is null
+                `,
+                args: [],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4, c5) as (
+                            select 
+                                tb_4_.PARENT_NODE_ID,
+                                tb_4_.NAME,
+                                tb_4_.ID,
+                                0,
+                                tb_4_.TYPE
+                            from TREE_NODE tb_4_
+                            where 
+                                tb_4_.PARENT_NODE_ID = ?
+                            union all
+                            select 
+                                tb_5_.PARENT_NODE_ID,
+                                tb_5_.NAME,
+                                tb_5_.ID,
+                                tb_1_.c4 + 1,
+                                tb_5_.TYPE
+                            from TREE_NODE tb_5_
+                            inner join tb_1_ on 
+                                tb_5_.PARENT_NODE_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c5,
+                        tb_2_.MANAGER,
+                        tb_3_.PRICE,
+                        tb_3_.ID,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                    left join CATEGORY tb_2_ on 
+                        tb_1_.c5 = 'Category'
+                    and
+                        tb_1_.c3 = tb_2_.ID
+                    left join ITEM tb_3_ on 
+                        tb_1_.c5 = 'Item'
+                    and
+                        tb_1_.c3 = tb_3_.ID
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c2 asc
+                `,
+                args: [1],
+                purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            }
+        )
+        expect(rows).toEqual([
+            {
+                "name": "Home",
+                "__typename": "Category",
+                "manager": "Michael",
+                "childNodes": [
+                    {
+                        "name": "Clothing",
+                        "__typename": "Category",
+                        "manager": "James",
+                        "childNodes": [
+                            {
+                                "name": "Man",
+                                "__typename": "Category",
+                                "manager": "William",
+                                "childNodes": [
+                                    {
+                                        "name": "Casual wear",
+                                        "__typename": "Category",
+                                        "manager": "Jennifer",
+                                        "childNodes": [
+                                            {
+                                                "name": "Jacket",
+                                                "__typename": "Item",
+                                                "price": 80,
+                                                "childNodes": [],
+                                                "tags": []
+                                            },
+                                            {
+                                                "name": "Jeans",
+                                                "__typename": "Item",
+                                                "price": 50,
+                                                "childNodes": [],
+                                                "tags": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Formal wear",
+                                        "__typename": "Category",
+                                        "manager": "Christopher",
+                                        "childNodes": [
+                                            {
+                                                "name": "Shirt",
+                                                "__typename": "Item",
+                                                "price": 65,
+                                                "childNodes": [],
+                                                "tags": []
+                                            },
+                                            {
+                                                "name": "Suit",
+                                                "__typename": "Item",
+                                                "price": 130,
+                                                "childNodes": [],
+                                                "tags": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Woman",
+                                "__typename": "Category",
+                                "manager": "Jessica",
+                                "childNodes": [
+                                    {
+                                        "name": "Casual wear",
+                                        "__typename": "Category",
+                                        "manager": "Robert",
+                                        "childNodes": [
+                                            {
+                                                "name": "Dress",
+                                                "__typename": "Item",
+                                                "price": 45,
+                                                "childNodes": [],
+                                                "tags": []
+                                            },
+                                            {
+                                                "name": "Jeans",
+                                                "__typename": "Item",
+                                                "price": 50,
+                                                "childNodes": [],
+                                                "tags": []
+                                            },
+                                            {
+                                                "name": "Miniskirt",
+                                                "__typename": "Item",
+                                                "price": 35,
+                                                "childNodes": [],
+                                                "tags": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Formal wear",
+                                        "__typename": "Category",
+                                        "manager": "Ashley",
+                                        "childNodes": [
+                                            {
+                                                "name": "Shirt",
+                                                "__typename": "Item",
+                                                "price": 60,
+                                                "childNodes": [],
+                                                "tags": []
+                                            },
+                                            {
+                                                "name": "Suit",
+                                                "__typename": "Item",
+                                                "price": 120,
+                                                "childNodes": [],
+                                                "tags": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Food",
+                        "__typename": "Category",
+                        "manager": "Sarah",
+                        "childNodes": [
+                            {
+                                "name": "Bread",
+                                "__typename": "Category",
+                                "manager": "Emily",
+                                "childNodes": [
+                                    {
+                                        "name": "Baguette",
+                                        "__typename": "Item",
+                                        "price": 4,
+                                        "childNodes": [],
+                                        "tags": []
+                                    },
+                                    {
+                                        "name": "Ciabatta",
+                                        "__typename": "Item",
+                                        "price": 5,
+                                        "childNodes": [],
+                                        "tags": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Drinks",
+                                "__typename": "Category",
+                                "manager": "David",
+                                "childNodes": [
+                                    {
+                                        "name": "Coca Cola",
+                                        "__typename": "Item",
+                                        "price": 2,
+                                        "childNodes": [],
+                                        "tags": []
+                                    },
+                                    {
+                                        "name": "Fanta",
+                                        "__typename": "Item",
+                                        "price": 2,
+                                        "childNodes": [],
+                                        "tags": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]);
+    });
+
+    it("recursiveWithDerivedRoot", async () => {
         const view = dto.view(CATEGORY, c => [
             c.name,
             c.manager,
-            c.$recursive("childNodes")
+            c.$recursive("childNodes").sort("name")
+        ]);
+        const rows = await sqlClient.createQuery(CATEGORY, (q, category) => {
+            q.where(category.parentNodeId.isNull());
+            return q.select(category.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_2_.NAME,
+                        tb_1_.MANAGER,
+                        tb_2_.ID
+                    from CATEGORY tb_1_
+                    inner join TREE_NODE tb_2_ on 
+                        tb_1_.ID = tb_2_.ID
+                    where 
+                        tb_2_.PARENT_NODE_ID is null
+                `,
+                args: [],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.PARENT_NODE_ID,
+                                tb_2_.NAME,
+                                tb_2_.ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.PARENT_NODE_ID = ?
+                            union all
+                            select 
+                                tb_3_.PARENT_NODE_ID,
+                                tb_3_.NAME,
+                                tb_3_.ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.PARENT_NODE_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c2 asc
+                `,
+                args: [1],
+                purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "Home",
+                "manager": "Michael",
+                "childNodes": [
+                    {
+                        "name": "Clothing",
+                        "childNodes": [
+                            {
+                                "name": "Man",
+                                "childNodes": [
+                                    {
+                                        "name": "Casual wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Jacket",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Jeans",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Formal wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Shirt",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Suit",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Woman",
+                                "childNodes": [
+                                    {
+                                        "name": "Casual wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Dress",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Jeans",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Miniskirt",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "Formal wear",
+                                        "childNodes": [
+                                            {
+                                                "name": "Shirt",
+                                                "childNodes": []
+                                            },
+                                            {
+                                                "name": "Suit",
+                                                "childNodes": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Food",
+                        "childNodes": [
+                            {
+                                "name": "Bread",
+                                "childNodes": [
+                                    {
+                                        "name": "Baguette",
+                                        "childNodes": []
+                                    },
+                                    {
+                                        "name": "Ciabatta",
+                                        "childNodes": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Drinks",
+                                "childNodes": [
+                                    {
+                                        "name": "Coca Cola",
+                                        "childNodes": []
+                                    },
+                                    {
+                                        "name": "Fanta",
+                                        "childNodes": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
         ]);
     });
 });

@@ -42,8 +42,12 @@ export class OracleDriver extends AbstractDriver {
         return ":";
     }
 
-    get paginationStrategy(): PaginationStrategy {
+    override get paginationStrategy(): PaginationStrategy {
         return paginationTransformer;
+    }
+
+    override get isRecursiveKeywordRequired(): boolean {
+        return false;
     }
 
     override typeName(columnDef: ColumnDef): string {
