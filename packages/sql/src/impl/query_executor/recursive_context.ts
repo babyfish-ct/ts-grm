@@ -20,6 +20,7 @@ export class RecursiveContext {
 
     constructor(
         private readonly _allDataRows: DataRows,
+        private readonly _unresolvedField: spi.DtoMapperField,
         private readonly _keySpan: number,
         private readonly _valueSpan: number,
         private readonly _orderSpan: number,
@@ -39,6 +40,7 @@ export class RecursiveContext {
     toDeeperContext() {
         return new RecursiveContext(
             this._allDataRows,
+            this._unresolvedField,
             this._keySpan,
             this._valueSpan,
             this._orderSpan,
@@ -72,6 +74,10 @@ export class RecursiveContext {
         return this._targetRowMapData != null;
     }
 
+    match(field: spi.DtoMapperField): boolean {
+        return this._unresolvedField.prop === field.prop;
+    }
+
     static merge(
         contexts: ReadonlyArray<RecursiveContext>
     ): RecursiveContext | undefined {
@@ -88,6 +94,7 @@ export class RecursiveContext {
         }
         return new RecursiveContext(
             rows,
+            firstContext._unresolvedField,
             firstContext._keySpan,
             firstContext._valueSpan,
             firstContext._orderSpan,

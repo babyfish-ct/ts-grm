@@ -56,6 +56,37 @@ describe("PolymorphismSqliteTest", () => {
         ]);
     });
 
+    it("singleTableDerivedRoot", async () => {
+        const view = dto.view(ONLINE_BOOK_STORE, c => [
+            c.$allScalars
+        ]);
+        const rows = await sqlClient.createQuery(ONLINE_BOOK_STORE, (q, onlineStore) => {
+            return q.select(onlineStore.fetch(view));
+        }).fetchList();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.VERSION,
+                    tb_1_.URL
+                from BOOK_STORE tb_1_
+                where 
+                    tb_1_.TYPE = 'OnlineBookStore'
+            `,
+            args: [],
+            purpose: "query"
+        });
+        expect(rows).toEqual([
+            {
+                "id": "1",
+                "name": "O'REILLY",
+                "version": 1,
+                "url": "https://www.oreilly.com"
+            }
+        ]);
+    });
+
     it("multipleTables", async () => {
 
         const view = dto.view(BOOK_STORE, c => [

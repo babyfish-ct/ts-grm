@@ -48,7 +48,10 @@ export async function resolveAssociations(
     recursiveContext: RecursiveContext | undefined
 ): Promise<void> {
     for (const unresolvedField of mapper.unresolvedFields) {
-        if (unresolvedField.prop.isEntityProp && (unresolvedField.prop as spi.EntityProp).calculationStrategy != null) {
+        if (!unresolvedField.prop.isEntityProp) {
+            continue;
+        }
+        if (unresolvedField.prop.associationType == null) {
             continue;
         }
         const joinFetchData = joinFetchMap?.get(unresolvedField);
@@ -410,7 +413,7 @@ class AssociationResolver {
         const view = new View<AnyModel, any>(this._unresolvedField.subMapper!);
         let keyRowReader: DataRowReader;
         let recursiveContext = this._recursiveContext;
-        if (recursiveContext != null) {
+        if (recursiveContext?.match(this._unresolvedField) === true) {
             keyRowReader = recursiveContext.toKeyRowReader();
         } else {
             const isRecursive = this._unresolvedField.recursiveDepth != null;
@@ -427,6 +430,7 @@ class AssociationResolver {
             if (isRecursive && recursiveContext == null) {
                 recursiveContext = new RecursiveContext(
                     dataRows, 
+                    this._unresolvedField,
                     this._keySpan, 
                     this._byTargetKey ? this._targetKeySpan : view.mapper.span, 
                     this._byTargetKey ? this._orderSpan : 0,
@@ -441,11 +445,12 @@ class AssociationResolver {
                     0
                 );
             }
-            keyRowReader = recursiveContext?.toKeyRowReader() 
-                ?? DataRowReader.of(
-                    dataRows, 
-                    (query as any as ExplicitDataTypeArrayProvider).explicitDataTypes
-                );
+            keyRowReader = recursiveContext?.match(this._unresolvedField) === true
+                    ? recursiveContext.toKeyRowReader() 
+                    : DataRowReader.of(
+                        dataRows, 
+                        (query as any as ExplicitDataTypeArrayProvider).explicitDataTypes
+                    );
         }
         const valueRowReader = keyRowReader.offset(this._keySpan);
         return [keyRowReader, valueRowReader, recursiveContext];

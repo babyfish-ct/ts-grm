@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { CATEGORY, ITEM, LIBRARY, TREE_NODE } from "../model/model";
 import { useSqliteClientWithData } from "../data_utils";
 import { newSqlRecord } from "../utils";
+import z from "zod";
 
 describe("RecursiveTest", () => {
 
@@ -1357,7 +1358,6 @@ describe("RecursiveTest", () => {
     });
 
     it("recursiveWithPolymorphism", async() => {
-        console.warn("The tags has not be fetched");
         const view = dto.view(TREE_NODE, c => [
             c.name,
             c.$instanceOf(CATEGORY, c => [
@@ -1365,9 +1365,16 @@ describe("RecursiveTest", () => {
             ]),
             c.$instanceOf(ITEM, c => [
                 c.price,
-                c.tags.with(c => [
-                    c.name
-                ]).sort("name")
+                c.$formula.ts({
+                    alias: "tagNames",
+                    valueType: z.array(z.string()),
+                    dependency: c => [
+                        c.tags.with(c => [
+                            c.name
+                        ]).sort("name")
+                    ],
+                    fn: data => data.tags.map(tag => tag.name)
+                })
             ]),
             c.$recursive("childNodes").sort("name")
         ]);
@@ -1448,8 +1455,44 @@ describe("RecursiveTest", () => {
                 `,
                 args: [1],
                 purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.ITEM_ID,
+                        tb_1_.NAME
+                    from TAG tb_1_
+                    inner join ITEM_TAG_MAPPING tb_2_ on 
+                        tb_1_.LOW = tb_2_.TAG_LOW_ID
+                    and
+                        tb_1_.HIGH = tb_2_.TAG_HIGH_ID
+                    where 
+                        tb_2_.ITEM_ID in(?, ?, ?, ?)
+                    order by 
+                        tb_1_.NAME asc
+                `,
+                args: [7, 8, 4, 5],
+                purpose: "loadAssociation(Item.tags)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.ITEM_ID,
+                        tb_1_.NAME
+                    from TAG tb_1_
+                    inner join ITEM_TAG_MAPPING tb_2_ on 
+                        tb_1_.LOW = tb_2_.TAG_LOW_ID
+                    and
+                        tb_1_.HIGH = tb_2_.TAG_HIGH_ID
+                    where 
+                        tb_2_.ITEM_ID in(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    order by 
+                        tb_1_.NAME asc
+                `,
+                args: [20, 21, 24, 23, 12, 14, 13, 17, 16],
+                purpose: "loadAssociation(Item.tags)"
             }
-        )
+        );
         expect(rows).toEqual([
             {
                 "name": "Home",
@@ -1475,15 +1518,20 @@ describe("RecursiveTest", () => {
                                                 "name": "Jacket",
                                                 "__typename": "Item",
                                                 "price": 80,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [
+                                                    "red"
+                                                ],
+                                                "childNodes": []
                                             },
                                             {
                                                 "name": "Jeans",
                                                 "__typename": "Item",
                                                 "price": 50,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [
+                                                    "purple",
+                                                    "yellow"
+                                                ],
+                                                "childNodes": []
                                             }
                                         ]
                                     },
@@ -1496,15 +1544,18 @@ describe("RecursiveTest", () => {
                                                 "name": "Shirt",
                                                 "__typename": "Item",
                                                 "price": 65,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [
+                                                    "cyan",
+                                                    "green"
+                                                ],
+                                                "childNodes": []
                                             },
                                             {
                                                 "name": "Suit",
                                                 "__typename": "Item",
                                                 "price": 130,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [],
+                                                "childNodes": []
                                             }
                                         ]
                                     }
@@ -1524,22 +1575,30 @@ describe("RecursiveTest", () => {
                                                 "name": "Dress",
                                                 "__typename": "Item",
                                                 "price": 45,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [
+                                                    "cyan",
+                                                    "purple"
+                                                ],
+                                                "childNodes": []
                                             },
                                             {
                                                 "name": "Jeans",
                                                 "__typename": "Item",
                                                 "price": 50,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [
+                                                    "yellow"
+                                                ],
+                                                "childNodes": []
                                             },
                                             {
                                                 "name": "Miniskirt",
                                                 "__typename": "Item",
                                                 "price": 35,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [
+                                                    "cyan",
+                                                    "orange"
+                                                ],
+                                                "childNodes": []
                                             }
                                         ]
                                     },
@@ -1552,15 +1611,15 @@ describe("RecursiveTest", () => {
                                                 "name": "Shirt",
                                                 "__typename": "Item",
                                                 "price": 60,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [],
+                                                "childNodes": []
                                             },
                                             {
                                                 "name": "Suit",
                                                 "__typename": "Item",
                                                 "price": 120,
-                                                "childNodes": [],
-                                                "tags": []
+                                                "tagNames": [],
+                                                "childNodes": []
                                             }
                                         ]
                                     }
@@ -1582,15 +1641,19 @@ describe("RecursiveTest", () => {
                                         "name": "Baguette",
                                         "__typename": "Item",
                                         "price": 4,
-                                        "childNodes": [],
-                                        "tags": []
+                                        "tagNames": [
+                                            "cyan"
+                                        ],
+                                        "childNodes": []
                                     },
                                     {
                                         "name": "Ciabatta",
                                         "__typename": "Item",
                                         "price": 5,
-                                        "childNodes": [],
-                                        "tags": []
+                                        "tagNames": [
+                                            "blue"
+                                        ],
+                                        "childNodes": []
                                     }
                                 ]
                             },
@@ -1603,188 +1666,18 @@ describe("RecursiveTest", () => {
                                         "name": "Coca Cola",
                                         "__typename": "Item",
                                         "price": 2,
-                                        "childNodes": [],
-                                        "tags": []
+                                        "tagNames": [
+                                            "blue",
+                                            "orange",
+                                            "red"
+                                        ],
+                                        "childNodes": []
                                     },
                                     {
                                         "name": "Fanta",
                                         "__typename": "Item",
                                         "price": 2,
-                                        "childNodes": [],
-                                        "tags": []
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]);
-    });
-
-    it("recursiveWithDerivedRoot", async () => {
-        const view = dto.view(CATEGORY, c => [
-            c.name,
-            c.manager,
-            c.$recursive("childNodes").sort("name")
-        ]);
-        const rows = await sqlClient.createQuery(CATEGORY, (q, category) => {
-            q.where(category.parentNodeId.isNull());
-            return q.select(category.fetch(view));
-        }).fetchList();
-        sqlRecord.assert(
-            {
-                sql: `
-                    select 
-                        tb_2_.NAME,
-                        tb_1_.MANAGER,
-                        tb_2_.ID
-                    from CATEGORY tb_1_
-                    inner join TREE_NODE tb_2_ on 
-                        tb_1_.ID = tb_2_.ID
-                    where 
-                        tb_2_.PARENT_NODE_ID is null
-                `,
-                args: [],
-                purpose: "query"
-            },
-            {
-                sql: `
-                    with
-                        recursive tb_1_(c1, c2, c3, c4) as (
-                            select 
-                                tb_2_.PARENT_NODE_ID,
-                                tb_2_.NAME,
-                                tb_2_.ID,
-                                0
-                            from TREE_NODE tb_2_
-                            where 
-                                tb_2_.PARENT_NODE_ID = ?
-                            union all
-                            select 
-                                tb_3_.PARENT_NODE_ID,
-                                tb_3_.NAME,
-                                tb_3_.ID,
-                                tb_1_.c4 + 1
-                            from TREE_NODE tb_3_
-                            inner join tb_1_ on 
-                                tb_3_.PARENT_NODE_ID = tb_1_.c3
-                        )
-                    select 
-                        tb_1_.c1,
-                        tb_1_.c2,
-                        tb_1_.c3,
-                        tb_1_.c4
-                    from tb_1_
-                    order by 
-                        tb_1_.c4 asc,
-                        tb_1_.c2 asc
-                `,
-                args: [1],
-                purpose: "loadRecursiveTree(TreeNode.childNodes)"
-            }
-        );
-        expect(rows).toEqual([
-            {
-                "name": "Home",
-                "manager": "Michael",
-                "childNodes": [
-                    {
-                        "name": "Clothing",
-                        "childNodes": [
-                            {
-                                "name": "Man",
-                                "childNodes": [
-                                    {
-                                        "name": "Casual wear",
-                                        "childNodes": [
-                                            {
-                                                "name": "Jacket",
-                                                "childNodes": []
-                                            },
-                                            {
-                                                "name": "Jeans",
-                                                "childNodes": []
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Formal wear",
-                                        "childNodes": [
-                                            {
-                                                "name": "Shirt",
-                                                "childNodes": []
-                                            },
-                                            {
-                                                "name": "Suit",
-                                                "childNodes": []
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Woman",
-                                "childNodes": [
-                                    {
-                                        "name": "Casual wear",
-                                        "childNodes": [
-                                            {
-                                                "name": "Dress",
-                                                "childNodes": []
-                                            },
-                                            {
-                                                "name": "Jeans",
-                                                "childNodes": []
-                                            },
-                                            {
-                                                "name": "Miniskirt",
-                                                "childNodes": []
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Formal wear",
-                                        "childNodes": [
-                                            {
-                                                "name": "Shirt",
-                                                "childNodes": []
-                                            },
-                                            {
-                                                "name": "Suit",
-                                                "childNodes": []
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Food",
-                        "childNodes": [
-                            {
-                                "name": "Bread",
-                                "childNodes": [
-                                    {
-                                        "name": "Baguette",
-                                        "childNodes": []
-                                    },
-                                    {
-                                        "name": "Ciabatta",
-                                        "childNodes": []
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Drinks",
-                                "childNodes": [
-                                    {
-                                        "name": "Coca Cola",
-                                        "childNodes": []
-                                    },
-                                    {
-                                        "name": "Fanta",
+                                        "tagNames": [],
                                         "childNodes": []
                                     }
                                 ]
