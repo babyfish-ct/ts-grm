@@ -680,7 +680,6 @@ describe.runIf(isExternalDbTestEnabled)("SqlServerTest", () => {
             q.where(order.createdTime.diff(time, "HOURS").between(1.1, 1.9));
             return q.select(order.fetch(view));
         }).fetchRequired();
-        sqlRecord.log();
         sqlRecord.assert(
             {
                 sql: `
