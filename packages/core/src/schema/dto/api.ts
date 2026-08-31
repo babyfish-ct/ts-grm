@@ -14,7 +14,7 @@
 
 import { dtoMapper, type DtoMapper } from "@/impl/dto_mapper";
 import { AnyModel } from "../model";
-import { __DtoBody, __DtoMapping, __DtoType } from "./dto_context";
+import { __AllAssociationPaths, __DtoBody, __DtoMapping, __DtoType } from "./dto_context";
 import { __AllModelMembers } from "../model_internal_types";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
@@ -30,16 +30,33 @@ export class View<TModel extends AnyModel, T> {
     constructor(readonly mapper: DtoMapper) {}
 }
 
-export type TypeOf<TView> =
-    TView extends View<any, infer R>
+export class Input<TModel extends AnyModel, T, TAssociationPaths extends string | never> {
+
+    __type(): { input: [TModel, T, TAssociationPaths] | undefined } {
+        return { input: undefined };
+    };
+}
+
+export type TypeOf<TDto> =
+    TDto extends View<any, infer R>
         ? R
+    : TDto extends Input<any, infer R, any>
+        ? R 
+    : never;
+
+export type SelectableAssocaitionPaths<TInput> =
+    TInput extends Input<any, any, infer Paths>
+        ? Paths extends string
+            ? "$all" | "$root" | Paths
+            : never
         : never;
 
 export type ReferenceFetchType = 
     "LOAD" | "JOIN_LOW_OFFSET_ONLY";
 
 export const dto = {
-    view: viewCreator()
+    view: viewCreator(),
+    input: newInput
 } as const;
 
 function viewCreator(): __ViewCreator {
@@ -66,7 +83,6 @@ function newView<
     return new View(dtoMapper(dto, false));
 }
 
-
 function newViewByNullAsUndefined<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
@@ -83,4 +99,23 @@ function newViewByNullAsUndefined<
     const ctx = newDtoContext(entity, false) as any;
     const dto = createDto(ctx, undefined, fn);
     return new View(dtoMapper(dto, true));
+}
+
+function newInput<
+    TModel extends AnyModel,
+    const TMappings extends ReadonlyArray<
+        __DtoMapping<TModel>
+    >,
+>(
+    _model: TModel,
+    _fn: __DtoBody<TModel, "INPUT", "ENTITY", __AllModelMembers<TModel>, TMappings>
+): Input<
+    TModel, 
+    __Prettify<__DtoType<TMappings, undefined>>,
+    __AllAssociationPaths<TMappings>
+> {
+    // const entity = Entity.of(model);
+    // const ctx = newDtoContext(entity, false) as any;
+    //const dto = createDto(ctx, undefined, fn);
+    return new Input();
 }

@@ -17,6 +17,7 @@ import { AnyModel } from "../model";
 import { __DtoKind } from "./dto_context";
 import { __NullityType } from "../prop_internal_types";
 import { __WithNullity, __IsAllowed } from "./utils";
+import { __MakeExpression } from "@/index_internal";
 
 export type __ScalarLikeMapping<
     TModel extends AnyModel, 
@@ -83,6 +84,19 @@ export interface __InputScalarLikeMapping<
     as<TAlias extends string>(
         alias: TAlias
     ): __InputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TAlias, TValue, TNullity>;
+
+    use(
+        options: { 
+            readonly key: true;
+        }
+    ): __InputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity>;
+
+    use(
+        options: {
+            readonly insert?: boolean;
+            readonly update?: boolean;
+        }
+    ): __InputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity>;
 
     mapInput<TInputSchema extends StandardSchemaV1>(
         schema: __RequiredSchema<TInputSchema>,

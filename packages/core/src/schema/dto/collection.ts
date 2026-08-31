@@ -19,7 +19,19 @@ import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
 
-export interface __CollectionMapping<
+export type __CollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> = 
+    TDtoKind extends "INPUT"
+        ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TKey>
+        : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>
+
+export interface __OutputCollectionMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -32,23 +44,46 @@ export interface __CollectionMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 
     filter(
         filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
-    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 
     sort(
         ...orders: ReadonlyArray<ModelOrder<__PropModelOf<TModel, TMember>>>
-    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
 
     limit(
         maxRows: number
-    ): __CollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+}
+
+export interface __InputCollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TAssociationName extends string
+> {
+
+    readonly __mappingType: "COLLECTION";
+
+    readonly __assocaitionPaths?: TAssociationName;
+    
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings, TAssociationName>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+    ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TAssociationName>;
 }
 
 export type __CollectionDtoType<

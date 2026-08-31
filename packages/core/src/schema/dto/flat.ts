@@ -38,7 +38,8 @@ export interface __FlatContext<
             TKey & string,
             TMembers[TKey],
             __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
-            __NullityOf<TMembers[TKey]>
+            __NullityOf<TMembers[TKey]>,
+            TKey & string
         >
         : __EmbeddedFlatMapping<
             TModel,
@@ -47,7 +48,8 @@ export interface __FlatContext<
             TKey & string,
             TMembers[TKey],
             __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
-            __NullityOf<TMembers[TKey]>
+            __NullityOf<TMembers[TKey]>,
+            TKey & string
         >;
 }
 
@@ -70,7 +72,8 @@ export type __FlatMapping<
     TKey extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType
+    TNullity extends __NullityType,
+    TPropName extends string,
 > = 
     __EmbeddedFlatMapping<
         TModel,
@@ -79,7 +82,8 @@ export type __FlatMapping<
         TKey,
         TMember,
         TMappings,
-        TNullity
+        TNullity,
+        TPropName
     > 
     | __ReferenceFlatMapping<
         TModel,
@@ -88,7 +92,8 @@ export type __FlatMapping<
         TKey,
         TMember,
         TMappings,
-        TNullity
+        TNullity,
+        TPropName
     >
 
 
@@ -99,7 +104,8 @@ export interface __EmbeddedFlatMapping<
     TKey extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType
+    TNullity extends __NullityType,
+    TEmbeddedName extends string,
 > {
     readonly __mappingType: 'FLAT';
 
@@ -107,21 +113,36 @@ export interface __EmbeddedFlatMapping<
     
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
+    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity, TEmbeddedName>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
-    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TEmbeddedName>;
 }
 
-export interface __ReferenceFlatMapping<
+export type __ReferenceFlatMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType
+    TNullity extends __NullityType,
+    TAssociationName extends string
+> = 
+    TDtoKind extends "INPUT"
+        ? __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>
+        : __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
+
+export interface __OutputReferenceFlatMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType,
+    TAssociationName extends string
 > {
     readonly __mappingType: 'FLAT';
 
@@ -129,26 +150,49 @@ export interface __ReferenceFlatMapping<
 
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
+    ): __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity, TAssociationName>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
 
     filter(
         filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
-    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
+    ): __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, "NULLABLE", TAssociationName>;
 
     fetch(
         fetchType: ReferenceFetchType
-    ): __ReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    ): __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
+}
+
+export interface __InputReferenceFlatMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType,
+    TAssociationName extends string
+> {
+    readonly __mappingType: 'FLAT';
+
+    readonly __flatType: 'REFERENCE';
+
+    prefix<TPrefix extends string>(
+        alias: TPrefix
+    ): __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPrefix, TMember, TMappings, TNullity, TAssociationName>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+    ): __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
 }
 
 export type __FlatDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __FlatMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+    TMapping extends __FlatMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity, any>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? __Flat<
                 __DtoType<Mappings, undefined>,

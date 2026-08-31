@@ -12,6 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { __MakeExpression } from "@/index_internal";
 import { AnyModel } from "../model";
 import { __DeclaringModelName } from "../model_internal_types";
 import { 
@@ -82,7 +83,8 @@ export type __DirectContext<
                 K & string, 
                 TMembers[K],
                 __DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>,
-                __NullityOf<TMembers[K]>
+                __NullityOf<TMembers[K]>,
+                K & string
             >
         : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
             ? __CollectionMapping<
