@@ -34,7 +34,7 @@ export type __ReferenceMapping<
         ? __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
         : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
 
-export interface __OutputReferenceMapping<
+export interface __ReferenceMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -44,9 +44,22 @@ export interface __OutputReferenceMapping<
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
 > {
-
     readonly __mappingType: "REFERENCE";
-    
+
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity];
+}
+
+export interface __OutputReferenceMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __ReferenceMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
+
     as<TAlias extends string>(
         alias: TAlias
     ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
@@ -73,9 +86,7 @@ export interface __InputReferenceMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
-> {
-
-    readonly __mappingType: "REFERENCE";
+> extends __ReferenceMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
     
     as<TAlias extends string>(
         alias: TAlias
@@ -90,7 +101,7 @@ export type __ReferenceDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __ReferenceMapping<any, infer Declaring, infer DtoKind, any, infer Alias, any, infer Mappings, infer Nullity>
+    TMapping extends __ReferenceMappingContract<any, infer Declaring, infer DtoKind, any, infer Alias, any, infer Mappings, infer Nullity>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? { 
                 [K in Alias]: 

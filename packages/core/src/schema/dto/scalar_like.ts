@@ -45,7 +45,7 @@ export type __ScalarLikeMapping<
             TNullity
         >;
 
-export interface __AbstractScalarLikeMapping<
+export interface __ScalarLikeMappingContract<
     TModel extends AnyModel, 
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -65,7 +65,7 @@ export interface __OutputScalarLikeMapping<
     TKey extends string, 
     TValue,
     TNullity extends __NullityType
-> extends __AbstractScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
+> extends __ScalarLikeMappingContract<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
     
     as<TAlias extends string>(
         alias: TAlias
@@ -98,7 +98,7 @@ export interface __BaseInputScalarLikeMapping<
     TKey extends string, 
     TValue,
     TNullity extends __NullityType
-> extends __AbstractScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
+> extends __ScalarLikeMappingContract<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -119,7 +119,7 @@ export interface __FullInputScalarLikeMapping<
     TKey extends string, 
     TValue,
     TNullity extends __NullityType
-> extends __AbstractScalarLikeMapping<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
+> extends __ScalarLikeMappingContract<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -146,7 +146,7 @@ export type __ScalarLikeDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __AbstractScalarLikeMapping<any, infer Declaring, infer DtoKind, infer Key, infer Value, infer Nullity>
+    TMapping extends __ScalarLikeMappingContract<any, infer Declaring, infer DtoKind, infer Key, infer Value, infer Nullity>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? {
                 [K in Key]: __WithNullity<

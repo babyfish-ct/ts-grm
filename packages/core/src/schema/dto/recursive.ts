@@ -78,7 +78,7 @@ export type __ReferenceRecursiveMapping<
         ? __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
         : __OutputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
 
-export interface __OutputReferenceRecursiveMapping<
+export interface __ReferenceRecursiveMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TSuperDeclarings extends string | undefined,
@@ -89,6 +89,18 @@ export interface __OutputReferenceRecursiveMapping<
 > {
     readonly __mappingType: "RECURSIVE";
     readonly __recursiveType: "REFERENCE";
+    readonly __generics?: [TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember];
+}
+
+export interface __OutputReferenceRecursiveMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TSuperDeclarings extends string | undefined,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember
+> extends __ReferenceRecursiveMappingContract<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -111,10 +123,7 @@ export interface __InputReferenceRecursiveMapping<
     TPropName extends string,
     TAlias extends string,
     TMember
-> {
-    readonly __mappingType: "RECURSIVE";
-    readonly __recursiveType: "REFERENCE";
-    readonly __key?: TAlias;
+> extends __ReferenceRecursiveMappingContract<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -135,7 +144,7 @@ export type __CollectionRecursiveMapping<
         ? __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
         : __OutputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>; 
 
-export interface __OutputCollectionRecursiveMapping<
+export interface __CollectionRecursiveMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TSuperDeclarings extends string | undefined,
@@ -146,7 +155,20 @@ export interface __OutputCollectionRecursiveMapping<
     THasDepth extends boolean
 > {
     readonly __mappingType: "RECURSIVE";
-    readonly __recursiveType: "COLLECTION";
+    readonly __recursiveType: "COLLECTION"; 
+    readonly __generics: [TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth];
+}
+
+export interface __OutputCollectionRecursiveMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TSuperDeclarings extends string | undefined,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    THasDepth extends boolean
+> extends __CollectionRecursiveMappingContract<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -178,11 +200,8 @@ export interface __InputCollectionRecursiveMapping<
     TAlias extends string,
     TMember,
     THasDepth extends boolean
-> {
-    readonly __mappingType: "RECURSIVE";
-    readonly __recursiveType: "COLLECTION";
-    readonly __key?: TAlias;
-
+> extends __CollectionRecursiveMappingContract<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth> {
+    
     as<TAlias extends string>(
         alias: TAlias
     ): __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
@@ -218,7 +237,7 @@ export type __WithRecursiveMappings<
 > = 
     TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
         ? (
-            First extends __ReferenceRecursiveMapping<
+            First extends __ReferenceRecursiveMappingContract<
                 any, 
                 infer Declaring, 
                 infer SuperDeclarings, 
@@ -232,7 +251,7 @@ export type __WithRecursiveMappings<
                     DtoKind, 
                     Alias
                 > & __WithRecursiveMappings<TPrevData, Rest, TOriginalMappings>
-            : First extends __CollectionRecursiveMapping<
+            : First extends __CollectionRecursiveMappingContract<
                 any, 
                 infer Declaring, 
                 infer SuperDeclarings, 

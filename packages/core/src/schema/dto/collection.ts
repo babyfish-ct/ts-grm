@@ -32,7 +32,7 @@ export type __CollectionMapping<
         ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
         : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
 
-export interface __OutputCollectionMapping<
+export interface __CollectionMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -41,6 +41,19 @@ export interface __OutputCollectionMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > {
+    readonly __mappingType: "COLLECTION";
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings];
+}
+
+export interface __OutputCollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> extends __CollectionMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
 
     readonly __mappingType: "COLLECTION";
     
@@ -73,11 +86,7 @@ export interface __InputCollectionMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> {
-
-    readonly __mappingType: "COLLECTION";
-
-    readonly __assocaitionPaths?: TPropName;
+> extends __CollectionMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
     
     as<TAlias extends string>(
         alias: TAlias
@@ -92,7 +101,7 @@ export type __CollectionDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __CollectionMapping<any, infer Declaring, any, any, infer Alias, any, infer Mappings>
+    TMapping extends __CollectionMappingContract<any, infer Declaring, any, any, infer Alias, any, infer Mappings>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? {
                 [K in Alias]: Array<__DtoType<Mappings, undefined>>

@@ -94,10 +94,9 @@ export type __FlatMapping<
         TMember,
         TMappings,
         TNullity
-    >
+    >;
 
-
-export interface __EmbeddedFlatMapping<
+export interface __FlatMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -108,7 +107,19 @@ export interface __EmbeddedFlatMapping<
     TNullity extends __NullityType
 > {
     readonly __mappingType: 'FLAT';
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity];
+}
 
+export interface __EmbeddedFlatMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TPrefix extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __FlatMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity> {
     readonly __flatType: 'EMBEDDED';
     
     prefix<TPrefix extends string>(
@@ -143,9 +154,8 @@ export interface __OutputReferenceFlatMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
-> {
-    readonly __mappingType: 'FLAT';
-
+> extends __FlatMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity> {
+    
     readonly __flatType: 'REFERENCE';
 
     prefix<TPrefix extends string>(
@@ -174,9 +184,8 @@ export interface __InputReferenceFlatMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
-> {
-    readonly __mappingType: 'FLAT';
-
+> extends __FlatMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity> {
+    
     readonly __flatType: 'REFERENCE';
 
     prefix<TPrefix extends string>(
@@ -192,7 +201,7 @@ export type __FlatDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __FlatMapping<any, infer Declaring, infer DtoKind, any, infer Prefix, any, infer Mappings, infer Nullity>
+    TMapping extends __FlatMappingContract<any, infer Declaring, infer DtoKind, any, infer Prefix, any, infer Mappings, infer Nullity>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? __Flat<
                 __DtoType<Mappings, undefined>,

@@ -28,7 +28,7 @@ export type __EmbeddedMapping<
         ? __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>
         : __OutputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
-export interface __AbstractEmbeddedMapping<
+export interface __EmbeddedMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -47,7 +47,7 @@ export interface __OutputEmbeddedMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> extends __AbstractEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings> {
+> extends __EmbeddedMappingContract<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -77,7 +77,7 @@ export interface __BaseInputEmbeddedMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> extends __AbstractEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings> {
+> extends __EmbeddedMappingContract<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -95,7 +95,7 @@ export interface __FullInputEmbeddedMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> extends __AbstractEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings> {
+> extends __EmbeddedMappingContract<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings> {
 
     as<TAlias extends string>(
         alias: TAlias
@@ -119,7 +119,7 @@ export type __EmbeddedDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __AbstractEmbeddedMapping<any, infer Declaring, any, infer Key, any, infer Mappings>
+    TMapping extends __EmbeddedMappingContract<any, infer Declaring, any, infer Key, any, infer Mappings>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? { [K in Key]: __DtoType<Mappings, undefined> }
             : never

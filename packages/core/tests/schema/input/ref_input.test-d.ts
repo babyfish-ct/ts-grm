@@ -35,7 +35,7 @@ describe("RefInputTest", () => {
             ]).as("owner"),
             c.$ref("authors", c => [
                 c.name
-            ]).as("creators")
+            ]).as("creators"),
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             creators: {

@@ -38,12 +38,8 @@ export interface __FoldMapping<
     TName extends string,
     TMappings extends __SelfMappings<TModel>
 > {
-
     readonly __mappingType: 'FOLD';
-    readonly __model?: TModel;
-    readonly __dtoKind?: TDtoKind;
-    readonly __name?: TName;
-    readonly __mappings?: TMappings;
+    readonly __generics?: [TModel, TDtoKind, TName, TMappings];
 }
 
 export type __FoldDtoType<

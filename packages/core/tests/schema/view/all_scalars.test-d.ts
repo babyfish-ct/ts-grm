@@ -21,7 +21,7 @@ describe("AllScalarsTest", () => {
 
     it("exclude", () => {
         const view = dto.view(AUTHOR, c => [
-            c.$allScalars.exclude("gender"),
+            c.$allScalars.exclude("gender")
         ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
