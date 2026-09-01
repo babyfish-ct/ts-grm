@@ -7,8 +7,8 @@ describe("ScalarInputTest", () => {
 
     it("simple", () => {
         const input = dto.input(BOOK, c => [
-            c.name.use({key: true}),
-            c.edition.use({key: true})
+            c.name.key(),
+            c.edition.key()
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             name: string;

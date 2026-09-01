@@ -6,11 +6,11 @@ import { SelectableAssocaitionPaths, TypeOf } from "@/schema/dto/api";
 describe("FlatInputTest", () => {
     it("flat", () => {
         const input = dto.input(BOOK, c => [
-            c.name.use({key: true}),
-            c.edition.use({key: true}),
+            c.name.key(),
+            c.edition.key(),
             c.$flat("store").prefix("owner").with(c => [
-                c.name.use({key: true}),
-                c.version.use({insert: false})
+                c.name.key(),
+                c.version.mask({insert: false})
             ])
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{

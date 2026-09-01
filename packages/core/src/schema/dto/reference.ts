@@ -30,7 +30,7 @@ export type __ReferenceMapping<
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
 > =
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
         : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
 

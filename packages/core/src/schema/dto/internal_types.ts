@@ -31,6 +31,7 @@ export * from "./instance_of";
 export * from "./recursive";
 export * from "./reference_key";
 export * from "./reference";
+export * from "./ref";
 export * from "./scalar_like";
 export * from "./utils";
 

@@ -28,6 +28,7 @@ import { __ApplyInstanceOfMappings, __InstanceOfContext, __InstanceOfMappping } 
 import { __ApplyRecursiveMappings, __InputCollectionRecursiveMapping, __InputReferenceRecursiveMapping, __RecursiveContext, __RecursiveMapping } from "./recursive";
 import { __CalculatedCollectionDtoType, __CalculatedCollectionMapping, __CalculatedReferenceDtoType, __CalculatedReferenceMapping, __ParameterizedContext } from "./calculator";
 import { __FormulaContext } from "./formula";
+import { __RefContext } from "./ref";
 
 export type __DtoContext<
     TModel extends AnyModel,
@@ -72,11 +73,16 @@ export type __DtoContext<
         TContextKind extends "EMBEDDABLE"
             ? object
             : __FormulaContext<TModel, TDtoKind, "ENTITY", TMembers>
+    )
+    & (
+        TDtoKind extends "INPUT"
+            ? __RefContext<TModel, TMembers>
+            : object
     );
 
 export type __ContextKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";
 
-export type __DtoKind = "NULL_VIEW" | "UNDEFINED_VIEW" | "INPUT";
+export type __DtoKind = "NULL_VIEW" | "UNDEFINED_VIEW" | "INPUT" | "INPUT_REF";
 
 export interface __DtoBody<
     TModel extends AnyModel,
@@ -174,17 +180,29 @@ export type __AssociationsPaths<
     TRecursiveMappings extends ReadonlyArray<__DtoMapping<any>> | never
 > =
     TMapping["__mappingType"] extends "REFERENCE"
-        ? TMapping extends __InputReferenceMapping<any, any, any, infer PropName, any, any, infer TargetMappings, any>
-            ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
+        ? TMapping extends __InputReferenceMapping<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings, any>
+            ? DtoKind extends "INPUT_REF"
+                ? never
+                : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? TMapping extends __InputCollectionMapping<any, any, any, infer PropName, any, any, infer TargetMappings>
-            ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
+        ? TMapping extends __InputCollectionMapping<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings>
+            ? DtoKind extends "INPUT_REF"
+                ? never 
+                : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "FLAT"
         ? TMapping extends __InputReferenceFlatMapping<any, any, any, infer PropName, any, any, infer TargetMappings, any>
             ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
+    : TMapping["__mappingType"] extends "FOLD"
+        ? TMapping extends __FoldMapping<any, any, any, infer InnerMappings>
+            ? __AllAssociationPaths<InnerMappings, false>
+            : never
+    : TMapping["__mappingType"] extends "INSTANCE_OF"
+        ? TMapping extends __InstanceOfMappping<any, any, any, any, infer InnerMappings>
+            ? __AllAssociationPaths<InnerMappings, false>
+            : never 
     : TMapping["__mappingType"] extends "RECURSIVE"
         ? TMapping extends __InputReferenceRecursiveMapping<any, any, any, any, infer PropName, any, any>
             ? `${PropName}*` | `${PropName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`

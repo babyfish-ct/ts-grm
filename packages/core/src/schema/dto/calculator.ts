@@ -29,7 +29,7 @@ export type __ParameterizedContext<
     TDtoKind extends __DtoKind,
     TMembers
 > = 
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? object
         : __ParameterizedContextImpl<
             TModel,

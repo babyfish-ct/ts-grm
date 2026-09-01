@@ -28,7 +28,7 @@ export type __CollectionMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > = 
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
         : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
 

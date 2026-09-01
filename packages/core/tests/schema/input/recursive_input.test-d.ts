@@ -8,22 +8,22 @@ describe("RecursiveTest", () => {
     it("simple", () => {
 
         const input = dto.input(TREE_NODE, c => [
-            c.name.use({key: true}),
+            c.name.key(),
             c.$recursive("parentNode").as("upObj"),
             c.$recursive("childNodes").as("downObjs")
         ]);
-        type ParentNodeBody = {
+        type UpObjBody = {
             name: string;
-            upObj: ParentNodeBody | null | undefined;
+            upObj: UpObjBody | null | undefined;
         };
-        type ChildNodeBody = {
+        type DownObjBody = {
             name: string;
-            downObjs: Array<ChildNodeBody> | null | undefined;
+            downObjs: Array<DownObjBody> | null | undefined;
         };
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             name: string;
-            upObj: ParentNodeBody | null | undefined;
-            downObjs: Array<ChildNodeBody> | null | undefined;
+            upObj: UpObjBody | null | undefined;
+            downObjs: Array<DownObjBody> | null | undefined;
         }>();
         expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
             "$all" | "$root" | "parentNode*" | "childNodes*"

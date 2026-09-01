@@ -46,9 +46,9 @@ export type __DirectContext<
             : TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
             : TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
-                ? K
+                ? __IfNotRef<K, TDtoKind>
             : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
-                ? K
+                ? __IfNotRef<K, TDtoKind>
             : TMembers[K] extends __CalculatedValuePropContract<any, any>
                 ? __IfView<K, TDtoKind>
             : TMembers[K] extends __CalculatedReferencePropContract<any, any>
@@ -137,7 +137,7 @@ export type __DirectContext<
 }
 
 export type __IsScalarLikeProp<TMember, TDtoKind extends __DtoKind> =
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? TMember extends __ScalarPropContract<any, any, any> ? true : false
         : TMember extends __ScalarLikePropContract<any, any> ? true : false;
 
@@ -147,6 +147,11 @@ export type __ScalarTypeOf<TMember> =
         : never
 
 export type __IfView<T, TDtoKind> = 
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
+        ? never
+        : T;
+
+export type __IfNotRef<T, TDtoKind> =
+    TDtoKind extends "INPUT_REF"
         ? never
         : T;

@@ -74,7 +74,7 @@ export type __ReferenceRecursiveMapping<
     TAlias extends string,
     TMember
 > =
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
         : __OutputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
 
@@ -131,7 +131,7 @@ export type __CollectionRecursiveMapping<
     TMember,
     THasDepth extends boolean
 > =
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
         : __OutputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>; 
 
@@ -190,8 +190,8 @@ export interface __InputCollectionRecursiveMapping<
 
 export type __RecursiveKeys<TModel extends AnyModel, TMembers> = 
     keyof {
-        [K in keyof TMembers
-            as __IsRecursiveProp<TModel, TMembers[K]> extends true
+        [K in keyof TMembers as
+            __IsRecursiveProp<TModel, TMembers[K]> extends true
                 ? K & string
                 : never
         ]: never
@@ -273,7 +273,7 @@ export type __WithRecursiveCollection<
 > =
     {
         [K in TKey]: 
-            TDtoKind extends "INPUT"
+            TDtoKind extends "INPUT" | "INPUT_REF"
                 ? __WithNullity<
                     Array<
                         TRecursiveBodyType & __WithRecursiveCollection<TRecursiveBodyType, TDtoKind, K, THasDepth>

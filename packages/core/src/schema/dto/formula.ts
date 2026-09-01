@@ -28,7 +28,7 @@ export type __FormulaContext<
     TContextKind extends __ContextKind,
     TMembers
 > = 
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? object
         : __FormulaContextImpl<TModel, TDtoKind, TContextKind, TMembers>;
 

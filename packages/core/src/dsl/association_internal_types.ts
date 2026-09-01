@@ -23,15 +23,14 @@ import { FilterType } from "./table";
 export type __AssociationKeys<TModel extends AnyModel> =
     __AssociationKeysImpl<__AllModelMembers<TModel>>;
 
-type __AssociationKeysImpl<TModelMembers> =
-    TModelMembers extends object 
-        ? { 
-            [K in keyof TModelMembers]: 
-                TModelMembers[K] extends __AssociatedPropContract<any, any, any, true, any, any>
-                    ? K
-                    : never
-        }[keyof TModelMembers] :
-        never;
+export type __AssociationKeysImpl<TMembers> =
+    keyof {
+        [K in keyof TMembers as
+            TMembers[K] extends __AssociatedPropContract<any, any, any, any, any, any>
+                ? K & string
+                : never
+        ]: never
+    } & string | never;
 
 export type __MakeAssociationModel<
     TModel extends AnyModel,

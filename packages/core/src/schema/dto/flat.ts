@@ -130,7 +130,7 @@ export type __ReferenceFlatMapping<
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
 > = 
-    TDtoKind extends "INPUT"
+    TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>
         : __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
 

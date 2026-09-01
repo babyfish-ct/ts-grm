@@ -29,14 +29,14 @@ describe("AssociationInputTest", () => {
 
     it("wide", () => {
         const input = dto.input(BOOK, c => [
-            c.name.use({key: true}),
-            c.edition.use({key: true}),
+            c.name.key(),
+            c.edition.key(),
             c.store.as("owner").with(c => [
-                c.name.use({key: true}),
-                c.version.use({insert: false})
+                c.name.key(),
+                c.version.mask({insert: false})
             ]),
             c.authors.as("creators").with(c => [
-                c.name.use({key: true})
+                c.name.key()
             ])
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
@@ -60,11 +60,11 @@ describe("AssociationInputTest", () => {
 
     it("deep", () => {
         const input = dto.input(STUDENT, c => [
-            c.name.use({key: true}),
+            c.name.key(),
             c.learningLinks.with(c => [
-                c.score.use({insert: false}),
+                c.score.mask({insert: false}),
                 c.student.with(c => [
-                    c.name.use({key: true})
+                    c.name.key()
                 ])
             ])
         ]);
