@@ -14,7 +14,7 @@
 
 import { dtoMapper, type DtoMapper } from "@/impl/dto_mapper";
 import { AnyModel } from "../model";
-import { __AllAssociationPaths, __DtoBody, __DtoMapping, __DtoType } from "./dto_context";
+import { __AllAssociationPaths, __DtoBody, __DtoMappingContract, __DtoType } from "./dto_context";
 import { __AllModelMembers } from "../model_internal_types";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
@@ -68,7 +68,7 @@ function viewCreator(): __ViewCreator {
 function newView<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
-        __DtoMapping<TModel>
+        __DtoMappingContract<TModel>
     >,
 >(
     model: TModel,
@@ -86,7 +86,7 @@ function newView<
 function newViewByNullAsUndefined<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
-        __DtoMapping<TModel>
+        __DtoMappingContract<TModel>
     >,
 >(
     model: TModel,
@@ -104,7 +104,7 @@ function newViewByNullAsUndefined<
 function newInput<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
-        __DtoMapping<TModel>
+        __DtoMappingContract<TModel>
     >,
 >(
     _model: TModel,

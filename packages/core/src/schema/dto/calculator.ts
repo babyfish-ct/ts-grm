@@ -99,7 +99,7 @@ export type __ParameterMap<TMembers> = {
         : never
 };
 
-export interface __CalculatedReferenceMapping<
+export interface __CalculatedReferenceMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -110,6 +110,18 @@ export interface __CalculatedReferenceMapping<
 > {
 
     readonly __mappingType: "CALCULATED_REFERENCE";
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity];
+}
+
+export interface __CalculatedReferenceMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __CalculatedReferenceMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity> {
     
     as<TAlias extends string>(
         alias: TAlias
@@ -120,7 +132,7 @@ export interface __CalculatedReferenceMapping<
     ): __CalculatedReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
-export interface __CalculatedCollectionMapping<
+export interface __CalculatedCollectionMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -128,8 +140,18 @@ export interface __CalculatedCollectionMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > {
-
     readonly __mappingType: "CALCULATED_COLLECTION";
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings];
+}
+
+export interface __CalculatedCollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> extends __CalculatedCollectionMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings> {
     
     as<TAlias extends string>(
         alias: TAlias
@@ -144,7 +166,7 @@ export type __CalculatedReferenceDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __CalculatedReferenceMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+    TMapping extends __CalculatedReferenceMappingContract<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? {
                 [K in Key]: __WithNullity<
@@ -160,7 +182,7 @@ export type __CalculatedCollectionDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __CalculatedCollectionMapping<any, infer Declaring, any, infer Key, any, infer Mappings>
+    TMapping extends __CalculatedCollectionMappingContract<any, infer Declaring, any, infer Key, any, infer Mappings>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? {
                 [K in Key]: ReadonlyArray<__DtoType<Mappings, undefined>>

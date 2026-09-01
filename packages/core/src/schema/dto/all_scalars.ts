@@ -27,17 +27,23 @@ export type __AllScalarsContext<
     $allScalars: __AllScalarsMapping<TModel, TDtoKind, TMembers, never>;
 }
 
-export interface __AllScalarsMapping<
+export interface __AllScalarsMappingContract<
     TModel extends AnyModel,
     TDtoKind extends __DtoKind,
     TMembers, 
     TExcludedKeys extends keyof TMembers
 > {
     readonly __mappingType: 'ALL_SCALARS';
-    readonly __model?: TModel;
-    readonly __members?: TMembers;
-    readonly __excludedKeys?: TExcludedKeys;
+    readonly __generics?: [TModel, TDtoKind, TMembers, TExcludedKeys];
+}
 
+export interface __AllScalarsMapping<
+    TModel extends AnyModel,
+    TDtoKind extends __DtoKind,
+    TMembers, 
+    TExcludedKeys extends keyof TMembers
+> extends __AllScalarsMappingContract<TModel, TDtoKind, TMembers, TExcludedKeys> {
+    
     exclude<const TExcludedKeys extends AtLeastOne<__ScalarKeys<TMembers>>>(
         ...keys: TExcludedKeys
     ): __AllScalarsMapping<

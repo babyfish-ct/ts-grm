@@ -17,7 +17,7 @@ import { __AllModelMembers, __DeclaringModelName, __RequiredModelKey } from "../
 import { __TargetKeyOf } from "../prop_internal_types";
 import { __EmbeddedPropContract, __ReferencePropContract } from "../prop_internal_types";
 import { __AllScalarsMapping, __MemberType } from "./all_scalars";
-import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __DtoBody, __DtoKind, __DtoMappingContract, __DtoType } from "./dto_context";
 import { __TargetMappings, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 
 export type __ReferenceKeyContext<
@@ -51,6 +51,17 @@ export type __ReferenceKeyName<TKey, TMember> =
         ? `${TKey & string}${Capitalize<__RequiredModelKey<TargetModel, TargetKey>>}`
         : never;
 
+export interface __ReferenceKeyMappingContract<
+    TModel extends AnyModel, 
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember
+> {
+    readonly __mappingType: "REFERENCE_KEY";
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TKey, TMember];
+}
+
 export type __ReferenceKeyMapping<
     TModel extends AnyModel, 
     TDeclaring extends string,
@@ -67,13 +78,9 @@ export interface __ScalarReferenceKeyMapping<
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember
-> {
-
-    readonly __mappingType: "REFERENCE_KEY";
+> extends __ReferenceKeyMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember> {
 
     readonly __keyType: "SCALAR";
-    
-    readonly __key?: TKey;
     
     as<TAlias extends string>(
         alias: TAlias
@@ -86,14 +93,9 @@ export interface __EmbeddedReferenceKeyMapping<
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember,
-    TMappings extends ReadonlyArray<__DtoMapping<any>>
-> {
-
-    readonly __mappingType: "REFERENCE_KEY";
-
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>
+> extends __ReferenceKeyMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember> {
     readonly __keyType: "EMBEDDED";
-    
-    readonly __key?: TKey;
     
     as<TAlias extends string>(
         alias: TAlias

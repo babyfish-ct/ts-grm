@@ -20,6 +20,20 @@ import { __DtoBody, __DtoType, __DtoKind} from "./dto_context";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
 
+export interface __ReferenceMappingContract<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> {
+    readonly __mappingType: "REFERENCE";
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity];
+}
+
 export type __ReferenceMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
@@ -33,21 +47,6 @@ export type __ReferenceMapping<
     TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
         : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
-
-export interface __ReferenceMappingContract<
-    TModel extends AnyModel,
-    TDeclaring extends string,
-    TDtoKind extends __DtoKind,
-    TPropName extends string,
-    TAlias extends string,
-    TMember,
-    TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType
-> {
-    readonly __mappingType: "REFERENCE";
-
-    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity];
-}
 
 export interface __OutputReferenceMapping<
     TModel extends AnyModel,

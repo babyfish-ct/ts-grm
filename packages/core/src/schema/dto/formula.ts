@@ -15,7 +15,7 @@
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { SqlFormulaFn, TsFormulaFn } from "../computed";
 import { AnyModel } from "../model";
-import { __ContextKind, __DtoBody, __DtoContext, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __ContextKind, __DtoBody, __DtoContext, __DtoKind, __DtoMappingContract, __DtoType } from "./dto_context";
 import { IsNull } from "@/dsl/utils";
 import { __NullityType } from "../prop_internal_types";
 import { __WithNullity } from "./utils";
@@ -50,7 +50,7 @@ export interface __FormulaCreator<
     ts<
         TAlias extends string,
         TValueType extends StandardSchemaV1,
-        const TMappings extends ReadonlyArray<__DtoMapping<TModel>>, 
+        const TMappings extends ReadonlyArray<__DtoMappingContract<TModel>>, 
     >(
         options: __TsFormulaMappingOptions<
             TModel,
@@ -100,7 +100,7 @@ export interface __TsFormulaMappingOptions<
     TMembers,
     TAlias extends string,
     TValueType extends StandardSchemaV1,
-    TMappings extends ReadonlyArray<__DtoMapping<TModel>>
+    TMappings extends ReadonlyArray<__DtoMappingContract<TModel>>
 >{
     readonly alias: TAlias;
     readonly valueType: TValueType;

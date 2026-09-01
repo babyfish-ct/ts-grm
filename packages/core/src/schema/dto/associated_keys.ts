@@ -16,7 +16,7 @@ import { AnyModel } from "../model";
 import { __AllModelMembers, __DeclaringModelName, __RequiredModelKey } from "../model_internal_types";
 import { __CollectionPropContract, __EmbeddedPropContract } from "../prop_internal_types";
 import { __AllScalarsMapping, __MemberType } from "./all_scalars";
-import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __DtoBody, __DtoKind, __DtoMappingContract, __DtoType } from "./dto_context";
 import { __TargetKeyMembersOf, __TargetKeyPropOf } from "./reference_key";
 import { __IsAllowed, __PropModelOf, __TargetMappings } from "./utils";
 
@@ -59,6 +59,17 @@ export type __CollectionKeys<TMembers> =
         ]: never
     };
 
+export interface __AssociatedKeysMappingContract<
+    TModel extends AnyModel, 
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember
+> {
+    readonly __mappingType: "ASSOCIATED_KEYS";
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TKey, TMember];
+}
+
 export type __AssociatedKeysMapping<
     TModel extends AnyModel, 
     TDeclaring extends string,
@@ -75,14 +86,9 @@ export interface __ScalarAssociatedKeysMapping<
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember
-> {
-    readonly __mappingType: "ASSOCIATED_KEYS";
+> extends __AssociatedKeysMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember> {
+
     readonly __keyType: "SCALAR";
-    readonly __model?: TModel;
-    readonly __declaring?: TDeclaring;
-    readonly __dtoKind?: TDtoKind;
-    readonly __key?: TKey;
-    readonly __member?: TMember;
 }
 
 export interface __EmbeddedAssociatedKeysMapping<
@@ -91,14 +97,10 @@ export interface __EmbeddedAssociatedKeysMapping<
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember,
-    TMappings extends ReadonlyArray<__DtoMapping<any>>
-> {
-    readonly __mappingType: "ASSOCIATED_KEYS";
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>
+> extends __AssociatedKeysMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember> {
+
     readonly __keyType: "EMBEDDED";
-    readonly __model?: TModel;
-    readonly __dtoKind?: TDtoKind;
-    readonly __key?: TKey;
-    readonly __member?: TMember;
     readonly __mappings?: TMappings;
 
     with<

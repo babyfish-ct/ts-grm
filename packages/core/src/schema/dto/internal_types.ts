@@ -16,7 +16,7 @@ import { __Prettify } from "@/auxiliary_types";
 import { AnyModel } from "../model";
 import { __AllModelMembers } from "../model_internal_types";
 import { View } from "./api";
-import { __DtoBody, __DtoMapping, __DtoType } from "./dto_context";
+import { __DtoBody, __DtoMappingContract, __DtoType } from "./dto_context";
 
 export * from "./all_scalars";
 export * from "./associated_keys";
@@ -40,7 +40,7 @@ export type __ViewCreator = {
     <
         TModel extends AnyModel,
         const TMappings extends ReadonlyArray<
-            __DtoMapping<TModel>
+            __DtoMappingContract<TModel>
         >,
     >(
         model: TModel,
@@ -53,7 +53,7 @@ export type __ViewCreator = {
     nullAsUndefined<
         TModel extends AnyModel,
         const TMappings extends ReadonlyArray<
-            __DtoMapping<TModel>
+            __DtoMappingContract<TModel>
         >,
     >(
         model: TModel,

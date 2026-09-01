@@ -14,19 +14,19 @@
 
 import { __UnionToIntersection } from "@/auxiliary_types";
 import { AnyModel } from "../model";
-import { __AllScalarsContext, __AllScalarsDtoType, __AllScalarsMapping } from "./all_scalars";
-import { __AssociatedKeysContext, __AssociatedKeysDtoType, __AssociatedKeysMapping } from "./associated_keys";
-import { __CollectionDtoType, __CollectionMapping, __InputCollectionMapping } from "./collection";
-import { __EmbeddedDtoType, __EmbeddedMapping } from "./embedded";
-import { __FlatContext, __FlatDtoType, __FlatMapping, __InputReferenceFlatMapping } from "./flat";
-import { __FoldContext, __FoldDtoType, __FoldMapping } from "./fold";
-import { __InputReferenceMapping, __ReferenceDtoType, __ReferenceMapping } from "./reference";
-import { __ReferenceKeyContext, __ReferenceKeyDtoType, __ReferenceKeyMapping } from "./reference_key";
-import { __ScalarLikeDtoType, __ScalarLikeMapping } from "./scalar_like";
+import { __AllScalarsContext, __AllScalarsDtoType, __AllScalarsMapping, __AllScalarsMappingContract } from "./all_scalars";
+import { __AssociatedKeysContext, __AssociatedKeysDtoType, __AssociatedKeysMapping, __AssociatedKeysMappingContract } from "./associated_keys";
+import { __CollectionDtoType, __CollectionMappingContract } from "./collection";
+import { __EmbeddedDtoType, __EmbeddedMapping, __EmbeddedMappingContract } from "./embedded";
+import { __FlatContext, __FlatDtoType, __FlatMapping, __FlatMappingContract, __InputReferenceFlatMapping } from "./flat";
+import { __FoldContext, __FoldDtoType, __FoldMappingContract } from "./fold";
+import { __InputReferenceMapping, __ReferenceDtoType, __ReferenceMapping, __ReferenceMappingContract } from "./reference";
+import { __ReferenceKeyContext, __ReferenceKeyDtoType, __ReferenceKeyMapping, __ReferenceKeyMappingContract } from "./reference_key";
+import { __ScalarLikeDtoType, __ScalarLikeMapping, __ScalarLikeMappingContract } from "./scalar_like";
 import { __DirectContext } from "./direct";
-import { __ApplyInstanceOfMappings, __InstanceOfContext, __InstanceOfMappping } from "./instance_of";
-import { __ApplyRecursiveMappings, __InputCollectionRecursiveMapping, __InputReferenceRecursiveMapping, __RecursiveContext, __RecursiveMapping } from "./recursive";
-import { __CalculatedCollectionDtoType, __CalculatedCollectionMapping, __CalculatedReferenceDtoType, __CalculatedReferenceMapping, __ParameterizedContext } from "./calculator";
+import { __ApplyInstanceOfMappings, __InstanceOfContext, __InstanceOfMapppingContract } from "./instance_of";
+import { __ApplyRecursiveMappings, __CollectionRecursiveMappingContract, __InputCollectionRecursiveMapping, __InputReferenceRecursiveMapping, __RecursiveContext, __RecursiveMapping, __ReferenceRecursiveMappingContract } from "./recursive";
+import { __CalculatedCollectionDtoType, __CalculatedCollectionMapping, __CalculatedCollectionMappingContract, __CalculatedReferenceDtoType, __CalculatedReferenceMapping, __CalculatedReferenceMappingContract, __ParameterizedContext } from "./calculator";
 import { __FormulaContext } from "./formula";
 import { __RefContext } from "./ref";
 
@@ -89,7 +89,7 @@ export interface __DtoBody<
     TDtoKind extends __DtoKind,
     TContextKind extends __ContextKind,
     TMembers,
-    TMappings extends ReadonlyArray<__DtoMapping<TModel>>
+    TMappings extends ReadonlyArray<__DtoMappingContract<TModel>>
 > {
 
     (
@@ -97,25 +97,26 @@ export interface __DtoBody<
     ): TMappings;
 }
 
-export type __DtoMapping<
+export type __DtoMappingContract<
     TModel extends AnyModel
 > = 
-    __AllScalarsMapping<TModel, any, any, any> 
-    | __FoldMapping<TModel, any, any, any>
-    | __FlatMapping<TModel, any, any, any, any, any, any, any>
-    | __InstanceOfMappping<TModel, any, any, any, any>
-    | __RecursiveMapping<TModel, any, any, any, any, any, any>
-    | __ScalarLikeMapping<TModel, any, any, any, any, any>
-    | __EmbeddedMapping<TModel, any, any, any, any, any>
-    | __ReferenceKeyMapping<TModel, any, any, any, any>
-    | __AssociatedKeysMapping<TModel, any, any, any, any>
-    | __ReferenceMapping<TModel, any, any, any, any, any, any, any>
-    | __CollectionMapping<TModel, any, any, any, any, any, any>
-    | __CalculatedReferenceMapping<TModel, any, any, any, any, any, any>
-    | __CalculatedCollectionMapping<TModel, any, any, any, any, any>;
+    __AllScalarsMappingContract<TModel, any, any, any> 
+    | __FoldMappingContract<TModel, any, any, any>
+    | __FlatMappingContract<TModel, any, any, any, any, any, any, any>
+    | __InstanceOfMapppingContract<TModel, any, any, any, any>
+    | __ReferenceRecursiveMappingContract<TModel, any, any, any, any, any, any>
+    | __CollectionRecursiveMappingContract<TModel, any, any, any, any, any, any, any>
+    | __ScalarLikeMappingContract<TModel, any, any, any, any, any>
+    | __EmbeddedMappingContract<TModel, any, any, any, any, any>
+    | __ReferenceKeyMappingContract<TModel, any, any, any, any>
+    | __AssociatedKeysMappingContract<TModel, any, any, any, any>
+    | __ReferenceMappingContract<TModel, any, any, any, any, any, any, any>
+    | __CollectionMappingContract<TModel, any, any, any, any, any, any>
+    | __CalculatedReferenceMappingContract<TModel, any, any, any, any, any, any>
+    | __CalculatedCollectionMappingContract<TModel, any, any, any, any, any>;
 
 export type __DtoType<
-    TMappings extends ReadonlyArray<__DtoMapping<any>>,
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>,
     TAllowedDeclarings extends string | undefined
 > = 
     __ApplyRecursiveMappings<
@@ -124,7 +125,7 @@ export type __DtoType<
     >;
 
 export type __UnrecursiveDtoType<
-    TMappings extends ReadonlyArray<__DtoMapping<any>>,
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>,
     TAllowedDeclarings extends string | undefined
 > = 
     __ApplyInstanceOfMappings<
@@ -135,7 +136,7 @@ export type __UnrecursiveDtoType<
     >;
     
 export type __DtoMappingType<
-    TMapping extends __DtoMapping<any>,
+    TMapping extends __DtoMappingContract<any>,
     TAllowedDeclarings extends string | undefined
 > =
     TMapping["__mappingType"] extends "SCALAR_LIKE"
@@ -163,7 +164,7 @@ export type __DtoMappingType<
     : never;
 
 export type __AllAssociationPaths<
-    TMappings extends ReadonlyArray<__DtoMapping<any>>,
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>,
     TIngoreRecurisve extends boolean = false
 > = {
     [
@@ -176,31 +177,31 @@ export type __AllAssociationPaths<
 }[number];
 
 export type __AssociationsPaths<
-    TMapping extends __DtoMapping<any>,
-    TRecursiveMappings extends ReadonlyArray<__DtoMapping<any>> | never
+    TMapping extends __DtoMappingContract<any>,
+    TRecursiveMappings extends ReadonlyArray<__DtoMappingContract<any>> | never
 > =
     TMapping["__mappingType"] extends "REFERENCE"
-        ? TMapping extends __InputReferenceMapping<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings, any>
+        ? TMapping extends __ReferenceMappingContract<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings, any>
             ? DtoKind extends "INPUT_REF"
                 ? never
                 : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? TMapping extends __InputCollectionMapping<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings>
+        ? TMapping extends __CollectionMappingContract<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings>
             ? DtoKind extends "INPUT_REF"
                 ? never 
                 : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "FLAT"
-        ? TMapping extends __InputReferenceFlatMapping<any, any, any, infer PropName, any, any, infer TargetMappings, any>
+        ? TMapping extends __FlatMappingContract<any, any, any, infer PropName, any, any, infer TargetMappings, any>
             ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "FOLD"
-        ? TMapping extends __FoldMapping<any, any, any, infer InnerMappings>
+        ? TMapping extends __FoldMappingContract<any, any, any, infer InnerMappings>
             ? __AllAssociationPaths<InnerMappings, false>
             : never
     : TMapping["__mappingType"] extends "INSTANCE_OF"
-        ? TMapping extends __InstanceOfMappping<any, any, any, any, infer InnerMappings>
+        ? TMapping extends __InstanceOfMapppingContract<any, any, any, any, infer InnerMappings>
             ? __AllAssociationPaths<InnerMappings, false>
             : never 
     : TMapping["__mappingType"] extends "RECURSIVE"

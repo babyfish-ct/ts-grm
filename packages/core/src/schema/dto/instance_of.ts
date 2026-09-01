@@ -14,7 +14,7 @@
 
 import { __UnionToIntersection } from "@/auxiliary_types";
 import { __DeclaredModelMembers, __DeclaringModelName, __DerivedModel, __ModelName, __ModelSuperNames } from "../model_internal_types";
-import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __DtoBody, __DtoKind, __DtoMappingContract, __DtoType } from "./dto_context";
 import { __SelfMappings } from "./utils";
 import { AnyModel, Model } from "../model";
 
@@ -28,7 +28,7 @@ export interface __InstanceOfContext<
     >(
         derivedModel: __DerivedModel<TDerivedModel, TModel>,
         body: __DtoBody<TDerivedModel, TDtoKind, "DERIVED_ENTITY", __DeclaredModelMembers<TDerivedModel>, TMappings>
-    ): __InstanceOfMappping<
+    ): __InstanceOfMapppingContract<
         TModel,
         __ModelName<TModel>,
         TDtoKind,
@@ -37,7 +37,7 @@ export interface __InstanceOfContext<
     >;
 }
 
-export interface __InstanceOfMappping<
+export interface __InstanceOfMapppingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -45,20 +45,16 @@ export interface __InstanceOfMappping<
     TMappings extends __SelfMappings<TDerivedModel>
 > {
     readonly __mappingType: "INSTANCE_OF";
-    readonly __declaring?: TDeclaring;
-    readonly __model?: TModel;
-    readonly __dtoKind?: TDtoKind;
-    readonly __derivedModel?: TDerivedModel;
-    readonly __mappings: TMappings;
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TDerivedModel, TMappings];
 }
 
 export type __ApplyInstanceOfMappings<
     TPrevData,
-    TMappings extends ReadonlyArray<__DtoMapping<any>>,
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>,
     THasInstanceOf extends boolean = false
 > = 
-    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
-        ? First extends __InstanceOfMappping<infer Model, any, any, infer DerivedModel, infer DerivedMappings>
+    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMappingContract<any>>]
+        ? First extends __InstanceOfMapppingContract<infer Model, any, any, infer DerivedModel, infer DerivedMappings>
             ? __DerivedType<TPrevData, __DtoType<DerivedMappings, undefined>, Model, DerivedModel>
                 | __ApplyInstanceOfMappings<TPrevData, Rest, true>
             : __ApplyInstanceOfMappings<TPrevData, Rest, THasInstanceOf>

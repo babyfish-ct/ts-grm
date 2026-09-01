@@ -16,7 +16,7 @@ import { AnyModel } from "../model";
 import { __AllModelMembers } from "../model_internal_types";
 import { __AssociatedLikePropContract, __EmbeddedPropContract, __NullityType } from "../prop_internal_types";
 import { __AllScalarsMapping } from "./all_scalars";
-import { __DtoMapping, __DtoKind } from "./dto_context";
+import { __DtoMappingContract, __DtoKind } from "./dto_context";
 
 export type __PropModelOf<
     TModel extends AnyModel, 
@@ -49,7 +49,7 @@ export type __TargetContextKindOf<
 export type __TargetMappings<
     TModel extends AnyModel, 
     TMember
-> = ReadonlyArray<__DtoMapping<__PropModelOf<TModel, TMember>>>;
+> = ReadonlyArray<__DtoMappingContract<__PropModelOf<TModel, TMember>>>;
 
 export type __DefaultTargetMappings<
     TModel extends AnyModel, 
@@ -76,7 +76,7 @@ export type __WithNullity<T, TNullity extends __NullityType, TDtoKind extends __
 
 export type __SelfMappings<
     TModel extends AnyModel, 
-> = ReadonlyArray<__DtoMapping<TModel>>;
+> = ReadonlyArray<__DtoMappingContract<TModel>>;
 
 export type __IsAllowed<
     TDeclaring extends any,

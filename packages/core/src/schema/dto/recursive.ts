@@ -14,7 +14,7 @@
 
 import { __DeclaringModelName, __Extends, __IsDerivedModelOf, __ModelName, __SuperDeclaringModelNames } from "../model_internal_types";
 import { __AssociatedPropContract, __CollectionPropContract } from "../prop_internal_types";
-import { __DtoKind, __DtoMapping, __UnrecursiveDtoType } from "./dto_context";
+import { __DtoKind, __DtoMappingContract, __UnrecursiveDtoType } from "./dto_context";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { __PropModelOf, __WithNullity } from "./utils";
@@ -225,17 +225,17 @@ export type __IsRecursiveProp<TModel extends AnyModel, TProp> =
 
 export type __ApplyRecursiveMappings<
     TPrevData,
-    TMappings extends ReadonlyArray<__DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>
 > = 
     TPrevData 
     & __WithRecursiveMappings<TPrevData, TMappings, TMappings>;
 
 export type __WithRecursiveMappings<
     TPrevData,
-    TMappings extends ReadonlyArray<__DtoMapping<any>>,
-    TOriginalMappings extends ReadonlyArray<__DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>,
+    TOriginalMappings extends ReadonlyArray<__DtoMappingContract<any>>
 > = 
-    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
+    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMappingContract<any>>]
         ? (
             First extends __ReferenceRecursiveMappingContract<
                 any, 

@@ -19,8 +19,8 @@
     }
   },
   "scripts": {
-    "build": "tsup --dts",
-    "dev": "tsup --watch --dts",
+    "build": "tsdown --dts",
+    "dev": "tsdown --watch --dts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui --coverage",
@@ -41,5 +41,7 @@
   "devDependencies": {
     "zod": "^4.3.6"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

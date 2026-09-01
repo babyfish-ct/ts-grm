@@ -16,18 +16,6 @@ import { AnyModel } from "../model";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
 
-export type __EmbeddedMapping<
-    TModel extends AnyModel,
-    TDeclaring extends string,
-    TDtoKind extends __DtoKind,
-    TAlias extends string,
-    TMember,
-    TMappings extends __TargetMappings<TModel, TMember>
-> = 
-    TDtoKind extends "INPUT" | "INPUT_REF"
-        ? __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>
-        : __OutputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
-
 export interface __EmbeddedMappingContract<
     TModel extends AnyModel,
     TDeclaring extends string,
@@ -39,6 +27,18 @@ export interface __EmbeddedMappingContract<
     readonly __mappingType: "EMBEDDED";
     readonly __generics: [TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings];
 }
+
+export type __EmbeddedMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> = 
+    TDtoKind extends "INPUT" | "INPUT_REF"
+        ? __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>
+        : __OutputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
 export interface __OutputEmbeddedMapping<
     TModel extends AnyModel,

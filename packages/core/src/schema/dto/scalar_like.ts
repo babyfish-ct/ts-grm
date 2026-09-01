@@ -54,7 +54,6 @@ export interface __ScalarLikeMappingContract<
     TNullity extends __NullityType
 > {
     readonly __mappingType: "SCALAR_LIKE";
-    readonly __scalarLikeMappingType: "INPUT";
     readonly __generics?: [TModel, TDeclaring, TDtoKind, TDtoKind, TKey, TValue, TNullity];
 }
 
@@ -67,6 +66,8 @@ export interface __OutputScalarLikeMapping<
     TNullity extends __NullityType
 > extends __ScalarLikeMappingContract<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
     
+    readonly __scalarLikeMappingType: "OUTPUT";
+
     as<TAlias extends string>(
         alias: TAlias
     ): __OutputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TAlias, TValue, TNullity>;
@@ -100,6 +101,8 @@ export interface __BaseInputScalarLikeMapping<
     TNullity extends __NullityType
 > extends __ScalarLikeMappingContract<TModel, TDeclaring, TDtoKind, TKey, TValue, TNullity> {
 
+    readonly __scalarLikeMappingType: "INPUT";
+    
     as<TAlias extends string>(
         alias: TAlias
     ): __BaseInputScalarLikeMapping<TModel, TDeclaring, TDtoKind, TAlias, TValue, TNullity>;

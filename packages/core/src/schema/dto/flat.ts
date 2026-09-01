@@ -65,6 +65,20 @@ export type __FlatableKeys<TMembers> =
         ]: never
     }
 
+export interface __FlatMappingContract<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TPrefix extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> {
+    readonly __mappingType: 'FLAT';
+    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity];
+}
+
 export type __FlatMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
@@ -95,20 +109,6 @@ export type __FlatMapping<
         TMappings,
         TNullity
     >;
-
-export interface __FlatMappingContract<
-    TModel extends AnyModel,
-    TDeclaring extends string,
-    TDtoKind extends __DtoKind,
-    TPropName extends string,
-    TPrefix extends string,
-    TMember,
-    TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType
-> {
-    readonly __mappingType: 'FLAT';
-    readonly __generics?: [TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity];
-}
 
 export interface __EmbeddedFlatMapping<
     TModel extends AnyModel,

@@ -29,10 +29,10 @@ export interface __FoldContext<
     >(
         name: TName,
         body: __DtoBody<TModel, TDtoKind, TContextKind, TMembers, TMappings>
-    ): __FoldMapping<TModel, TDtoKind, TName, TMappings>;
+    ): __FoldMappingContract<TModel, TDtoKind, TName, TMappings>;
 }
 
-export interface __FoldMapping<
+export interface __FoldMappingContract<
     TModel extends AnyModel,
     TDtoKind extends __DtoKind,
     TName extends string,
@@ -46,6 +46,6 @@ export type __FoldDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __FoldMapping<any, any, infer Name, infer Mappings>
+    TMapping extends __FoldMappingContract<any, any, infer Name, infer Mappings>
         ? { [K in Name]: __DtoType<Mappings, TAllowedDeclarings> }
         : never;

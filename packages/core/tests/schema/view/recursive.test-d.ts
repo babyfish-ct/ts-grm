@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { CATEGORY, ITEM, TREE_NODE } from "../../model/model";
-import { __AllModelMembers, __DtoMapping, __DtoType, __UnionToIntersection, __UnrecursiveDtoType, dto, TypeOf } from "@/index";
+import { __AllModelMembers, __DtoMappingContract, __DtoType, __UnionToIntersection, __UnrecursiveDtoType, dto, TypeOf } from "@/index";
 
 describe("RecursiveTest", () => {
 

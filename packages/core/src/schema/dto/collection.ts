@@ -30,7 +30,7 @@ export type __CollectionMapping<
 > = 
     TDtoKind extends "INPUT" | "INPUT_REF"
         ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
-        : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
+        : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
 export interface __CollectionMappingContract<
     TModel extends AnyModel,
@@ -54,8 +54,6 @@ export interface __OutputCollectionMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > extends __CollectionMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
-
-    readonly __mappingType: "COLLECTION";
     
     as<TAlias extends string>(
         alias: TAlias

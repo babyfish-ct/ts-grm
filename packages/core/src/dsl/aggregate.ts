@@ -69,7 +69,7 @@ export function max(
     expr: DateExprContract
 ): DateExpression<Date | null>;
 
-export function max<T>(
+export function max(
     expr: EnumSetExprContract
 ): EnumSetExpression<string | null>;
 
@@ -103,7 +103,7 @@ export function min(
     expr: DateExprContract
 ): DateExpression<Date | null>;
 
-export function min<T>(
+export function min(
     expr: EnumSetExprContract
 ): EnumSetExpression<string | null>;
 
