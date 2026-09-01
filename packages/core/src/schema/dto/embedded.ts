@@ -16,11 +16,23 @@ import { AnyModel } from "../model";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
 
-export interface __EmbeddedMapping<
+export type __EmbeddedMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
     TKey extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> = 
+    TDtoKind extends "INPUT"
+        ? __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>
+        : __OutputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+
+export interface __OutputEmbeddedMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > {
@@ -29,11 +41,44 @@ export interface __EmbeddedMapping<
 
     as<TAlias extends string>(
         alias: TAlias
-    ): __EmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+    ): __OutputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
-    ): __EmbeddedMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+}
+
+export interface __InputEmbeddedMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> {
+
+    readonly __mappingType: "EMBEDDED";
+
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
+    ): __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+
+    use(
+        options: {
+            readonly key: true
+        }
+    ): __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+
+    use(
+        options: {
+            readonly insert?: boolean;
+            readonly update?: boolean;
+        }
+    ): __InputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 }
 
 export type __EmbeddedDtoType<

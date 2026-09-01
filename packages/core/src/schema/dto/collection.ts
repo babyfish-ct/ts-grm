@@ -23,19 +23,21 @@ export type __CollectionMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
-    TKey extends string,
+    TPropName extends string,
+    TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > = 
     TDtoKind extends "INPUT"
-        ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TKey>
-        : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>
+        ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
+        : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
 
 export interface __OutputCollectionMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
-    TKey extends string,
+    TPropName extends string,
+    TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > {
@@ -44,56 +46,56 @@ export interface __OutputCollectionMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     filter(
         filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
-    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     sort(
         ...orders: ReadonlyArray<ModelOrder<__PropModelOf<TModel, TMember>>>
-    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     limit(
         maxRows: number
-    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 
 export interface __InputCollectionMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
-    TKey extends string,
+    TPropName extends string,
+    TAlias extends string,
     TMember,
-    TMappings extends __TargetMappings<TModel, TMember>,
-    TAssociationName extends string
+    TMappings extends __TargetMappings<TModel, TMember>
 > {
 
     readonly __mappingType: "COLLECTION";
 
-    readonly __assocaitionPaths?: TAssociationName;
+    readonly __assocaitionPaths?: TPropName;
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings, TAssociationName>;
+    ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TAssociationName>;
+    ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 
 export type __CollectionDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __CollectionMapping<any, infer Declaring, any, infer Key, any, infer Mappings>
+    TMapping extends __CollectionMapping<any, infer Declaring, any, any, infer Alias, any, infer Mappings>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? {
-                [K in Key]: Array<__DtoType<Mappings, undefined>>
+                [K in Alias]: Array<__DtoType<Mappings, undefined>>
             }
             : never
         : never

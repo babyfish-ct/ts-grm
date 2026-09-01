@@ -104,7 +104,7 @@ export type __DtoMapping<
     | __ReferenceKeyMapping<TModel, any, any, any, any>
     | __AssociatedKeysMapping<TModel, any, any, any, any>
     | __ReferenceMapping<TModel, any, any, any, any, any, any, any>
-    | __CollectionMapping<TModel, any, any, any, any, any>
+    | __CollectionMapping<TModel, any, any, any, any, any, any>
     | __CalculatedReferenceMapping<TModel, any, any, any, any, any, any>
     | __CalculatedCollectionMapping<TModel, any, any, any, any, any>;
 
@@ -174,21 +174,21 @@ export type __AssociationsPaths<
     TRecursiveMappings extends ReadonlyArray<__DtoMapping<any>> | never
 > =
     TMapping["__mappingType"] extends "REFERENCE"
-        ? TMapping extends __InputReferenceMapping<any, any, any, any, any, infer TargetMappings, any, infer AssociationName>
-            ? AssociationName | `${AssociationName}.${__AllAssociationPaths<TargetMappings>}`
+        ? TMapping extends __InputReferenceMapping<any, any, any, infer PropName, any, any, infer TargetMappings, any>
+            ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? TMapping extends __InputCollectionMapping<any, any, any, any, any, infer TargetMappings, infer AssociationName>
-            ? AssociationName | `${AssociationName}.${__AllAssociationPaths<TargetMappings>}`
+        ? TMapping extends __InputCollectionMapping<any, any, any, infer PropName, any, any, infer TargetMappings>
+            ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "FLAT"
-        ? TMapping extends __InputReferenceFlatMapping<any, any, any, any, any, infer TargetMappings, any, infer AssociationName>
-            ? AssociationName | `${AssociationName}.${__AllAssociationPaths<TargetMappings>}`
+        ? TMapping extends __InputReferenceFlatMapping<any, any, any, infer PropName, any, any, infer TargetMappings, any>
+            ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "RECURSIVE"
-        ? TMapping extends __InputReferenceRecursiveMapping<any, any, any, any, any, any, infer AssociationName>
-            ? `${AssociationName}*` | `${AssociationName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`
-        : TMapping extends __InputCollectionRecursiveMapping<any, any, any, any, any, any, any, infer AssociationName>
-            ? `${AssociationName}*` | `${AssociationName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`
+        ? TMapping extends __InputReferenceRecursiveMapping<any, any, any, any, infer PropName, any, any>
+            ? `${PropName}*` | `${PropName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`
+        : TMapping extends __InputCollectionRecursiveMapping<any, any, any, any, infer PropName, any, any, any>
+            ? `${PropName}*` | `${PropName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`
         : never
     : never;

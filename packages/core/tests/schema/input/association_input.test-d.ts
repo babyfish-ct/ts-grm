@@ -27,13 +27,16 @@ describe("AssociationInputTest", () => {
         >();
     });
 
-    it("configurable", () => {
+    it("wide", () => {
         const input = dto.input(BOOK, c => [
             c.name.use({key: true}),
             c.edition.use({key: true}),
             c.store.as("owner").with(c => [
                 c.name.use({key: true}),
                 c.version.use({insert: false})
+            ]),
+            c.authors.as("creators").with(c => [
+                c.name.use({key: true})
             ])
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
@@ -43,9 +46,15 @@ describe("AssociationInputTest", () => {
                 name: string;
                 version: number;
             } | null | undefined;
+            creators: {
+                name: {
+                    firstName: string;
+                    lastName: string;
+                };
+            }[];
         }>();
         expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "store"
+            "$all" | "$root" | "store" | "authors"
         >();
     });
 
@@ -70,26 +79,6 @@ describe("AssociationInputTest", () => {
         }>();
         expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
             "$all" | "$root" | "learningLinks" | "learningLinks.student"
-        >();
-    });
-
-    it("flat", () => {
-        const input = dto.input(BOOK, c => [
-            c.name.use({key: true}),
-            c.edition.use({key: true}),
-            c.$flat("store").prefix("owner").with(c => [
-                c.name.use({key: true}),
-                c.version.use({insert: false})
-            ])
-        ]);
-        expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
-            edition: number;
-            name: string;
-            ownerName: string | null | undefined;
-            ownerVersion: number | null | undefined;
-        }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "store"
         >();
     });
 });

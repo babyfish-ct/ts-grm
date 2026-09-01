@@ -24,76 +24,76 @@ export type __ReferenceMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
-    TKey extends string,
+    TPropName extends string,
+    TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType,
-    TAssociationName extends string
+    TNullity extends __NullityType
 > =
     TDtoKind extends "INPUT"
-        ? __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>
-        : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>
+        ? __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
+        : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
 
 export interface __OutputReferenceMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
-    TKey extends string,
+    TPropName extends string,
+    TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType,
-    TAssociationName extends string
+    TNullity extends __NullityType
 > {
 
     readonly __mappingType: "REFERENCE";
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings, TNullity, TAssociationName>;
+    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
+    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     filter(
         filter: (table: EntityTable<__PropModelOf<TModel, TMember>>) => Predicate | undefined
-    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, "NULLABLE", TAssociationName>;
+    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, "NULLABLE">;
 
     fetch(
         fetchType: ReferenceFetchType
-    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
+    ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 }
 
 export interface __InputReferenceMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
-    TKey extends string,
+    TPropName extends string,
+    TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
-    TNullity extends __NullityType,
-    TAssociationName extends string
+    TNullity extends __NullityType
 > {
 
     readonly __mappingType: "REFERENCE";
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings, TNullity, TAssociationName>;
+    ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
-    ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings, TNullity, TAssociationName>;
+    ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 }
 
 export type __ReferenceDtoType<
     TMapping,
     TAllowedDeclarings extends string | undefined
 > =
-    TMapping extends __ReferenceMapping<any, infer Declaring, infer DtoKind, infer Key, any, infer Mappings, infer Nullity, any>
+    TMapping extends __ReferenceMapping<any, infer Declaring, infer DtoKind, any, infer Alias, any, infer Mappings, infer Nullity>
         ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
             ? { 
-                [K in Key]: 
+                [K in Alias]: 
                     __WithNullity<
                         __DtoType<Mappings, undefined>,
                         Nullity,
