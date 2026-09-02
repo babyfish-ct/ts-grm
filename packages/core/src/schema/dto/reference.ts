@@ -15,7 +15,7 @@
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { AnyModel } from "../model";
-import { __NullityType } from "../prop_internal_types";
+import { __NullityType, __OneToOnePropContract } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind} from "./dto_context";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
@@ -45,7 +45,9 @@ export type __ReferenceMapping<
     TNullity extends __NullityType
 > =
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
+        ? TMember extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+            ? __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
+            : __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
         : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
 
 export interface __OutputReferenceMapping<
@@ -94,6 +96,25 @@ export interface __InputReferenceMapping<
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
     ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+}
+
+export interface __InversedInputReferenceMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
+
+    reparentable(
+    ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+
+    onDissociate(
+        behavior: "NONE" | "SET_NULL" | "DELETE"
+    ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 }
 
 export type __ReferenceDtoType<

@@ -18,6 +18,7 @@ import { AnyModel } from "../model";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
+import { __OneToManyPropContract } from "../prop_internal_types";
 
 export type __CollectionMapping<
     TModel extends AnyModel,
@@ -29,7 +30,9 @@ export type __CollectionMapping<
     TMappings extends __TargetMappings<TModel, TMember>
 > = 
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
+        ? TMember extends __OneToManyPropContract<any, any, any, any, any>
+            ? __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
+            : __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
         : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
 export interface __CollectionMappingContract<
@@ -93,6 +96,24 @@ export interface __InputCollectionMapping<
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
     ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+}
+
+export interface __OneToManyInputCollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> extends __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+
+    reparentable(
+    ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+
+    onDissociate(
+        behavior: "NONE" | "SET_NULL" | "DELETE"
+    ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 
 export type __CollectionDtoType<

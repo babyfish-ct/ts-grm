@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
-import { BOOK, STUDENT } from "../../model/model";
+import { BOOK, BOOK_STORE, STUDENT } from "../../model/model";
 import { dto, TypeOf } from "@/index";
 import { SelectableAssocaitionPaths } from "@/schema/dto/api";
 
@@ -79,6 +79,31 @@ describe("AssociationInputTest", () => {
         }>();
         expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
             "$all" | "$root" | "learningLinks" | "learningLinks.student"
+        >();
+    });
+
+    it("o2m", () => {
+        const input = dto.input(BOOK_STORE, c => [
+            c.name.key(),
+            c.books
+                .reparentable()
+                .onDissociate("DELETE")
+                .with(c => [
+                    c.name.key(),
+                    c.edition.key(),
+                    c.price
+                ])
+        ]);
+        expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
+            name: string;
+            books: {
+                edition: number;
+                name: string;
+                price: number;
+            }[];
+        }>();
+        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+            "$all" | "$root" | "books"
         >();
     });
 });
