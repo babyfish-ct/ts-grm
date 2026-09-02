@@ -19,6 +19,7 @@ import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
 import { __OneToManyPropContract } from "../prop_internal_types";
+import { DissociateMode } from "./api";
 
 export type __CollectionMapping<
     TModel extends AnyModel,
@@ -108,11 +109,19 @@ export interface __OneToManyInputCollectionMapping<
     TMappings extends __TargetMappings<TModel, TMember>
 > extends __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
 
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+    ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+
     reparentable(
     ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     onDissociate(
-        behavior: "NONE" | "SET_NULL" | "DELETE"
+        behavior: DissociateMode
     ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 

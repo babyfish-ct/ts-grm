@@ -29,7 +29,10 @@ export type {
     Schema,  
     FindManyOptions,
     FindRangeOptions,
-    FindPageOptions
+    FindPageOptions,
+    SaveOptions,
+    RootSaveMode,
+    AssociatedSaveMode
 } from "./sql_client";
 export type { AtLeastOne, AtLeastTwo } from "./utils";
 export type { Criteria } from "./criteria";

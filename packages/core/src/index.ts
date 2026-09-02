@@ -127,8 +127,8 @@ export {
 } from "./schema/computed";
 export { ScalarProvider, ScalarType, scalars } from "./schema/scalar";
 export type { ScalarKind } from "./schema/scalar";
-export type { TypeOf } from "./schema/dto/api";
-export { View } from "./schema/dto/api";
+export type { TypeOf, InputAssociationMembers, DissociateMode } from "./schema/dto/api";
+export { View, Input } from "./schema/dto/api";
 export { EntityManager } from "./schema/entity_manager";
 export type { CascadeType } from "./schema/join";
 export type  {
@@ -140,6 +140,7 @@ export type  {
     FindManyOptions,
     FindRangeOptions,
     FindPageOptions,
+    SaveOptions,
     Criteria, 
     AtLeastOne,
     AtLeastTwo,
@@ -197,6 +198,8 @@ export type  {
     ExprTuple,
     RowTypeOf,
     SelectionLike,
-    TimeUnit
+    TimeUnit,
+    RootSaveMode,
+    AssociatedSaveMode
 } from "./dsl";
 

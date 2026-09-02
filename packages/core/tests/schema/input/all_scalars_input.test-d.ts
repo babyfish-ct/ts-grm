@@ -1,6 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR } from "../../model/model";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("AllScalarsInput", () => {
 
@@ -16,6 +17,9 @@ describe("AllScalarsInput", () => {
             };
             gender: "FEMALE" | "MALE";
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 
     it("exclude", () => {
@@ -29,6 +33,9 @@ describe("AllScalarsInput", () => {
                 lastName: string;
             };
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 
     it("excludeArr", () => {
@@ -41,5 +48,8 @@ describe("AllScalarsInput", () => {
                 lastName: string;
             };
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 });

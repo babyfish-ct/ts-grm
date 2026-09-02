@@ -20,9 +20,10 @@ import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
 import { Page } from "./page";
-import { TypeOf, View } from "@/schema/dto/api";
+import { Input, InputAssociationMembers, TypeOf, View } from "@/schema/dto/api";
 import { __ModelOf } from "@/schema/dto/internal_types";
 import { ModelOrder } from "@/schema/order";
+import { __AssociatedSaveModeOptions, __OnDissociateOptions } from "@/index_internal";
 
 export interface SqlClient {
 
@@ -101,6 +102,18 @@ export interface SqlClient {
         fn: () => Promise<R>
     ): Promise<R>;
 
+    save<TInput extends Input<any, any, any>>(
+        input: TInput,
+        obj: TypeOf<TInput>,
+        options?: SaveOptions<TInput>
+    ): Promise<void>;
+
+    save<TInput extends Input<any, any, any>>(
+        input: TInput,
+        arr: ReadonlyArray<TypeOf<TInput>>,
+        options?: SaveOptions<TInput>
+    ): Promise<void>;
+
     createSchema(): Promise<Schema>;
 }
 
@@ -156,3 +169,14 @@ export interface FindPageOptions<TModel extends AnyModel> extends FindManyOption
 
     readonly pageNo?: number;
 }
+
+export type SaveOptions<TInput extends Input<any, any, any>> = 
+    {
+        readonly root?: RootSaveMode;
+        readonly associated?: __AssociatedSaveModeOptions<InputAssociationMembers<TInput>>;
+        readonly onDissocate?: __OnDissociateOptions<InputAssociationMembers<TInput>>;
+    };
+
+export type RootSaveMode = "UPSERT" | "INSERT" | "INSERT_IF_ABSENT" | "UPDATE" | "NON_IDEMPOTENT_UPSERT";
+
+export type AssociatedSaveMode = "REPLACE" | "MERGE" | "APPEND" | "APPEND_IF_ABSENT" | "UPDATE" | "VIOLENTLY_REPLACE";

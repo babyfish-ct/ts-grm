@@ -18,7 +18,7 @@ import { AnyModel } from "../model";
 import { __NullityType, __OneToOnePropContract } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind} from "./dto_context";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
-import { ReferenceFetchType } from "./api";
+import { DissociateMode, ReferenceFetchType } from "./api";
 
 export interface __ReferenceMappingContract<
     TModel extends AnyModel,
@@ -109,11 +109,19 @@ export interface __InversedInputReferenceMapping<
     TNullity extends __NullityType
 > extends __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
 
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+    ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+
     reparentable(
     ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     onDissociate(
-        behavior: "NONE" | "SET_NULL" | "DELETE"
+        behavior: DissociateMode
     ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 }
 

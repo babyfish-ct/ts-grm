@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
 import { TREE_NODE } from "../../model/model";
-import { SelectableAssocaitionPaths } from "@/schema/dto/api";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("RecursiveTest", () => {
 
@@ -25,8 +25,8 @@ describe("RecursiveTest", () => {
             upObj: UpObjBody | null | undefined;
             downObjs: Array<DownObjBody> | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "parentNode*" | "childNodes*"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "parentNode*" | "childNodes*"
         >();
     });
 });

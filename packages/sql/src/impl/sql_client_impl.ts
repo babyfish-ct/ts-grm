@@ -18,6 +18,7 @@ import { SqlClientImplementor } from "@/sql_client";
 import { 
     Criteria, 
     View, 
+    Input,
     TypeOf, 
     AtLeastOne, 
     AnyModel,
@@ -45,6 +46,7 @@ import {
     Schema,
     FetchRangeOptions,
     FetchPageOptions,
+    SaveOptions,
     Page,
     spi,
     dsl,
@@ -375,6 +377,26 @@ export class SqlClientImpl implements SqlClientImplementor {
             }
         }
         this._validated = true;
+    }
+
+    save<TInput extends Input<any, any, any>>(
+        input: TInput,
+        obj: TypeOf<TInput>,
+        options?: SaveOptions<TInput>
+    ): Promise<void>;
+
+    save<TInput extends Input<any, any, any>>(
+        input: TInput,
+        arr: ReadonlyArray<TypeOf<TInput>>,
+        options?: SaveOptions<TInput>
+    ): Promise<void>;
+
+    async save<TInput extends Input<any, any, any>>(
+        _input: TInput,
+        _data: TypeOf<TInput> | ReadonlyArray<TypeOf<TInput>>,
+        _options?: SaveOptions<TInput>
+    ): Promise<void> {
+        throw new Error("UnsupportedOperation");
     }
 }
 

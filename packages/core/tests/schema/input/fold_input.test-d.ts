@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK } from "../../model/model";
-import { SelectableAssocaitionPaths } from "@/schema/dto/api";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("FoldInputTest", () => {
 
@@ -41,8 +41,8 @@ describe("FoldInputTest", () => {
                 edition: number;
             };
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "store" | "authors"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "store" | "authors"
         >();
     });
 });

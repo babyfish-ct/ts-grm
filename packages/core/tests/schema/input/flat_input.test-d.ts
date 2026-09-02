@@ -1,7 +1,7 @@
 import { dto } from "@/index";
 import { describe, it, expectTypeOf } from "vitest";
 import { BOOK } from "../../model/model";
-import { SelectableAssocaitionPaths, TypeOf } from "@/schema/dto/api";
+import { InputAssociationMembers, TypeOf } from "@/schema/dto/api";
 
 describe("FlatInputTest", () => {
     it("flat", () => {
@@ -19,8 +19,8 @@ describe("FlatInputTest", () => {
             ownerName: string | null | undefined;
             ownerVersion: number | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "store"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "store"
         >();
     });
 });

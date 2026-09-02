@@ -13,13 +13,14 @@
  */
 
 import { __DeclaringModelName, __Extends, __IsDerivedModelOf, __ModelName, __SuperDeclaringModelNames } from "../model_internal_types";
-import { __AssociatedPropContract, __CollectionPropContract } from "../prop_internal_types";
+import { __AssociatedPropContract, __CollectionPropContract, __OneToManyPropContract, __OneToOnePropContract } from "../prop_internal_types";
 import { __DtoKind, __DtoMappingContract, __UnrecursiveDtoType } from "./dto_context";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { __PropModelOf, __WithNullity } from "./utils";
 import { ModelOrder } from "../order";
 import { AnyModel } from "../model";
+import { DissociateMode } from "./api";
 
 export interface __RecursiveContext<
     TModel extends AnyModel,
@@ -75,7 +76,9 @@ export type __ReferenceRecursiveMapping<
     TMember
 > =
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
+        ? TMember extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+            ? __InversedInputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
+            : __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
         : __OutputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>
 
 export interface __ReferenceRecursiveMappingContract<
@@ -130,6 +133,28 @@ export interface __InputReferenceRecursiveMapping<
     ): __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
 }
 
+export interface __InversedInputReferenceRecursiveMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TSuperDeclarings extends string | undefined,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember
+> extends __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember> {
+
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __InversedInputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
+
+    reparentable(
+    ): __InversedInputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
+
+    onDissociate(
+        behavior: DissociateMode
+    ): __InversedInputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
+}
+
 export type __CollectionRecursiveMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
@@ -141,7 +166,9 @@ export type __CollectionRecursiveMapping<
     THasDepth extends boolean
 > =
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
+        ? TMember extends __OneToManyPropContract<any, any, any, any, any>
+            ? __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
+            : __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
         : __OutputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>; 
 
 export interface __CollectionRecursiveMappingContract<
@@ -205,6 +232,29 @@ export interface __InputCollectionRecursiveMapping<
     as<TAlias extends string>(
         alias: TAlias
     ): __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
+}
+
+export interface __OneToManyInputCollectionRecursiveMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TSuperDeclarings extends string | undefined,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    THasDepth extends boolean
+> extends __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth> {
+
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
+
+    reparentable(
+    ): __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
+
+    onDissociate(
+        behavior: DissociateMode
+    ): __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
 }
 
 export type __RecursiveKeys<TModel extends AnyModel, TMembers> = 

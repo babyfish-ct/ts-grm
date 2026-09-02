@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK } from "../../model/model";
-import { SelectableAssocaitionPaths } from "@/schema/dto/api";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 /*
  * Tests for short-associations
@@ -21,7 +21,7 @@ describe("RefInputTest", () => {
             name: string;
             storeId: string | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never
         >();
     });
@@ -50,7 +50,7 @@ describe("RefInputTest", () => {
                 name: string;
             } | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never
         >();
     });
@@ -70,7 +70,7 @@ describe("RefInputTest", () => {
             storeName: string | null | undefined;
             storeVersion: number | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never
         >();
     });
@@ -90,7 +90,7 @@ describe("RefInputTest", () => {
             ownerName: string | null | undefined;
             ownerVersion: number | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never
         >();
     });

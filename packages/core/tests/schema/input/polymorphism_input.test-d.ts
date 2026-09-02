@@ -1,7 +1,7 @@
-import { dto, TypeOf } from "@/index";
+import { __Prettify, dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
 import { CATEGORY, ITEM, TREE_NODE } from "../../model/model";
-import { SelectableAssocaitionPaths } from "@/schema/dto/api";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("PolymorphismInputTest", () => {
 
@@ -63,9 +63,9 @@ describe("PolymorphismInputTest", () => {
             }[];
             upObj: UpObjBody | null | undefined;
             downObjs: DownObjBody[] | null | undefined;
-        }>(); 
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "childNodes*" | "parentNode*" | "tags"
+        }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "childNodes*" | "parentNode*" | "tags"
         >();
     });
 });

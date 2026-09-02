@@ -20,4 +20,5 @@ export * from "@/dsl/association_internal_types";
 export * from "@/dsl/table_internal_types";
 export * from "@/dsl/expression_internal_types";
 export * from "@/dsl/criteria_internal_types";
+export * from "@/dsl/sql_client_internal_types";
 export * from "@/auxiliary_types";

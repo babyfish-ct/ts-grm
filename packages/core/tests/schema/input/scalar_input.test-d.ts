@@ -2,6 +2,7 @@ import { dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR, BOOK, LEARNING_LINK } from "../../model/model";
 import z from "zod";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("ScalarInputTest", () => {
 
@@ -14,6 +15,9 @@ describe("ScalarInputTest", () => {
             name: string;
             edition: number;
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 
     it("nullish", () => {
@@ -25,6 +29,9 @@ describe("ScalarInputTest", () => {
             id: number;
             score: number | null | undefined;
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 
     it("alias", () => {
@@ -38,6 +45,9 @@ describe("ScalarInputTest", () => {
             bookName: string;
             bookEdition: number;
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 
     it("input", () => {
@@ -51,5 +61,8 @@ describe("ScalarInputTest", () => {
             gender: "BOY" | "GIRL";
             id: number;
         }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
     });
 });

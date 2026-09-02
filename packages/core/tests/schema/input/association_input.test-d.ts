@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE, STUDENT } from "../../model/model";
 import { dto, TypeOf } from "@/index";
-import { SelectableAssocaitionPaths } from "@/schema/dto/api";
+import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("AssociationInputTest", () => {
 
@@ -22,8 +22,8 @@ describe("AssociationInputTest", () => {
                 version: number;
             } | null | undefined;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "store"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "store"
         >();
     });
 
@@ -53,8 +53,8 @@ describe("AssociationInputTest", () => {
                 };
             }[];
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "store" | "authors"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "store" | "authors"
         >();
     });
 
@@ -77,8 +77,8 @@ describe("AssociationInputTest", () => {
             }[];
             name: string;
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "learningLinks" | "learningLinks.student"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "learningLinks" | "learningLinks.student"
         >();
     });
 
@@ -102,8 +102,8 @@ describe("AssociationInputTest", () => {
                 price: number;
             }[];
         }>();
-        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
-            "$all" | "$root" | "books"
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            "books"
         >();
     });
 });

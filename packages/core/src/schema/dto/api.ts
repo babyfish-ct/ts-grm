@@ -14,12 +14,13 @@
 
 import { dtoMapper, type DtoMapper } from "@/impl/dto_mapper";
 import { AnyModel } from "../model";
-import { __AllAssociationPaths, __DtoBody, __DtoMappingContract, __DtoType } from "./dto_context";
+import { __AllAssociationMemberUnions, __DtoBody, __DtoMappingContract, __DtoType } from "./dto_context";
 import { __AllModelMembers } from "../model_internal_types";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
-import { __Prettify } from "@/auxiliary_types";
+import { __Prettify, __UnionToIntersection } from "@/auxiliary_types";
 import { __ViewCreator } from "@/schema/dto/internal_types";
+import { __PropContract } from "../prop_internal_types";
 
 export class View<TModel extends AnyModel, T> {
 
@@ -30,9 +31,9 @@ export class View<TModel extends AnyModel, T> {
     constructor(readonly mapper: DtoMapper) {}
 }
 
-export class Input<TModel extends AnyModel, T, TAssociationPaths extends string | never> {
+export class Input<TModel extends AnyModel, T, TAssociationMembers> {
 
-    __type(): { input: [TModel, T, TAssociationPaths] | undefined } {
+    __type(): { input: [TModel, T, TAssociationMembers] | undefined } {
         return { input: undefined };
     };
 }
@@ -44,12 +45,10 @@ export type TypeOf<TDto> =
         ? R 
     : never;
 
-export type SelectableAssocaitionPaths<TInput> =
-    TInput extends Input<any, any, infer Paths>
-        ? Paths extends string
-            ? "$all" | "$root" | Paths
-            : never
-        : never;
+export type InputAssociationMembers<TInput> =
+    TInput extends Input<any, any, infer AssociationMembers>
+        ? AssociationMembers
+        : {};
 
 export type ReferenceFetchType = 
     "LOAD" | "JOIN_LOW_OFFSET_ONLY";
@@ -112,10 +111,12 @@ function newInput<
 ): Input<
     TModel, 
     __Prettify<__DtoType<TMappings, undefined>>,
-    __AllAssociationPaths<TMappings>
+    __UnionToIntersection<__AllAssociationMemberUnions<TMappings>>
 > {
     // const entity = Entity.of(model);
     // const ctx = newDtoContext(entity, false) as any;
     //const dto = createDto(ctx, undefined, fn);
     return new Input();
 }
+
+export type DissociateMode = "ERROR" | "SET_NULL" | "DELETE";

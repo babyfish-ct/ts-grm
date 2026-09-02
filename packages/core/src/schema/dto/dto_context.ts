@@ -163,7 +163,7 @@ export type __DtoMappingType<
         ? __CalculatedCollectionDtoType<TMapping, TAllowedDeclarings>
     : never;
 
-export type __AllAssociationPaths<
+export type __AllAssociationMemberUnions<
     TMappings extends ReadonlyArray<__DtoMappingContract<any>>,
     TIngoreRecurisve extends boolean = false
 > = {
@@ -172,44 +172,61 @@ export type __AllAssociationPaths<
     ]: TIngoreRecurisve extends true
         ? TMappings[K]["__mappingType"] extends "RECURSIVE"
             ? never
-            : __AssociationsPaths<TMappings[K], TMappings>
-        : __AssociationsPaths<TMappings[K], never>
+            : __AssociationMemberUnions<TMappings[K], TMappings>
+        : __AssociationMemberUnions<TMappings[K], never>
 }[number];
 
-export type __AssociationsPaths<
+export type __AssociationMemberUnions<
     TMapping extends __DtoMappingContract<any>,
     TRecursiveMappings extends ReadonlyArray<__DtoMappingContract<any>> | never
 > =
     TMapping["__mappingType"] extends "REFERENCE"
-        ? TMapping extends __ReferenceMappingContract<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings, any>
+        ? TMapping extends __ReferenceMappingContract<any, any, infer DtoKind, infer PropName, any, infer Member, infer TargetMappings, any>
             ? DtoKind extends "INPUT_REF"
                 ? never
-                : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
+                : { readonly [K in PropName]: Member } 
+                    | __ConcatAssociationMemberUnion<PropName, __AllAssociationMemberUnions<TargetMappings, false>>
             : never
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? TMapping extends __CollectionMappingContract<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings>
+        ? TMapping extends __CollectionMappingContract<any, any, infer DtoKind, infer PropName, any, infer Member, infer TargetMappings>
             ? DtoKind extends "INPUT_REF"
                 ? never 
-                : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
+                : { readonly [K in PropName]: Member } 
+                    | __ConcatAssociationMemberUnion<PropName, __AllAssociationMemberUnions<TargetMappings, false>>
             : never
     : TMapping["__mappingType"] extends "FLAT"
-        ? TMapping extends __FlatMappingContract<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings, any>
+        ? TMapping extends __FlatMappingContract<any, any, infer DtoKind, infer PropName, any, infer Member, infer TargetMappings, any>
             ? DtoKind extends "INPUT_REF"
                 ? never
-                : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
+                : { readonly [K in PropName]: Member } 
+                    | __ConcatAssociationMemberUnion<PropName, __AllAssociationMemberUnions<TargetMappings, false>>
             : never
     : TMapping["__mappingType"] extends "FOLD"
         ? TMapping extends __FoldMappingContract<any, any, any, infer InnerMappings>
-            ? __AllAssociationPaths<InnerMappings, false>
+            ? __AllAssociationMemberUnions<InnerMappings, false>
             : never
     : TMapping["__mappingType"] extends "INSTANCE_OF"
         ? TMapping extends __InstanceOfMapppingContract<any, any, any, any, infer InnerMappings>
-            ? __AllAssociationPaths<InnerMappings, false>
+            ? __AllAssociationMemberUnions<InnerMappings, false>
             : never 
     : TMapping["__mappingType"] extends "RECURSIVE"
-        ? TMapping extends __InputReferenceRecursiveMapping<any, any, any, any, infer PropName, any, any>
-            ? `${PropName}*` | `${PropName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`
-        : TMapping extends __InputCollectionRecursiveMapping<any, any, any, any, infer PropName, any, any, any>
-            ? `${PropName}*` | `${PropName}*.${__AllAssociationPaths<TRecursiveMappings, true>}`
+        ? TMapping extends __InputReferenceRecursiveMapping<any, any, any, any, infer PropName, any, infer Member>
+            ? { readonly [K in PropName as `${PropName}*`]: Member } 
+                | __ConcatAssociationMemberUnion<`${PropName}*`, __AllAssociationMemberUnions<TRecursiveMappings, true>>
+        : TMapping extends __InputCollectionRecursiveMapping<any, any, any, any, infer PropName, any, any, infer Member>
+            ? { readonly [K in PropName as `${PropName}*`]: Member } 
+                | __ConcatAssociationMemberUnion<`${PropName}*`, __AllAssociationMemberUnions<TRecursiveMappings, true>>
         : never
     : never;
+
+export type __ConcatAssociationMemberUnion<
+    TPropName extends string,
+    TSubAssociationMembers
+> = 
+    TSubAssociationMembers extends any
+        ? {
+            readonly [
+                K in keyof TSubAssociationMembers as `${TPropName}.${string & K}`
+            ]: TSubAssociationMembers[K];
+        }
+        : never;
