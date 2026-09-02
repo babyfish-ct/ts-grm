@@ -193,8 +193,10 @@ export type __AssociationsPaths<
                 : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "FLAT"
-        ? TMapping extends __FlatMappingContract<any, any, any, infer PropName, any, any, infer TargetMappings, any>
-            ? PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
+        ? TMapping extends __FlatMappingContract<any, any, infer DtoKind, infer PropName, any, any, infer TargetMappings, any>
+            ? DtoKind extends "INPUT_REF"
+                ? never
+                : PropName | `${PropName}.${__AllAssociationPaths<TargetMappings>}`
             : never
     : TMapping["__mappingType"] extends "FOLD"
         ? TMapping extends __FoldMappingContract<any, any, any, infer InnerMappings>

@@ -35,7 +35,7 @@ describe("RefInputTest", () => {
             ]).as("owner"),
             c.$ref("authors", c => [
                 c.name
-            ]).as("creators"),
+            ]).as("creators")
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             creators: {
@@ -49,6 +49,46 @@ describe("RefInputTest", () => {
             owner: {
                 name: string;
             } | null | undefined;
+        }>();
+        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+            never
+        >();
+    });
+
+    it("flatRef", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.$flatRef("store", c => [
+                c.name
+            ])
+        ]);
+        expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
+            edition: number;
+            name: string;
+            storeId: string | null | undefined;
+            storeName: string | null | undefined;
+            storeVersion: number | null | undefined;
+        }>();
+        expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
+            never
+        >();
+    });
+
+    it("flatRefWithPrefix", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.$flatRef("store", c => [
+                c.name
+            ]).prefix("owner")
+        ]);
+        expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
+            edition: number;
+            name: string;
+            ownerId: string | null | undefined;
+            ownerName: string | null | undefined;
+            ownerVersion: number | null | undefined;
         }>();
         expectTypeOf<SelectableAssocaitionPaths<typeof input>>().toEqualTypeOf<
             never
