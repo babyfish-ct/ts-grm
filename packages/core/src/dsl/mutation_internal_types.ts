@@ -8,7 +8,7 @@ export type __AssociatedSaveModeOptions<
     readonly [K in keyof TAssociationMembers]?: AssociatedSaveMode;
 }
 
-export type __OnDissociateOptions<
+export type __DissociationOptions<
     TAssociationMembers
 > = {
     readonly [K in keyof TAssociationMembers as

@@ -49,13 +49,13 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            onDissocate: {
+            dissocation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             }
         });
         expectTypeOf<typeof result>().toEqualTypeOf<{
-            affectedRows: {
+            affected: {
                 $total: number;
                 childNodes: number;
                 "childNodes.childNodes": number;
@@ -71,20 +71,20 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            onDissocate: {
+            dissocation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             },
             view: VIEW
         });
         expectTypeOf<typeof result>().toEqualTypeOf<{
-            affectedRows: {
+            affected: {
                 $total: number;
                 childNodes: number;
                 "childNodes.childNodes": number;
                 "childNodes.tags": number;
             };
-            row: {
+            data: {
                 name: string;
                 parentName: string | null;
                 parentParentName: string | null;
@@ -99,13 +99,13 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            onDissocate: {
+            dissocation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             }
         });
         expectTypeOf<typeof result>().toEqualTypeOf<{
-            affectedRows: {
+            affected: {
                 $total: number;
                 childNodes: number;
                 "childNodes.childNodes": number;
@@ -121,20 +121,20 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            onDissocate: {
+            dissocation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             },
             view: VIEW
         });
         expectTypeOf<typeof result>().toEqualTypeOf<{
-            affectedRows: {
+            affected: {
                 $total: number;
                 childNodes: number;
                 "childNodes.childNodes": number;
                 "childNodes.tags": number;
             };
-            rows: {
+            data: {
                 name: string;
                 parentName: string | null;
                 parentParentName: string | null;

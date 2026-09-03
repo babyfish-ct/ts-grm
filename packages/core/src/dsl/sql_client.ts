@@ -23,7 +23,7 @@ import { Page } from "./page";
 import { Input, TypeOf, View } from "@/schema/dto/api";
 import { __ModelOf } from "@/schema/dto/internal_types";
 import { ModelOrder } from "@/schema/order";
-import { __AffectRowsResult, __AssociatedSaveModeOptions, __OnDissociateOptions } from "@/index_internal";
+import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions } from "@/index_internal";
 import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult, SaveWithViewOptions } from "./mutation";
 
 export interface SqlClient {
