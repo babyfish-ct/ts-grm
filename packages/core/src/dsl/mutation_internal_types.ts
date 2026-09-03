@@ -1,5 +1,5 @@
-import { __OneToManyPropContract } from "@/index_internal";
-import { AssociatedSaveMode } from "./sql_client";
+import { __OneToManyPropContract, __Prettify } from "@/index_internal";
+import { AssociatedSaveMode } from "./mutation";
 import { DissociateMode } from "@/schema/dto/api";
 
 export type __AssociatedSaveModeOptions<
@@ -17,3 +17,12 @@ export type __OnDissociateOptions<
             : never
     ]?: DissociateMode;
 };
+
+export type __AffectRowsResult<
+    TAssociationMembers
+> = __Prettify<{
+        readonly $total: number;
+    } & {
+        readonly [K in keyof TAssociationMembers]: number;
+    }
+>;

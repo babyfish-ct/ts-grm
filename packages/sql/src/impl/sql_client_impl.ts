@@ -47,6 +47,10 @@ import {
     FetchRangeOptions,
     FetchPageOptions,
     SaveOptions,
+    SaveWithViewOptions,
+    SaveResult,
+    SaveOneWithViewResult,
+    SaveManyWithViewResult,
     Page,
     spi,
     dsl,
@@ -383,19 +387,42 @@ export class SqlClientImpl implements SqlClientImplementor {
         input: TInput,
         obj: TypeOf<TInput>,
         options?: SaveOptions<TInput>
-    ): Promise<void>;
+    ): Promise<SaveResult<TInput>>;
 
     save<TInput extends Input<any, any, any>>(
         input: TInput,
         arr: ReadonlyArray<TypeOf<TInput>>,
         options?: SaveOptions<TInput>
-    ): Promise<void>;
+    ): Promise<SaveResult<TInput>>;
+
+    save<
+        TInput extends Input<any, any, any>,
+        TView extends View<__ModelOf<TInput>, any>
+    >(
+        input: TInput,
+        obj: TypeOf<TInput>,
+        options?: SaveWithViewOptions<TInput, TView>
+    ): Promise<SaveOneWithViewResult<TInput, TView>>;
+
+    save<
+        TInput extends Input<any, any, any>,
+        TView extends View<__ModelOf<TInput>, any>
+    >(
+        input: TInput,
+        arr: ReadonlyArray<TypeOf<TInput>>,
+        options?: SaveWithViewOptions<TInput, TView>
+    ): Promise<SaveManyWithViewResult<TInput, TView>>;
 
     async save<TInput extends Input<any, any, any>>(
         _input: TInput,
         _data: TypeOf<TInput> | ReadonlyArray<TypeOf<TInput>>,
-        _options?: SaveOptions<TInput>
-    ): Promise<void> {
+        _options?: SaveOptions<TInput> & {
+            readonly view?: View<any, any>
+        }
+    ): Promise<SaveResult<TInput> & {
+        readonly row?: any;
+        readonly rows?: ReadonlyArray<any>
+    }> {
         throw new Error("UnsupportedOperation");
     }
 }

@@ -29,16 +29,22 @@ export type {
     Schema,  
     FindManyOptions,
     FindRangeOptions,
-    FindPageOptions,
-    SaveOptions,
-    RootSaveMode,
-    AssociatedSaveMode
+    FindPageOptions
 } from "./sql_client";
 export type { AtLeastOne, AtLeastTwo } from "./utils";
 export type { Criteria } from "./criteria";
 export { criteria } from "./criteria";
 export type { ExprTuple, ExprTupleMatchable } from "./tuple";
 export type { FetchPageOptions, FetchRangeOptions, Page } from "./page";
+export type {
+    RootSaveMode,
+    AssociatedSaveMode,
+    SaveOptions,
+    SaveWithViewOptions,
+    SaveResult,
+    SaveOneWithViewResult,
+    SaveManyWithViewResult
+} from "./mutation";
 export type { 
     RootQuery, 
     AtomRootQuery,

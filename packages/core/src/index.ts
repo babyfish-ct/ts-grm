@@ -140,7 +140,6 @@ export type  {
     FindManyOptions,
     FindRangeOptions,
     FindPageOptions,
-    SaveOptions,
     Criteria, 
     AtLeastOne,
     AtLeastTwo,
@@ -200,6 +199,11 @@ export type  {
     SelectionLike,
     TimeUnit,
     RootSaveMode,
-    AssociatedSaveMode
+    AssociatedSaveMode,
+    SaveOptions,
+    SaveWithViewOptions,
+    SaveResult,
+    SaveOneWithViewResult,
+    SaveManyWithViewResult,
 } from "./dsl";
 

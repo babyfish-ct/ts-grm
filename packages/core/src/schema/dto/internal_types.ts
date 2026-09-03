@@ -15,7 +15,7 @@
 import { __Prettify } from "@/auxiliary_types";
 import { AnyModel } from "../model";
 import { __AllModelMembers } from "../model_internal_types";
-import { View } from "./api";
+import { Input, View } from "./api";
 import { __DtoBody, __DtoMappingContract, __DtoType } from "./dto_context";
 
 export * from "./all_scalars";
@@ -67,6 +67,8 @@ export type __ViewCreator = {
 export type __ModelOf<T> =
     T extends View<infer R, any>
         ? R
-        : never;
+    : T extends Input<infer R, any, any>
+        ? R
+    : never;
 
 export type __ViewNullType = "NULL" | "UNDEFINED";

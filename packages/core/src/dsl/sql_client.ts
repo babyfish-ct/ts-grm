@@ -20,10 +20,11 @@ import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
 import { Page } from "./page";
-import { Input, InputAssociationMembers, TypeOf, View } from "@/schema/dto/api";
+import { Input, TypeOf, View } from "@/schema/dto/api";
 import { __ModelOf } from "@/schema/dto/internal_types";
 import { ModelOrder } from "@/schema/order";
-import { __AssociatedSaveModeOptions, __OnDissociateOptions } from "@/index_internal";
+import { __AffectRowsResult, __AssociatedSaveModeOptions, __OnDissociateOptions } from "@/index_internal";
+import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult, SaveWithViewOptions } from "./mutation";
 
 export interface SqlClient {
 
@@ -106,13 +107,31 @@ export interface SqlClient {
         input: TInput,
         obj: TypeOf<TInput>,
         options?: SaveOptions<TInput>
-    ): Promise<void>;
+    ): Promise<SaveResult<TInput>>;
 
     save<TInput extends Input<any, any, any>>(
         input: TInput,
         arr: ReadonlyArray<TypeOf<TInput>>,
         options?: SaveOptions<TInput>
-    ): Promise<void>;
+    ): Promise<SaveResult<TInput>>;
+
+    save<
+        TInput extends Input<any, any, any>,
+        TView extends View<__ModelOf<TInput>, any>
+    >(
+        input: TInput,
+        obj: TypeOf<TInput>,
+        options?: SaveWithViewOptions<TInput, TView>
+    ): Promise<SaveOneWithViewResult<TInput, TView>>;
+
+    save<
+        TInput extends Input<any, any, any>,
+        TView extends View<__ModelOf<TInput>, any>
+    >(
+        input: TInput,
+        arr: ReadonlyArray<TypeOf<TInput>>,
+        options?: SaveWithViewOptions<TInput, TView>
+    ): Promise<SaveManyWithViewResult<TInput, TView>>;
 
     createSchema(): Promise<Schema>;
 }
@@ -170,13 +189,3 @@ export interface FindPageOptions<TModel extends AnyModel> extends FindManyOption
     readonly pageNo?: number;
 }
 
-export type SaveOptions<TInput extends Input<any, any, any>> = 
-    {
-        readonly root?: RootSaveMode;
-        readonly associated?: __AssociatedSaveModeOptions<InputAssociationMembers<TInput>>;
-        readonly onDissocate?: __OnDissociateOptions<InputAssociationMembers<TInput>>;
-    };
-
-export type RootSaveMode = "UPSERT" | "INSERT" | "INSERT_IF_ABSENT" | "UPDATE" | "NON_IDEMPOTENT_UPSERT";
-
-export type AssociatedSaveMode = "REPLACE" | "MERGE" | "APPEND" | "APPEND_IF_ABSENT" | "UPDATE" | "VIOLENTLY_REPLACE";
