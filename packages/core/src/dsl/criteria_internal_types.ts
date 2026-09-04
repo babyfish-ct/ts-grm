@@ -52,7 +52,7 @@ export type __CriteriaReferenceKeyMembers<
 > = { 
     [
         K in keyof TMembers as 
-            TMembers[K] extends __ReferencePropContract<infer TargetModel, any, "OWNING", false, any, infer TargetKey>
+            TMembers[K] extends __ReferencePropContract<infer TargetModel, any, "COLUMNS", undefined, any, infer TargetKey>
                 ? `${K & string}${Capitalize<__RequiredModelKey<TargetModel, TargetKey>>}`
                 : never
     ]?: __CriteriaReferenceKeyMember<TMembers[K]>; 
@@ -122,7 +122,7 @@ export type __NonNullCriteriaMember<TProp, TNullity extends __NullityType> =
     : never;
 
 export type __CriteriaReferenceKeyMember<TProp> =
-    TProp extends __ReferencePropContract<infer TargetModel, infer Nullity, "OWNING", false, any, infer TargetKey>
+    TProp extends __ReferencePropContract<infer TargetModel, infer Nullity, "COLUMNS", undefined, any, infer TargetKey>
         ? Nullity extends "NULLABLE"
             ? { readonly $isNull: boolean } | __NonNullCriteriaReferenceKeyMember<TargetModel, TargetKey>
             : __NonNullCriteriaReferenceKeyMember<TargetModel, TargetKey>

@@ -31,7 +31,7 @@ export type __CollectionMapping<
     TMappings extends __TargetMappings<TModel, TMember>
 > = 
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? TMember extends __OneToManyPropContract<any, any, any, any, any>
+        ? TMember extends __OneToManyPropContract<any, any, any, any>
             ? __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
             : __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
         : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;

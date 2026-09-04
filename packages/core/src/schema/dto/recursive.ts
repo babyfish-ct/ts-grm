@@ -166,7 +166,7 @@ export type __CollectionRecursiveMapping<
     THasDepth extends boolean
 > =
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? TMember extends __OneToManyPropContract<any, any, any, any, any>
+        ? TMember extends __OneToManyPropContract<any, any, any, any>
             ? __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
             : __InputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>
         : __OutputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>; 

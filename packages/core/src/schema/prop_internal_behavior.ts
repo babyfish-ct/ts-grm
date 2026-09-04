@@ -45,7 +45,7 @@ import {
     __CalculatedReferencePropContract, 
     __CalculatedValuePropContract, 
     __CollectionPropContract, 
-    __DirectionType, 
+    __StorageType, 
     __EmbeddedMember, 
     __EmbeddedPropContract, 
     __EnumSetPropContract, 
@@ -165,16 +165,16 @@ export type __FollowNullity<TProp, TParentNullity extends __NullityType> =
 export abstract class __AssociatedProp<
     TModel extends AnyModel,
     TNullity extends __NullityType,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __Prop<TModel, TNullity> 
 implements __AssociatedPropContract<
     TModel, 
     TNullity, 
-    TDirection, 
-    TMiddleTable, 
+    TStorage, 
+    TMappedBy, 
     TBackOptionalModelKey, 
     TTargetOptionalModelKey
 > {
@@ -183,9 +183,9 @@ implements __AssociatedPropContract<
     
     readonly __associatedProp = true;
 
-    declare readonly __direction?: TDirection;
+    declare readonly __direction?: TStorage;
 
-    declare readonly __middleTable?: TMiddleTable;
+    declare readonly __middleTable?: TMappedBy;
 
     declare readonly __backOptionalModelKey?: TBackOptionalModelKey;
 
@@ -203,12 +203,12 @@ implements __AssociatedPropContract<
 export class __OneToOneProp<
     TModel extends AnyModel,
     TNullity extends __NullityType,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends __AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __ReferencePropContract<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __referenceProp = true;
 
@@ -221,8 +221,8 @@ implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, T
     nullable(): __OneToOneProp<
         TModel, 
         "NULLABLE", 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -235,12 +235,12 @@ implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, T
 export class __ConfigurableOneToOneProp<
     TModel extends AnyModel,
     TNullity extends __NullityType,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string,
     TSelf extends boolean = false
-> extends __OneToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __OneToOneProp<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
         super(data);
@@ -249,8 +249,8 @@ export class __ConfigurableOneToOneProp<
     nullable(): __ConfigurableOneToOneProp<
         TModel, 
         "NULLABLE", 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -267,7 +267,7 @@ export class __ConfigurableOneToOneProp<
         TModel, 
         "NULLABLE", 
         "INVERSE", 
-        false,
+        TMappedBy,
         __TargetKeyOf<__AllModelMembers<TModel>[TMappedBy]>, 
         __SourceKeyOf<__AllModelMembers<TModel>[TMappedBy]>
     > {
@@ -283,8 +283,8 @@ export class __ConfigurableOneToOneProp<
     ): __OneToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         TBackOptionalModelKey, 
         TTargetKeyProp
     >;
@@ -294,8 +294,8 @@ export class __ConfigurableOneToOneProp<
     ): __OneToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         TBackOptionalModelKey, 
         __ModelIdKey<TModel>
     >;
@@ -305,8 +305,8 @@ export class __ConfigurableOneToOneProp<
     ): __OneToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         TBackOptionalModelKey, 
         __ModelIdKey<TModel>
     > {
@@ -324,8 +324,8 @@ export class __ConfigurableOneToOneProp<
     ): __OneToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        true,
+        "MIDDLE_TABLE", 
+        undefined,
         TBackReferencedProp, 
         TTargetReferencedProp
     > {
@@ -350,8 +350,8 @@ export class __ConfigurableOneToOneProp<
     ): __OneToOneProp<
         __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
         TNullity,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinThisProp]>,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
@@ -369,12 +369,12 @@ export class __ConfigurableOneToOneProp<
 export class __ManyToOneProp<
     TModel extends AnyModel,
     TNullity extends __NullityType,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends __AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __ReferencePropContract<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __referenceProp = true;
 
@@ -387,8 +387,8 @@ implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, T
     nullable(): __ManyToOneProp<
         TModel, 
         "NULLABLE", 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -401,11 +401,11 @@ implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, T
 export class __ConfigurableManyToOneProp<
     TModel extends AnyModel,
     TNullity extends __NullityType,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends __ManyToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __ManyToOneProp<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
         super(data);
@@ -414,8 +414,8 @@ export class __ConfigurableManyToOneProp<
     nullable(): __ConfigurableManyToOneProp<
         TModel, 
         "NULLABLE", 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -431,8 +431,8 @@ export class __ConfigurableManyToOneProp<
     ): __ManyToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         TBackOptionalModelKey, 
         TTargetKeyProp
     >;
@@ -442,8 +442,8 @@ export class __ConfigurableManyToOneProp<
     ): __ManyToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         TBackOptionalModelKey, 
         __ModelIdKey<TModel>
     >;
@@ -453,8 +453,8 @@ export class __ConfigurableManyToOneProp<
     ): __ManyToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         TBackOptionalModelKey, 
         __ModelIdKey<TModel>
     > {
@@ -472,8 +472,8 @@ export class __ConfigurableManyToOneProp<
     ): __ManyToOneProp<
         TModel, 
         TNullity, 
-        "OWNING", 
-        true,
+        "MIDDLE_TABLE", 
+        undefined,
         TBackReferenceProp, 
         TTargetReferencedProp
     > {
@@ -498,8 +498,8 @@ export class __ConfigurableManyToOneProp<
     ): __ManyToOneProp<
         __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
         TNullity,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
@@ -516,12 +516,12 @@ export class __ConfigurableManyToOneProp<
 
 export class __OneToManyProp<
     TModel extends AnyModel,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends __AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, "NONNULL", TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __CollectionPropContract<TModel, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp = true;
 
@@ -535,8 +535,8 @@ implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptio
         ...orders: ModelOrder<TModel>[]
     ): __OneToManyProp<
         TModel, 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -564,12 +564,12 @@ implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptio
 
 export class __ConfigurableOneToManyProp<
     TModel extends AnyModel,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string,
     TSelf extends boolean = false
-> extends __OneToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __OneToManyProp<TModel, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
         super(data);
@@ -589,8 +589,8 @@ export class __ConfigurableOneToManyProp<
         >
     ): __OneToManyProp<
         __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
@@ -613,7 +613,7 @@ export class __ConfigurableOneToManyProp<
     ): __OneToManyProp<
         TModel, 
         "INVERSE", 
-        false,
+        TMappedBy,
         __TargetKeyOf<__AllModelMembers<TModel>[TMappedBy]>, 
         __SourceKeyOf<__AllModelMembers<TModel>[TMappedBy]>
     > {
@@ -624,8 +624,8 @@ export class __ConfigurableOneToManyProp<
         ...orders: ModelOrder<TModel>[]
     ): __OneToManyProp<
         TModel, 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -637,12 +637,12 @@ export class __ConfigurableOneToManyProp<
 
 export class __ManyToManyProp<
     TModel extends AnyModel,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends __AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, "NONNULL", TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __CollectionPropContract<TModel, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp = true;
 
@@ -656,8 +656,8 @@ implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptio
         ...orders: ModelOrder<TModel>[]
     ): __ManyToManyProp<
         TModel, 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -669,12 +669,12 @@ implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptio
 
 export class __ConfigurableManyToManyProp<
     TModel extends AnyModel,
-    TDirection extends __DirectionType,
-    TMiddleTable extends boolean,
+    TStorage extends __StorageType,
+    TMappedBy extends string | undefined,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string,
     TSelf extends boolean = false
-> extends __ManyToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __ManyToManyProp<TModel, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: __PropData) {
         super(data);
@@ -689,7 +689,7 @@ export class __ConfigurableManyToManyProp<
     ): __ManyToManyProp<
         TModel, 
         "INVERSE",
-        true,
+        TMappedBy,
         __TargetKeyOf<__AllModelMembers<TModel>[TMappedBy]>, 
         __SourceKeyOf<__AllModelMembers<TModel>[TMappedBy]>
     > {
@@ -703,8 +703,8 @@ export class __ConfigurableManyToManyProp<
         options: JoinTable<TModel, TBackReferenceProp, __RequiredModelKey<TModel, TTargetReferencedProp>>
     ): __ManyToManyProp<
         TModel, 
-        "OWNING", 
-        true,
+        "MIDDLE_TABLE", 
+        undefined,
         TBackReferenceProp, 
         TTargetReferencedProp
     > {
@@ -728,8 +728,8 @@ export class __ConfigurableManyToManyProp<
         >
     ): __ManyToManyProp<
         __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
         __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
@@ -747,8 +747,8 @@ export class __ConfigurableManyToManyProp<
         ...orders: ModelOrder<TModel>[]
     ): __ConfigurableManyToManyProp<
         TModel, 
-        TDirection, 
-        TMiddleTable,
+        TStorage, 
+        TMappedBy,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
@@ -1125,8 +1125,8 @@ export type __O2OCreator = {
     ): __ConfigurableOneToOneProp<
         TModel, 
         "NONNULL", 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         "",
         __ModelIdKey<TModel>
     >;
@@ -1136,8 +1136,8 @@ export type __O2OCreator = {
     ): __ConfigurableOneToOneProp<
         TModel, 
         "NULLABLE", 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         "",
         __ModelIdKey<TModel>,
         true
@@ -1151,8 +1151,8 @@ export interface __M2OCreator {
     ): __ConfigurableManyToOneProp<
         TModel, 
         "NONNULL", 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         "",
         __ModelIdKey<TModel>
     >;
@@ -1162,8 +1162,8 @@ export interface __M2OCreator {
     ): __ConfigurableManyToOneProp<
         TModel, 
         "NULLABLE", 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         "",
         __ModelIdKey<TModel>
     >;
@@ -1175,8 +1175,8 @@ export interface __O2MCreator {
         targetModel: TModel
     ): __ConfigurableOneToManyProp<
         TModel, 
-        "OWNING", 
-        false, 
+        "INVERSE", 
+        undefined, 
         "", 
         __ModelIdKey<TModel>
     >;
@@ -1185,8 +1185,8 @@ export interface __O2MCreator {
         selfGetter: () => TModel
     ): __ConfigurableOneToManyProp<
         TModel, 
-        "OWNING", 
-        false, 
+        "INVERSE", 
+        undefined, 
         "", 
         __ModelIdKey<TModel>,
         true
@@ -1199,8 +1199,8 @@ export interface __M2MCreator {
         targetModel: TModel
     ): __ConfigurableManyToManyProp<
         TModel,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         "",
         __ModelIdKey<TModel>
     >;
@@ -1209,8 +1209,8 @@ export interface __M2MCreator {
         selfGetter: () => TModel
     ): __ConfigurableManyToManyProp<
         TModel,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         "",
         __ModelIdKey<TModel>,
         true
@@ -1309,7 +1309,7 @@ export function __o2oCreator(): __O2OCreator {
 
     function o2o<TModel extends AnyModel>(
         targetModel: __ModelRef<TModel>
-    ): __ConfigurableOneToOneProp<TModel, any, "OWNING", false, "", __ModelIdKey<TModel>> {
+    ): __ConfigurableOneToOneProp<TModel, any, "COLUMNS", undefined, "", __ModelIdKey<TModel>> {
         return new __ConfigurableOneToOneProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModelRef: targetModel, 
@@ -1327,8 +1327,8 @@ export function __m2oCreator(): __M2OCreator {
     ): __ConfigurableManyToOneProp<
         TModel, 
         any, 
-        "OWNING", 
-        false,
+        "COLUMNS", 
+        undefined,
         "",
         __ModelIdKey<TModel>
     > {
@@ -1348,8 +1348,8 @@ export function __o2mCreator(): __O2MCreator {
         targetModel: __ModelRef<TModel>
     ): __ConfigurableOneToManyProp<
         TModel, 
-        "OWNING", 
-        false, 
+        "INVERSE", 
+        any, 
         "", 
         __ModelIdKey<TModel>
     > {
@@ -1368,8 +1368,8 @@ export function __m2mCreator(): __M2MCreator {
         targetModel: __ModelRef<TModel>
     ): __ConfigurableManyToManyProp<
         TModel,
-        "OWNING",
-        true,
+        "MIDDLE_TABLE",
+        undefined,
         "",
         __ModelIdKey<TModel>
     > {

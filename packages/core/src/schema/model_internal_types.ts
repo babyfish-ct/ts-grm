@@ -197,7 +197,7 @@ export type __OneToOneMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
-            __OneToOnePropContract<any, any, "OWNING", any, any, any>
+            __OneToOnePropContract<any, any, "COLUMNS" | "MIDDLE_TABLE", any, any, any>
         > & string :
         never;
 
@@ -205,7 +205,7 @@ export type __OneToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
-            __ManyToOnePropContract<any, any, "OWNING", any, any, any>
+            __ManyToOnePropContract<any, any, "COLUMNS" | "MIDDLE_TABLE", any, any, any>
         > & string :
         never;
 
@@ -213,7 +213,7 @@ export type __ManyToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any, any>
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
-            __ManyToManyPropContract<any, "OWNING", any, any, any>
+            __ManyToManyPropContract<any, "MIDDLE_TABLE", any, any, any>
         > & string :
         never;
 
@@ -225,10 +225,10 @@ export type __MiddleEntityJoinThisKeys<
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             TAssociationType extends "ONE_TO_ONE"
-                ? __OneToOnePropContract<any, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<any, any, "COLUMNS", any, any, any>
             : TAssociationType extends "ONE_TO_MANY"
-                ? __OneToOnePropContract<any, any, "OWNING", any, any, any>
-            : __ManyToOnePropContract<any, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<any, any, "COLUMNS", any, any, any>
+            : __ManyToOnePropContract<any, any, "COLUMNS", any, any, any>
         > & string :
         never;
 
@@ -240,16 +240,16 @@ export type __MiddleEntityJoinTargetKeys<
         ? __ExpectedKeysImpl<
             __CtorMembers<TCtor>, 
             TAssociationType extends "ONE_TO_ONE"
-                ? __OneToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<TTargetModel, any, "COLUMNS", any, any, any>
             : TAssociationType extends "MANY_TO_ONE"
-                ? __OneToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
-            : __ManyToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<TTargetModel, any, "COLUMNS", any, any, any>
+            : __ManyToOnePropContract<TTargetModel, any, "COLUMNS", any, any, any>
         > & string :
         never;
 
 export type __ExpectedKeysImpl<
     TModelMembers, 
-    TExpectedProp extends __AssociatedPropContract<any, any, "OWNING", any, any, any>
+    TExpectedProp extends __AssociatedPropContract<any, any, "COLUMNS" | "MIDDLE_TABLE", any, any, any>
 > = 
     TModelMembers extends object 
         ? { 
@@ -308,8 +308,8 @@ export type __UniqueKeysImpl<TFlattenCtorMembers> =
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
                     __ScalarPropContract<any, any, any> 
-                    | __OneToOnePropContract<any, any, "OWNING", false, any, any>
-                    | __ManyToOnePropContract<any, any, "OWNING", false, any, any>
+                    | __OneToOnePropContract<any, any, "COLUMNS", undefined, any, any>
+                    | __ManyToOnePropContract<any, any, "COLUMNS", undefined, any, any>
                 )
                     ? K
                     : never

@@ -125,12 +125,12 @@ export type __MakeType<T, TNullity extends __NullityType> =
 export type __DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends __NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends __ReferencePropContract<infer _, any, "OWNING", false, any, infer TKey>
+            TMembers[K] extends __ReferencePropContract<infer _, any, "COLUMNS", undefined, any, infer TKey>
                 ? TKey extends string
                     ? `${K & string}${Capitalize<__RequiredModelKey<TModel, TKey>>}`
                     : never
                 : never
-    ]: TMembers[K] extends __ReferencePropContract<infer TargetModel, infer Nullity, "OWNING", false, any, infer Key>
+    ]: TMembers[K] extends __ReferencePropContract<infer TargetModel, infer Nullity, "COLUMNS", undefined, any, infer Key>
         ? Key extends string
             ? __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, Key>] extends __EmbeddedPropContract<infer R, any, any>
                 ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, "REFERENCE">

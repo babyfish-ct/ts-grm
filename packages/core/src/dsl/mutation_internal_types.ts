@@ -26,7 +26,7 @@ export type __DissociationOptions<
     TAssociationMembers
 > = {
     readonly [K in keyof TAssociationMembers as
-        TAssociationMembers[K] extends __OneToManyPropContract<any, any, any, any, any>
+        TAssociationMembers[K] extends __OneToManyPropContract<any, any, any, any>
             ? K
             : never
     ]?: DissociateMode;

@@ -14,7 +14,7 @@
 
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
 import { __EntityTableMembers, __JoinPolicyType, __MakeExpression } from "./table_internal_types";
-import { __AssociatedPropContract, __EmbeddedPropContract, __NullityType, __ReferencePropContract } from "@/schema/prop_internal_types";
+import { __AssociatedPropContract, __EmbeddedPropContract, __IsMiddleTableAssociation, __NullityType, __ReferencePropContract } from "@/schema/prop_internal_types";
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { AssociationModel } from "./association";
 import { AnyModel } from "@/schema/model";
@@ -36,23 +36,25 @@ export type __MakeAssociationModel<
     TModel extends AnyModel,
     TAssociationKey extends __AssociationKeys<TModel>
 > = 
-    __AllModelMembers<TModel>[TAssociationKey] extends __AssociatedPropContract<
-        infer TargetModel, 
-        any, 
-        any, 
-        true,
-        infer SourceKey, 
-        infer TargetKey
-    >
-        ? AssociationModel<
-            TModel,
-            __RequiredModelKey<TModel, SourceKey>,
-            TargetModel,
-            __RequiredModelKey<TargetModel, TargetKey>,
-            __AllModelMembers<TModel>[TAssociationKey] extends __ReferencePropContract<any, any, any, any, any, any>
-                ? "ARBITRARY"
-                : "REFERENCE"
+    __IsMiddleTableAssociation<__AllModelMembers<TModel>[TAssociationKey]> extends true
+        ? __AllModelMembers<TModel>[TAssociationKey] extends __AssociatedPropContract<
+            infer TargetModel, 
+            any, 
+            any, 
+            any,
+            infer SourceKey, 
+            infer TargetKey
         >
+            ? AssociationModel<
+                TModel,
+                __RequiredModelKey<TModel, SourceKey>,
+                TargetModel,
+                __RequiredModelKey<TargetModel, TargetKey>,
+                __AllModelMembers<TModel>[TAssociationKey] extends __ReferencePropContract<any, any, any, any, any, any>
+                    ? "ARBITRARY"
+                    : "REFERENCE"
+            >
+            : never
         : never;
 
 export type __MakeAssociationTableMembers<
@@ -60,24 +62,26 @@ export type __MakeAssociationTableMembers<
     TAssociationKey extends __AssociationKeys<TModel>,
     TNullity extends __NullityType
 > = 
-    __AllModelMembers<TModel>[TAssociationKey] extends __AssociatedPropContract<
-        infer TargetModel, 
-        any, 
-        any, 
-        true,
-        infer SourceKey, 
-        infer TargetKey
-    >
-        ? __AssociationTableMembers<
-            TModel,
-            __RequiredModelKey<TModel, SourceKey>,
-            TargetModel,
-            __RequiredModelKey<TargetModel, TargetKey>,
-            TNullity,
-            __AllModelMembers<TModel>[TAssociationKey] extends __ReferencePropContract<any, any, any, any, any, any>
-                ? "ARBITRARY"
-                : "REFERENCE"
+    __IsMiddleTableAssociation<__AllModelMembers<TModel>[TAssociationKey]> extends true
+        ? __AllModelMembers<TModel>[TAssociationKey] extends __AssociatedPropContract<
+            infer TargetModel, 
+            any, 
+            any, 
+            any,
+            infer SourceKey, 
+            infer TargetKey
         >
+            ? __AssociationTableMembers<
+                TModel,
+                __RequiredModelKey<TModel, SourceKey>,
+                TargetModel,
+                __RequiredModelKey<TargetModel, TargetKey>,
+                TNullity,
+                __AllModelMembers<TModel>[TAssociationKey] extends __ReferencePropContract<any, any, any, any, any, any>
+                    ? "ARBITRARY"
+                    : "REFERENCE"
+            >
+            : never
         : never;
       
 export type __AssociationTableMembers<
