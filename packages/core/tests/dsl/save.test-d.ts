@@ -49,7 +49,7 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            dissocation: {
+            dissociation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             }
@@ -71,7 +71,7 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            dissocation: {
+            dissociation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             },
@@ -99,7 +99,7 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            dissocation: {
+            dissociation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             }
@@ -121,7 +121,7 @@ describe("SaveTest", () => {
                 "childNodes": "VIOLENTLY_REPLACE",
                 "childNodes.tags": "APPEND_IF_ABSENT"
             },
-            dissocation: {
+            dissociation: {
                 "childNodes": "SET_NULL",
                 "childNodes.childNodes": "DELETE"
             },

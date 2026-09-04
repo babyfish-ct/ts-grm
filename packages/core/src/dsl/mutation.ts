@@ -23,7 +23,7 @@ export type AssociatedSaveMode = "REPLACE" | "MERGE" | "APPEND" | "APPEND_IF_ABS
 export interface SaveOptions<TInput extends Input<any, any, any>> {
     readonly root?: RootSaveMode;
     readonly associated?: __AssociatedSaveModeOptions<InputAssociationMembers<TInput>>;
-    readonly dissocation?: __DissociationOptions<InputAssociationMembers<TInput>>;
+    readonly dissociation?: __DissociationOptions<InputAssociationMembers<TInput>>;
 };
 
 export interface SaveWithViewOptions<
