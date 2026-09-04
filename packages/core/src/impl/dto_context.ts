@@ -175,6 +175,25 @@ export class AbstractDtoContext {
         }
     }
 
+    $ref(key: string, body: DtoBody) {
+        const prop = this._prop(key);
+        if (prop.associationType == null) {
+            throw new ArgumentError(`The property "${prop.toString()}" is not association property`);
+        }
+        if (prop.associationType === "ONE_TO_MANY" || prop.associationType === "MANY_TO_MANY") {
+            return CollectionMapping.refOf(prop, body);
+        }
+        return ReferenceMapping.refOf(prop, body);
+    }
+
+    $flatRef(key: string, body: DtoBody) {
+        const prop = this._prop(key);
+        if (prop.associationType !== "ONE_TO_ONE" && prop.associationType !== "MANY_TO_ONE") {
+            throw new ArgumentError(`The property "${prop.toString()}" is not one-to-one/many-to-one property`);
+        }
+        return FlatMapping.refOf(prop, body);
+    }
+
     private _prop(key: string): EntityProp {
         if (this.$embeddedProp != null) {
             const prop = this.$embeddedProp.props!.get(key);
@@ -360,23 +379,11 @@ class DtoContextCtorCreator {
                     .newLine(";");
             } else if (prop.associationType === "ONE_TO_ONE" || prop.associationType === "MANY_TO_ONE") {
                 writer 
-                    .code(
-                        `return new $referenceMapping(ThisClass.${
-                            this._propName(prop)
-                        }, "${
-                            prop.name
-                        }", c => [c.$allScalars], undefined, undefined)`
-                    )
+                    .code(`return $referenceMapping.of(ThisClass.${this._propName(prop)})`)
                     .newLine(";");
             } else if (prop.associationType === "ONE_TO_MANY" || prop.associationType === "MANY_TO_MANY") {
                 writer 
-                    .code(
-                        `return new $collectionMapping(ThisClass.${
-                            this._propName(prop)
-                        }, "${
-                            prop.name
-                        }", c => [c.$allScalars], undefined, undefined, undefined)`
-                    )
+                    .code(`return $collectionMapping.of(ThisClass.${this._propName(prop)})`)
                     .newLine(";");
             } else if (prop.calculationStrategy != null) {
                 switch (prop.calculationStrategy.kind) {

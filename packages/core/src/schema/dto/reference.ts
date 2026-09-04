@@ -44,11 +44,15 @@ export type __ReferenceMapping<
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
 > =
-    TDtoKind extends "INPUT" | "INPUT_REF"
+    TDtoKind extends "INPUT"
         ? TMember extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
             ? __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
             : __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
-        : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
+    : TDtoKind extends "INPUT_REF"
+        ? TMember extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+            ? __RefOnlyInversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
+            : __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
+    : __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>
 
 export interface __OutputReferenceMapping<
     TModel extends AnyModel,
@@ -78,7 +82,7 @@ export interface __OutputReferenceMapping<
     ): __OutputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 }
 
-export interface __InputReferenceMapping<
+export interface __RefOnlyInputReferenceMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -91,11 +95,50 @@ export interface __InputReferenceMapping<
     
     as<TAlias extends string>(
         alias: TAlias
+    ): __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+}
+
+export interface __InputReferenceMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
+    
+    as<TAlias extends string>(
+        alias: TAlias
     ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
     ): __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+}
+
+export interface __RefOnlyInversedInputReferenceMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
+
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __RefOnlyInversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+
+    reparentable(
+    ): __RefOnlyInversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+
+    onDissociate(
+        behavior: DissociateMode
+    ): __RefOnlyInversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 }
 
 export interface __InversedInputReferenceMapping<
@@ -107,7 +150,7 @@ export interface __InversedInputReferenceMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
-> extends __InputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
+> extends __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
 
     as<TAlias extends string>(
         alias: TAlias

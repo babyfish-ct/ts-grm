@@ -188,7 +188,8 @@ export class FlatMapping implements AbstractDtoMapping {
         private readonly _context: AbstractDtoContext,
         private readonly _body: DtoBody,
         private readonly _filter: Filter | undefined,
-        private readonly _fetchType: ReferenceFetchType
+        private readonly _fetchType: ReferenceFetchType,
+        private readonly _ref: boolean
     ) {}
     
     static of(prop: EntityProp) {
@@ -204,30 +205,49 @@ export class FlatMapping implements AbstractDtoMapping {
             context,
             c => [c.$allScalars],
             undefined,
-            "LOAD"
-        )
+            "LOAD",
+            false
+        );
+    }
+
+    static refOf(
+        prop: EntityProp,
+        body: DtoBody
+    ) {
+        const context = prop.targetEntity != null
+            ? newDtoContext(prop.targetEntity, DtoContextFlags.Input)
+            : newDtoContext(prop, DtoContextFlags.Input);
+        return new FlatMapping(
+            prop,
+            prop.name,
+            context,
+            body,
+            undefined,
+            "LOAD",
+            true
+        );
     }
 
     prefix(prefix: string): FlatMapping {
-        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType);
+        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType, this._ref);
     }
 
     with(body: DtoBody): FlatMapping {
-        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType);
+        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType, this._ref);
     }
 
     filter(filter: Filter): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "filter"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType, this._ref);
     }
 
     fetch(fetchType: ReferenceFetchType): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "fetch"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType, this._ref);
     }
 
     toFields(
@@ -555,8 +575,9 @@ export abstract class AssociationMapping implements AbstractDtoMapping {
     protected constructor(
         protected readonly _prop: EntityProp,
         protected readonly _alias: string,
-        protected _body: DtoBody,
-        protected readonly _filter: Filter | undefined
+        protected readonly _body: DtoBody,
+        protected readonly _filter: Filter | undefined,
+        protected readonly _ref: boolean
     ) {
     }
 
@@ -603,14 +624,42 @@ export class ReferenceMapping extends AssociationMapping {
 
     readonly __mappingType = "REFERENCE";
 
-    constructor(
+    private constructor(
         _prop: EntityProp,
         _alias: string,
         _body: DtoBody,
         _filter: Filter | undefined,
+        _ref: boolean,
         private readonly _fetchType: ReferenceFetchType
     ) {
-        super(_prop, _alias, _body, _filter);
+        super(_prop, _alias, _body, _filter, _ref);
+    }
+
+    static of(
+        prop: EntityProp
+    ) {
+        return new ReferenceMapping(
+            prop, 
+            prop.name, 
+            c => [c.$allScalars], 
+            undefined, 
+            false, 
+            "LOAD"
+        );
+    }
+
+    static refOf(
+        prop: EntityProp,
+        body: DtoBody
+    ) {
+        return new ReferenceMapping(
+            prop, 
+            prop.name, 
+            body, 
+            undefined, 
+            true, 
+            "LOAD"
+        );
     }
 
     as(alias: string): ReferenceMapping {
@@ -619,6 +668,7 @@ export class ReferenceMapping extends AssociationMapping {
             alias,
             this._body,
             this._filter,
+            this._ref,
             this._fetchType
         );
     }
@@ -629,6 +679,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             body,
             this._filter,
+            this._ref,
             this._fetchType
         );
     }
@@ -639,6 +690,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             this._body,
             filter,
+            this._ref,
             this._fetchType
         );
     }
@@ -649,6 +701,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
+            this._ref,
             fetchType
         );
     }
@@ -679,15 +732,45 @@ export class CollectionMapping extends AssociationMapping {
 
     readonly __mappingType = "COLLECTION";
 
-    constructor(
+    private constructor(
         _prop: EntityProp,
         _alias: string,
         _body: DtoBody,
         _filter: Filter | undefined,
+        _ref: boolean,
         private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
         private readonly _maxRows: number | undefined
     ) {
-        super(_prop, _alias, _body, _filter);
+        super(_prop, _alias, _body, _filter, _ref);
+    }
+
+    static of(
+        prop: EntityProp
+    ) {
+        return new CollectionMapping(
+            prop, 
+            prop.name, 
+            c => [c.$allScalars], 
+            undefined, 
+            false, 
+            undefined, 
+            undefined
+        );
+    }
+
+    static refOf(
+        prop: EntityProp,
+        body: DtoBody
+    ) {
+        return new CollectionMapping(
+            prop, 
+            prop.name, 
+            body, 
+            undefined, 
+            true, 
+            undefined, 
+            undefined
+        );
     }
 
     as(alias: string): CollectionMapping {
@@ -696,6 +779,7 @@ export class CollectionMapping extends AssociationMapping {
             alias,
             this._body,
             this._filter,
+            this._ref,
             this._orders,
             this._maxRows
         );
@@ -707,6 +791,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             body,
             this._filter,
+            this._ref,
             this._orders,
             this._maxRows
         );
@@ -718,6 +803,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             filter,
+            this._ref,
             this._orders,
             this._maxRows
         );
@@ -736,6 +822,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
+            this._ref,
             propOrders,
             this._maxRows
         );
@@ -750,6 +837,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
+            this._ref,
             this._orders,
             maxRows
         );

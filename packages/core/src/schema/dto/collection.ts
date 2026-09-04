@@ -30,11 +30,15 @@ export type __CollectionMapping<
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
 > = 
-    TDtoKind extends "INPUT" | "INPUT_REF"
+    TDtoKind extends "INPUT"
         ? TMember extends __OneToManyPropContract<any, any, any, any>
             ? __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
             : __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
-        : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+    : TDtoKind extends "INPUT_REF"
+        ? TMember extends __OneToManyPropContract<any, any, any, any>
+            ? __RefOnlyOneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
+            : __RefOnlyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>
+    : __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
 export interface __CollectionMappingContract<
     TModel extends AnyModel,
@@ -80,7 +84,7 @@ export interface __OutputCollectionMapping<
     ): __OutputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 
-export interface __InputCollectionMapping<
+export interface __RefOnlyInputCollectionMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -92,11 +96,48 @@ export interface __InputCollectionMapping<
     
     as<TAlias extends string>(
         alias: TAlias
+    ): __RefOnlyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+}
+
+export interface __InputCollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> extends __RefOnlyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+    
+    as<TAlias extends string>(
+        alias: TAlias
     ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
     ): __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+}
+
+export interface __RefOnlyOneToManyInputCollectionMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TAlias extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>
+> extends __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __RefOnlyOneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+
+    reparentable(
+    ): __RefOnlyOneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+
+    onDissociate(
+        behavior: DissociateMode
+    ): __RefOnlyOneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 
 export interface __OneToManyInputCollectionMapping<
@@ -107,7 +148,7 @@ export interface __OneToManyInputCollectionMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> extends __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+> extends __RefOnlyOneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
 
     as<TAlias extends string>(
         alias: TAlias
