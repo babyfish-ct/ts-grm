@@ -16,7 +16,7 @@ import { dtoMapper, type DtoMapper } from "@/impl/dto_mapper";
 import { AnyModel } from "../model";
 import { __AllAssociationMemberUnions, __DtoBody, __DtoMappingContract, __DtoType } from "./dto_context";
 import { __AllModelMembers } from "../model_internal_types";
-import { createDto, newDtoContext } from "@/impl/dto_context";
+import { createDto, DtoContextFlags, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
 import { __Prettify, __UnionToIntersection } from "@/auxiliary_types";
 import { __ViewCreator } from "@/schema/dto/internal_types";
@@ -77,7 +77,7 @@ function newView<
     __Prettify<__DtoType<TMappings, undefined>>
 > {
     const entity = Entity.of(model);
-    const ctx = newDtoContext(entity, false) as any;
+    const ctx = newDtoContext(entity, DtoContextFlags.None) as any;
     const dto = createDto(ctx, undefined, fn);
     return new View(dtoMapper(dto, false));
 }
@@ -95,7 +95,7 @@ function newViewByNullAsUndefined<
     __Prettify<__DtoType<TMappings, undefined>>
 > {
     const entity = Entity.of(model);
-    const ctx = newDtoContext(entity, false) as any;
+    const ctx = newDtoContext(entity, DtoContextFlags.None) as any;
     const dto = createDto(ctx, undefined, fn);
     return new View(dtoMapper(dto, true));
 }
@@ -106,16 +106,17 @@ function newInput<
         __DtoMappingContract<TModel>
     >,
 >(
-    _model: TModel,
-    _fn: __DtoBody<TModel, "INPUT", "ENTITY", __AllModelMembers<TModel>, TMappings>
+    model: TModel,
+    fn: __DtoBody<TModel, "INPUT", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): Input<
     TModel, 
     __Prettify<__DtoType<TMappings, undefined>>,
     __UnionToIntersection<__AllAssociationMemberUnions<TMappings>>
 > {
-    // const entity = Entity.of(model);
-    // const ctx = newDtoContext(entity, false) as any;
-    //const dto = createDto(ctx, undefined, fn);
+    const entity = Entity.of(model);
+    const ctx = newDtoContext(entity, DtoContextFlags.Input) as any;
+    const dto = createDto(ctx, undefined, fn);
+    console.log(dto);
     return new Input();
 }
 

@@ -40,38 +40,58 @@ import {
 import { SqlFormula, TsFormula } from "@/schema/computed";
 import { dto } from "@/schema/dto/api";
 
+export enum DtoContextFlags {
+    None = 0,
+    Input = 1 << 0,
+    DeclaredOnly = 1 << 1
+}
+
 export function newDtoContext(
     source: Entity |  EntityProp,
-    declaredOnly: boolean
+    flags: DtoContextFlags
 ): AbstractDtoContext {
-    const ctor = dtoContextCtor(source, declaredOnly);
-    return new ctor(source, declaredOnly);
+    const ctor = dtoContextCtor(source, flags);
+    return new ctor(source, flags);
 }
 
 type DtoContextCtor = new(
     source: Entity | EntityProp,
-    declaredOnly: boolean
+    flags: DtoContextFlags
 ) => AbstractDtoContext;
 
 const dtoContextCtorMap = new Map<string, DtoContextCtor>();
 
 function dtoContextCtor(
     source: Entity |  EntityProp,
-    declaredOnly: boolean
+    flags: DtoContextFlags
 ): DtoContextCtor {
     const name = source instanceof Entity
         ? source.name
         : source.toString();
-    const key = declaredOnly ? `declaredOnly(${name})` : name;
+    function appendDeclaredOnly(name: string): string {
+        return (flags & DtoContextFlags.DeclaredOnly) !== 0 
+            ? `declaredOnly(${name})` 
+            : name;
+    }
+    function appendInput(name: string): string {
+        return (flags & DtoContextFlags.Input) !== 0 
+            ? `input(${name})` 
+            : name;
+    }
+    const key = appendInput(appendDeclaredOnly(name));
     let ctor = dtoContextCtorMap.get(key);
     if (ctor == null) {
-        ctor = createDtoContextCtor(source, declaredOnly);
+        ctor = createDtoContextCtor(source, flags);
         dtoContextCtorMap.set(key, ctor);
     }
     return ctor;
 }
 
 export class AbstractDtoContext {
+
+    readonly input: boolean;
+
+    readonly declaredOnly: boolean;
 
     private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
 
@@ -83,7 +103,7 @@ export class AbstractDtoContext {
 
     constructor(
         source: Entity |  EntityProp,
-        readonly declaredOnly: boolean,
+        flags: DtoContextFlags,
     ) {
         if (source instanceof EntityProp) {
             this.$entity = source.declaringEntity;
@@ -92,6 +112,8 @@ export class AbstractDtoContext {
             this.$entity = source;
             this.$embeddedProp = undefined;
         }
+        this.input = (flags & DtoContextFlags.Input) !== 0;
+        this.declaredOnly = (flags & DtoContextFlags.DeclaredOnly) !== 0;
         this.$formula = new FormulaCreator(this.$entity);
     }
 
@@ -178,24 +200,30 @@ export class AbstractDtoContext {
 
 function createDtoContextCtor(
     source: Entity |  EntityProp,
-    declaredOnly: boolean
+    flags: DtoContextFlags
 ): DtoContextCtor {
+    const declaredOnly = (flags & DtoContextFlags.DeclaredOnly) !== 0;
     if (declaredOnly && source instanceof EntityProp) {
         throw new ArgumentError("declaredOnly must be false when source is property");
     }
     const superCtor = !declaredOnly 
         && source instanceof Entity
         && source.superEntity
-        ? dtoContextCtor(source.superEntity, false)
+        ? dtoContextCtor(source.superEntity, flags & ~DtoContextFlags.DeclaredOnly)
         : AbstractDtoContext
-    return new DtoContextCtorCreator(source, superCtor).create();
+    return new DtoContextCtorCreator(
+        source, 
+        superCtor, 
+        (flags & DtoContextFlags.Input) !== 0
+    ).create();
 }
 
 class DtoContextCtorCreator {
 
     constructor(
         private readonly _source: Entity |  EntityProp,
-        private readonly _superCtor: DtoContextCtor | undefined
+        private readonly _superCtor: DtoContextCtor | undefined,
+        private readonly _input: boolean
     ) {}
 
     create(): DtoContextCtor {
@@ -254,8 +282,21 @@ class DtoContextCtorCreator {
         const declaredOnly = this._source instanceof Entity
             ? this._source.superEntity != null && this._superCtor == null
             : false;
+        const input = this._input;
+        function withDeclaredOnly(
+            flags: DtoContextFlags
+        ): DtoContextFlags {
+            return declaredOnly ? flags | DtoContextFlags.DeclaredOnly : flags; 
+        }
+        function withInput(
+            flags: DtoContextFlags
+        ): DtoContextFlags {
+            return input ? flags | DtoContextFlags.Input : flags;
+        }
         writer.code("constructor(newSource) ").scope("CURLY_BRACKETS", () => {
-            writer.code(`super(newSource ?? $source, ${declaredOnly})`).newLine(";");
+            writer.code(`super(newSource ?? $source, ${
+                withInput(withDeclaredOnly(DtoContextFlags.None))
+            })`).newLine(";");
         }).newLine();
     }
 

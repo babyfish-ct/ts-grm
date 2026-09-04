@@ -23,7 +23,7 @@ import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, InverseFetchProp, 
 import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { ReferenceFetchType } from "@/schema/dto/api";
 import { __TsFormulaMappingOptions } from "@/schema/dto/formula";
-import { AbstractDtoContext, createDto, finalPath, newDtoContext } from "./dto_context";
+import { AbstractDtoContext, createDto, DtoContextFlags, finalPath, newDtoContext } from "./dto_context";
 import { acceptsNullOrUndefined } from "./util";
 
 export interface AbstractDtoMapping {
@@ -196,8 +196,8 @@ export class FlatMapping implements AbstractDtoMapping {
             throw new ArgumentError(`The flated prop ${prop.toString()} is neither reference nor embedded`);
         }
         const context = prop.targetEntity != null
-            ? newDtoContext(prop.targetEntity, false)
-            : newDtoContext(prop, false);
+            ? newDtoContext(prop.targetEntity, DtoContextFlags.None)
+            : newDtoContext(prop, DtoContextFlags.None);
         return new FlatMapping(
             prop,
             prop.name,
@@ -235,7 +235,7 @@ export class FlatMapping implements AbstractDtoMapping {
     ): DtoField | ReadonlyArray<DtoField> {
         const ctx = newDtoContext(
             this._prop.props != null ? this._prop : this._prop.targetEntity!, 
-            false
+            DtoContextFlags.None
         );
         const dto = createDto(
             ctx, 
@@ -280,7 +280,7 @@ export class InstanceOfMapping implements AbstractDtoMapping {
     toFields(
         _: Entity | undefined
     ): ReadonlyArray<DtoField> {
-        const ctx = newDtoContext(this._downcastTo, true);
+        const ctx = newDtoContext(this._downcastTo, DtoContextFlags.DeclaredOnly);
         const dto = createDto(
             ctx,
             this._downcastTo,
@@ -528,7 +528,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
     toFields(
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
-        const ctx = newDtoContext(this._prop, false);
+        const ctx = newDtoContext(this._prop, DtoContextFlags.None);
         const dto = createDto(ctx, downcastTo, this._body);
         return {
             path: finalPath(this._alias),
@@ -578,8 +578,8 @@ export abstract class AssociationMapping implements AbstractDtoMapping {
     ): Dto {
         const middleEntity = this._prop.middleEntity;
         const ctx = middleEntity != null 
-            ? newDtoContext(middleEntity.entity!, false)
-            : newDtoContext(this._prop.targetEntity!, false);
+            ? newDtoContext(middleEntity.entity!, DtoContextFlags.None)
+            : newDtoContext(this._prop.targetEntity!, DtoContextFlags.None);
         const body = middleEntity != null
             ? (c: AbstractDtoContext) => {
                 const flat = c.$flat(middleEntity.joinTargetProp.name)
@@ -803,7 +803,11 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
     ): DtoField {
         const dto = 
             this._body != null 
-                ? createDto(newDtoContext(this._prop, false), undefined, this._body) 
+                ? createDto(
+                    newDtoContext(this._prop, DtoContextFlags.None), 
+                    undefined, 
+                    this._body
+                ) 
                 : undefined;
         return {
             path: finalPath(this._alias),
@@ -916,7 +920,7 @@ export class CalculatedAssociationMapping implements AbstractDtoMapping {
     toFields(
         downcastTo: Entity | undefined
     ): DtoField {
-        const ctx = newDtoContext(this._prop.targetEntity!, false);
+        const ctx = newDtoContext(this._prop.targetEntity!, DtoContextFlags.None);
         const dto = createDto(ctx, undefined, this._body);
         const field: DtoField = {
             path: finalPath(this._alias),

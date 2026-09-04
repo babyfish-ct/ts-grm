@@ -20,7 +20,7 @@ import { createDtoRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl/expression";
-import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
+import { AbstractDtoContext, createDto, DtoContextFlags, newDtoContext } from "./dto_context";
 import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
@@ -826,7 +826,7 @@ function dtoField(
     prop: EntityProp
 ): DtoField {
     if (prop.props != null) {
-        const ctx = newDtoContext(prop, false);
+        const ctx = newDtoContext(prop, DtoContextFlags.None);
         const childDto = createDto(ctx, downcastTo, (c: AbstractDtoContext) => [c.$allScalars]);
         return {
             path: prop.name,
