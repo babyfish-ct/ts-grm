@@ -43,7 +43,8 @@ import { dto } from "@/schema/dto/api";
 export enum DtoContextFlags {
     None = 0,
     Input = 1 << 0,
-    DeclaredOnly = 1 << 1
+    DeclaredOnly = 1 << 1,
+    KeyOnly = 1 << 2
 }
 
 export function newDtoContext(
@@ -78,7 +79,12 @@ function dtoContextCtor(
             ? `input(${name})` 
             : name;
     }
-    const key = appendInput(appendDeclaredOnly(name));
+    function appendKeyOnly(name: string): string {
+        return (flags & DtoContextFlags.KeyOnly) !== 0
+            ? `keyOnly(${name})`
+            : name;
+    }
+    const key = appendKeyOnly(appendInput(appendDeclaredOnly(name)));
     let ctor = dtoContextCtorMap.get(key);
     if (ctor == null) {
         ctor = createDtoContextCtor(source, flags);
@@ -92,6 +98,8 @@ export class AbstractDtoContext {
     readonly input: boolean;
 
     readonly declaredOnly: boolean;
+
+    readonly keyOnly: boolean;
 
     private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
 
@@ -114,6 +122,7 @@ export class AbstractDtoContext {
         }
         this.input = (flags & DtoContextFlags.Input) !== 0;
         this.declaredOnly = (flags & DtoContextFlags.DeclaredOnly) !== 0;
+        this.keyOnly = (flags & DtoContextFlags.KeyOnly) !== 0;
         this.$formula = new FormulaCreator(this.$entity);
     }
 
@@ -141,7 +150,8 @@ export class AbstractDtoContext {
             alias, 
             prop.targetKeyProp!.props != null
                 ? c => [c.$allScalars]
-                : undefined
+                : undefined,
+            this.input
         );
     }
 
@@ -165,7 +175,7 @@ export class AbstractDtoContext {
         const prop = this._prop(key);
         switch (prop.calculationStrategy?.kind) {
             case "PARAMETERIZED_VALUE":
-                return new ScalarLikeMapping(prop, prop.name, parameter, undefined, undefined);
+                return new ScalarLikeMapping(prop, prop.name, parameter, false, undefined, undefined);
             case "PARAMETERIZED_REFERENCE":
             case "PARAMETERIZED_COLLECTION":
                 return CalculatedAssociationMapping.of(prop, parameter);
@@ -233,7 +243,8 @@ function createDtoContextCtor(
     return new DtoContextCtorCreator(
         source, 
         superCtor, 
-        (flags & DtoContextFlags.Input) !== 0
+        (flags & DtoContextFlags.Input) !== 0,
+        (flags & DtoContextFlags.KeyOnly) !== 0
     ).create();
 }
 
@@ -242,8 +253,10 @@ class DtoContextCtorCreator {
     constructor(
         private readonly _source: Entity |  EntityProp,
         private readonly _superCtor: DtoContextCtor | undefined,
-        private readonly _input: boolean
-    ) {}
+        private readonly _input: boolean,
+        private readonly _keyOnly: boolean
+    ) {
+    }
 
     create(): DtoContextCtor {
         const writer = new CodeWriter();
@@ -302,6 +315,7 @@ class DtoContextCtorCreator {
             ? this._source.superEntity != null && this._superCtor == null
             : false;
         const input = this._input;
+        const keyOnly = this._keyOnly;
         function withDeclaredOnly(
             flags: DtoContextFlags
         ): DtoContextFlags {
@@ -312,9 +326,14 @@ class DtoContextCtorCreator {
         ): DtoContextFlags {
             return input ? flags | DtoContextFlags.Input : flags;
         }
+        function withKeyOnly(
+            flags: DtoContextFlags
+        ): DtoContextFlags {
+            return keyOnly ? flags | DtoContextFlags.KeyOnly : flags;
+        }
         writer.code("constructor(newSource) ").scope("CURLY_BRACKETS", () => {
             writer.code(`super(newSource ?? $source, ${
-                withInput(withDeclaredOnly(DtoContextFlags.None))
+                withKeyOnly(withInput(withDeclaredOnly(DtoContextFlags.None)))
             })`).newLine(";");
         }).newLine();
     }
@@ -343,7 +362,7 @@ class DtoContextCtorCreator {
                                 this._propName(prop)
                             }, "${
                                 prop.name
-                            }", c => [c.$allScalars])`
+                            }", c => [c.$allScalars], ${this._input}, false)`
                         )
                         .newLine(";");
                 } else {
@@ -353,7 +372,7 @@ class DtoContextCtorCreator {
                                 this._propName(prop)
                             }, "${
                                 prop.name
-                            }", undefined)`
+                            }", undefined, ${this._input}, false)`
                         )
                         .newLine(";");
                 }
@@ -364,7 +383,7 @@ class DtoContextCtorCreator {
                             this._propName(prop)
                         }, "${
                             prop.name
-                        }", undefined, undefined, undefined)`
+                        }", undefined, ${this._keyOnly}, undefined, undefined)`
                     )
                     .newLine(";");
             } else if (prop.props != null) {
@@ -394,7 +413,7 @@ class DtoContextCtorCreator {
                                     this._propName(prop)
                                 }, "${
                                     prop.name
-                                }", undefined, undefined, undefined)`
+                                }", undefined, ${this._keyOnly}, undefined, undefined)`
                             )
                             .newLine(";");
                             break;
@@ -555,6 +574,8 @@ export class DtoFactory {
             ),
             bridgeProp: undefined,
             dto: undefined,
+            ref: false,
+            key: false,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -594,6 +615,7 @@ class FormulaCreator {
             new TsFormulaProp(this._entity, options.alias, formula),
             options.alias,
             undefined,
+            false,
             undefined,
             undefined
         );
@@ -611,6 +633,7 @@ class FormulaCreator {
             new SqlFormulaProp(this._entity, options.alias, formula),
             options.alias,
             undefined,
+            false,
             undefined,
             undefined
         );

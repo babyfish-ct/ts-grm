@@ -14,6 +14,8 @@ export function mapperJson(mapper: DtoMapper): any {
                 subMapper: f.subMapper != null
                     ? mapperJson(f.subMapper)
                     : undefined,
+                ref: f.ref ? true : undefined,
+                key: f.key ? true : undefined,
                 recursiveDepth: f.recursiveDepth,
                 dependencies: f.dependencies,
                 isDependent: f.isDependent ? true : undefined,

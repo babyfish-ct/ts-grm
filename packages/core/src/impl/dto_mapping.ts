@@ -97,6 +97,8 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             prop,
             bridgeProp: undefined,
             dto: this._toDto(prop),
+            ref: false,
+            key: this._context.keyOnly,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -276,6 +278,8 @@ export class FlatMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
+            ref: this._ref,
+            key: false,
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -423,6 +427,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             prop: this.prop,
             bridgeProp: undefined,
             dto: undefined,
+            ref: false,
+            key: false,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this.prop.orders,
@@ -444,6 +450,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         private readonly _prop: FetchProp,
         private readonly _alias: string,
         readonly _parameter: any,
+        readonly _key: boolean,
         readonly _output: ScalarLikeMapper | undefined,
         readonly _input: ScalarLikeMapper | undefined
     ) {}
@@ -452,9 +459,21 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         return new ScalarLikeMapping(
             this._prop,
             alias,
+            this._parameter,
+            this._key,
             this._output,
-            this._input,
-            this._parameter
+            this._input
+        );
+    }
+
+    key(): ScalarLikeMapping {
+        return new ScalarLikeMapping(
+            this._prop,
+            this._alias,
+            this._parameter,
+            true,
+            this._output,
+            this._input
         );
     }
 
@@ -466,6 +485,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             this._parameter,
+            this._key,
             { schema, fn },
             undefined
         );
@@ -479,6 +499,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             this._parameter,
+            this._key,
             undefined,
             { schema, fn }
         );
@@ -493,6 +514,8 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto: undefined,
+            ref: false,
+            key: this._key,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -526,14 +549,25 @@ export class EmbeddedMapping implements AbstractDtoMapping {
     constructor(
         private readonly _prop: EntityProp,
         private readonly _alias: string,
-        private readonly _body: DtoBody
+        private readonly _body: DtoBody,
+        private readonly _key: boolean
     ) {}
 
     as(alias: string): EmbeddedMapping {
         return new EmbeddedMapping(
             this._prop,
             alias,
-            this._body
+            this._body,
+            this._key
+        );
+    }
+
+    key(): EmbeddedMapping {
+        return new EmbeddedMapping(
+            this._prop,
+            this._alias,
+            this._body,
+            true
         );
     }
 
@@ -541,14 +575,18 @@ export class EmbeddedMapping implements AbstractDtoMapping {
         return new EmbeddedMapping(
             this._prop,
             this._alias,
-            body
+            body,
+            this._key
         );
     }
 
     toFields(
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
-        const ctx = newDtoContext(this._prop, DtoContextFlags.None);
+        const ctx = newDtoContext(
+            this._prop, 
+            this._key ? DtoContextFlags.KeyOnly : DtoContextFlags.None
+        );
         const dto = createDto(ctx, downcastTo, this._body);
         return {
             path: finalPath(this._alias),
@@ -556,6 +594,8 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
+            ref: false,
+            key: false,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -716,6 +756,8 @@ export class ReferenceMapping extends AssociationMapping {
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
             dto,
+            ref: this._ref,
+            key: false,
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -853,6 +895,8 @@ export class CollectionMapping extends AssociationMapping {
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
             dto,
+            ref: this._ref,
+            key: false,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this._prop.orders,
@@ -872,18 +916,24 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
     constructor(
         private readonly _prop: EntityProp,
         private readonly _alias: string,
-        private readonly _body: DtoBody | undefined
+        private readonly _body: DtoBody | undefined,
+        private readonly _ref: boolean,
+        private readonly _key: boolean
     ) {}
 
     as(alias: string): ReferenceKeyMapping {
-        return new ReferenceKeyMapping(this._prop, alias, this._body);
+        return new ReferenceKeyMapping(this._prop, alias, this._body, this._ref, this._key);
+    }
+
+    key(): ReferenceKeyMapping {
+        return new ReferenceKeyMapping(this._prop, this._alias, this._body, this._ref, true);
     }
 
     with(body: DtoBody): ReferenceKeyMapping {
         if (this._prop.props == null) {
             throw new StateError(`Cannot set the body of "${this._prop.toString()}" which is not embedded property`)
         }
-        return new ReferenceKeyMapping(this._prop, this._alias, body);
+        return new ReferenceKeyMapping(this._prop, this._alias, body, this._ref, this._key);
     }
 
     toFields(
@@ -903,6 +953,8 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
+            ref: this._ref,
+            key: this._key,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -922,14 +974,15 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
     constructor(
         private readonly _prop: EntityProp,
         private readonly _alias: string,
-        private readonly _body: DtoBody | undefined
+        private readonly _body: DtoBody | undefined,
+        private readonly _ref: boolean
     ) {}
 
     with(body: DtoBody): AssociatedKeysMapping {
         if (this._prop.targetKeyProp!.props == null) {
             throw new StateError(`Cannot set the body of "${this._prop.targetKeyProp!.toString()}" which is not embedded property`)
         }
-        return new AssociatedKeysMapping(this._prop, this._alias, body);
+        return new AssociatedKeysMapping(this._prop, this._alias, body, this._ref);
     }
 
     toFields(downcastTo: Entity | undefined): DtoField {
@@ -939,6 +992,8 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
             prop: new AssociatedKeysFormulaProp(this._prop.declaringEntity, this._alias, this._prop, this._body),
             bridgeProp: undefined,
             dto: undefined,
+            ref: this._ref,
+            key: false,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -1016,6 +1071,8 @@ export class CalculatedAssociationMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
+            ref: false,
+            key: false,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,

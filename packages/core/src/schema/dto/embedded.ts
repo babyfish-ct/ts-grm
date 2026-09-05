@@ -84,7 +84,7 @@ export interface __BaseInputEmbeddedMapping<
     ): __BaseInputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
-        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
+        body: __DtoBody<__PropModelOf<TModel, TMember>, "INPUT_REF", "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
     ): __BaseInputEmbeddedMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 }
 

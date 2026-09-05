@@ -44,6 +44,10 @@ export interface DtoField {
 
     readonly dto: Dto | undefined;
 
+    readonly ref: boolean;
+
+    readonly key: boolean;
+
     readonly fetchType: ReferenceFetchType | undefined;
 
     readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined;

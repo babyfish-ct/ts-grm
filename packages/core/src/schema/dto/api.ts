@@ -36,6 +36,8 @@ export class Input<TModel extends AnyModel, T, TAssociationMembers> {
     __type(): { input: [TModel, T, TAssociationMembers] | undefined } {
         return { input: undefined };
     };
+
+    constructor(readonly mapper: DtoMapper) {}
 }
 
 export type TypeOf<TDto> =
@@ -79,7 +81,7 @@ function newView<
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, DtoContextFlags.None) as any;
     const dto = createDto(ctx, undefined, fn);
-    return new View(dtoMapper(dto, false));
+    return new View(dtoMapper(dto, false, false));
 }
 
 function newViewByNullAsUndefined<
@@ -97,7 +99,7 @@ function newViewByNullAsUndefined<
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, DtoContextFlags.None) as any;
     const dto = createDto(ctx, undefined, fn);
-    return new View(dtoMapper(dto, true));
+    return new View(dtoMapper(dto, false, true));
 }
 
 function newInput<
@@ -116,8 +118,7 @@ function newInput<
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, DtoContextFlags.Input) as any;
     const dto = createDto(ctx, undefined, fn);
-    console.log(dto);
-    return new Input();
+    return new Input(dtoMapper(dto, true, false));
 }
 
 export type DissociateMode = "ERROR" | "SET_NULL" | "DELETE";

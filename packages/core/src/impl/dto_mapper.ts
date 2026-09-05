@@ -26,9 +26,14 @@ import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
 import { belongTo, fromDtoFields, Metadata, MetadataField } from "./metadata";
 
-export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
+export function dtoMapper(
+    dto: Dto, 
+    input: boolean, 
+    nullAsUndefined: boolean
+): DtoMapper {
     const mapper = new Mapper(
         dto.entity ?? makeErr(() => new ArgumentError(`"dto.entity" must be specified`)), 
+        input,
         nullAsUndefined,
         undefined,
         undefined
@@ -57,6 +62,7 @@ export class DtoMapper {
 
     constructor(
         readonly entity: Entity,
+        readonly input: boolean,
         readonly nullAsUndefined: boolean,
         readonly associatedProp: FetchProp | undefined,
         readonly bridgeProp: EntityProp | undefined,
@@ -153,7 +159,7 @@ export class DtoMapper {
     }
 }
 
-export type DtoMapperField = {
+export interface DtoMapperField {
 
     readonly index: number;
 
@@ -178,6 +184,10 @@ export type DtoMapperField = {
     readonly limit: number | undefined;
 
     readonly subMapper: DtoMapper | undefined;
+
+    readonly ref: boolean;
+
+    readonly key: boolean;
 
     readonly recursiveDepth: number | undefined;
 
@@ -204,6 +214,7 @@ class Mapper implements Metadata {
 
     constructor(
         readonly entity: Entity,
+        readonly input: boolean,
         readonly nullAsUndefined: boolean,
         readonly associatedProp: FetchProp | undefined,
         readonly bridgeProp: EntityProp | undefined
@@ -264,10 +275,10 @@ class Mapper implements Metadata {
         }
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
-            this._add(dtoField(field.downcastTo, referenceKeyProp), false);
+            this._add(dtoField(field.downcastTo, referenceKeyProp, this.input), false);
         } else if (prop.targetEntity != null) {
             let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
-            this._add(dtoField(field.downcastTo, keyProp), false);
+            this._add(dtoField(field.downcastTo, keyProp, field.ref), false);
         }
     }
 
@@ -343,6 +354,8 @@ class Mapper implements Metadata {
             ),
             bridgeProp: undefined,
             dto: undefined,
+            ref: false,
+            key: false,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -379,6 +392,7 @@ class Mapper implements Metadata {
             }
         }
         const field = new MapperField(
+            this.input,
             this.nullAsUndefined,
             dtoField.downcastTo,
             dtoField.prop, 
@@ -391,16 +405,29 @@ class Mapper implements Metadata {
             dtoField.nullable,
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
-            this._dependencyReader?.refs
+            this._dependencyReader?.refs,
+            dtoField.ref,
+            dtoField.key
         );
-        this._fieldMap.set(
-            key, 
-            cachedValue == null 
-                ? field
-                : Array.isArray(cachedValue)
+        if (cachedValue == null) {
+            this._fieldMap.set(key, field);
+        } else {
+            if (this.input) {
+                throw new StateError(
+                    `Input DTO for "${
+                        this.entity.name
+                    }" does not accept duplicated fields based on "${
+                        dtoField.prop.toString()
+                    }"`
+                );
+            }
+            this._fieldMap.set(
+                key, 
+                Array.isArray(cachedValue)
                     ? [...cachedValue, field]
                     : [cachedValue, field]
-        );
+            );
+        }
         return field;
     }
 
@@ -409,6 +436,7 @@ class Mapper implements Metadata {
         this._handleRecursiveFields(fields);
         return new DtoMapper(
             this.entity,
+            this.input,
             this.nullAsUndefined,
             this.associatedProp,
             this.bridgeProp,
@@ -499,6 +527,7 @@ class Mapper implements Metadata {
         }
         return new DtoMapper(
             recursiveField.prop.targetEntity!,
+            this.input,
             this.nullAsUndefined,
             recursiveField.prop,
             recursiveField.bridgeProp,
@@ -569,6 +598,7 @@ class MapperField implements MetadataField {
     private _columnIndex: number | undefined = undefined;
 
     constructor(
+        input: boolean,
         nullAsUndefined: boolean,
         readonly downcastTo: Entity | undefined,
         readonly prop: FetchProp,
@@ -581,12 +611,14 @@ class MapperField implements MetadataField {
         readonly nullable: boolean,
         readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
-        readonly dependencies: ReadonlyArray<MapperField> | undefined
+        readonly dependencies: ReadonlyArray<MapperField> | undefined,
+        readonly ref: boolean,
+        readonly key: boolean
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMetadata = undefined;
         } else {
-            this.subMetadata = new Mapper(prop.targetEntity, nullAsUndefined, prop, bridgeProp);
+            this.subMetadata = new Mapper(prop.targetEntity, input, nullAsUndefined, prop, bridgeProp);
         }
     }
 
@@ -629,6 +661,8 @@ class MapperField implements MetadataField {
             nullable: this.nullable,
             paths,
             subMapper,
+            ref: this.ref,
+            key: this.key,
             fetchType: this.fetchType,
             predicateFn: this.predicateFn,
             orders: this.orders,
@@ -780,6 +814,8 @@ function toDtoFields(
         prop: field.prop,
         bridgeProp: field.bridgeProp,
         dto: field.subMapper != null ? toDto(field.subMapper) : undefined,
+        ref: field.ref,
+        key: field.key,        
         fetchType: field.fetchType,
         predicateFn: field.predicateFn,
         orders: field.orders,
@@ -823,7 +859,8 @@ function fieldHash(field: DtoMapperField): string {
 
 function dtoField(
     downcastTo: Entity | undefined,
-    prop: EntityProp
+    prop: EntityProp,
+    ref: boolean
 ): DtoField {
     if (prop.props != null) {
         const ctx = newDtoContext(prop, DtoContextFlags.None);
@@ -834,6 +871,8 @@ function dtoField(
             prop: prop,
             bridgeProp: undefined,
             dto: childDto,
+            ref,
+            key: false,
             fetchType: undefined,
             predicateFn: undefined,
             orders: prop.orders,
@@ -850,6 +889,8 @@ function dtoField(
         prop: prop,
         bridgeProp: undefined,
         dto: undefined,
+        ref,
+        key: false,
         fetchType: undefined,
         predicateFn: undefined,
         orders: prop.orders,
