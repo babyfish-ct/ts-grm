@@ -20,6 +20,7 @@ import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
 import { __DeclaringModelName } from "../model_internal_types";
+import { __ReferenceKeyName } from "./internal_types";
 
 export interface __FlatContext<
     TModel extends AnyModel,
@@ -63,7 +64,7 @@ export type __FlatableKeys<TMembers> =
                     ? K
                 : never
         ]: never
-    }
+    };
 
 export interface __FlatMappingContract<
     TModel extends AnyModel,
@@ -110,7 +111,20 @@ export type __FlatMapping<
         TNullity
     >;
 
-export interface __EmbeddedFlatMapping<
+export type __EmbeddedFlatMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TPrefix extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> = TDtoKind extends "INPUT"
+    ? __KeyableEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>
+    : __SimpleEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+export interface __SimpleEmbeddedFlatMapping<
     TModel extends AnyModel,
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -120,15 +134,40 @@ export interface __EmbeddedFlatMapping<
     TMappings extends __TargetMappings<TModel, TMember>,
     TNullity extends __NullityType
 > extends __FlatMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity> {
+
     readonly __flatType: 'EMBEDDED';
     
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+    ): __SimpleEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
-    ): __EmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+    ): __SimpleEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+}
+
+export interface __KeyableEmbeddedFlatMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TPrefix extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __FlatMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity> {
+
+    readonly __flatType: 'EMBEDDED';
+    
+    prefix<TPrefix extends string>(
+        alias: TPrefix
+    ): __KeyableEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
+    ): __KeyableEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+    key(): __KeyableEmbeddedFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
 }
 
 export type __ReferenceFlatMapping<

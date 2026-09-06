@@ -23,7 +23,7 @@ import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, InverseFetchProp, 
 import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { ReferenceFetchType } from "@/schema/dto/api";
 import { __TsFormulaMappingOptions } from "@/schema/dto/formula";
-import { AbstractDtoContext, createDto, DtoContextFlags, finalPath, newDtoContext } from "./dto_context";
+import { AbstractDtoContext, createDto, DtoContextFlags, finalKey, finalPath, newDtoContext } from "./dto_context";
 import { acceptsNullOrUndefined } from "./util";
 
 export interface AbstractDtoMapping {
@@ -98,7 +98,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             bridgeProp: undefined,
             dto: this._toDto(prop),
             ref: false,
-            key: this._context.keyOnly,
+            key: finalKey(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -174,7 +174,8 @@ export class FoldMapping implements AbstractDtoMapping {
             this._context,
             downcastTo,
             this._body,
-            this._name
+            this._name,
+            finalKey()
         )
         return dto.fields;
     }
@@ -191,7 +192,8 @@ export class FlatMapping implements AbstractDtoMapping {
         private readonly _body: DtoBody,
         private readonly _filter: Filter | undefined,
         private readonly _fetchType: ReferenceFetchType,
-        private readonly _ref: boolean
+        private readonly _ref: boolean,
+        private readonly _key: boolean
     ) {}
     
     static of(prop: EntityProp) {
@@ -208,6 +210,7 @@ export class FlatMapping implements AbstractDtoMapping {
             c => [c.$allScalars],
             undefined,
             "LOAD",
+            false,
             false
         );
     }
@@ -226,30 +229,35 @@ export class FlatMapping implements AbstractDtoMapping {
             body,
             undefined,
             "LOAD",
+            true,
             true
         );
     }
 
     prefix(prefix: string): FlatMapping {
-        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType, this._ref);
+        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType, this._ref, this._key);
     }
 
     with(body: DtoBody): FlatMapping {
-        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType, this._ref);
+        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType, this._ref, this._key);
     }
 
     filter(filter: Filter): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "filter"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType, this._ref);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType, this._ref, this._key);
     }
 
     fetch(fetchType: ReferenceFetchType): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "fetch"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType, this._ref);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType, this._ref, this._key);
+    }
+
+    key(): FlatMapping {
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, this._fetchType, this._ref, true);
     }
 
     toFields(
@@ -267,7 +275,8 @@ export class FlatMapping implements AbstractDtoMapping {
                 prefix: this._prefix,
                 reference: this._prop.targetEntity != null,
                 nullable: this._prop.nullable || this._filter != null
-            }
+            },
+            this._key || (this._prop.props != null ? finalKey() : false),
         );
         if (this._prop.props != null) {
             return dto.fields;
@@ -279,7 +288,7 @@ export class FlatMapping implements AbstractDtoMapping {
             bridgeProp: undefined,
             dto,
             ref: this._ref,
-            key: false,
+            key: this._key || (this._prop.props != null ? finalKey() : false),
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -515,7 +524,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             bridgeProp: undefined,
             dto: undefined,
             ref: false,
-            key: this._key,
+            key: this._key || finalKey(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -583,11 +592,8 @@ export class EmbeddedMapping implements AbstractDtoMapping {
     toFields(
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
-        const ctx = newDtoContext(
-            this._prop, 
-            this._key ? DtoContextFlags.KeyOnly : DtoContextFlags.None
-        );
-        const dto = createDto(ctx, downcastTo, this._body);
+        const ctx = newDtoContext(this._prop, DtoContextFlags.None);
+        const dto = createDto(ctx, downcastTo, this._body, undefined, this._key || finalKey());
         return {
             path: finalPath(this._alias),
             downcastTo,
@@ -595,7 +601,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             bridgeProp: undefined,
             dto,
             ref: false,
-            key: false,
+            key: this._key || finalKey(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -944,8 +950,10 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
                 ? createDto(
                     newDtoContext(this._prop, DtoContextFlags.None), 
                     undefined, 
-                    this._body
-                ) 
+                    this._body,
+                    undefined,
+                    this._key || finalKey()
+                )
                 : undefined;
         return {
             path: finalPath(this._alias),
@@ -954,7 +962,7 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
             bridgeProp: undefined,
             dto,
             ref: this._ref,
-            key: this._key,
+            key: this._key || finalKey(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,

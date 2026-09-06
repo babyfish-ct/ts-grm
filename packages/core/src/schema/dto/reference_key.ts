@@ -18,6 +18,7 @@ import { __TargetKeyOf } from "../prop_internal_types";
 import { __EmbeddedPropContract, __ReferencePropContract } from "../prop_internal_types";
 import { __AllScalarsMapping, __MemberType } from "./all_scalars";
 import { __DtoBody, __DtoKind, __DtoMappingContract, __DtoType } from "./dto_context";
+import { __ScalarLikeMappingContract } from "./internal_types";
 import { __TargetMappings, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 
 export type __ReferenceKeyContext<
@@ -69,10 +70,22 @@ export type __ReferenceKeyMapping<
     TKey extends string, 
     TMember
 > =
-    __ScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember>
-    | __EmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, any>;
+    TMember extends __ScalarLikeMappingContract<any, any, any, any, any, any>
+        ? __ScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember>
+        : __EmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, any>;
 
-export interface __ScalarReferenceKeyMapping<
+export type __ScalarReferenceKeyMapping<
+    TModel extends AnyModel, 
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember
+> = 
+    TDtoKind extends "INPUT"
+        ? __KeyableScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember>
+        : __SimpleScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember>;
+
+export interface __SimpleScalarReferenceKeyMapping<
     TModel extends AnyModel, 
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -84,10 +97,37 @@ export interface __ScalarReferenceKeyMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __ScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember>;
+    ): __SimpleScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember>;
 }
 
-export interface __EmbeddedReferenceKeyMapping<
+export interface __KeyableScalarReferenceKeyMapping<
+    TModel extends AnyModel, 
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember
+> extends __SimpleScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember> {
+    
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __KeyableScalarReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember>;
+
+    key(): __KeyableScalarReferenceKeyMapping<TModel, TDeclaring, "INPUT_REF", TKey, TMember>;
+}
+
+export type __EmbeddedReferenceKeyMapping<
+    TModel extends AnyModel, 
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember,
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>
+> =
+    TDtoKind extends "INPUT"
+        ? __KeyableEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>
+        : __SimpleEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+
+export interface __SimpleEmbeddedReferenceKeyMapping<
     TModel extends AnyModel, 
     TDeclaring extends string,
     TDtoKind extends __DtoKind,
@@ -95,11 +135,12 @@ export interface __EmbeddedReferenceKeyMapping<
     TMember,
     TMappings extends ReadonlyArray<__DtoMappingContract<any>>
 > extends __ReferenceKeyMappingContract<TModel, TDeclaring, TDtoKind, TKey, TMember> {
+
     readonly __keyType: "EMBEDDED";
     
     as<TAlias extends string>(
         alias: TAlias
-    ): __EmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+    ): __SimpleEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
 
     with<
         const TMappings extends __TargetMappings<TModel, TMember>
@@ -111,7 +152,35 @@ export interface __EmbeddedReferenceKeyMapping<
             __TargetKeyMembersOf<TModel, TMember>,
             TMappings
         >
-    ): __EmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+    ): __SimpleEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+}
+
+export interface __KeyableEmbeddedReferenceKeyMapping<
+    TModel extends AnyModel, 
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember,
+    TMappings extends ReadonlyArray<__DtoMappingContract<any>>
+> extends __SimpleEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings> {
+    
+    as<TAlias extends string>(
+        alias: TAlias
+    ): __KeyableEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TAlias, TMember, TMappings>;
+
+    with<
+        const TMappings extends __TargetMappings<TModel, TMember>
+    >(
+        body: __DtoBody<
+            __PropModelOf<TModel, TMember>, 
+            TDtoKind, 
+            "EMBEDDABLE", 
+            __TargetKeyMembersOf<TModel, TMember>,
+            TMappings
+        >
+    ): __KeyableEmbeddedReferenceKeyMapping<TModel, TDeclaring, TDtoKind, TKey, TMember, TMappings>;
+
+    key(): __KeyableEmbeddedReferenceKeyMapping<TModel, TDeclaring, "INPUT_REF", TKey, TMember, TMappings>;
 }
 
 export type __TargetKeyPropOf<

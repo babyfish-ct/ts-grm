@@ -43,8 +43,7 @@ import { dto } from "@/schema/dto/api";
 export enum DtoContextFlags {
     None = 0,
     Input = 1 << 0,
-    DeclaredOnly = 1 << 1,
-    KeyOnly = 1 << 2
+    DeclaredOnly = 1 << 1
 }
 
 export function newDtoContext(
@@ -79,12 +78,7 @@ function dtoContextCtor(
             ? `input(${name})` 
             : name;
     }
-    function appendKeyOnly(name: string): string {
-        return (flags & DtoContextFlags.KeyOnly) !== 0
-            ? `keyOnly(${name})`
-            : name;
-    }
-    const key = appendKeyOnly(appendInput(appendDeclaredOnly(name)));
+    const key = appendInput(appendDeclaredOnly(name));
     let ctor = dtoContextCtorMap.get(key);
     if (ctor == null) {
         ctor = createDtoContextCtor(source, flags);
@@ -98,8 +92,6 @@ export class AbstractDtoContext {
     readonly input: boolean;
 
     readonly declaredOnly: boolean;
-
-    readonly keyOnly: boolean;
 
     private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
 
@@ -122,7 +114,6 @@ export class AbstractDtoContext {
         }
         this.input = (flags & DtoContextFlags.Input) !== 0;
         this.declaredOnly = (flags & DtoContextFlags.DeclaredOnly) !== 0;
-        this.keyOnly = (flags & DtoContextFlags.KeyOnly) !== 0;
         this.$formula = new FormulaCreator(this.$entity);
     }
 
@@ -243,8 +234,7 @@ function createDtoContextCtor(
     return new DtoContextCtorCreator(
         source, 
         superCtor, 
-        (flags & DtoContextFlags.Input) !== 0,
-        (flags & DtoContextFlags.KeyOnly) !== 0
+        (flags & DtoContextFlags.Input) !== 0
     ).create();
 }
 
@@ -253,8 +243,7 @@ class DtoContextCtorCreator {
     constructor(
         private readonly _source: Entity |  EntityProp,
         private readonly _superCtor: DtoContextCtor | undefined,
-        private readonly _input: boolean,
-        private readonly _keyOnly: boolean
+        private readonly _input: boolean
     ) {
     }
 
@@ -315,7 +304,6 @@ class DtoContextCtorCreator {
             ? this._source.superEntity != null && this._superCtor == null
             : false;
         const input = this._input;
-        const keyOnly = this._keyOnly;
         function withDeclaredOnly(
             flags: DtoContextFlags
         ): DtoContextFlags {
@@ -326,14 +314,9 @@ class DtoContextCtorCreator {
         ): DtoContextFlags {
             return input ? flags | DtoContextFlags.Input : flags;
         }
-        function withKeyOnly(
-            flags: DtoContextFlags
-        ): DtoContextFlags {
-            return keyOnly ? flags | DtoContextFlags.KeyOnly : flags;
-        }
         writer.code("constructor(newSource) ").scope("CURLY_BRACKETS", () => {
             writer.code(`super(newSource ?? $source, ${
-                withKeyOnly(withInput(withDeclaredOnly(DtoContextFlags.None)))
+                withInput(withDeclaredOnly(DtoContextFlags.None))
             })`).newLine(";");
         }).newLine();
     }
@@ -362,7 +345,7 @@ class DtoContextCtorCreator {
                                 this._propName(prop)
                             }, "${
                                 prop.name
-                            }", c => [c.$allScalars], ${this._input}, false)`
+                            }", c => [c.$allScalars], ${this._input})`
                         )
                         .newLine(";");
                 } else {
@@ -372,7 +355,7 @@ class DtoContextCtorCreator {
                                 this._propName(prop)
                             }, "${
                                 prop.name
-                            }", undefined, ${this._input}, false)`
+                            }", undefined, ${this._input})`
                         )
                         .newLine(";");
                 }
@@ -383,7 +366,7 @@ class DtoContextCtorCreator {
                             this._propName(prop)
                         }, "${
                             prop.name
-                        }", undefined, ${this._keyOnly}, undefined, undefined)`
+                        }", undefined, false, undefined, undefined)`
                     )
                     .newLine(";");
             } else if (prop.props != null) {
@@ -413,7 +396,7 @@ class DtoContextCtorCreator {
                                     this._propName(prop)
                                 }, "${
                                     prop.name
-                                }", undefined, ${this._keyOnly}, undefined, undefined)`
+                                }", undefined, false, undefined, undefined)`
                             )
                             .newLine(";");
                             break;
@@ -452,11 +435,12 @@ class DtoContextCtorCreator {
     }
 }
 
-class PathContext {
+class FieldContext {
 
     constructor(
-        readonly parent: PathContext | undefined,
-        readonly op: PathOp | undefined
+        readonly parent: FieldContext | undefined,
+        readonly op: PathOp | undefined,
+        readonly key: boolean
     ) {}
 
     finalPath(path: Path | undefined): Path | undefined {
@@ -466,7 +450,7 @@ class PathContext {
         const arr = typeof path === "string"
                 ? [path]
                 : [...path];
-        for (let ctx: PathContext | undefined = this; ctx != null && ctx.op != null; ctx = ctx.parent) {
+        for (let ctx: FieldContext | undefined = this; ctx != null && ctx.op != null; ctx = ctx.parent) {
             const index = arr.findIndex(name => name !== "..");
             const op = ctx.op;
             if (typeof op === "string") {
@@ -488,15 +472,16 @@ class PathContext {
     }
 }
 
-let currentPathContext: PathContext | undefined = undefined;
+let currentFieldContext: FieldContext | undefined = undefined;
 
 export function createDto(
     ctx: AbstractDtoContext,
     downloadTo: Entity | undefined,
     body: any,
-    op?: PathOp
+    op?: PathOp,
+    key?: boolean
 ): Dto {
-    currentPathContext = new PathContext(currentPathContext, op);
+    currentFieldContext = new FieldContext(currentFieldContext, op, key === true);
     try {
         const mappings = body(ctx);
         const factory = new DtoFactory(ctx.$entity, downloadTo);
@@ -505,14 +490,18 @@ export function createDto(
         }
         return factory.create();
     } finally {
-        currentPathContext = currentPathContext.parent;
+        currentFieldContext = currentFieldContext.parent;
     }
 }
 
 export function finalPath(
     path: Path | undefined
 ): Path | undefined {
-    return currentPathContext?.finalPath(path);
+    return currentFieldContext?.finalPath(path);
+}
+
+export function finalKey(): boolean {
+    return currentFieldContext?.key ?? false;
 }
 
 export class DtoFactory {
@@ -565,7 +554,7 @@ export class DtoFactory {
         }
         const entity = this._source;
         const field: DtoField = {
-            path: currentPathContext!.finalPath("__typename"),
+            path: currentFieldContext!.finalPath("__typename"),
             downcastTo: undefined,
             prop: new TypeNameProp(
                 entity,

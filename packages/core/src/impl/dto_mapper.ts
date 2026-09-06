@@ -20,7 +20,7 @@ import { createDtoRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl/expression";
-import { AbstractDtoContext, createDto, DtoContextFlags, newDtoContext } from "./dto_context";
+import { AbstractDtoContext, createDto, DtoContextFlags, finalKey, newDtoContext } from "./dto_context";
 import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
@@ -872,7 +872,7 @@ function dtoField(
             bridgeProp: undefined,
             dto: childDto,
             ref,
-            key: false,
+            key: finalKey(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: prop.orders,
@@ -890,7 +890,7 @@ function dtoField(
         bridgeProp: undefined,
         dto: undefined,
         ref,
-        key: false,
+        key: finalKey(),
         fetchType: undefined,
         predicateFn: undefined,
         orders: prop.orders,
