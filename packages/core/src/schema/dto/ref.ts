@@ -1,4 +1,4 @@
-import { __AssociationKeysImpl, __EmbeddedFlatMapping, __FlatableKeys, __FlatMappingContract, __InputReferenceFlatMapping, __ReferenceFlatMapping } from "@/index_internal";
+import { __AssociationKeysImpl, __EmbeddedFlatMapping, __FlatableKeys, __FlatableRefs, __FlatMappingContract, __InputReferenceFlatMapping, __ReferenceFlatMapping } from "@/index_internal";
 import { AnyModel } from "../model";
 import { __DeclaringModelName } from "../model_internal_types";
 import { __AssociatedPropContract, __CollectionPropContract, __NullityOf, __NullityType, __ReferencePropContract } from "../prop_internal_types";
@@ -42,7 +42,7 @@ export interface __RefContext<
         : never;
 
     $flatRef<
-        TKey extends __FlatableKeys<TMembers>,
+        TKey extends __FlatableRefs<TMembers>,
         const TMappings extends __TargetMappings<TModel, TMembers[TKey]>
     >(
         key: TKey,

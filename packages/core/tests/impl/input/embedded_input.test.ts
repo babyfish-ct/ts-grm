@@ -504,4 +504,67 @@ describe("EmbeddedTest", () => {
             ]
         });
     });
+
+    it("flatImplicitReferenceKey", () => {
+        const input = dto.input(ORDER_ITEM, c => [
+            c.$flat("orderId").key()
+        ]);
+        expect(mapperJson(input.mapper)).toEqual({
+            "entity": "OrderItem",
+            "fields": [
+                {
+                    "prop": "OrderItem.orderId.x",
+                    "paths": ["orderIdX"],
+                    "key": true,
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "OrderItem.orderId.y.a",
+                    "paths": [
+                        ["orderIdY", "a"]
+                    ],
+                    "key": true,
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "OrderItem.orderId.y.b",
+                    "paths": [
+                        ["orderIdY", "b"]
+                    ],
+                    "key": true,
+                    "columnIndex": 2
+                }
+            ]
+        });
+    });
+
+    it("flatExplicitReferenceKey", () => {
+        const input = dto.input(ORDER_ITEM, c => [
+            c.$flat("orderId").key().with(c => [
+                c.x,
+                c.y.with(c => [
+                    c.b
+                ])
+            ])
+        ]);
+        expect(mapperJson(input.mapper)).toEqual({
+            "entity": "OrderItem",
+            "fields": [
+                {
+                    "prop": "OrderItem.orderId.x",
+                    "paths": ["orderIdX"],
+                    "key": true,
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "OrderItem.orderId.y.b",
+                    "paths": [
+                        ["orderIdY", "b"]
+                    ],
+                    "key": true,
+                    "columnIndex": 1
+                }
+            ]
+        });
+    });
 });

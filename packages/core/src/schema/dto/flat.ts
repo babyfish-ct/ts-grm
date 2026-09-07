@@ -15,12 +15,12 @@
 import { Predicate } from "@/dsl/expression";
 import { EntityTable } from "@/dsl/table";
 import { AnyModel } from "../model";
-import { __EmbeddedPropContract, __NullityOf, __NullityType, __ReferencePropContract } from "../prop_internal_types";
+import { __EmbeddedPropContract, __NullityOf, __NullityType, __ReferencePropContract, __TargetKeyOf, __TargetModelOf } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
 import { __DeclaringModelName } from "../model_internal_types";
-import { __ReferenceKeyName } from "./internal_types";
+import { __ReferenceKeyName, __TargetKeyPropOf } from "./internal_types";
 
 export interface __FlatContext<
     TModel extends AnyModel,
@@ -28,10 +28,12 @@ export interface __FlatContext<
     TMembers
 > {
     $flat<
-        TKey extends __FlatableKeys<TMembers>
+        TKey extends __FlatableKeys<TModel, TDtoKind, TMembers>
     >(
         key: TKey
-    ): TMembers[TKey] extends __ReferencePropContract<any, any, any, any, any, any>
+    ): TKey extends keyof __EmbeddedRefereceKeyMappings<TModel, TDtoKind, TMembers>
+        ? __EmbeddedRefereceKeyMappings<TModel, TDtoKind, TMembers>[TKey]
+    : TMembers[TKey] extends __ReferencePropContract<any, any, any, any, any, any>
         ? __ReferenceFlatMapping<
             TModel,
             __DeclaringModelName<TMembers[TKey]>,
@@ -42,19 +44,23 @@ export interface __FlatContext<
             __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
             __NullityOf<TMembers[TKey]>
         >
-        : __EmbeddedFlatMapping<
-            TModel,
-            __DeclaringModelName<TMembers[TKey]>,
-            TDtoKind,
-            TKey & string,
-            TKey & string,
-            TMembers[TKey],
-            __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
-            __NullityOf<TMembers[TKey]>
-        >;
+    : __EmbeddedFlatMapping<
+        TModel,
+        __DeclaringModelName<TMembers[TKey]>,
+        TDtoKind,
+        TKey & string,
+        TKey & string,
+        TMembers[TKey],
+        __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
+        __NullityOf<TMembers[TKey]>
+    >;
 }
 
-export type __FlatableKeys<TMembers> = 
+export type __FlatableKeys<
+    TModel extends AnyModel,
+    TDtoKind extends __DtoKind,
+    TMembers
+> = 
     keyof {
         [
             K in keyof TMembers as
@@ -64,7 +70,47 @@ export type __FlatableKeys<TMembers> =
                     ? K
                 : never
         ]: never
+    } | keyof __EmbeddedRefereceKeyMappings<TModel, TDtoKind, TMembers>;
+
+export type __FlatableRefs<
+    TMembers
+> = 
+    keyof {
+        [
+            K in keyof TMembers as
+                TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
+                    ? K
+                : never
+        ]: never
     };
+
+export type __EmbeddedRefereceKeyMappings<
+    TModel extends AnyModel,
+    TDtoKind extends __DtoKind,
+    TMembers
+> = {
+    [
+        K in keyof TMembers as
+            TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
+                ? __TargetKeyPropOf<TModel, TMembers[K]> extends __EmbeddedPropContract<any, any, any>
+                    ? __ReferenceKeyName<K, TMembers[K]>
+                    : never
+                : never
+    ]: TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
+        ? __TargetKeyPropOf<TModel, TMembers[K]> extends __EmbeddedPropContract<any, any, any>
+            ? __EmbeddedFlatMapping<
+                TModel,
+                __DeclaringModelName<__TargetKeyPropOf<TModel, TMembers[K]>>,
+                TDtoKind,
+                __ReferenceKeyName<K, TMembers[K]> & string,
+                __ReferenceKeyName<K, TMembers[K]> & string,
+                __TargetKeyPropOf<TModel, TMembers[K]>,
+                __DefaultTargetMappings<TModel, TDtoKind, __TargetKeyPropOf<TModel, TMembers[K]>>,
+                __NullityOf<TMembers[K]>
+            >
+            : never
+        : never
+}
 
 export interface __FlatMappingContract<
     TModel extends AnyModel,

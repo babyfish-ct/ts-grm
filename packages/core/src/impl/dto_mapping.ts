@@ -114,11 +114,8 @@ export class AllScalarsMapping implements AbstractDtoMapping {
         if (prop.props == null) {
             return undefined;
         }
-        const fields = Array.from(prop.props.values()).map(p => this._toField(p, undefined));
-        return {
-            entity: this._context.$entity,
-            fields
-        }
+        const ctx = newDtoContext(prop, DtoContextFlags.None);
+        return createDto(ctx, undefined, (c: AbstractDtoContext) => [c.$allScalars], undefined, finalKey());
     }
 }
 
