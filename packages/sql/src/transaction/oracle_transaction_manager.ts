@@ -157,7 +157,8 @@ let _oracleRuntime: OracelRuntime | undefined = undefined;
 async function oracelRuntime(): Promise<OracelRuntime> {
     let runtime = _oracleRuntime;
     if (runtime == null) {
-        const oracledb = await import("oracledb"); 
+        const oracledbModule = await import("oracledb"); 
+        const oracledb = oracledbModule.default ?? oracledbModule;
         _oracleRuntime = runtime = {
             createPool: oracledb.createPool,
             outputFormatArray: oracledb.OUT_FORMAT_ARRAY

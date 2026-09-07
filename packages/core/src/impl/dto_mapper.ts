@@ -16,7 +16,7 @@ import { ArgumentError, StateError } from "@/error/common";
 import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, SqlFormulaProp, TsFormulaProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp} from "./entity_prop";
-import { createDtoRowReader, DtoRowReader } from "./row_reader";
+import { createDtoRowReader, DtoRowReader } from "./dto_row_reader";
 import { makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl/expression";
@@ -369,9 +369,18 @@ class Mapper implements Metadata {
     }
 
     private _field(dtoField: DtoField): MapperField {
-        const key = dtoFieldKey(dtoField);
+        const key = this._dtoFieldKey(dtoField);
         let cachedValue = this._fieldMap.get(key);
         if (cachedValue != null) {
+            if (this.input) {
+                throw new StateError(
+                    `Input DTO for "${
+                        this.entity.name
+                    }" does not accept duplicated fields based on "${
+                        dtoField.prop.toString()
+                    }"`
+                );
+            }
             const arr = Array.isArray(cachedValue)
                 ? cachedValue
                 : [cachedValue];
@@ -412,15 +421,6 @@ class Mapper implements Metadata {
         if (cachedValue == null) {
             this._fieldMap.set(key, field);
         } else {
-            if (this.input) {
-                throw new StateError(
-                    `Input DTO for "${
-                        this.entity.name
-                    }" does not accept duplicated fields based on "${
-                        dtoField.prop.toString()
-                    }"`
-                );
-            }
             this._fieldMap.set(
                 key, 
                 Array.isArray(cachedValue)
@@ -581,6 +581,29 @@ class Mapper implements Metadata {
             }
         };
     }
+
+    private _dtoFieldKey(field: DtoField): string {
+        if (this.input) {
+            return field.prop.toString();
+        }
+        let key = field.prop.toString();
+        if (field.predicateFn != null) {
+            key += `\x1Ff:${field.predicateFn.toString()}`;
+        }
+        if (field.orders != null && field.orders.length !== 0) {
+            key += `\x1Fo:${JSON.stringify(field.orders)}`;
+        }
+        if (field.limit != null) {
+            key += `\x1Fl:${field.limit}`
+        }
+        if (field.parameter != null) {
+            key += `\x1Fp:${JSON.stringify(field.parameter)}`;
+        }
+        if (field.mapperFn != null) {
+            key += `\x1Fm:${field.mapperFn.toString()}`;
+        }
+        return key;
+    }
 };
 
 class MapperField implements MetadataField {
@@ -598,7 +621,7 @@ class MapperField implements MetadataField {
     private _columnIndex: number | undefined = undefined;
 
     constructor(
-        input: boolean,
+        readonly input: boolean,
         nullAsUndefined: boolean,
         readonly downcastTo: Entity | undefined,
         readonly prop: FetchProp,
@@ -747,26 +770,6 @@ class MapperField implements MetadataField {
     get fullPaths(): ReadonlySet<string> {
         return this._fullPaths;
     }
-}
-
-function dtoFieldKey(field: DtoField): string {
-    let key = field.prop.toString();
-    if (field.predicateFn != null) {
-        key += `\x1Ff:${field.predicateFn.toString()}`;
-    }
-    if (field.orders != null && field.orders.length !== 0) {
-        key += `\x1Fo:${JSON.stringify(field.orders)}`;
-    }
-    if (field.limit != null) {
-        key += `\x1Fl:${field.limit}`
-    }
-    if (field.parameter != null) {
-        key += `\x1Fp:${JSON.stringify(field.parameter)}`;
-    }
-    if (field.mapperFn != null) {
-        key += `\x1Fm:${field.mapperFn.toString()}`;
-    }
-    return key;
 }
 
 function embeddedPath(

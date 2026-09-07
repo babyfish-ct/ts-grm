@@ -40,7 +40,7 @@ export { CodeWriter } from "./code_writer";
 export type { DataReader } from "./data_reader";
 export { FetchedViewImpl } from "./fetched_view_impl";
 export type { DtoMapper, DtoMapperField } from "./dto_mapper";
-export type { DtoRow, DtoRowReader } from "./row_reader";
+export type { DtoRow, DtoRowReader } from "./dto_row_reader";
 export type {
     CalculationStrategy,
     ValueCalculationStragegy,

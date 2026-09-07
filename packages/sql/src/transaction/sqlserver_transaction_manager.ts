@@ -179,9 +179,9 @@ async function isolationLevel(
     const runtime = await mssqlRuntime();
     switch (isolation) {
         case "READ_UNCOMMITTED":
-            return runtime.readUncommited;
+            return runtime.readUncommitted;
         case "READ_COMMITTED":
-            return runtime.readCommited;
+            return runtime.readCommitted;
         case "REPEATABLE_READ":
             return runtime.repeatableRead;
         case "SERIALIZABLE":
@@ -194,12 +194,13 @@ let _mssqlRuntime: MssqlRuntime | undefined;
 async function mssqlRuntime(): Promise<MssqlRuntime> {
     let runtime = _mssqlRuntime;
     if (runtime == null) {
-        const mssql = await import("mssql");
+        const mssqlModule = await import("mssql");
+        const mssql = mssqlModule.default ?? mssqlModule;
         _mssqlRuntime = runtime = {
             int: mssql.Int,
             bigInt: mssql.BigInt,
-            readUncommited: mssql.ISOLATION_LEVEL.READ_UNCOMMITTED,
-            readCommited: mssql.ISOLATION_LEVEL.READ_COMMITTED,
+            readUncommitted: mssql.ISOLATION_LEVEL.READ_UNCOMMITTED,
+            readCommitted: mssql.ISOLATION_LEVEL.READ_COMMITTED,
             repeatableRead: mssql.ISOLATION_LEVEL.REPEATABLE_READ,
             serializeable: mssql.ISOLATION_LEVEL.SERIALIZABLE,
             connect: mssql.connect,
@@ -212,8 +213,8 @@ async function mssqlRuntime(): Promise<MssqlRuntime> {
 interface MssqlRuntime {
     readonly int: ISqlTypeFactoryWithNoParams;
     readonly bigInt: ISqlTypeFactoryWithNoParams;
-    readonly readUncommited: number;
-    readonly readCommited: number;
+    readonly readUncommitted: number;
+    readonly readCommitted: number;
     readonly repeatableRead: number;
     readonly serializeable: number;
     readonly connect: (config: config | string) => Promise<ConnectionPool>;
