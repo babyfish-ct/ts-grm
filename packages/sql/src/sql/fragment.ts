@@ -399,7 +399,7 @@ export class Source extends Composite {
         if (cteTables.length === 0) {
             return;
         }
-        builder.sql("with");
+        builder.sql("with ");
         const withScope = new Scope("COMMA");
         for (const cteTable of cteTables) {
             withScope.separator();

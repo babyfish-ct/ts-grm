@@ -153,7 +153,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     tb_1_(c1, c2, c3, c4, c5) as (
                         select 
                             tb_2_.ID,
@@ -250,7 +250,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     recursive tb_1_(c1, c2, c3) as (
                         select 
                             tb_2_.ID,
@@ -573,7 +573,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     tb_1_(c1, c2, c3) as (
                         select 
                             tb_3_.ID,
@@ -636,7 +636,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     tb_1_(c1, c2, c3, c4, c5) as (
                         select 
                             tb_3_.ID,
@@ -694,7 +694,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     tb_2_(c1, c2, c3, c4, c5) as (
                         select 
                             tb_3_.ID,
@@ -747,7 +747,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     tb_1_(c1, c2, c3, c4, c5) as (
                         select 
                             tb_3_.ID,
@@ -806,7 +806,7 @@ describe("QuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     tb_1_(c1, c2, c3, c4, c5) as (
                         select 
                             tb_3_.ID,

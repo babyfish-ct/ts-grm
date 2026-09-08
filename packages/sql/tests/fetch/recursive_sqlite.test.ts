@@ -35,7 +35,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.ID,
@@ -121,7 +121,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.PARENT_NODE_ID,
@@ -299,7 +299,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.ID,
@@ -331,7 +331,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.PARENT_NODE_ID,
@@ -431,7 +431,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.PARENT_NODE_ID,
@@ -530,7 +530,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3) as (
                             select 
                                 tb_3_.DEPENDENT_ID,
@@ -962,7 +962,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3) as (
                             select 
                                 tb_3_.DEPENDENCY_ID,
@@ -1194,7 +1194,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3) as (
                             select 
                                 tb_3_.DEPENDENT_ID,
@@ -1241,7 +1241,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3) as (
                             select 
                                 tb_3_.DEPENDENCY_ID,
@@ -1409,7 +1409,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4, c5) as (
                             select 
                                 tb_4_.PARENT_NODE_ID,
@@ -1717,7 +1717,7 @@ describe("RecursiveTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         recursive tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.PARENT_NODE_ID,

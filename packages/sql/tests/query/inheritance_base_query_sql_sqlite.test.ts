@@ -761,7 +761,7 @@ describe("InheritanceBaseQuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-                with
+                with 
                     recursive tb_1_(c1, c2, c3, c4) as (
                         select 
                             tb_3_.ID,

@@ -767,7 +767,7 @@ describe.runIf(isExternalDbTestEnabled)("OracleTest", () => {
             },
             {
                 sql: `
-                    with
+                    with 
                         tb_1_(c1, c2, c3, c4) as (
                             select 
                                 tb_2_.PARENT_NODE_ID,
