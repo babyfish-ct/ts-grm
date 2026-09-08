@@ -122,15 +122,15 @@ export abstract class AbstractVisitor implements Visitor {
     visitAtomQuery(query: AtomQueryContract): void {
         query.recursivePred?.accept(this);
         query.wherePred?.accept(this);
-        if (!query.options.countMode) {
-            for (const order of query.orders) {
-                (order.expression as any as Node).accept(this);
-            }
-        }
         const groupByExprs = query.groupByExprs;
         if (groupByExprs != null) {
             for (const groupByExpr of groupByExprs) {
                 groupByExpr.accept(this);
+            }
+        }
+        if (!query.options.countMode) {
+            for (const order of query.orders) {
+                (order.expression as any as Node).accept(this);
             }
         }
         query.havingPred?.accept(this);

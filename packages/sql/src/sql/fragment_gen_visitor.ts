@@ -212,6 +212,16 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             wherePred?.accept(this);
         }
 
+        const groupByExprs = query.groupByExprs;
+        if (groupByExprs != null) {
+            this._compositeStack.current.add("\ngroup by ");
+            using _ = this._compositeStack.with(new Scope("COMMA"));
+            for (const expr of groupByExprs) {
+                this._compositeStack.current.separator();
+                expr.accept(this);
+            }
+        }
+
         const orders = query.orders;
         if (orders.length !== 0 && !query.options.countMode) {
             using _ = this._compositeStack.with(
@@ -229,16 +239,6 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 if (order.nullsType !== "UNSPECIFIED") {
                     current.add(`nulls ${order.nullsType.toLowerCase()}`);
                 }
-            }
-        }
-
-        const groupByExprs = query.groupByExprs;
-        if (groupByExprs != null) {
-            this._compositeStack.current.add("\ngroup by ");
-            using _ = this._compositeStack.with(new Scope("COMMA"));
-            for (const expr of groupByExprs) {
-                this._compositeStack.current.separator();
-                expr.accept(this);
             }
         }
 
