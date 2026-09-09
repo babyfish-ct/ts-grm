@@ -481,6 +481,6 @@ describe("JoinEntityTest", () => {
                 c.learningLinks,
                 c.$fold("tmp", c => [c.courses]) 
             ])
-        ).toThrowError(`The property "Student.learningLinks" and "Student.courses" cannot be fetched together`);
+        ).toThrowError(`The property "Student.learningLinks" and "Student.courses" cannot be mapped by DTO together`);
     });
 });

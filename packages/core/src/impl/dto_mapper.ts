@@ -175,6 +175,8 @@ export interface DtoMapperField {
 
     readonly paths: ReadonlyArray<Path>;
 
+    readonly implicit: boolean;
+
     readonly fetchType: ReferenceFetchType | undefined;
 
     readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined;
@@ -275,10 +277,10 @@ class Mapper implements Metadata {
         }
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
-            this._add(dtoField(field.downcastTo, referenceKeyProp, this.input), false);
+            this._add(implicitDtoField(field.downcastTo, referenceKeyProp, this.input), false);
         } else if (prop.targetEntity != null) {
             let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
-            this._add(dtoField(field.downcastTo, keyProp, field.ref), false);
+            this._add(implicitDtoField(field.downcastTo, keyProp, field.ref), false);
         }
     }
 
@@ -346,6 +348,7 @@ class Mapper implements Metadata {
         }
         const field: DtoField = {
             path: "__typename",
+            implicit: true,
             downcastTo: undefined,
             prop: new TypeNameProp(
                 this.entity,
@@ -371,16 +374,45 @@ class Mapper implements Metadata {
     private _field(dtoField: DtoField): MapperField {
         const key = this._dtoFieldKey(dtoField);
         let cachedValue = this._fieldMap.get(key);
-        if (cachedValue != null) {
-            if (this.input) {
+        if (this.input && !dtoField.implicit) {
+            let conflictField = cachedValue as MapperField;
+            if (conflictField != null && !conflictField.implicit) {
                 throw new StateError(
                     `Input DTO for "${
                         this.entity.name
-                    }" does not accept duplicated fields based on "${
+                    }" does not accept conflict property "${
                         dtoField.prop.toString()
                     }"`
                 );
             }
+            const refererenceKeyProp = dtoField.prop.asEntityProp?.referenceKeyProp;
+            if (refererenceKeyProp != null) {
+                const conflictReferenceKeyField = this._fieldMap.get(refererenceKeyProp.toString()) as MapperField;
+                if (conflictReferenceKeyField != null && !conflictReferenceKeyField.implicit) {
+                    throw new StateError(
+                        `Input DTO for "${
+                            this.entity.name
+                        }" does not accept both reference "${
+                            dtoField.prop.toString()
+                        }" and reference key "${conflictReferenceKeyField.prop.toString()}"`
+                    );
+                }
+            }
+            const refererenceProp = dtoField.prop.asEntityProp?.referenceProp;
+            if (refererenceProp != null) {
+                const conflictReferenceField = this._fieldMap.get(refererenceProp.toString()) as MapperField;
+                if (conflictReferenceField != null) {
+                    throw new StateError(
+                        `Input DTO for "${
+                            this.entity.name
+                        }" does not accept both reference "${
+                            conflictReferenceField.prop.toString()
+                        }" and reference key "${dtoField.prop.toString()}"`
+                    );
+                }
+            }
+        }
+        if (cachedValue != null) {
             const arr = Array.isArray(cachedValue)
                 ? cachedValue
                 : [cachedValue];
@@ -392,7 +424,7 @@ class Mapper implements Metadata {
                             (field.bridgeProp ?? field.prop).toString()
                         }" and "${
                             (dtoField.bridgeProp ?? field.prop).toString()
-                        }" cannot be fetched together`
+                        }" cannot be mapped by DTO together`
                     );
                 }
                 if (isMergeableField(field, dtoField)) {
@@ -405,6 +437,7 @@ class Mapper implements Metadata {
             this.nullAsUndefined,
             dtoField.downcastTo,
             dtoField.prop, 
+            dtoField.implicit,
             dtoField.fetchType,
             dtoField.predicateFn,
             dtoField.orders,
@@ -625,6 +658,7 @@ class MapperField implements MetadataField {
         nullAsUndefined: boolean,
         readonly downcastTo: Entity | undefined,
         readonly prop: FetchProp,
+        readonly implicit: boolean,
         readonly fetchType: ReferenceFetchType | undefined,
         readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined,
         readonly orders: ReadonlyArray<EntityPropOrder> | undefined,
@@ -679,6 +713,7 @@ class MapperField implements MetadataField {
             index: this._index,
             downcastTo: this.downcastTo,
             prop: this.prop,
+            implicit: this.implicit,
             parameter: this.parameter,
             bridgeProp: this.bridgeProp,
             nullable: this.nullable,
@@ -812,6 +847,7 @@ function toDtoFields(
     assignPath: boolean
 ): ReadonlyArray<DtoField> {
     const dtoField: DtoField = {
+        implicit: field.implicit,
         path: undefined,
         downcastTo: field.downcastTo,
         prop: field.prop,
@@ -860,7 +896,7 @@ function fieldHash(field: DtoMapperField): string {
     }`;
 }
 
-function dtoField(
+function implicitDtoField(
     downcastTo: Entity | undefined,
     prop: EntityProp,
     ref: boolean
@@ -869,7 +905,8 @@ function dtoField(
         const ctx = newDtoContext(prop, DtoContextFlags.None);
         const childDto = createDto(ctx, downcastTo, (c: AbstractDtoContext) => [c.$allScalars]);
         return {
-            path: prop.name,
+            implicit: true,
+            path: undefined,
             downcastTo,
             prop: prop,
             bridgeProp: undefined,
@@ -887,7 +924,8 @@ function dtoField(
         };
     }
     return {
-        path: prop.name,
+        implicit: true,
+        path: undefined,
         downcastTo,
         prop: prop,
         bridgeProp: undefined,

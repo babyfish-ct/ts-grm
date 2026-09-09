@@ -22,7 +22,7 @@ import { buildShape, isEmptyShape, Shape, ShapeMember } from "./shape";
 import { ArgumentError } from "@/error/common";
 import { MapperFn } from "./dto_mapping";
 
-export type DtoRow = {
+export interface DtoRow {
 
     readonly reader: DtoRowReader;
     

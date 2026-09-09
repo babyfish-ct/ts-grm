@@ -32,6 +32,8 @@ export interface Dto {
 
 export interface DtoField {
 
+    readonly implicit: boolean;
+    
     readonly path: string | ReadonlyArray<string> | undefined;
 
     readonly downcastTo: Entity | undefined;
