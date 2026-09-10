@@ -92,6 +92,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         return {
+            implicit: false,
             path: finalPath(prop.name),
             downcastTo,
             prop,
@@ -279,6 +280,7 @@ export class FlatMapping implements AbstractDtoMapping {
             return dto.fields;
         }
         return {
+            implicit: false,
             path: undefined,
             downcastTo,
             prop: this._prop,
@@ -428,6 +430,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         const field: DtoField = {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo: downcastTo,
             prop: this.prop,
@@ -515,6 +518,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
         return {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: this._prop,
@@ -592,6 +596,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
         const ctx = newDtoContext(this._prop, DtoContextFlags.None);
         const dto = createDto(ctx, downcastTo, this._body, undefined, this._key || finalKey());
         return {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: this._prop,
@@ -620,7 +625,8 @@ export abstract class AssociationMapping implements AbstractDtoMapping {
         protected readonly _alias: string,
         protected readonly _body: DtoBody,
         protected readonly _filter: Filter | undefined,
-        protected readonly _ref: boolean
+        protected readonly _ref: boolean,
+        protected readonly _backRefAsKey: boolean
     ) {
     }
 
@@ -673,9 +679,10 @@ export class ReferenceMapping extends AssociationMapping {
         _body: DtoBody,
         _filter: Filter | undefined,
         _ref: boolean,
+        _backRefAsKey: boolean,
         private readonly _fetchType: ReferenceFetchType
     ) {
-        super(_prop, _alias, _body, _filter, _ref);
+        super(_prop, _alias, _body, _filter, _ref, _backRefAsKey);
     }
 
     static of(
@@ -686,6 +693,7 @@ export class ReferenceMapping extends AssociationMapping {
             prop.name, 
             c => [c.$allScalars], 
             undefined, 
+            false,
             false, 
             "LOAD"
         );
@@ -701,6 +709,7 @@ export class ReferenceMapping extends AssociationMapping {
             body, 
             undefined, 
             true, 
+            false,
             "LOAD"
         );
     }
@@ -712,6 +721,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._body,
             this._filter,
             this._ref,
+            this._backRefAsKey,
             this._fetchType
         );
     }
@@ -723,6 +733,7 @@ export class ReferenceMapping extends AssociationMapping {
             body,
             this._filter,
             this._ref,
+            this._backRefAsKey,
             this._fetchType
         );
     }
@@ -734,6 +745,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._body,
             filter,
             this._ref,
+            this._backRefAsKey,
             this._fetchType
         );
     }
@@ -745,7 +757,20 @@ export class ReferenceMapping extends AssociationMapping {
             this._body,
             this._filter,
             this._ref,
+            this._backRefAsKey,
             fetchType
+        );
+    }
+
+    backRefAsKey(): ReferenceMapping {
+        return new ReferenceMapping(
+            this._prop,
+            this._alias,
+            this._body,
+            this._filter,
+            this._ref,
+            true,
+            this._fetchType
         );
     }
 
@@ -754,6 +779,7 @@ export class ReferenceMapping extends AssociationMapping {
     ): DtoField {
         const dto = this._createChildDto(downcastTo);
         return {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: this._directProp,
@@ -783,10 +809,11 @@ export class CollectionMapping extends AssociationMapping {
         _body: DtoBody,
         _filter: Filter | undefined,
         _ref: boolean,
+        _backRefAsKey: boolean,
         private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
         private readonly _maxRows: number | undefined
     ) {
-        super(_prop, _alias, _body, _filter, _ref);
+        super(_prop, _alias, _body, _filter, _ref, _backRefAsKey);
     }
 
     static of(
@@ -798,6 +825,7 @@ export class CollectionMapping extends AssociationMapping {
             c => [c.$allScalars], 
             undefined, 
             false, 
+            false,
             undefined, 
             undefined
         );
@@ -813,6 +841,7 @@ export class CollectionMapping extends AssociationMapping {
             body, 
             undefined, 
             true, 
+            false,
             undefined, 
             undefined
         );
@@ -825,6 +854,7 @@ export class CollectionMapping extends AssociationMapping {
             this._body,
             this._filter,
             this._ref,
+            false,
             this._orders,
             this._maxRows
         );
@@ -837,6 +867,7 @@ export class CollectionMapping extends AssociationMapping {
             body,
             this._filter,
             this._ref,
+            this._backRefAsKey,
             this._orders,
             this._maxRows
         );
@@ -849,6 +880,7 @@ export class CollectionMapping extends AssociationMapping {
             this._body,
             filter,
             this._ref,
+            this._backRefAsKey,
             this._orders,
             this._maxRows
         );
@@ -868,6 +900,7 @@ export class CollectionMapping extends AssociationMapping {
             this._body,
             this._filter,
             this._ref,
+            this._backRefAsKey,
             propOrders,
             this._maxRows
         );
@@ -883,8 +916,22 @@ export class CollectionMapping extends AssociationMapping {
             this._body,
             this._filter,
             this._ref,
+            this._backRefAsKey,
             this._orders,
             maxRows
+        );
+    }
+
+    backRefAsKey(): AssociationMapping {
+        return new CollectionMapping(
+            this._prop,
+            this._alias,
+            this._body,
+            this._filter,
+            this._ref,
+            true,
+            this._orders,
+            this._maxRows
         );
     }
 
@@ -893,6 +940,7 @@ export class CollectionMapping extends AssociationMapping {
     ): DtoField {
         const dto = this._createChildDto(downcastTo);
         return {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: this._directProp,
@@ -953,6 +1001,7 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
                 )
                 : undefined;
         return {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: this._prop,
@@ -992,6 +1041,7 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
 
     toFields(downcastTo: Entity | undefined): DtoField {
         return {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: new AssociatedKeysFormulaProp(this._prop.declaringEntity, this._alias, this._prop, this._body),
@@ -1071,6 +1121,7 @@ export class CalculatedAssociationMapping implements AbstractDtoMapping {
         const ctx = newDtoContext(this._prop.targetEntity!, DtoContextFlags.None);
         const dto = createDto(ctx, undefined, this._body);
         const field: DtoField = {
+            implicit: false,
             path: finalPath(this._alias),
             downcastTo,
             prop: this._prop,

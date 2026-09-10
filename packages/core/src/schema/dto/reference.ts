@@ -15,7 +15,7 @@
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { AnyModel } from "../model";
-import { __NullityType, __OneToOnePropContract } from "../prop_internal_types";
+import { __MappedByOf, __NullityType, __OneToOnePropContract } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind} from "./dto_context";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { DissociateMode, ReferenceFetchType } from "./api";
@@ -93,6 +93,8 @@ export interface __RefOnlyInputReferenceMapping<
     TNullity extends __NullityType
 > extends __ReferenceMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
     
+    // There is no `with` because the dto body is specified by the function `$ref`
+
     as<TAlias extends string>(
         alias: TAlias
     ): __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
@@ -129,6 +131,10 @@ export interface __RefOnlyInversedInputReferenceMapping<
     TNullity extends __NullityType
 > extends __RefOnlyInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity> {
 
+    // There is no `with` because the dto body is specified by the function `$ref`
+
+    // There is no `backRefAsKey` because the all target members of `$ref` are keys
+
     as<TAlias extends string>(
         alias: TAlias
     ): __RefOnlyInversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
@@ -157,8 +163,16 @@ export interface __InversedInputReferenceMapping<
     ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
-        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+        body: __DtoBody<
+            __PropModelOf<TModel, TMember>, 
+            TDtoKind, 
+            "ENTITY", 
+            Omit<__TargetMembersOf<TMember>, __MappedByOf<TMember>>, 
+            TMappings
+        >
     ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
+
+    backRefAsKey(): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;
 
     reparentable(
     ): __InversedInputReferenceMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings, TNullity>;

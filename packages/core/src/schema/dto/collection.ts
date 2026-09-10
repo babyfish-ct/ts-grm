@@ -18,7 +18,7 @@ import { AnyModel } from "../model";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
 import { __TargetMappings, __TargetMembersOf, __PropModelOf, __IsAllowed } from "./utils";
-import { __OneToManyPropContract } from "../prop_internal_types";
+import { __MappedByOf, __OneToManyPropContract, __OneToOnePropContract } from "../prop_internal_types";
 import { DissociateMode } from "./api";
 
 export type __CollectionMapping<
@@ -94,6 +94,8 @@ export interface __RefOnlyInputCollectionMapping<
     TMappings extends __TargetMappings<TModel, TMember>
 > extends __CollectionMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
     
+    // There is no `with` because the dto body is specified by the function `$ref`
+
     as<TAlias extends string>(
         alias: TAlias
     ): __RefOnlyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
@@ -107,7 +109,7 @@ export interface __InputCollectionMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> extends __RefOnlyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+> extends __CollectionMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
     
     as<TAlias extends string>(
         alias: TAlias
@@ -126,7 +128,11 @@ export interface __RefOnlyOneToManyInputCollectionMapping<
     TAlias extends string,
     TMember,
     TMappings extends __TargetMappings<TModel, TMember>
-> extends __InputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+> extends __RefOnlyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings> {
+
+    // There is no `with` because the dto body is specified by the function `$ref`
+    
+    // There is no `backRefAsKey` because the all target members of `$ref` are keys
 
     as<TAlias extends string>(
         alias: TAlias
@@ -155,7 +161,13 @@ export interface __OneToManyInputCollectionMapping<
     ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
-        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+        body: __DtoBody<
+            __PropModelOf<TModel, TMember>, 
+            TDtoKind, 
+            "ENTITY", 
+            Omit<__TargetMembersOf<TMember>, __MappedByOf<TMember> & string>, 
+            TMappings
+        >
     ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 
     reparentable(
@@ -164,6 +176,8 @@ export interface __OneToManyInputCollectionMapping<
     onDissociate(
         behavior: DissociateMode
     ): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
+
+    backRefAsKey(): __OneToManyInputCollectionMapping<TModel, TDeclaring, TDtoKind, TPropName, TAlias, TMember, TMappings>;
 }
 
 export type __CollectionDtoType<

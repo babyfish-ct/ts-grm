@@ -1,7 +1,7 @@
 import { __AssociationKeysImpl, __EmbeddedFlatMapping, __FlatableKeys, __FlatableRefs, __FlatMappingContract, __InputReferenceFlatMapping, __ReferenceFlatMapping } from "@/index_internal";
 import { AnyModel } from "../model";
 import { __DeclaringModelName } from "../model_internal_types";
-import { __AssociatedPropContract, __CollectionPropContract, __NullityOf, __NullityType, __ReferencePropContract } from "../prop_internal_types";
+import { __AssociatedPropContract, __CollectionPropContract, __MappedByOf, __NullityOf, __NullityType, __OneToManyPropContract, __OneToOnePropContract, __ReferencePropContract } from "../prop_internal_types";
 import { __CollectionMapping } from "./collection";
 import { __DtoBody, __DtoMappingContract } from "./dto_context";
 import { __ReferenceMapping } from "./reference";
@@ -16,7 +16,17 @@ export interface __RefContext<
         const TMappings extends ReadonlyArray<__DtoMappingContract<__PropModelOf<TModel, TMembers[TKey]>>>
     >(
         key: TKey,
-        body: __DtoBody<__PropModelOf<TModel, TMembers[TKey]>, "INPUT_REF", "ENTITY", __TargetMembersOf<TMembers[TKey]>, TMappings>
+        body: __DtoBody<
+            __PropModelOf<TModel, TMembers[TKey]>, 
+            "INPUT_REF", 
+            "ENTITY",
+            TMembers[TKey] extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+                ? Omit<__TargetMembersOf<TMembers[TKey]>, __MappedByOf<TMembers[TKey]>>
+            : TMembers[TKey] extends __OneToManyPropContract<any, any, any, any>
+                ? Omit<__TargetMembersOf<TMembers[TKey]>, __MappedByOf<TMembers[TKey]>>
+            : __TargetMembersOf<TMembers[TKey]>, 
+            TMappings
+        >
     ): 
         TMembers[TKey] extends __ReferencePropContract<any, any, any, any, any, any>
             ? __ReferenceMapping<
@@ -50,10 +60,22 @@ export interface __RefContext<
             __PropModelOf<TModel, TMembers[TKey]>, 
             "INPUT_REF", 
             "ENTITY", 
-            __TargetMembersOf<TMembers[TKey]>, 
+            TMembers[TKey] extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+                ? Omit<__TargetMembersOf<TMembers[TKey]>, __MappedByOf<TMembers[TKey]>>
+                : __TargetMembersOf<TMembers[TKey]>, 
             TMappings
         >
-    ): __FlatRefMappingContract<
+    ): TMembers[TKey] extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+        ? __InverseFlatRefMappingContract<
+            TModel,
+            __DeclaringModelName<TMembers[TKey]>,
+            TKey & string,
+            TKey & string,
+            TMembers[TKey],
+            __DefaultTargetMappings<TModel, "INPUT_REF", TMembers[TKey]>,
+            __NullityOf<TMembers[TKey]>
+        >
+        : __FlatRefMappingContract<
             TModel,
             __DeclaringModelName<TMembers[TKey]>,
             TKey & string,
@@ -76,5 +98,22 @@ export interface __FlatRefMappingContract<
 
     prefix<TPrefix extends string>(
         prefix: TPrefix
-    ): __FlatMappingContract<TModel, TDeclaring, "INPUT_REF", TPropName, TPrefix, TMember, TMappings, TNullity>;
+    ): __FlatRefMappingContract<TModel, TDeclaring, TPropName, TPrefix, TMember, TMappings, TNullity>;
+}
+
+export interface __InverseFlatRefMappingContract<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TPropName extends string,
+    TPrefix extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __FlatMappingContract<TModel, TDeclaring, "INPUT_REF", TPropName, TPrefix, TMember, TMappings, TNullity> {
+
+    prefix<TPrefix extends string>(
+        prefix: TPrefix
+    ): __InverseFlatRefMappingContract<TModel, TDeclaring, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+    backRefAsKey(): __InverseFlatRefMappingContract<TModel, TDeclaring, TPropName, TPrefix, TMember, TMappings, TNullity>;
 }

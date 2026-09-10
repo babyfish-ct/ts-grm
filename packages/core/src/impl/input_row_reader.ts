@@ -12,6 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { CodeWriter } from "./code_writer";
 import { DtoMapper } from "./dto_mapper";
 import { MapperFn } from "./dto_mapping";
 import { EntityProp } from "./entity_prop";
@@ -47,7 +48,10 @@ export abstract class InputRowReader {
         throw new Error();
     }
 
-    abstract read(): ReadonlyArray<InputRow>;
+    abstract read(
+        parent: InputRow | undefined,
+        input: any
+    ): InputRow;
 }
 
 export function createInputRowReader(mapper: DtoMapper): InputRowReader {
@@ -59,20 +63,46 @@ type InputRowReaderCreator = new (
     inputFunMap: ReadonlyMap<string, MapperFn>
 ) => InputRowReader;
 
-const DTO_ROW_READER_CREATOR_MAP = new Map<string, InputRowReaderCreator>();
+const INPUT_ROW_READER_CREATOR_MAP = new Map<string, InputRowReaderCreator>();
 
 function getInputRowReaderCreator(mapper: DtoMapper): InputRowReaderCreator {
     const hash = mapper.hash;
-    let creator = DTO_ROW_READER_CREATOR_MAP.get(hash);
+    let creator = INPUT_ROW_READER_CREATOR_MAP.get(hash);
     if (creator == null) {
-        creator = createInputRowReaderCreator(mapper);
-        DTO_ROW_READER_CREATOR_MAP.set(hash, creator);
+        creator = new InputRowReaderCreatorGenerator(mapper).generate();
+        INPUT_ROW_READER_CREATOR_MAP.set(hash, creator);
     }
     return creator;
 }
 
-function createInputRowReaderCreator(_mapper: DtoMapper): InputRowReaderCreator {
-    throw new Error();
+class InputRowReaderCreatorGenerator {
+
+    private readonly _writer = new CodeWriter();
+
+    constructor(
+        readonly _mapper: DtoMapper
+    ) {
+    }
+    
+    generate(): InputRowReaderCreator {
+        const w = this._writer;
+        w.code("return new class extends $baseClass ");
+        w.scope("CURLY_BRACKETS", () => {
+            this._writeRead();
+        }).newLine(";");
+        return new Function("$baseClass", w.toString())(InputRowReader);
+    }
+
+    private _writeRead() {
+        const w = this._writer;
+        w.code("read(parent, input) ");
+        w.scope("CURLY_BRACKETS", () => {
+            w.code("return ");
+            w.scope("SQUARE_BRACKETS", () => {
+                
+            });
+        });
+    }
 }
 
 function inputFunMap(

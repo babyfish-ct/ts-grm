@@ -63,7 +63,7 @@ describe("AssociationInputTest", () => {
             c.name.key(),
             c.learningLinks.with(c => [
                 c.score.mask({insert: false}),
-                c.student.with(c => [
+                c.course.with(c => [
                     c.name.key()
                 ])
             ])
@@ -71,14 +71,14 @@ describe("AssociationInputTest", () => {
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             learningLinks: {
                 score: number | null | undefined;
-                student: {
+                course: {
                     name: string;
                 };
             }[];
             name: string;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
-            "learningLinks" | "learningLinks.student"
+            "learningLinks" | "learningLinks.course"
         >();
     });
 

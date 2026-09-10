@@ -153,6 +153,8 @@ export interface __InversedInputReferenceRecursiveMapping<
     onDissociate(
         behavior: DissociateMode
     ): __InversedInputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
+
+    backRefAsKey(): __InversedInputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
 }
 
 export type __CollectionRecursiveMapping<
@@ -255,6 +257,8 @@ export interface __OneToManyInputCollectionRecursiveMapping<
     onDissociate(
         behavior: DissociateMode
     ): __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
+
+    backRefAsKey(): __OneToManyInputCollectionRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember, THasDepth>;
 }
 
 export type __RecursiveKeys<TModel extends AnyModel, TMembers> = 

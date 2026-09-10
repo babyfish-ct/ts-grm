@@ -135,16 +135,18 @@ export class DtoMapper {
     get hash(): string {
         let hash = this._hash;
         if (hash == null) {
-            this._hash = hash = 
-                `${
-                    this.entity.name
-                }|${
-                    this.nullAsUndefined
-                }|${
-                    this.associatedProp?.toString()
-                }|(${
-                    this.fields.map(f => fieldHash(f)).join(",")
-                })`;
+            this._hash = hash =
+                this.input 
+                    ? this.entity.name
+                    : `${
+                        this.entity.name
+                    }|${
+                        this.nullAsUndefined
+                    }|${
+                        this.associatedProp?.toString()
+                    }|(${
+                        this.fields.map(f => fieldHash(f)).join(",")
+                    })`;
         }
         return hash;
     }

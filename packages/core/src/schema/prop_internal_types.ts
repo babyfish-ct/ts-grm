@@ -28,8 +28,8 @@ export type __NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
 
 export type __EmbeddedMember = 
     __ScalarPropContract<any, any, any> 
-    | __ForeignKeyPropLike<__OneToOnePropContract<any, any, "COLUMNS", any, any, any>>
-    | __ForeignKeyPropLike<__ManyToOnePropContract<any, any, "COLUMNS", any, any, any>>
+    | __ForeignKeyPropLike<__OneToOnePropContract<any, any, "COLUMNS", never, any, any>>
+    | __ForeignKeyPropLike<__ManyToOnePropContract<any, any, "COLUMNS", never, any, any>>
     | __EmbeddedPropContract<any, any, any>;
 
 export type __StorageType = "COLUMNS" | "MIDDLE_TABLE" | "INVERSE";
@@ -100,14 +100,14 @@ export interface __AssociatedPropContract<
     TModel extends AnyModel,
     TNullity extends __NullityType,
     TStorage extends __StorageType,
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __AssociatedLikePropContract<TModel, TNullity> {
 
     readonly __associatedProp: true;
 
-    readonly __direction?: TStorage;
+    readonly __storage?: TStorage;
 
     readonly __mappedBy?: TMappedBy;
 
@@ -120,7 +120,7 @@ export interface __ReferencePropContract<
     TModel extends AnyModel, 
     TNullity extends __NullityType,
     TStorage extends __StorageType,
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __AssociatedPropContract<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
@@ -131,7 +131,7 @@ export interface __ReferencePropContract<
 export interface __CollectionPropContract<
     TModel extends AnyModel, 
     TStorage extends __StorageType,
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __AssociatedPropContract<TModel, "NONNULL", TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
@@ -143,7 +143,7 @@ export interface __OneToOnePropContract<
     TModel extends AnyModel,
     TNullity extends __NullityType,
     TStorage extends __StorageType,
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __ReferencePropContract<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
@@ -155,7 +155,7 @@ export interface __ManyToOnePropContract<
     TModel extends AnyModel,
     TNullity extends __NullityType,
     TStorage extends __StorageType,
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __ReferencePropContract<TModel, TNullity, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
@@ -165,7 +165,7 @@ export interface __ManyToOnePropContract<
 
 export interface __OneToManyPropContract<
     TModel extends AnyModel,
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __CollectionPropContract<TModel, "INVERSE", TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
@@ -176,7 +176,7 @@ export interface __OneToManyPropContract<
 export interface __ManyToManyPropContract<
     TModel extends AnyModel,
     TStorage extends "MIDDLE_TABLE" | "INVERSE",
-    TMappedBy extends string | undefined,
+    TMappedBy extends string | never,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends __CollectionPropContract<TModel, TStorage, TMappedBy, TBackOptionalModelKey, TTargetOptionalModelKey> {
@@ -264,7 +264,7 @@ export interface __ParameterizedCalculatedCollectionPropContract<
 }
 
 export type __ForeignKeyPropLike<T> = 
-  T extends __ReferencePropContract<infer TModel, any, "COLUMNS", undefined, any, infer TTargetOptionalModelKey>
+  T extends __ReferencePropContract<infer TModel, any, "COLUMNS", never, any, infer TTargetOptionalModelKey>
     ? TTargetOptionalModelKey extends Exclude<__OptionalModelKey<TModel>, "">
       ? T
       : never
@@ -312,3 +312,8 @@ export type __IsMiddleTableAssociation<TProp> =
                 : false
             : false
     : false;
+
+export type __MappedByOf<TProp> = 
+    TProp extends __AssociatedPropContract<any, any, any, infer MappedBy extends string, any, any>
+        ? MappedBy
+        : never;

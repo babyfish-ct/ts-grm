@@ -15,7 +15,7 @@
 import { Predicate } from "@/dsl/expression";
 import { EntityTable } from "@/dsl/table";
 import { AnyModel } from "../model";
-import { __EmbeddedPropContract, __NullityOf, __NullityType, __ReferencePropContract, __TargetKeyOf, __TargetModelOf } from "../prop_internal_types";
+import { __EmbeddedPropContract, __MappedByOf, __NullityOf, __NullityType, __OneToOnePropContract, __ReferencePropContract, __TargetKeyOf, __TargetModelOf } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
 import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
 import { ReferenceFetchType } from "./api";
@@ -227,7 +227,9 @@ export type __ReferenceFlatMapping<
     TNullity extends __NullityType
 > = 
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>
+        ? TMember extends __OneToOnePropContract<any, any, "INVERSE", any, any, any>
+            ? __InverseInputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>
+            : __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>
         : __OutputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
 
 export interface __OutputReferenceFlatMapping<
@@ -280,6 +282,36 @@ export interface __InputReferenceFlatMapping<
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
     ): __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+}
+
+export interface __InverseInputReferenceFlatMapping<
+    TModel extends AnyModel,
+    TDeclaring extends string,
+    TDtoKind extends __DtoKind,
+    TPropName extends string,
+    TPrefix extends string,
+    TMember,
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
+> extends __FlatMappingContract<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity> {
+    
+    readonly __flatType: 'REFERENCE';
+
+    prefix<TPrefix extends string>(
+        alias: TPrefix
+    ): __InverseInputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<
+            __PropModelOf<TModel, TMember>, 
+            TDtoKind, 
+            "ENTITY", 
+            Omit<__TargetMembersOf<TMember>, __MappedByOf<TMember>>, 
+            TMappings
+        >
+    ): __InverseInputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+    backRefAsKey(): __InverseInputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
 }
 
 export type __FlatDtoType<

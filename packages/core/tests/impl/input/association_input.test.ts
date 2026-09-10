@@ -1,6 +1,6 @@
-import { dto } from "@/index";
+import { __AllModelMembers, __AssociatedProp, __AssociatedPropContract, __DeclaringArware, __MappedByOf, __OneToManyProp, __OneToManyPropContract, dto } from "@/index";
 import { describe, it, expect } from "vitest";
-import { BOOK } from "../../model/model";
+import { BOOK, TREE_NODE } from "../../model/model";
 import { mapperJson } from "../view/utils";
 
 describe("SimpleInputTest", () => {
@@ -66,5 +66,16 @@ describe("SimpleInputTest", () => {
                 }
             ]
         });
+    });
+
+    it("o2m", () => {
+        const input = dto.input(TREE_NODE, c => [
+            c.id,
+            c.name,
+            c.childNodes.backRefAsKey().with(c => [
+                c.name.key()
+            ])
+        ]);
+        console.log(input);
     });
 });

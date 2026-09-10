@@ -308,8 +308,8 @@ export type __UniqueKeysImpl<TFlattenCtorMembers> =
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
                     __ScalarPropContract<any, any, any> 
-                    | __OneToOnePropContract<any, any, "COLUMNS", undefined, any, any>
-                    | __ManyToOnePropContract<any, any, "COLUMNS", undefined, any, any>
+                    | __OneToOnePropContract<any, any, "COLUMNS", never, any, any>
+                    | __ManyToOnePropContract<any, any, "COLUMNS", never, any, any>
                 )
                     ? K
                     : never

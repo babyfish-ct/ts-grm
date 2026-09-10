@@ -554,6 +554,7 @@ export class DtoFactory {
         }
         const entity = this._source;
         const field: DtoField = {
+            implicit: true,
             path: currentFieldContext!.finalPath("__typename"),
             downcastTo: undefined,
             prop: new TypeNameProp(
