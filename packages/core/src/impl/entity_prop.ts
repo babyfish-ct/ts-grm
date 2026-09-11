@@ -1401,4 +1401,14 @@ export class EntityProp {
     get scalarProvider(): ScalarProvider<any, any> | undefined {
         return this._data.scalarProvider;
     }
+
+    get backRefProp(): EntityProp | undefined {
+        switch (this.associationType) {
+            case "ONE_TO_ONE":
+            case "ONE_TO_MANY":
+                return this.mappedByProp;
+            default:
+                return undefined;
+        }
+    }
 }

@@ -2,7 +2,7 @@ import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { BOOK } from "../../model/model";
 
-describe("ConflictTest", () => {
+describe("ConflictInputTest", () => {
 
     it("simple", () => {
         expect(() => {

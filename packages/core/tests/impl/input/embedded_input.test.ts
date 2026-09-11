@@ -4,7 +4,7 @@ import { BOOK, ORDER_ITEM } from "../../model/model";
 import { z } from "zod";
 import { mapperJson } from "../view/utils";
 
-describe("EmbeddedTest", () => {
+describe("EmbeddedInputTest", () => {
 
     it("implict", () => {
         const input = dto.input(BOOK, c => [

@@ -25,6 +25,7 @@ import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
 import { belongTo, fromDtoFields, Metadata, MetadataField } from "./metadata";
+import { prop } from "@/schema/prop";
 
 export function dtoMapper(
     dto: Dto, 
@@ -216,24 +217,44 @@ class Mapper implements Metadata {
 
     private _dependencyReader: DependencyReader | undefined = undefined;
 
+    private _backRefForInput: EntityProp | undefined;
+
     constructor(
         readonly entity: Entity,
         readonly input: boolean,
         readonly nullAsUndefined: boolean,
         readonly associatedProp: FetchProp | undefined,
         readonly bridgeProp: EntityProp | undefined
-    ) {}
+    ) {
+        this._backRefForInput = input
+            ? associatedProp?.asEntityProp?.backRefProp
+            : undefined; 
+    }
 
     add(dtoField: DtoField) {
         this._add(dtoField, true);
     }
     
     private _add(dtoField: DtoField, mapPath: boolean) {
-        
+        if (this._backRefForInput != null) {
+            if (dtoField.prop === this._backRefForInput) {
+                throw new ArgumentError(
+                    `"The sub input DTO does not accept the back reference "${
+                        dtoField.prop.toString()
+                    }"`
+                );
+            }
+            if (dtoField.prop === this._backRefForInput?.referenceKeyProp) {
+                throw new ArgumentError(
+                    `The sub input DTO does not accept the back reference key "${
+                        dtoField.prop.toString()
+                    }"`
+                );
+            }
+        }
         if (dtoField.downcastTo != null) {
             this._addTypeNameField();
         }
-
         let dependencies: ReadonlyArray<MapperField> | undefined = undefined;
 
         this._dependencyWriter = { refs: [], parent: this._dependencyWriter };
@@ -520,8 +541,14 @@ class Mapper implements Metadata {
         fields: ReadonlyArray<DtoMapperField>
     ): DtoMapper {
         const usedArr: boolean[] = new Array(fields.length).fill(false);
+        const backRefForInput = this.input 
+            ? recursiveField.prop.asEntityProp?.backRefProp 
+            : undefined;
         for (let i = 0; i < fields.length; i++) {
             const field = fields[i]!;
+            if (backRefForInput != null && (field.prop === backRefForInput || field.prop === backRefForInput?.referenceKeyProp)) {
+                continue;
+            }
             if (field.downcastTo != null ||
                 field.prop.declaringEntity.isAssignableFrom(recursiveField.prop.declaringEntity)
             ) {
