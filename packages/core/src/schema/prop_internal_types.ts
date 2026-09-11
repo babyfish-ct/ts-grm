@@ -317,3 +317,10 @@ export type __MappedByOf<TProp> =
     TProp extends __AssociatedPropContract<any, any, any, infer MappedBy extends string, any, any>
         ? MappedBy
         : never;
+
+export type __BackRefOf<TProp> =
+    TProp extends __OneToOnePropContract<any, any, "INVERSE", infer MappedBy, any, any>
+        ? MappedBy
+    : TProp extends __OneToManyPropContract<any, infer MappedBy, any, any>
+        ? MappedBy
+    : never;

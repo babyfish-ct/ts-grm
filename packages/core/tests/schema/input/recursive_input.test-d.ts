@@ -29,4 +29,21 @@ describe("RecursiveTest", () => {
             "parentNode*" | "childNodes*"
         >();
     });
+
+    it("ignoreBackRef", () => {
+        const input = dto.input(TREE_NODE, c => [
+            c.parentNodeId,
+            c.name,
+            c.$recursive("childNodes").backRefAsKey()
+        ]);
+        interface ChildNodeBody {
+            name: string;
+            childNodes: Array<ChildNodeBody> | null | undefined;
+        }
+        expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
+            parentNodeId: number | null | undefined,
+            name: string,
+            childNodes: Array<ChildNodeBody> | null | undefined
+        }>();
+    });
 });

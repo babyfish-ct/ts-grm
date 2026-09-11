@@ -80,10 +80,26 @@ export type __SelfMappings<
 
 export type __IsAllowed<
     TDeclaring extends any,
-    TAllowedDeclarings extends string | undefined
+    TAllowedDeclarings extends string | undefined,
 > =
     TAllowedDeclarings extends undefined
         ? true
         : TDeclaring extends TAllowedDeclarings
             ? true
+            : false;
+
+export type __IsAllowedEx<
+    TDeclaring extends any,
+    TAllowedDeclarings extends string | undefined,
+    TPropName extends string,
+    TBackRef extends string | never
+> =
+    TAllowedDeclarings extends undefined
+        ? TPropName extends TBackRef
+            ? false
+            : true
+        : TDeclaring extends TAllowedDeclarings
+            ? TPropName extends TBackRef
+                ? false
+                : true
             : false;

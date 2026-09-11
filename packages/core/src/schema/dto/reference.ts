@@ -17,7 +17,7 @@ import { Predicate } from "@/dsl/expression";
 import { AnyModel } from "../model";
 import { __MappedByOf, __NullityType, __OneToOnePropContract } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind} from "./dto_context";
-import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
+import { __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowedEx } from "./utils";
 import { DissociateMode, ReferenceFetchType } from "./api";
 
 export interface __ReferenceMappingContract<
@@ -184,10 +184,11 @@ export interface __InversedInputReferenceMapping<
 
 export type __ReferenceDtoType<
     TMapping,
-    TAllowedDeclarings extends string | undefined
+    TAllowedDeclarings extends string | undefined,
+    TBackRef extends string | never
 > =
-    TMapping extends __ReferenceMappingContract<any, infer Declaring, infer DtoKind, any, infer Alias, any, infer Mappings, infer Nullity>
-        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+    TMapping extends __ReferenceMappingContract<any, infer Declaring, infer DtoKind, infer PropName, infer Alias, any, infer Mappings, infer Nullity>
+        ? __IsAllowedEx<Declaring, TAllowedDeclarings, PropName, TBackRef> extends true
             ? { 
                 [K in Alias]: 
                     __WithNullity<

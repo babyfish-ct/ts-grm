@@ -13,7 +13,7 @@
  */
 
 import { __DeclaringModelName, __Extends, __IsDerivedModelOf, __ModelName, __SuperDeclaringModelNames } from "../model_internal_types";
-import { __AssociatedPropContract, __CollectionPropContract, __OneToManyPropContract, __OneToOnePropContract } from "../prop_internal_types";
+import { __AssociatedPropContract, __BackRefOf, __CollectionPropContract, __OneToManyPropContract, __OneToOnePropContract } from "../prop_internal_types";
 import { __DtoKind, __DtoMappingContract, __UnrecursiveDtoType } from "./dto_context";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
@@ -298,10 +298,10 @@ export type __WithRecursiveMappings<
                 infer DtoKind, 
                 any,
                 infer Alias,
-                any
+                infer Member
             >
                 ? __WithRecursiveReference<
-                    __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings>, 
+                    __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings, __BackRefOf<Member>>, 
                     DtoKind, 
                     Alias
                 > & __WithRecursiveMappings<TPrevData, Rest, TOriginalMappings>
@@ -312,11 +312,11 @@ export type __WithRecursiveMappings<
                 infer DtoKind,
                 any, 
                 infer Alias, 
-                any,
+                infer Member,
                 infer HasDepth
             >
                 ? __WithRecursiveCollection<
-                    __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings>, 
+                    __UnrecursiveDtoType<TOriginalMappings, Declaring | SuperDeclarings, __BackRefOf<Member>>, 
                     DtoKind, 
                     Alias, 
                     HasDepth

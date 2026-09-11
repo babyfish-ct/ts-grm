@@ -17,7 +17,7 @@ import { EntityTable } from "@/dsl/table";
 import { AnyModel } from "../model";
 import { __EmbeddedPropContract, __MappedByOf, __NullityOf, __NullityType, __OneToOnePropContract, __ReferencePropContract, __TargetKeyOf, __TargetModelOf } from "../prop_internal_types";
 import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
-import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowed } from "./utils";
+import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity, __IsAllowedEx } from "./utils";
 import { ReferenceFetchType } from "./api";
 import { __DeclaringModelName } from "../model_internal_types";
 import { __ReferenceKeyName, __TargetKeyPropOf } from "./internal_types";
@@ -316,10 +316,11 @@ export interface __InverseInputReferenceFlatMapping<
 
 export type __FlatDtoType<
     TMapping,
-    TAllowedDeclarings extends string | undefined
+    TAllowedDeclarings extends string | undefined,
+    TBackRef extends string | never
 > =
-    TMapping extends __FlatMappingContract<any, infer Declaring, infer DtoKind, any, infer Prefix, any, infer Mappings, infer Nullity>
-        ? __IsAllowed<Declaring, TAllowedDeclarings> extends true
+    TMapping extends __FlatMappingContract<any, infer Declaring, infer DtoKind, infer PropName, infer Prefix, any, infer Mappings, infer Nullity>
+        ? __IsAllowedEx<Declaring, TAllowedDeclarings, PropName, TBackRef> extends true
             ? __Flat<
                 __DtoType<Mappings, undefined>,
                 Prefix,

@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
-import { BOOK, ORDER_ITEM, TREE_NODE } from "../../model/model";
+import { BOOK, ORDER_ITEM } from "../../model/model";
 import { dto, TypeOf } from "@/index";
 
 describe("ReferenceTest", () => {
@@ -78,14 +78,4 @@ describe("ReferenceTest", () => {
             } | null;
         }>();
     });
-
-    it("ignoreBackRef", () => {
-        const input = dto.input(TREE_NODE, c => [
-            c.parentNodeId,
-            c.name,
-            c.$recursive("childNodes")
-        ]);
-        // TODO
-        console.log(input);
-    })
 });
