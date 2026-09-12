@@ -13,7 +13,7 @@ const SIMPLE_BOOK_VIEW = dto.view(BOOK, c => [
     c.$allScalars.exclude("price")
 ]);
 
-describe("TestCriteria", () => {
+describe("CriteriaTest", () => {
 
     it("simple", async () => {
         const row = await sqlClient().findOne(SIMPLE_BOOK_VIEW, {

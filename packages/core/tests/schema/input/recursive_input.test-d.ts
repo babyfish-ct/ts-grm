@@ -34,16 +34,16 @@ describe("RecursiveTest", () => {
         const input = dto.input(TREE_NODE, c => [
             c.parentNodeId,
             c.name,
-            c.$recursive("childNodes").backRefAsKey()
+            c.$recursive("childNodes").as("children").backRefAsKey()
         ]);
         interface ChildNodeBody {
             name: string;
-            childNodes: Array<ChildNodeBody> | null | undefined;
+            children: Array<ChildNodeBody> | null | undefined;
         }
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             parentNodeId: number | null | undefined,
             name: string,
-            childNodes: Array<ChildNodeBody> | null | undefined
+            children: Array<ChildNodeBody> | null | undefined
         }>();
     });
 });
