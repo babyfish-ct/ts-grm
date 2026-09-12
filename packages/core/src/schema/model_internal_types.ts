@@ -27,7 +27,7 @@ export interface __ModelCreator<TAbstract extends boolean> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TCtor, never>) => void
+        configurator?: (ctx: __ModelContext<TIdKey, TCtor, never>) => void
     ): Model<
         TName, 
         TIdKey, 
@@ -57,10 +57,10 @@ export type __InheritanceModelCreator<
     >(
         name: __OtherString<TName, __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TCtor, TSuperModel>) => void
+        configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel>) => void
     ): Model<
         TName, 
-        __SuperIdKey<TSuperModel>, 
+        __ModelIdKey<TSuperModel>, 
         TCtor, 
         __MakeAllModelMembers<TName, TCtor, TSuperModel>,
         __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
@@ -73,19 +73,18 @@ export type __OtherString<T extends string, X extends string> =
         ? never
         : T;
 
-export interface __ModelContext<TCtor extends __Ctor, TSuperModel extends AnyModel | never> {
+export interface __ModelContext<
+    TIdKey extends string, 
+    TCtor extends __Ctor, 
+    TSuperModel extends AnyModel | never
+> {
     
     __type(): { modelContext: TCtor | true };
 
     table(options: __TableOptions<TSuperModel>): this;
 
-    unique(...paths : __UniqueKeys<__CtorMembers<TCtor>>[]): this;
+    unique(...paths : __UniqueKeys<TIdKey, __CtorMembers<TCtor>>[]): this;
 }
-
-export type __SuperIdKey<TSuperModel extends AnyModel> =
-    TSuperModel extends Model<any, infer IdKey, any, any, any, any>
-        ? IdKey
-        : never;
 
 export interface __Ctor {
     new (): any;
@@ -100,8 +99,8 @@ export type __ModelName<TModel extends AnyModel> =
         : never;
 
 export type __ModelIdKey<TModel extends AnyModel> =
-    TModel extends Model<any, infer TId, any, any, any, any>
-        ? TId
+    TModel extends Model<any, infer IdKey, any, any, any, any>
+        ? IdKey
         : never;
 
 export type __ModelSuperNames<TModel extends AnyModel> =
@@ -299,21 +298,28 @@ export type __IdRemappedTable<TSuperModel extends AnyModel | never> =
         }
         : never;
 
-export type __UniqueKeys<TMembers extends object> =
-    __UniqueKeysImpl<__FlattenMembers<TMembers>>;
+export type __UniqueKeys<
+    TIdKey extends string, 
+    TMembers extends object
+> =
+    Exclude<
+        __UniqueKeysImpl<__FlattenMembers<TMembers>>, 
+        TIdKey
+    >;
 
 export type __UniqueKeysImpl<TFlattenCtorMembers> = 
     TFlattenCtorMembers extends object
-        ? { 
-            [K in keyof TFlattenCtorMembers]: 
-                TFlattenCtorMembers[K] extends (
-                    __ScalarPropContract<any, any, any> 
-                    | __OneToOnePropContract<any, any, "COLUMNS", never, any, any>
-                    | __ManyToOnePropContract<any, any, "COLUMNS", never, any, any>
-                )
-                    ? K
-                    : never
-        }[keyof TFlattenCtorMembers]
+        ? keyof { 
+            [
+                K in keyof TFlattenCtorMembers as 
+                    TFlattenCtorMembers[K] extends
+                        __ScalarPropContract<any, any, any> 
+                        | __OneToOnePropContract<any, any, "COLUMNS", never, any, any>
+                        | __ManyToOnePropContract<any, any, "COLUMNS", never, any, any>
+                        ? K
+                        : never
+            ]: never
+        }
         : never;
 
 export type __OrderedKeys<TModel extends AnyModel> =

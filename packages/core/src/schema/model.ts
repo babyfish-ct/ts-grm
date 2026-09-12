@@ -20,9 +20,9 @@ import {
     __MakeAllModelMembers, 
     __ModelContext, 
     __ModelCreator, 
+    __ModelIdKey, 
     __ModelName, 
-    __ModelSuperNames, 
-    __SuperIdKey 
+    __ModelSuperNames 
 } from "./model_internal_types";
 
 export const model: __ModelCreator<false> = modelCreator();
@@ -37,7 +37,7 @@ function modelCreator(): __ModelCreator<false> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TCtor, never>) => void
+        configurator?: (ctx: __ModelContext<TIdKey, TCtor, never>) => void
     ): Model<
         TName, 
         TIdKey, 
@@ -46,7 +46,7 @@ function modelCreator(): __ModelCreator<false> {
         never, 
         any
     > {
-        const ctx = new ModelContextImpl<TCtor, never>();
+        const ctx = new ModelContextImpl<TIdKey, TCtor, never>();
         if (configurator != null) {
             configurator(ctx);
         }
@@ -61,7 +61,7 @@ function modelCreator(): __ModelCreator<false> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TCtor, never>) => void
+        configurator?: (ctx: __ModelContext<TIdKey, TCtor, never>) => void
     ): Model<
         TName, 
         TIdKey, 
@@ -70,7 +70,7 @@ function modelCreator(): __ModelCreator<false> {
         never, 
         any
     > {
-        const ctx = new ModelContextImpl<TCtor, never>();
+        const ctx = new ModelContextImpl<TIdKey, TCtor, never>();
         if (configurator != null) {
             configurator(ctx);
         }
@@ -88,22 +88,22 @@ function modelCreator(): __ModelCreator<false> {
         >(
             name: TName,
             ctor: TCtor,
-            configurator?: (ctx: __ModelContext<TCtor, TSuperModel>) => void
+            configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel>) => void
         ): Model<
             TName, 
-            __SuperIdKey<TSuperModel>, 
+            __ModelIdKey<TSuperModel>, 
             TCtor, 
             __MakeAllModelMembers<TName, TCtor, TSuperModel>,
             __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
             any
         > => {
-            const ctx = new ModelContextImpl<TCtor, TSuperModel>();
+            const ctx = new ModelContextImpl<__ModelIdKey<TSuperModel>, TCtor, TSuperModel>();
             if (configurator != null) {
                 configurator(ctx);
             }
             return new ModelImpl<
                 TName, 
-                __SuperIdKey<TSuperModel>, 
+                __ModelIdKey<TSuperModel>, 
                 TCtor, 
                 __MakeAllModelMembers<TName, TCtor, TSuperModel>,
                 __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
@@ -130,22 +130,22 @@ function modelCreator(): __ModelCreator<false> {
         >(
             name: TName,
             ctor: TCtor,
-            configurator?: (ctx: __ModelContext<TCtor, TSuperModel>) => void
+            configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel>) => void
         ): Model<
             TName, 
-            __SuperIdKey<TSuperModel>, 
+            __ModelIdKey<TSuperModel>, 
             TCtor, 
             __MakeAllModelMembers<TName, TCtor, TSuperModel>,
             __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
             any
         > => {
-            const ctx = new ModelContextImpl<TCtor, TSuperModel>();
+            const ctx = new ModelContextImpl<__ModelIdKey<TSuperModel>, TCtor, TSuperModel>();
             if (configurator != null) {
                 configurator(ctx);
             }
             return new ModelImpl<
                 TName, 
-                __SuperIdKey<TSuperModel>, 
+                __ModelIdKey<TSuperModel>, 
                 TCtor, 
                 __MakeAllModelMembers<TName, TCtor, TSuperModel>,
                 __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,

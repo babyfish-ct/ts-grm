@@ -98,8 +98,12 @@ export type ModelOptions = {
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
 };
 
-export class ModelContextImpl<TCtor extends __Ctor, TSuperModel extends AnyModel | never> 
-implements __ModelContext<TCtor, TSuperModel> {
+export class ModelContextImpl<
+    TIdKey extends string, 
+    TCtor extends __Ctor, 
+    TSuperModel extends AnyModel | never
+> 
+implements __ModelContext<TIdKey, TCtor, TSuperModel> {
 
     private _tableOptions: __TableOptions<TSuperModel> | undefined = undefined;
 
@@ -116,7 +120,7 @@ implements __ModelContext<TCtor, TSuperModel> {
         return this;
     }
 
-    unique(...paths : __UniqueKeys<__CtorMembers<TCtor>>[]): this {
+    unique(...paths : __UniqueKeys<TIdKey, __CtorMembers<TCtor>>[]): this {
         this._uniqueConstraints.push(paths);
         return this;
     }
