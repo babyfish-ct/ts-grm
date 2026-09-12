@@ -14,7 +14,7 @@
 
 import { __FlattenMembers } from "@/auxiliary_types";
 import { DatabaseIdentifier } from "./database_identifier";
-import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
+import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __I64PropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT } from "./model";
 
 export interface __ModelCreator<TAbstract extends boolean> {
@@ -27,7 +27,7 @@ export interface __ModelCreator<TAbstract extends boolean> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TIdKey, TCtor, never>) => void
+        configurator?: (ctx: __RootModelContext<TIdKey, TCtor>) => void
     ): Model<
         TName, 
         TIdKey, 
@@ -84,6 +84,16 @@ export interface __ModelContext<
     table(options: __TableOptions<TSuperModel>): this;
 
     unique(...paths : __UniqueKeys<TIdKey, __CtorMembers<TCtor>>[]): this;
+}
+
+export interface __RootModelContext<
+    TIdKey extends string, 
+    TCtor extends __Ctor
+> extends __ModelContext<TIdKey, TCtor, never> {
+
+    __type(): { modelContext: TCtor | true; rootModelContext: true };
+
+    id(idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]>): this;
 }
 
 export interface __Ctor {
@@ -367,3 +377,25 @@ export type __DerivedModel<
 > = __IsDerivedModelOf<TDerivedModel, TSuperModel> extends true
     ? TDerivedModel :
     never;
+
+export type __IdGenerator<
+    TIdMember
+> = 
+    TIdMember extends __I64PropContract<infer Value, any>
+        ? "IDENTITY"
+        | { readonly sequenceName: string; }
+        | __UserIdGenerator<Value>
+    : TIdMember extends __ScalarPropContract<number, any, any>
+        ? "IDENTITY"
+        | { readonly sequenceName: string; }
+        | __UserIdGenerator<number>
+    : __UserIdGenerator<__DataType<TIdMember>>;
+
+export type __UserIdGenerator<T> = () => T;
+
+export type __DataType<TProp> = 
+    TProp extends __ScalarPropContract<infer Value, any, any>
+        ? Value
+    : TProp extends __EmbeddedPropContract<infer Props, any, any>
+        ? { readonly [K in keyof Props]: __DataType<Props[K]> }
+    : never;

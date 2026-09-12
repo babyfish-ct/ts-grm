@@ -144,7 +144,7 @@ export type __IsScalarLikeProp<TMember, TDtoKind extends __DtoKind> =
 export type __ScalarTypeOf<TMember> =
     TMember extends __ScalarLikePropContract<infer Value, any> 
         ? Value 
-        : never
+        : never;
 
 export type __IfView<T, TDtoKind> = 
     TDtoKind extends "INPUT" | "INPUT_REF"

@@ -14,7 +14,7 @@
 
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { __Ctor, __CtorMembers, __ModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
+import { __Ctor, __CtorMembers, __IdGenerator, __ModelContext, __RootModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
 import { ModelContract } from "./model_contract";
 import { AnyModel, Model } from "@/schema/model";
 
@@ -102,8 +102,7 @@ export class ModelContextImpl<
     TIdKey extends string, 
     TCtor extends __Ctor, 
     TSuperModel extends AnyModel | never
-> 
-implements __ModelContext<TIdKey, TCtor, TSuperModel> {
+> implements __ModelContext<TIdKey, TCtor, TSuperModel> {
 
     private _tableOptions: __TableOptions<TSuperModel> | undefined = undefined;
 
@@ -144,6 +143,21 @@ implements __ModelContext<TIdKey, TCtor, TSuperModel> {
             tableOptions: this._tableOptions,
             uniqueConstraints: this._uniqueConstraints
         };
+    }
+}
+
+export class RootModelContextImpl<
+    TIdKey extends string, 
+    TCtor extends __Ctor
+> extends ModelContextImpl<TIdKey, TCtor, never> 
+implements __RootModelContext<TIdKey, TCtor> {
+
+    __type(): { modelContext: TCtor | true; rootModelContext: true } {
+        return { modelContext: true, rootModelContext: true };
+    }
+
+    id(_idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]>): this {
+        return this;
     }
 }
 

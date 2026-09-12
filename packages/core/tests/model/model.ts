@@ -73,6 +73,7 @@ export const BOOK_STORE = model.abstract("BookStore", "id", class {
     ctx.table({
         discriminator: "TYPE"
     });
+    ctx.id("IDENTITY");
 });
 
 export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
@@ -132,7 +133,7 @@ export const BOOK = model("Book", "id", class {
     ctx.table({
         discriminator: "TYPE",
         discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
-    }).unique("name", "edition");
+    }).unique("name", "edition").id("IDENTITY");
 });
 
 const PAPER_BOOK_AREA_FORMULA: TsFormula<number> = 
@@ -200,7 +201,7 @@ export const AUTHOR = model("Author", "id", class {
         FEMALE: 'F'
     })
     fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA)
-}, ctx => ctx.unique("name.firstName", "name.lastName"));
+}, ctx => ctx.unique("name.firstName", "name.lastName").id("IDENTITY"));
 
 export const TREE_NODE = model.abstract("TreeNode", "id", class {
     id = prop.i64()

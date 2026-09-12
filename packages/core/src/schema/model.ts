@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
+import { ModelContextImpl, ModelImpl, RootModelContextImpl } from "@/impl/model_impl";
 import { 
     __Ctor, 
     __CtorMembers, 
@@ -22,7 +22,8 @@ import {
     __ModelCreator, 
     __ModelIdKey, 
     __ModelName, 
-    __ModelSuperNames 
+    __ModelSuperNames, 
+    __RootModelContext
 } from "./model_internal_types";
 
 export const model: __ModelCreator<false> = modelCreator();
@@ -37,7 +38,7 @@ function modelCreator(): __ModelCreator<false> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TIdKey, TCtor, never>) => void
+        configurator?: (ctx: __RootModelContext<TIdKey, TCtor>) => void
     ): Model<
         TName, 
         TIdKey, 
@@ -46,7 +47,7 @@ function modelCreator(): __ModelCreator<false> {
         never, 
         any
     > {
-        const ctx = new ModelContextImpl<TIdKey, TCtor, never>();
+        const ctx = new RootModelContextImpl<TIdKey, TCtor>();
         if (configurator != null) {
             configurator(ctx);
         }
@@ -61,7 +62,7 @@ function modelCreator(): __ModelCreator<false> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<TIdKey, TCtor, never>) => void
+        configurator?: (ctx: __RootModelContext<TIdKey, TCtor>) => void
     ): Model<
         TName, 
         TIdKey, 
@@ -70,7 +71,7 @@ function modelCreator(): __ModelCreator<false> {
         never, 
         any
     > {
-        const ctx = new ModelContextImpl<TIdKey, TCtor, never>();
+        const ctx = new RootModelContextImpl<TIdKey, TCtor>();
         if (configurator != null) {
             configurator(ctx);
         }
