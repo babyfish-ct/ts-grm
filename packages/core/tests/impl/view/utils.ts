@@ -1,5 +1,5 @@
 import { DataReader } from "@/impl/data_reader";
-import { DtoMapper } from "@/impl/dto_mapper";
+import { DtoMapper, InputFlags } from "@/impl/dto_mapper";
 import { buildShape, Shape } from "@/impl/shape";
 
 export function mapperJson(mapper: DtoMapper): any {
@@ -14,8 +14,8 @@ export function mapperJson(mapper: DtoMapper): any {
                 subMapper: f.subMapper != null
                     ? mapperJson(f.subMapper)
                     : undefined,
-                ref: f.ref ? true : undefined,
-                key: f.key ? true : undefined,
+                ref: (f.inputFlags & InputFlags.Ref) !== 0 ? true : undefined,
+                key: (f.inputFlags & InputFlags.Key) !== 0 ? true : undefined,
                 recursiveDepth: f.recursiveDepth,
                 dependencies: f.dependencies,
                 isDependent: f.isDependent ? true : undefined,

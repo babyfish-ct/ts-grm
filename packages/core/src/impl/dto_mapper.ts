@@ -190,13 +190,11 @@ export interface DtoMapperField {
 
     readonly subMapper: DtoMapper | undefined;
 
-    readonly ref: boolean;
-
-    readonly key: boolean;
-
     readonly recursiveDepth: number | undefined;
 
     readonly dependencies: ReadonlyArray<number> | undefined;
+
+    readonly inputFlags: InputFlags;
 
     readonly isDependent: boolean;
 
@@ -303,7 +301,7 @@ class Mapper implements Metadata {
             this._add(implicitDtoField(field.downcastTo, referenceKeyProp, this.input), false);
         } else if (prop.targetEntity != null) {
             let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
-            this._add(implicitDtoField(field.downcastTo, keyProp, field.ref), false);
+            this._add(implicitDtoField(field.downcastTo, keyProp, (field.inputFlags & InputFlags.Ref) !== 0), false);
         }
     }
 
@@ -380,8 +378,7 @@ class Mapper implements Metadata {
             ),
             bridgeProp: undefined,
             dto: undefined,
-            ref: false,
-            key: false,
+            inputFlags: InputFlags.None,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -471,8 +468,7 @@ class Mapper implements Metadata {
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
             this._dependencyReader?.refs,
-            dtoField.ref,
-            dtoField.key
+            dtoField.inputFlags
         );
         if (cachedValue == null) {
             this._fieldMap.set(key, field);
@@ -698,8 +694,7 @@ class MapperField implements MetadataField {
         readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
         readonly dependencies: ReadonlyArray<MapperField> | undefined,
-        readonly ref: boolean,
-        readonly key: boolean
+        readonly inputFlgas: InputFlags
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMetadata = undefined;
@@ -748,14 +743,13 @@ class MapperField implements MetadataField {
             nullable: this.nullable,
             paths,
             subMapper,
-            ref: this.ref,
-            key: this.key,
             fetchType: this.fetchType,
             predicateFn: this.predicateFn,
             orders: this.orders,
             limit: this.limit,
             recursiveDepth: this.recursiveDepth,
             dependencies: this.dependencies?.map(ref => ref._index),
+            inputFlags: this.inputFlgas,
             isDependent: this.isDependent,
             columnIndex: this._columnIndex,
             optimizable: this.isOptimizable(),
@@ -882,8 +876,7 @@ function toDtoFields(
         prop: field.prop,
         bridgeProp: field.bridgeProp,
         dto: field.subMapper != null ? toDto(field.subMapper) : undefined,
-        ref: field.ref,
-        key: field.key,        
+        inputFlags: field.inputFlags,       
         fetchType: field.fetchType,
         predicateFn: field.predicateFn,
         orders: field.orders,
@@ -940,8 +933,11 @@ function implicitDtoField(
             prop: prop,
             bridgeProp: undefined,
             dto: childDto,
-            ref,
-            key: finalKey(),
+            inputFlags: (
+                ref ? InputFlags.Ref : InputFlags.None
+            ) | (
+                finalKey() ? InputFlags.Key : InputFlags.None
+            ),
             fetchType: undefined,
             predicateFn: undefined,
             orders: prop.orders,
@@ -959,8 +955,11 @@ function implicitDtoField(
         prop: prop,
         bridgeProp: undefined,
         dto: undefined,
-        ref,
-        key: finalKey(),
+        inputFlags: (
+            ref ? InputFlags.Ref : InputFlags.None
+        ) | (
+            finalKey() ? InputFlags.Key : InputFlags.None
+        ),
         fetchType: undefined,
         predicateFn: undefined,
         orders: prop.orders,
@@ -1067,4 +1066,13 @@ function pathLevelOf(
         }
     }
     return level;
+}
+
+export enum InputFlags {
+    None = 0,
+    Ref = 1 << 0,
+    Key = 1 << 1,
+    BackRefAsKey = 1 << 2,
+    NonInsertable = 1 << 3,
+    NonUpdateable = 1 << 4,
 }

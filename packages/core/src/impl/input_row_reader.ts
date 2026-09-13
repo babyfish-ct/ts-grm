@@ -12,8 +12,9 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { _map } from "zod/v4/core";
 import { CodeWriter } from "./code_writer";
-import { DtoMapper } from "./dto_mapper";
+import { DtoMapper, InputFlags } from "./dto_mapper";
 import { MapperFn } from "./dto_mapping";
 import { EntityProp } from "./entity_prop";
 
@@ -82,6 +83,22 @@ class InputRowReaderCreatorGenerator {
     constructor(
         readonly _mapper: DtoMapper
     ) {
+        const keyNames = new Set<string>();
+        // const insertedNames = new Set<string>();
+        // const updatedNames = new Set<string>();
+        const idName = _mapper.entity.idProp.name;
+        let hasId = false;
+        for (const field of _mapper.fields) {
+            if (field.prop.name === idName) {
+                hasId = true;
+            }
+            if ((field.inputFlags & InputFlags.Key) !== 0) {
+                keyNames.add(field.prop.name);
+            }
+        }
+        if (keyNames.size === 0 && hasId) {
+            keyNames.add(idName);
+        }
     }
     
     generate(): InputRowReaderCreator {

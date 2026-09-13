@@ -25,6 +25,7 @@ import { ReferenceFetchType } from "@/schema/dto/api";
 import { __TsFormulaMappingOptions } from "@/schema/dto/formula";
 import { AbstractDtoContext, createDto, DtoContextFlags, finalKey, finalPath, newDtoContext } from "./dto_context";
 import { acceptsNullOrUndefined } from "./util";
+import { InputFlags } from "./dto_mapper";
 
 export interface AbstractDtoMapping {
 
@@ -98,8 +99,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             prop,
             bridgeProp: undefined,
             dto: this._toDto(prop),
-            ref: false,
-            key: finalKey(),
+            inputFlags: finalKey() ? InputFlags.Key : InputFlags.None,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -286,8 +286,11 @@ export class FlatMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            ref: this._ref,
-            key: this._key || (this._prop.props != null ? finalKey() : false),
+            inputFlags: (
+                this._ref ? InputFlags.Ref : InputFlags.None
+            ) | (
+                this._key || (this._prop.props != null ? finalKey() : false) ? InputFlags.Key : InputFlags.None
+            ),
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -436,8 +439,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             prop: this.prop,
             bridgeProp: undefined,
             dto: undefined,
-            ref: false,
-            key: false,
+            inputFlags: InputFlags.None,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this.prop.orders,
@@ -524,8 +526,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto: undefined,
-            ref: false,
-            key: this._key || finalKey(),
+            inputFlags: (this._key || finalKey() ? InputFlags.Key : InputFlags.None),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -602,8 +603,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            ref: false,
-            key: this._key || finalKey(),
+            inputFlags: this._key || finalKey() ? InputFlags.Key : InputFlags.None,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -785,8 +785,7 @@ export class ReferenceMapping extends AssociationMapping {
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
             dto,
-            ref: this._ref,
-            key: false,
+            inputFlags: this._ref ? InputFlags.Ref : InputFlags.None,
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -946,8 +945,7 @@ export class CollectionMapping extends AssociationMapping {
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
             dto,
-            ref: this._ref,
-            key: false,
+            inputFlags: this._ref ? InputFlags.Ref : InputFlags.None,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this._prop.orders,
@@ -1007,8 +1005,11 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            ref: this._ref,
-            key: this._key || finalKey(),
+            inputFlags: (
+                this._ref ? InputFlags.Ref : InputFlags.None
+            ) | (
+                this._key || finalKey() ? InputFlags.Key : InputFlags.None
+            ),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -1047,8 +1048,7 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
             prop: new AssociatedKeysFormulaProp(this._prop.declaringEntity, this._alias, this._prop, this._body),
             bridgeProp: undefined,
             dto: undefined,
-            ref: this._ref,
-            key: false,
+            inputFlags: this._ref ? InputFlags.Ref : InputFlags.None,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -1127,8 +1127,7 @@ export class CalculatedAssociationMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            ref: false,
-            key: false,
+            inputFlags: InputFlags.None,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,

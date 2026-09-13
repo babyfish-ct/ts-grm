@@ -18,7 +18,7 @@ import { ArgumentError, StateError } from "@/error/common";
 import { CodeWriter } from "./code_writer";
 import { Dto, DtoField, SqlFormulaProp, TsFormulaProp, TypeNameProp } from "./dto";
 import { capitalize } from "./util";
-import { Path } from "./dto_mapper";
+import { InputFlags, Path } from "./dto_mapper";
 import { AnyModel } from "@/schema/model";
 import { __SqlFormulaMappingOptions, __TsFormulaMappingOptions } from "@/schema/dto/formula";
 import { 
@@ -564,8 +564,7 @@ export class DtoFactory {
             ),
             bridgeProp: undefined,
             dto: undefined,
-            ref: false,
-            key: false,
+            inputFlags: InputFlags.None,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,

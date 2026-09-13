@@ -22,6 +22,7 @@ import { ReferenceFetchType } from "@/schema/dto/api";
 import { SqlFormula, TsFormula } from "@/schema/computed";
 import { StateError } from "@/error/common";
 import { DtoBody, MapperFn } from "./dto_mapping";
+import { InputFlags } from "./dto_mapper";
 
 export interface Dto {
 
@@ -46,9 +47,7 @@ export interface DtoField {
 
     readonly dto: Dto | undefined;
 
-    readonly ref: boolean;
-
-    readonly key: boolean;
+    readonly inputFlags: InputFlags;
 
     readonly fetchType: ReferenceFetchType | undefined;
 
