@@ -142,7 +142,7 @@ export class AbstractDtoContext {
             prop.targetKeyProp!.props != null
                 ? c => [c.$allScalars]
                 : undefined,
-            this.input
+            this.input ? InputFlags.Ref : InputFlags.None
         );
     }
 
@@ -166,7 +166,7 @@ export class AbstractDtoContext {
         const prop = this._prop(key);
         switch (prop.calculationStrategy?.kind) {
             case "PARAMETERIZED_VALUE":
-                return new ScalarLikeMapping(prop, prop.name, parameter, false, undefined, undefined);
+                return new ScalarLikeMapping(prop, prop.name, parameter, InputFlags.None, undefined, undefined);
             case "PARAMETERIZED_REFERENCE":
             case "PARAMETERIZED_COLLECTION":
                 return CalculatedAssociationMapping.of(prop, parameter);
@@ -345,7 +345,9 @@ class DtoContextCtorCreator {
                                 this._propName(prop)
                             }, "${
                                 prop.name
-                            }", c => [c.$allScalars], ${this._input})`
+                            }", c => [c.$allScalars], ${
+                                this._input ? InputFlags.Ref : InputFlags.None
+                            })`
                         )
                         .newLine(";");
                 } else {
@@ -355,7 +357,9 @@ class DtoContextCtorCreator {
                                 this._propName(prop)
                             }, "${
                                 prop.name
-                            }", undefined, ${this._input})`
+                            }", undefined, ${
+                                this._input ? InputFlags.Ref : InputFlags.None
+                            })`
                         )
                         .newLine(";");
                 }
@@ -366,7 +370,7 @@ class DtoContextCtorCreator {
                             this._propName(prop)
                         }, "${
                             prop.name
-                        }", undefined, false, undefined, undefined)`
+                        }", undefined, ${InputFlags.None}, undefined, undefined)`
                     )
                     .newLine(";");
             } else if (prop.props != null) {
@@ -376,7 +380,9 @@ class DtoContextCtorCreator {
                             this._propName(prop)
                         }, "${
                             prop.name
-                        }", c => [c.$allScalars])`
+                        }", c => [c.$allScalars], ${
+                            InputFlags.None
+                        })`
                     )
                     .newLine(";");
             } else if (prop.associationType === "ONE_TO_ONE" || prop.associationType === "MANY_TO_ONE") {
@@ -396,7 +402,9 @@ class DtoContextCtorCreator {
                                     this._propName(prop)
                                 }, "${
                                     prop.name
-                                }", undefined, false, undefined, undefined)`
+                                }", undefined, ${
+                                    InputFlags.None
+                                }, undefined, undefined)`
                             )
                             .newLine(";");
                             break;
@@ -604,7 +612,7 @@ class FormulaCreator {
             new TsFormulaProp(this._entity, options.alias, formula),
             options.alias,
             undefined,
-            false,
+            InputFlags.None,
             undefined,
             undefined
         );
@@ -622,7 +630,7 @@ class FormulaCreator {
             new SqlFormulaProp(this._entity, options.alias, formula),
             options.alias,
             undefined,
-            false,
+            InputFlags.None,
             undefined,
             undefined
         );

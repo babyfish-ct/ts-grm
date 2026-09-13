@@ -190,8 +190,7 @@ export class FlatMapping implements AbstractDtoMapping {
         private readonly _body: DtoBody,
         private readonly _filter: Filter | undefined,
         private readonly _fetchType: ReferenceFetchType,
-        private readonly _ref: boolean,
-        private readonly _key: boolean
+        private readonly _inputFlags: InputFlags
     ) {}
     
     static of(prop: EntityProp) {
@@ -208,8 +207,7 @@ export class FlatMapping implements AbstractDtoMapping {
             c => [c.$allScalars],
             undefined,
             "LOAD",
-            false,
-            false
+            InputFlags.None
         );
     }
 
@@ -227,35 +225,44 @@ export class FlatMapping implements AbstractDtoMapping {
             body,
             undefined,
             "LOAD",
-            true,
-            true
+            InputFlags.Ref
         );
     }
 
     prefix(prefix: string): FlatMapping {
-        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType, this._ref, this._key);
+        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType, this._inputFlags);
     }
 
     with(body: DtoBody): FlatMapping {
-        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType, this._ref, this._key);
+        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType, this._inputFlags);
     }
 
     filter(filter: Filter): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "filter"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType, this._ref, this._key);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType, this._inputFlags);
     }
 
     fetch(fetchType: ReferenceFetchType): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "fetch"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType, this._ref, this._key);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType, this._inputFlags);
     }
 
     key(): FlatMapping {
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, this._fetchType, this._ref, true);
+        if ((this._inputFlags & InputFlags.Key) !== 0) {
+            return this;
+        }
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, this._fetchType, this._inputFlags | InputFlags.Key);
+    }
+
+    backRefAsKey(): FlatMapping {
+        if ((this._inputFlags & InputFlags.BackRefAsKey) !== 0) {
+            return this;
+        }
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, this._fetchType, this._inputFlags | InputFlags.BackRefAsKey);
     }
 
     toFields(
@@ -274,7 +281,7 @@ export class FlatMapping implements AbstractDtoMapping {
                 reference: this._prop.targetEntity != null,
                 nullable: this._prop.nullable || this._filter != null
             },
-            this._key || (this._prop.props != null ? finalKey() : false),
+            ((this._inputFlags & InputFlags.Key) !== 0) || (this._prop.props != null ? finalKey() : false),
         );
         if (this._prop.props != null) {
             return dto.fields;
@@ -286,11 +293,7 @@ export class FlatMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            inputFlags: (
-                this._ref ? InputFlags.Ref : InputFlags.None
-            ) | (
-                this._key || (this._prop.props != null ? finalKey() : false) ? InputFlags.Key : InputFlags.None
-            ),
+            inputFlags: this._inputFlags,
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -335,7 +338,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
         private readonly _filter: Filter | undefined,
         private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
         private readonly _maxRows: number | undefined,
-        private readonly _depth: number
+        private readonly _depth: number,
+        private readonly _backRefAsKey: boolean
     ) {}
 
     static of(prop: EntityProp): RecursiveMapping {
@@ -345,7 +349,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             undefined,
             undefined,
             undefined,
-            -1
+            -1,
+            false
         );
     }
 
@@ -356,7 +361,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._filter,
             this._orders,
             this._maxRows,
-            this._depth
+            this._depth,
+            this._backRefAsKey
         );
     }
 
@@ -367,7 +373,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             filter,
             this._orders,
             this._maxRows,
-            this._depth
+            this._depth,
+            this._backRefAsKey
         );
     }
 
@@ -392,7 +399,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._filter,
             toEntityPropOrders(this.prop.targetEntity!, orders),
             this._maxRows,
-            this._depth
+            this._depth,
+            this._backRefAsKey
         );
     }
 
@@ -411,7 +419,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._filter,
             this._orders,
             maxRows,
-            this._depth
+            this._depth,
+            this._backRefAsKey
         );
     }
 
@@ -425,7 +434,23 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._filter,
             this._orders,
             this._maxRows,
-            depth
+            depth,
+            this._backRefAsKey
+        );
+    }
+
+    backRefAsKey(): RecursiveMapping {
+        if (this._backRefAsKey) {
+            return this;
+        }
+        return new RecursiveMapping(
+            this.prop,
+            this._alias,
+            this._filter,
+            this._orders,
+            this._maxRows,
+            this._depth,
+            true
         );
     }
 
@@ -439,7 +464,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             prop: this.prop,
             bridgeProp: undefined,
             dto: undefined,
-            inputFlags: InputFlags.None,
+            inputFlags: this._backRefAsKey ? InputFlags.BackRefAsKey : InputFlags.None,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this.prop.orders,
@@ -461,7 +486,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         private readonly _prop: FetchProp,
         private readonly _alias: string,
         readonly _parameter: any,
-        readonly _key: boolean,
+        readonly _inputFlags: InputFlags,
         readonly _output: ScalarLikeMapper | undefined,
         readonly _input: ScalarLikeMapper | undefined
     ) {}
@@ -471,7 +496,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             alias,
             this._parameter,
-            this._key,
+            this._inputFlags,
             this._output,
             this._input
         );
@@ -482,7 +507,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             this._parameter,
-            true,
+            this._inputFlags | InputFlags.Key,
             this._output,
             this._input
         );
@@ -496,7 +521,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             this._parameter,
-            this._key,
+            this._inputFlags,
             { schema, fn },
             undefined
         );
@@ -510,7 +535,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             this._parameter,
-            this._key,
+            this._inputFlags,
             undefined,
             { schema, fn }
         );
@@ -526,7 +551,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto: undefined,
-            inputFlags: (this._key || finalKey() ? InputFlags.Key : InputFlags.None),
+            inputFlags: this._inputFlags | (finalKey() ? InputFlags.Key : InputFlags.None),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -561,7 +586,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
         private readonly _prop: EntityProp,
         private readonly _alias: string,
         private readonly _body: DtoBody,
-        private readonly _key: boolean
+        private readonly _inputFlags: InputFlags
     ) {}
 
     as(alias: string): EmbeddedMapping {
@@ -569,7 +594,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             this._prop,
             alias,
             this._body,
-            this._key
+            this._inputFlags
         );
     }
 
@@ -578,7 +603,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             this._body,
-            true
+            this._inputFlags | InputFlags.Key
         );
     }
 
@@ -587,7 +612,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             this._prop,
             this._alias,
             body,
-            this._key
+            this._inputFlags
         );
     }
 
@@ -595,7 +620,13 @@ export class EmbeddedMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
         const ctx = newDtoContext(this._prop, DtoContextFlags.None);
-        const dto = createDto(ctx, downcastTo, this._body, undefined, this._key || finalKey());
+        const dto = createDto(
+            ctx, 
+            downcastTo, 
+            this._body, 
+            undefined, 
+            (this._inputFlags & InputFlags.Key) !== 0 || finalKey()
+        );
         return {
             implicit: false,
             path: finalPath(this._alias),
@@ -603,7 +634,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            inputFlags: this._key || finalKey() ? InputFlags.Key : InputFlags.None,
+            inputFlags: this._inputFlags | (finalKey() ? InputFlags.Key : InputFlags.None),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -625,8 +656,7 @@ export abstract class AssociationMapping implements AbstractDtoMapping {
         protected readonly _alias: string,
         protected readonly _body: DtoBody,
         protected readonly _filter: Filter | undefined,
-        protected readonly _ref: boolean,
-        protected readonly _backRefAsKey: boolean
+        protected readonly _inputFlags: InputFlags
     ) {
     }
 
@@ -678,11 +708,10 @@ export class ReferenceMapping extends AssociationMapping {
         _alias: string,
         _body: DtoBody,
         _filter: Filter | undefined,
-        _ref: boolean,
-        _backRefAsKey: boolean,
+        _inputFlags: InputFlags,
         private readonly _fetchType: ReferenceFetchType
     ) {
-        super(_prop, _alias, _body, _filter, _ref, _backRefAsKey);
+        super(_prop, _alias, _body, _filter, _inputFlags);
     }
 
     static of(
@@ -693,8 +722,7 @@ export class ReferenceMapping extends AssociationMapping {
             prop.name, 
             c => [c.$allScalars], 
             undefined, 
-            false,
-            false, 
+            InputFlags.None, 
             "LOAD"
         );
     }
@@ -708,8 +736,7 @@ export class ReferenceMapping extends AssociationMapping {
             prop.name, 
             body, 
             undefined, 
-            true, 
-            false,
+            InputFlags.Ref,
             "LOAD"
         );
     }
@@ -720,8 +747,7 @@ export class ReferenceMapping extends AssociationMapping {
             alias,
             this._body,
             this._filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             this._fetchType
         );
     }
@@ -732,8 +758,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             body,
             this._filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             this._fetchType
         );
     }
@@ -744,8 +769,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             this._body,
             filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             this._fetchType
         );
     }
@@ -756,8 +780,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             fetchType
         );
     }
@@ -768,8 +791,7 @@ export class ReferenceMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
-            this._ref,
-            true,
+            this._inputFlags | InputFlags.BackRefAsKey,
             this._fetchType
         );
     }
@@ -785,7 +807,7 @@ export class ReferenceMapping extends AssociationMapping {
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
             dto,
-            inputFlags: this._ref ? InputFlags.Ref : InputFlags.None,
+            inputFlags: this._inputFlags,
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -807,12 +829,11 @@ export class CollectionMapping extends AssociationMapping {
         _alias: string,
         _body: DtoBody,
         _filter: Filter | undefined,
-        _ref: boolean,
-        _backRefAsKey: boolean,
+        _inputFlags: InputFlags,
         private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
         private readonly _maxRows: number | undefined
     ) {
-        super(_prop, _alias, _body, _filter, _ref, _backRefAsKey);
+        super(_prop, _alias, _body, _filter, _inputFlags);
     }
 
     static of(
@@ -823,8 +844,7 @@ export class CollectionMapping extends AssociationMapping {
             prop.name, 
             c => [c.$allScalars], 
             undefined, 
-            false, 
-            false,
+            InputFlags.None,
             undefined, 
             undefined
         );
@@ -839,8 +859,7 @@ export class CollectionMapping extends AssociationMapping {
             prop.name, 
             body, 
             undefined, 
-            true, 
-            false,
+            InputFlags.Ref,
             undefined, 
             undefined
         );
@@ -852,8 +871,7 @@ export class CollectionMapping extends AssociationMapping {
             alias,
             this._body,
             this._filter,
-            this._ref,
-            false,
+            this._inputFlags,
             this._orders,
             this._maxRows
         );
@@ -865,8 +883,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             body,
             this._filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             this._orders,
             this._maxRows
         );
@@ -878,8 +895,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             this._orders,
             this._maxRows
         );
@@ -898,8 +914,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             propOrders,
             this._maxRows
         );
@@ -914,8 +929,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
-            this._ref,
-            this._backRefAsKey,
+            this._inputFlags,
             this._orders,
             maxRows
         );
@@ -927,8 +941,7 @@ export class CollectionMapping extends AssociationMapping {
             this._alias,
             this._body,
             this._filter,
-            this._ref,
-            true,
+            this._inputFlags | InputFlags.BackRefAsKey,
             this._orders,
             this._maxRows
         );
@@ -945,7 +958,7 @@ export class CollectionMapping extends AssociationMapping {
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
             dto,
-            inputFlags: this._ref ? InputFlags.Ref : InputFlags.None,
+            inputFlags: this._inputFlags,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this._prop.orders,
@@ -966,23 +979,22 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
         private readonly _prop: EntityProp,
         private readonly _alias: string,
         private readonly _body: DtoBody | undefined,
-        private readonly _ref: boolean,
-        private readonly _key: boolean
+        private readonly _inputFlags: InputFlags
     ) {}
 
     as(alias: string): ReferenceKeyMapping {
-        return new ReferenceKeyMapping(this._prop, alias, this._body, this._ref, this._key);
+        return new ReferenceKeyMapping(this._prop, alias, this._body, this._inputFlags);
     }
 
     key(): ReferenceKeyMapping {
-        return new ReferenceKeyMapping(this._prop, this._alias, this._body, this._ref, true);
+        return new ReferenceKeyMapping(this._prop, this._alias, this._body, this._inputFlags | InputFlags.Key);
     }
 
     with(body: DtoBody): ReferenceKeyMapping {
         if (this._prop.props == null) {
             throw new StateError(`Cannot set the body of "${this._prop.toString()}" which is not embedded property`)
         }
-        return new ReferenceKeyMapping(this._prop, this._alias, body, this._ref, this._key);
+        return new ReferenceKeyMapping(this._prop, this._alias, body, this._inputFlags);
     }
 
     toFields(
@@ -995,7 +1007,7 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
                     undefined, 
                     this._body,
                     undefined,
-                    this._key || finalKey()
+                    (this._inputFlags & InputFlags.Key) !== 0 || finalKey()
                 )
                 : undefined;
         return {
@@ -1005,11 +1017,7 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            inputFlags: (
-                this._ref ? InputFlags.Ref : InputFlags.None
-            ) | (
-                this._key || finalKey() ? InputFlags.Key : InputFlags.None
-            ),
+            inputFlags: this._inputFlags,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -1030,14 +1038,14 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
         private readonly _prop: EntityProp,
         private readonly _alias: string,
         private readonly _body: DtoBody | undefined,
-        private readonly _ref: boolean
+        private readonly _inputFlags: InputFlags
     ) {}
 
     with(body: DtoBody): AssociatedKeysMapping {
         if (this._prop.targetKeyProp!.props == null) {
             throw new StateError(`Cannot set the body of "${this._prop.targetKeyProp!.toString()}" which is not embedded property`)
         }
-        return new AssociatedKeysMapping(this._prop, this._alias, body, this._ref);
+        return new AssociatedKeysMapping(this._prop, this._alias, body, this._inputFlags);
     }
 
     toFields(downcastTo: Entity | undefined): DtoField {
@@ -1048,7 +1056,7 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
             prop: new AssociatedKeysFormulaProp(this._prop.declaringEntity, this._alias, this._prop, this._body),
             bridgeProp: undefined,
             dto: undefined,
-            inputFlags: this._ref ? InputFlags.Ref : InputFlags.None,
+            inputFlags: this._inputFlags,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
