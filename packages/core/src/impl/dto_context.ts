@@ -448,7 +448,7 @@ class FieldContext {
     constructor(
         readonly parent: FieldContext | undefined,
         readonly op: PathOp | undefined,
-        readonly key: boolean
+        readonly inputFlags: InputFlags
     ) {}
 
     finalPath(path: Path | undefined): Path | undefined {
@@ -487,9 +487,9 @@ export function createDto(
     downloadTo: Entity | undefined,
     body: any,
     op?: PathOp,
-    key?: boolean
+    inputFlags?: InputFlags
 ): Dto {
-    currentFieldContext = new FieldContext(currentFieldContext, op, key === true);
+    currentFieldContext = new FieldContext(currentFieldContext, op, inputFlags ?? InputFlags.None);
     try {
         const mappings = body(ctx);
         const factory = new DtoFactory(ctx.$entity, downloadTo);
@@ -508,8 +508,8 @@ export function finalPath(
     return currentFieldContext?.finalPath(path);
 }
 
-export function finalKey(): boolean {
-    return currentFieldContext?.key ?? false;
+export function finalInputFlags(): InputFlags {
+    return currentFieldContext?.inputFlags ?? InputFlags.None;
 }
 
 export class DtoFactory {

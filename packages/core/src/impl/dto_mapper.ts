@@ -20,7 +20,7 @@ import { createDtoRowReader, DtoRowReader } from "./dto_row_reader";
 import { makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl/expression";
-import { AbstractDtoContext, createDto, DtoContextFlags, finalKey, newDtoContext } from "./dto_context";
+import { AbstractDtoContext, createDto, DtoContextFlags, finalInputFlags, newDtoContext } from "./dto_context";
 import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
@@ -935,9 +935,7 @@ function implicitDtoField(
             dto: childDto,
             inputFlags: (
                 ref ? InputFlags.Ref : InputFlags.None
-            ) | (
-                finalKey() ? InputFlags.Key : InputFlags.None
-            ),
+            ) | finalInputFlags(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: prop.orders,
@@ -957,9 +955,7 @@ function implicitDtoField(
         dto: undefined,
         inputFlags: (
             ref ? InputFlags.Ref : InputFlags.None
-        ) | (
-            finalKey() ? InputFlags.Key : InputFlags.None
-        ),
+        ) | finalInputFlags(),
         fetchType: undefined,
         predicateFn: undefined,
         orders: prop.orders,

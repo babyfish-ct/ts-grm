@@ -23,7 +23,7 @@ import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, InverseFetchProp, 
 import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { ReferenceFetchType } from "@/schema/dto/api";
 import { __TsFormulaMappingOptions } from "@/schema/dto/formula";
-import { AbstractDtoContext, createDto, DtoContextFlags, finalKey, finalPath, newDtoContext } from "./dto_context";
+import { AbstractDtoContext, createDto, DtoContextFlags, finalInputFlags, finalPath, newDtoContext } from "./dto_context";
 import { acceptsNullOrUndefined } from "./util";
 import { InputFlags } from "./dto_mapper";
 
@@ -99,7 +99,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             prop,
             bridgeProp: undefined,
             dto: this._toDto(prop),
-            inputFlags: finalKey() ? InputFlags.Key : InputFlags.None,
+            inputFlags: finalInputFlags() & ~InputFlags.Ref,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -116,7 +116,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             return undefined;
         }
         const ctx = newDtoContext(prop, DtoContextFlags.None);
-        return createDto(ctx, undefined, (c: AbstractDtoContext) => [c.$allScalars], undefined, finalKey());
+        return createDto(ctx, undefined, (c: AbstractDtoContext) => [c.$allScalars], undefined, finalInputFlags());
     }
 }
 
@@ -173,7 +173,7 @@ export class FoldMapping implements AbstractDtoMapping {
             downcastTo,
             this._body,
             this._name,
-            finalKey()
+            finalInputFlags()
         )
         return dto.fields;
     }
@@ -281,7 +281,7 @@ export class FlatMapping implements AbstractDtoMapping {
                 reference: this._prop.targetEntity != null,
                 nullable: this._prop.nullable || this._filter != null
             },
-            ((this._inputFlags & InputFlags.Key) !== 0) || (this._prop.props != null ? finalKey() : false),
+            this._inputFlags | finalInputFlags(),
         );
         if (this._prop.props != null) {
             return dto.fields;
@@ -541,6 +541,41 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         );
     }
 
+    mask(
+        options: {
+            readonly insert?: boolean;
+            readonly update?: boolean;
+        }
+    ): ScalarLikeMapping {
+        const nonInsertable = options.insert === false;
+        const nonUpdatable = options.update === false;
+        if (nonInsertable && nonUpdatable) {
+            throw new ArgumentError(
+                `Cannot make the property "${
+                    this._prop
+                }" both non-insertable and non-modifiable by setting the mask.`
+            );
+        }
+        let inputFlags = this._inputFlags;
+        if (nonInsertable) {
+            inputFlags |= InputFlags.NonInsertable;
+        }
+        if (nonUpdatable) {
+            inputFlags |= InputFlags.NonUpdateable;
+        }
+        if (this._inputFlags === inputFlags) {
+            return this;
+        }
+        return new ScalarLikeMapping(
+            this._prop,
+            this._alias,
+            this._parameter,
+            inputFlags,
+            this._output,
+            this._input
+        );
+    }
+
     toFields(
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
@@ -551,7 +586,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto: undefined,
-            inputFlags: this._inputFlags | (finalKey() ? InputFlags.Key : InputFlags.None),
+            inputFlags: this._inputFlags | finalInputFlags() & ~InputFlags.Ref,
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -616,6 +651,39 @@ export class EmbeddedMapping implements AbstractDtoMapping {
         );
     }
 
+    mask(
+        options: {
+            readonly insert?: boolean,
+            readonly update?: boolean
+        }
+    ) {
+        const nonInsertable = options.insert === false;
+        const nonUpdatable = options.update === false;
+        if (nonInsertable && nonUpdatable) {
+            throw new ArgumentError(
+                `Cannot make the property "${
+                    this._prop
+                }" both non-insertable and non-modifiable by setting the mask.`
+            );
+        }
+        let inputFlags = this._inputFlags;
+        if (nonInsertable) {
+            inputFlags |= InputFlags.NonInsertable;
+        }
+        if (nonUpdatable) {
+            inputFlags |= InputFlags.NonUpdateable;
+        }
+        if (this._inputFlags === inputFlags) {
+            return this;
+        }
+        return new EmbeddedMapping(
+            this._prop,
+            this._alias,
+            this._body,
+            inputFlags
+        );
+    }
+
     toFields(
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
@@ -625,7 +693,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             downcastTo, 
             this._body, 
             undefined, 
-            (this._inputFlags & InputFlags.Key) !== 0 || finalKey()
+            this._inputFlags | finalInputFlags()
         );
         return {
             implicit: false,
@@ -634,7 +702,7 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             prop: this._prop,
             bridgeProp: undefined,
             dto,
-            inputFlags: this._inputFlags | (finalKey() ? InputFlags.Key : InputFlags.None),
+            inputFlags: this._inputFlags | finalInputFlags(),
             fetchType: undefined,
             predicateFn: undefined,
             orders: undefined,
@@ -1007,7 +1075,7 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
                     undefined, 
                     this._body,
                     undefined,
-                    (this._inputFlags & InputFlags.Key) !== 0 || finalKey()
+                    this._inputFlags | finalInputFlags()
                 )
                 : undefined;
         return {
