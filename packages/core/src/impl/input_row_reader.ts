@@ -36,6 +36,7 @@ export abstract class InputRowReader {
         readonly updateIndices: ReadonlyArray<number>,
         readonly returnProps: ReadonlyArray<EntityProp>,
         readonly returnIndices: ReadonlyArray<number>,
+        readonly preAssociatedMap: ReadonlyMap<string, InputRowReader>
     ) {
     }
 
@@ -123,7 +124,7 @@ class InputRowReaderCreatorGenerator {
 
     private readonly _inputFunMap: ReadonlyMap<string, MapperFn>;
 
-    private readonly _associatedMap: ReadonlyMap<string, InputRowReader>;
+    private readonly _preAssociatedMap: ReadonlyMap<string, InputRowReader>;
 
     constructor(
         private readonly _path: string,
@@ -136,15 +137,15 @@ class InputRowReaderCreatorGenerator {
         const insertMap = new Map<string, DtoMapperField>();
         const updateMap = new Map<string, DtoMapperField>();
         const returnMap = new Map<string, EntityProp>();
-        const associatedMap = new Map<string, InputRowReader>();
+        const preAssociatedMap = new Map<string, InputRowReader>();
         for (const field of originalFields) {
             const name = field.prop.path;
-            if (field.subMapper != null) {
+            if (field.subMapper != null && field.prop.referenceKeyProp != null) {
                 const creator = createInputRowReaderCreator(
                     `${_path}.${prop.num}${field.recursiveDepth != null ? "*" : ""}`, 
                     field.subMapper
                 );
-                associatedMap.set(
+                preAssociatedMap.set(
                     field.prop.path, 
                     new creator()
                 );
@@ -240,7 +241,7 @@ class InputRowReaderCreatorGenerator {
         this._returnProps = returnProps;
         this._returnIndices = returnIndices;
         this._inputFunMap = inputFnMap;
-        this._associatedMap = associatedMap;
+        this._preAssociatedMap = preAssociatedMap;
     }
     
     generate(): InputRowReaderCreator {
@@ -259,7 +260,7 @@ class InputRowReaderCreatorGenerator {
             "$updateIndices",
             "$returnProps",
             "$returnIndices",
-            "$associatedMap",
+            "$preAssociatedMap",
             w.toString()
         )(
             InputRowReader,
@@ -269,7 +270,7 @@ class InputRowReaderCreatorGenerator {
             this._updateIndices,
             this._returnProps,
             this._returnIndices,
-            this._associatedMap
+            this._preAssociatedMap
         );
     }
 
@@ -278,7 +279,7 @@ class InputRowReaderCreatorGenerator {
         w.newLine();
         w.code("constructor() ");
         w.scope("CURLY_BRACKETS", () => {
-            w.code("super($fields, $keyIndices, $insertIndices, $updateIndices, $returnProps, $returnIndices)").newLine(";");
+            w.code("super($fields, $keyIndices, $insertIndices, $updateIndices, $returnProps, $returnIndices, $preAssociatedMap)").newLine(";");
         }).newLine();
     }
 
@@ -307,11 +308,11 @@ class InputRowReaderCreatorGenerator {
             .code(`")`)
             .newLine(";");
         }
-        for (const path of this._associatedMap.keys()) {
+        for (const path of this._preAssociatedMap.keys()) {
             w
             .code("static ")
             .code(readerName(path))
-            .code(` = $associatedMap.get("`)
+            .code(` = $preAssociatedMap.get("`)
             .code(path)
             .code(`")`)
             .newLine(";");
@@ -327,7 +328,7 @@ class InputRowReaderCreatorGenerator {
             } else {
                 const thisProp = field.prop.asEntityProp?.rootProp!;
                 const targetKeyProp = thisProp.targetKeyProp!.sub(thisProp.subPath);
-                const associatedReader = this._associatedMap.get(referenceProp.path)!;
+                const associatedReader = this._preAssociatedMap.get(referenceProp.path)!;
                 w.code(`parent.get(${associatedReader.indexOf(targetKeyProp.path)})`);
             }
         } else if (field.mapperFn == null) {
