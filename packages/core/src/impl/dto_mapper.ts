@@ -26,6 +26,8 @@ import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
 import { belongTo, fromDtoFields, Metadata, MetadataField } from "./metadata";
 import { prop } from "@/schema/prop";
+import { createInputRowReader, InputRowReader } from "./input_row_reader";
+import { InputFlags } from "./input_flags";
 
 export function dtoMapper(
     dto: Dto, 
@@ -48,6 +50,8 @@ export function dtoMapper(
 export class DtoMapper {
 
     private _dtoRowReader: DtoRowReader | undefined = undefined;
+
+    private _inputRowReader: InputRowReader | undefined = undefined;
 
     private _span: number | undefined = undefined;
 
@@ -76,6 +80,14 @@ export class DtoMapper {
             this._dtoRowReader = rowReader = createDtoRowReader(this);
         }
         return rowReader;
+    }
+
+    get inputRowReader(): InputRowReader {
+        let rowRader = this._inputRowReader;
+        if (rowRader == null) {
+            this._inputRowReader = rowRader = createInputRowReader(this);
+        }
+        return rowRader;
     }
 
     get span(): number {
@@ -1062,13 +1074,4 @@ function pathLevelOf(
         }
     }
     return level;
-}
-
-export enum InputFlags {
-    None = 0,
-    Ref = 1 << 0,
-    Key = 1 << 1,
-    BackRefAsKey = 1 << 2,
-    NonInsertable = 1 << 3,
-    NonUpdateable = 1 << 4,
 }

@@ -25,7 +25,7 @@ import { __Mutable } from "@/auxiliary_types";
 import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
-import { __PropData } from "@/index_internal";
+import { __IdGenerator, __PropData } from "@/index_internal";
 import { ExplicitDataType } from "./explicit";
 
 export class Entity {
@@ -490,6 +490,10 @@ export class Entity {
             this._tableCtor = ctor = createEntityTableClass(this);
         }
         return ctor;
+    }
+
+    get idGenerator(): __IdGenerator<any> | undefined {
+        return this._options.idGenerator;
     }
 
     toJSON(): any {

@@ -18,7 +18,7 @@ import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions 
 
 export type RootSaveMode = "UPSERT" | "INSERT" | "INSERT_IF_ABSENT" | "UPDATE" | "NON_IDEMPOTENT_UPSERT";
 
-export type AssociatedSaveMode = "REPLACE" | "MERGE" | "APPEND" | "APPEND_IF_ABSENT" | "UPDATE" | "VIOLENTLY_REPLACE";
+export type AssociatedSaveMode = "REPLACE" | "UPSERT" | "INSERT" | "INSERT_IF_ABSENT" | "UPDATE" | "VIOLENTLY_REPLACE";
 
 export interface SaveOptions<TInput extends Input<any, any, any>> {
     readonly root?: RootSaveMode;

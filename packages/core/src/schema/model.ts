@@ -183,6 +183,8 @@ export interface Model<
 
 export type AnyModel = Model<any, any, any, any, any, any>;
 
+export type UserIdGenerator<T> = () => T;
+
 export const TABLE_INHERIT = Symbol("<inherit>");
 
 export const DISCRIMINATOR_VALUE_MODEL_NAME = Symbol("<modelName>");

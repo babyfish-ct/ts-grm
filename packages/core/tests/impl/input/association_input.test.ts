@@ -66,6 +66,7 @@ describe("SimpleInputTest", () => {
                 }
             ]
         });
+        console.log(input.mapper.inputRowReader.constructor.toString());
     });
 
     it("o2m", () => {

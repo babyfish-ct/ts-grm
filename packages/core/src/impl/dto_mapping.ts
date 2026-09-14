@@ -25,7 +25,7 @@ import { ReferenceFetchType } from "@/schema/dto/api";
 import { __TsFormulaMappingOptions } from "@/schema/dto/formula";
 import { AbstractDtoContext, createDto, DtoContextFlags, finalInputFlags, finalPath, newDtoContext } from "./dto_context";
 import { acceptsNullOrUndefined } from "./util";
-import { InputFlags } from "./dto_mapper";
+import { InputFlags } from "./input_flags";
 
 export interface AbstractDtoMapping {
 

@@ -96,6 +96,7 @@ export type AnyModelImpl = ModelImpl<any, any, any, any, any, any>;
 export type ModelOptions = {
     readonly tableOptions: __TableOptions<AnyModel | never> | undefined;
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
+    readonly idGenerator: __IdGenerator<any> | undefined;
 };
 
 export class ModelContextImpl<
@@ -104,9 +105,9 @@ export class ModelContextImpl<
     TSuperModel extends AnyModel | never
 > implements __ModelContext<TIdKey, TCtor, TSuperModel> {
 
-    private _tableOptions: __TableOptions<TSuperModel> | undefined = undefined;
+    protected _tableOptions: __TableOptions<TSuperModel> | undefined = undefined;
 
-    private readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
+    protected readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
 
     private readonly _uniqueKeySet = new Set<string>();
     
@@ -141,7 +142,8 @@ export class ModelContextImpl<
     toModelOptions(): ModelOptions {
         return {
             tableOptions: this._tableOptions,
-            uniqueConstraints: this._uniqueConstraints
+            uniqueConstraints: this._uniqueConstraints,
+            idGenerator: undefined
         };
     }
 }
@@ -152,12 +154,23 @@ export class RootModelContextImpl<
 > extends ModelContextImpl<TIdKey, TCtor, never> 
 implements __RootModelContext<TIdKey, TCtor> {
 
+    private _idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]> | undefined = undefined;
+
     __type(): { modelContext: TCtor | true; rootModelContext: true } {
         return { modelContext: true, rootModelContext: true };
     }
 
-    id(_idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]>): this {
+    id(idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]>): this {
+        this._idGenerator = idGenerator;
         return this;
+    }
+
+    toModelOptions(): ModelOptions {
+        return {
+            tableOptions: this._tableOptions,
+            uniqueConstraints: this._uniqueConstraints,
+            idGenerator: this._idGenerator
+        };
     }
 }
 

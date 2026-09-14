@@ -15,7 +15,7 @@
 import { __FlattenMembers } from "@/auxiliary_types";
 import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __I64PropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
-import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT } from "./model";
+import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT, UserIdGenerator } from "./model";
 
 export interface __ModelCreator<TAbstract extends boolean> {
     
@@ -384,14 +384,12 @@ export type __IdGenerator<
     TIdMember extends __I64PropContract<infer Value, any>
         ? "IDENTITY"
         | { readonly sequenceName: string; }
-        | __UserIdGenerator<Value>
+        | UserIdGenerator<Value>
     : TIdMember extends __ScalarPropContract<number, any, any>
         ? "IDENTITY"
         | { readonly sequenceName: string; }
-        | __UserIdGenerator<number>
-    : __UserIdGenerator<__DataType<TIdMember>>;
-
-export type __UserIdGenerator<T> = () => T;
+        | UserIdGenerator<number>
+    : UserIdGenerator<__DataType<TIdMember>>;
 
 export type __DataType<TProp> = 
     TProp extends __ScalarPropContract<infer Value, any, any>

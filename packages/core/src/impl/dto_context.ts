@@ -18,7 +18,7 @@ import { ArgumentError, StateError } from "@/error/common";
 import { CodeWriter } from "./code_writer";
 import { Dto, DtoField, SqlFormulaProp, TsFormulaProp, TypeNameProp } from "./dto";
 import { capitalize } from "./util";
-import { InputFlags, Path } from "./dto_mapper";
+import { Path } from "./dto_mapper";
 import { AnyModel } from "@/schema/model";
 import { __SqlFormulaMappingOptions, __TsFormulaMappingOptions } from "@/schema/dto/formula";
 import { 
@@ -39,6 +39,7 @@ import {
 } from "./dto_mapping";
 import { SqlFormula, TsFormula } from "@/schema/computed";
 import { dto } from "@/schema/dto/api";
+import { InputFlags } from "./input_flags";
 
 export enum DtoContextFlags {
     None = 0,

@@ -22,7 +22,7 @@ import { ReferenceFetchType } from "@/schema/dto/api";
 import { SqlFormula, TsFormula } from "@/schema/computed";
 import { StateError } from "@/error/common";
 import { DtoBody, MapperFn } from "./dto_mapping";
-import { InputFlags } from "./dto_mapper";
+import { InputFlags } from "./input_flags";
 
 export interface Dto {
 

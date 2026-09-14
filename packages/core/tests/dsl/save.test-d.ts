@@ -47,7 +47,7 @@ describe("SaveTest", () => {
             root: "UPDATE",
             associated: {
                 "childNodes": "VIOLENTLY_REPLACE",
-                "childNodes.tags": "APPEND_IF_ABSENT"
+                "childNodes.tags": "INSERT_IF_ABSENT"
             },
             dissociation: {
                 "childNodes": "SET_NULL",
@@ -69,7 +69,7 @@ describe("SaveTest", () => {
             root: "UPDATE",
             associated: {
                 "childNodes": "VIOLENTLY_REPLACE",
-                "childNodes.tags": "APPEND_IF_ABSENT"
+                "childNodes.tags": "INSERT_IF_ABSENT"
             },
             dissociation: {
                 "childNodes": "SET_NULL",
@@ -97,7 +97,7 @@ describe("SaveTest", () => {
             root: "UPDATE",
             associated: {
                 "childNodes": "VIOLENTLY_REPLACE",
-                "childNodes.tags": "APPEND_IF_ABSENT"
+                "childNodes.tags": "INSERT_IF_ABSENT"
             },
             dissociation: {
                 "childNodes": "SET_NULL",
@@ -119,7 +119,7 @@ describe("SaveTest", () => {
             root: "UPDATE",
             associated: {
                 "childNodes": "VIOLENTLY_REPLACE",
-                "childNodes.tags": "APPEND_IF_ABSENT"
+                "childNodes.tags": "INSERT_IF_ABSENT"
             },
             dissociation: {
                 "childNodes": "SET_NULL",

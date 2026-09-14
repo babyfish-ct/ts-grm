@@ -101,7 +101,8 @@ export { ExpressionOrder } from "./dsl";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
     Model,
-    AnyModel
+    AnyModel,
+    UserIdGenerator
 } from "./schema/model";
 export { TABLE_INHERIT, DISCRIMINATOR_VALUE_MODEL_NAME } from "./schema/model";
 export type { 

@@ -1,5 +1,6 @@
 import { DataReader } from "@/impl/data_reader";
-import { DtoMapper, InputFlags } from "@/impl/dto_mapper";
+import { DtoMapper } from "@/impl/dto_mapper";
+import { InputFlags } from "@/impl/input_flags";
 import { buildShape, Shape } from "@/impl/shape";
 
 export function mapperJson(mapper: DtoMapper): any {

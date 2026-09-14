@@ -133,7 +133,11 @@ export const BOOK = model("Book", "id", class {
     ctx.table({
         discriminator: "TYPE",
         discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
-    }).unique("name", "edition").id("IDENTITY");
+    }).unique(
+        "name", "edition"
+    ).id(
+        "IDENTITY"
+    );
 });
 
 const PAPER_BOOK_AREA_FORMULA: TsFormula<number> = 
