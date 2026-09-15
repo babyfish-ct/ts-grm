@@ -2,6 +2,7 @@ import { __AllModelMembers, __AssociatedProp, __AssociatedPropContract, __Declar
 import { describe, it, expect } from "vitest";
 import { BOOK, TREE_NODE } from "../../model/model";
 import { mapperJson } from "../view/utils";
+import { expectCode } from "../../utils";
 
 describe("SimpleInputTest", () => {
 
@@ -66,7 +67,43 @@ describe("SimpleInputTest", () => {
                 }
             ]
         });
-        console.log(input.mapper.inputRowReader.constructor.toString());
+
+        const reader = input.mapper.inputRowReader();
+        expectCode(reader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnProps, $returnIndices, $preAssociatedMap);
+                }
+                read(parent, input) {
+                    return [input.name, input.edition, input.price, parent.get(2)]
+                }
+                idIndex(subpath) {
+                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
+                }
+                static __store_reader = $preAssociatedMap.get("store");
+            }
+        `);
+        expect(reader.returnProps.map(p => p.toString())).toEqual(["Book.id"]);
+        expect(reader.returnIndices).toEqual([4]);
+        
+        const storeReader = reader.preAssociatedMap.get("store")!;
+        expectCode(storeReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnProps, $returnIndices, $preAssociatedMap);
+                }
+                read(parent, input) {
+                    return [input.name, input.version]
+                }
+                idIndex(subpath) {
+                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
+                }
+            }
+        `);
+        expect(storeReader.returnProps.map(p => p.toString())).toEqual(["BookStore.id"]);
+        expect(storeReader.returnIndices).toEqual([2]);
     });
 
     it("o2m", () => {

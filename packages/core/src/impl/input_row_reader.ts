@@ -21,6 +21,8 @@ import { AssociatedSaveMode, RootSaveMode } from "@/dsl";
 import { ArgumentError } from "@/error/common";
 import { InputFlags } from "./input_flags";
 import { prop } from "@/schema/prop";
+import { __AssociatedSaveModeOptions } from "@/index_internal";
+import { DtoField } from "./dto";
 
 export interface InputRow {
 
@@ -29,6 +31,8 @@ export interface InputRow {
 
 export abstract class InputRowReader {
 
+    private readonly _indexMap = new Map<string, number>();
+
     constructor(
         readonly fields: ReadonlyArray<DtoMapperField>,
         readonly keyIndices: ReadonlyArray<number>,
@@ -36,7 +40,8 @@ export abstract class InputRowReader {
         readonly updateIndices: ReadonlyArray<number>,
         readonly returnProps: ReadonlyArray<EntityProp>,
         readonly returnIndices: ReadonlyArray<number>,
-        readonly preAssociatedMap: ReadonlyMap<string, InputRowReader>
+        readonly preAssociatedMap: ReadonlyMap<string, InputRowReader>,
+        readonly postAssociatedCreatorMap: ReadonlyMap<string, InputRowReaderCreator>
     ) {
     }
 
@@ -45,7 +50,18 @@ export abstract class InputRowReader {
         input: any
     ): InputRow;
 
+    abstract idIndex(subpath: string): number;
+
     indexOf(path: string): number {
+        let index = this._indexMap.get(path);
+        if (index == null) {
+            index = this._indexOfImpl(path);
+            this._indexMap.set(path, index);
+        }
+        return index;
+    }
+
+    private _indexOfImpl(path: string): number {
         for (let i = 0; i < this.fields.length; i++) {
             if (this.fields[i]!.prop.path === path) {
                 return i;
@@ -60,20 +76,80 @@ export abstract class InputRowReader {
     }
 }
 
-export function createInputRowReader(mapper: DtoMapper): InputRowReader {
-    const creator = getInputRowReaderCreator(mapper);
-    return new creator();
+export interface __InputRowReaderOptions {
+    readonly root?: RootSaveMode;
+    readonly associated?: __AssociatedSaveModeOptions<any>;
 }
 
-type InputRowReaderCreator = new () => InputRowReader;
+export function inputRowReaderKey(
+    options?: __InputRowReaderOptions
+): string {
+    if (options == null) {
+        return "u";
+    }
+    const associated = options?.associated;
+    if (associated == null) {
+        return `${modeString(options.root ?? "UPSERT")}`;
+    }
+    const keys = Object.keys(associated);
+    keys.sort();
+    let str = modeString(options.root ?? "UPSERT");
+    let sp = "(";
+    for (const key of keys) {
+        const mode = associated[key];
+        if (mode == null || mode === "REPLACE") {
+            continue;
+        }
+        str += `${key}:${modeString(mode)}`;
+        sp = "|";
+    }
+    if (sp === "|") {
+        str += ")";
+    }
+    return str;
+}
+
+function modeString(
+    mode: RootSaveMode | AssociatedSaveMode
+) {
+    switch (mode) {
+        case "UPSERT":
+            return "ui";
+        case "INSERT":
+            return "i";
+        case "INSERT_IF_ABSENT":
+            return "ia";
+        case "UPDATE":
+            return "u";
+        case "REPLACE":
+            return "r";
+        case "NON_IDEMPOTENT_UPSERT":
+            return "nu";
+        case "VIOLENTLY_REPLACE":
+            return "vr";
+    }
+}
+
+export function createInputRowReader(
+    mapper: DtoMapper,
+    options: __InputRowReaderOptions | undefined
+): InputRowReader {
+    const creator = getInputRowReaderCreator(mapper, options);
+    return creator();
+}
+
+type InputRowReaderCreator = () => InputRowReader;
 
 const INPUT_ROW_READER_CREATOR_MAP = new Map<string, InputRowReaderCreator>();
 
-function getInputRowReaderCreator(mapper: DtoMapper): InputRowReaderCreator {
-    const hash = mapper.hash;
+function getInputRowReaderCreator(
+    mapper: DtoMapper,
+    options: __InputRowReaderOptions | undefined
+): InputRowReaderCreator {
+    const hash = mapper.hash + "|" + inputRowReaderKey(options);
     let creator = INPUT_ROW_READER_CREATOR_MAP.get(hash);
     if (creator == null) {
-        creator = createInputRowReaderCreator("<root>", mapper);
+        creator = createInputRowReaderCreator("", mapper, options, undefined);
         INPUT_ROW_READER_CREATOR_MAP.set(hash, creator);
     }
     return creator;
@@ -81,7 +157,9 @@ function getInputRowReaderCreator(mapper: DtoMapper): InputRowReaderCreator {
 
 function createInputRowReaderCreator(
     path: string,
-    mapper: DtoMapper
+    mapper: DtoMapper,
+    options: __InputRowReaderOptions | undefined,
+    parent: InputRowCreatorParent | undefined
 ): InputRowReaderCreator {
     const fieldMap = new Map<Entity, Array<DtoMapperField>>();
     for (const field of mapper.fields) {
@@ -100,7 +178,7 @@ function createInputRowReaderCreator(
     }
     const creatorMap = new Map<Entity, InputRowReaderCreator>();
     for (const [entity, fields] of fieldMap.entries()) {
-        const creator = new InputRowReaderCreatorGenerator(path, "UPSERT", entity, fields).generate();
+        const creator = new InputRowReaderCreatorGenerator(path, options, entity, fields, parent).generate();
         creatorMap.set(entity, creator);
     }
     return creatorMap.get(mapper.entity.tableEntity)!;
@@ -126,122 +204,69 @@ class InputRowReaderCreatorGenerator {
 
     private readonly _preAssociatedMap: ReadonlyMap<string, InputRowReader>;
 
+    private readonly _postAssociatedCreatorMap: ReadonlyMap<string, InputRowReaderCreator>;
+
+    private readonly _backRefProp: EntityProp | undefined;
+
     constructor(
         private readonly _path: string,
-        private readonly _mode: RootSaveMode | AssociatedSaveMode,
-        entity: Entity,
-        originalFields: ReadonlyArray<DtoMapperField>
+        options: __InputRowReaderOptions | undefined,
+        private readonly _entity: Entity,
+        originalFields: ReadonlyArray<DtoMapperField>,
+        private readonly _parent: InputRowCreatorParent | undefined
     ) {
-        const idName = entity.idProp.name;
-        const keyMap = new Map<string, DtoMapperField>();
-        const insertMap = new Map<string, DtoMapperField>();
-        const updateMap = new Map<string, DtoMapperField>();
-        const returnMap = new Map<string, EntityProp>();
-        const preAssociatedMap = new Map<string, InputRowReader>();
+        if (_parent?.prop?.mappedByProp != null) {
+            const mappedBy = _parent?.prop?.mappedByProp;
+            if (mappedBy.associationType === "ONE_TO_ONE" || mappedBy.associationType === "MANY_TO_ONE") {
+                this._backRefProp = mappedBy;
+            }
+        }
+        const path = this._path !== "" ? `<root>.${this._path}` : "<root>";
+        const ctx = new InputRowReaderContext(path, _entity, options);
         for (const field of originalFields) {
-            const name = field.prop.path;
-            if (field.subMapper != null && field.prop.referenceKeyProp != null) {
-                const creator = createInputRowReaderCreator(
-                    `${_path}.${prop.num}${field.recursiveDepth != null ? "*" : ""}`, 
-                    field.subMapper
-                );
-                preAssociatedMap.set(
-                    field.prop.path, 
-                    new creator()
-                );
-            }
-            if (field.columnIndex == null) {
-                continue;
-            }
-            if ((field.inputFlags & InputFlags.Key) !== 0) {
-                keyMap.set(name, field);
-            } else {
-                if ((field.inputFlags & InputFlags.NonInsertable) === 0) {
-                    insertMap.set(name, field);
-                }
-                if ((field.inputFlags & InputFlags.NonUpdateable) === 0) {
-                    updateMap.set(name, field);
-                }
-                if (field.prop.name === idName && (field.inputFlags & InputFlags.NonWritable) !== 0) {
-                    throw new ArgumentError(
-                        `Illegal object format at the path "${
-                            this._path
-                        }", the mask of id property "${
-                            field.prop.toString()
-                        }" cannot be specified`
-                    );
-                }
-            }
+            ctx.add(field, this);
         }
-        const idField = keyMap.get(idName) ?? insertMap.get(idName) ?? updateMap.get(idName);
-        if (keyMap.size === 0) {
-            if (idField != null) {
-                keyMap.set(idName, idField);
-                insertMap.delete(idName);
-                updateMap.delete(idName);
-            } else if (_mode !== "INSERT" && _mode !== "NON_IDEMPOTENT_UPSERT" && _mode !== "VIOLENTLY_REPLACE") {
-                throw new ArgumentError(
-                    `Illegal object format at the path "${
-                        this._path
-                    }", no key properties are specified but the save mode is "${
-                        this._mode
-                    }"`
-                );
-            }
-        }
-        if (idField == null) {
-            if (entity.idGenerator == null) {
-                throw new ArgumentError(
-                    `Illegal object format at the path "${
-                        this._path
-                    }", the id property "${
-                        entity.idProp.toString()
-                    }" must be member of DTO body when the id propertyh does not have any generator`
-                );
-            }
-            if (!returnMap.has(idName)) {
-                returnMap.set(idName, entity.idProp);
-            }
-        }
-        const fields: Array<DtoMapperField> = [];
-        const keyIndices: Array<number> = [];
-        for (const field of keyMap.values()) {
-            keyIndices.push(fields.length);
-            fields.push(field);
-        }
-        const insertIndices: Array<number> = [];
-        for (const field of insertMap.values()) {
-            insertIndices.push(fields.length);
-            fields.push(field);
-        }
-        const updatedIndices: Array<number> = [];
-        for (const [path, field] of updateMap.entries()) {
-            if (!insertMap.has(path)) {
-                updatedIndices.push(fields.length);
-                fields.push(field);
-            }
-        }
-        const returnProps = Array.from(returnMap.values());
-        const returnIndices: Array<number> = [];
-        const span = fields.length;
-        for (let i = 0; i < returnProps.length; i++) {
-            returnIndices.push(span + i);
-        }
+        ctx.finish();
         const inputFnMap = new Map<string, MapperFn>();
-        for (const field of fields) {
+        for (const field of ctx.fields) {
             const fn = field.mapperFn;
             if (fn != null) {
                 inputFnMap.set(field.prop.path, fn);
             }
         }
-        this._fields = fields;
-        this._keyIndices = keyIndices;
-        this._insertIndices = insertIndices;
-        this._updateIndices = updatedIndices;
-        this._returnProps = returnProps;
-        this._returnIndices = returnIndices;
+        this._fields = ctx.fields;
+        this._keyIndices = ctx.keyIndices;
+        this._insertIndices = ctx.insertIndices;
+        this._updateIndices = ctx.updateIndices;
+        this._returnProps = ctx.returnProps;
+        this._returnIndices = ctx.returnIndices;
+        this._preAssociatedMap = ctx.preAssociatedMap;
+        this._postAssociatedCreatorMap = ctx.postAssociatedCreatorMap;
         this._inputFunMap = inputFnMap;
-        this._preAssociatedMap = preAssociatedMap;
+    }
+
+    private _addBackRefPFields(prop: EntityProp) {
+        const backRefProp = this._backRefProp;
+        if (backRefProp == null) {
+            return;
+        }
+        const field: DtoField = {
+            implicit: true,
+            path: undefined,
+            downcastTo: undefined,
+            prop,
+            bridgeProp: undefined,
+            dto: undefined,
+            inputFlags: InputFlags.None,
+            fetchType: "LOAD",
+            predicateFn: undefined,
+            orders: undefined,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: false,
+            parameter: undefined,
+            mapperFn: undefined
+        };
     }
     
     generate(): InputRowReaderCreator {
@@ -250,9 +275,10 @@ class InputRowReaderCreatorGenerator {
         w.scope("CURLY_BRACKETS", () => {
             this._writeConstructor();
             this._writeRead();
-            this._writeStaticFields()
+            this._writeIdIndex();
+            this._writeStaticFields();
         }).newLine(";");
-        return new Function(
+        const ctor = new Function(
             "$baseClass", 
             "$fields",
             "$keyIndices",
@@ -272,6 +298,7 @@ class InputRowReaderCreatorGenerator {
             this._returnIndices,
             this._preAssociatedMap
         );
+        return () => new ctor();
     }
 
     private _writeConstructor() {
@@ -352,6 +379,150 @@ class InputRowReaderCreatorGenerator {
             }
         }
     }
+
+    private _writeIdIndex() {
+        const idName = this._entity.idProp.name;
+        const w = this._writer;
+        w.code("idIndex(subpath) ").scope("CURLY_BRACKETS", () => {
+            w.code(`return subpath === "" ? this.indexOf("${idName}") : this.indexOf("${idName}." + subpath)`).newLine(";")
+        }).newLine();
+    }
+}
+
+class InputRowReaderContext {
+
+    readonly _mode: RootSaveMode | AssociatedSaveMode;
+    readonly fields: Array<DtoMapperField> = [];
+    readonly keyIndices: Array<number> = [];
+    readonly insertIndices: Array<number> = [];
+    readonly updateIndices: Array<number> = [];
+    readonly returnProps: Array<EntityProp> = [];
+    readonly returnIndices: Array<number> = [];
+    readonly preAssociatedMap = new Map<string, InputRowReader>();
+    readonly postAssociatedCreatorMap = new Map<string, InputRowReaderCreator>();
+
+    private readonly _idName: string;
+    private _idIndex = -1;
+
+    constructor(
+        private readonly _path: string,
+        private readonly _entity: Entity,
+        private readonly _options: __InputRowReaderOptions | undefined
+    ) {
+        this._idName = _entity.idProp.name;
+        this._mode = this._path === ""
+            ? _options?.root ?? "UPSERT"
+            : _options?.associated != null
+                ? _options?.associated[_path] ?? "REPLACE"
+                : "REPLACE";
+    }
+
+    add(field: DtoMapperField, generator: InputRowReaderCreatorGenerator) {
+        if (this._association(field, generator)) {
+            return;
+        }
+        if (field.columnIndex == null) {
+            return;
+        }
+        if ((field.inputFlags & InputFlags.NonWritable) === InputFlags.NonWritable) {
+            return;
+        }
+        const index = this.fields.length;
+        if (field.prop.name === this._idName) {
+            if ((field.inputFlags & InputFlags.NonWritable) !== 0) {
+                throw new ArgumentError(
+                    `Illegal object format at the path "${
+                        this._path
+                    }", the mask of id property "${
+                        field.prop.toString()
+                    }" cannot be specified`
+                );
+            }
+            this._idIndex = index;
+        }
+        this.fields.push(field);
+        const flags = field.inputFlags;
+        if ((flags & InputFlags.Key) !== 0) {
+            this.keyIndices.push(index);
+        } else {
+            if ((flags & InputFlags.NonInsertable) === 0) {
+                this.insertIndices.push(index);
+            }
+            if ((flags & InputFlags.NonUpdateable) === 0) {
+                this.updateIndices.push(index);
+            }
+        }
+    }
+
+    private _association(
+        field: DtoMapperField, 
+        generator: InputRowReaderCreatorGenerator
+    ): boolean {
+        if (field.subMapper != null) {
+            if (field.prop.referenceKeyProp != null) {
+                const creator = createInputRowReaderCreator(
+                    `${this._path}.${field.prop.name}${field.recursiveDepth != null ? "*" : ""}`, 
+                    field.subMapper,
+                    this._options,
+                    undefined
+                );
+                this.preAssociatedMap.set(field.prop.path, creator());
+            } else {
+                const creator = createInputRowReaderCreator(
+                    `${this._path}.${field.prop.name}${field.recursiveDepth != null ? "*" : ""}`, 
+                    field.subMapper,
+                    this._options,
+                    {
+                        prop: field.prop.asEntityProp!,
+                        parent: generator
+                    }
+                );
+                this.postAssociatedCreatorMap.set(field.prop.path, creator);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    finish() {
+        if (this.keyIndices.length === 0) {
+            if (this._idIndex !== -1) {
+                this.keyIndices.push(this._idIndex);
+                remove(this.insertIndices, this._idIndex);
+                remove(this.updateIndices, this._idIndex);
+            } else if (this._mode !== "INSERT" && this._mode !== "NON_IDEMPOTENT_UPSERT" && this._mode !== "VIOLENTLY_REPLACE") {
+                throw new ArgumentError(
+                    `Illegal object format at the path "${
+                        this._path
+                    }", no key properties are specified but the save mode is "${
+                        this._mode
+                    }"`
+                );
+            }
+        }
+        if (this._idIndex === -1) {
+            if (this._entity.idGenerator == null) {
+                throw new ArgumentError(
+                    `Illegal object format at the path "${
+                        this._path
+                    }", the id property "${
+                        this._entity.idProp.toString()
+                    }" must be member of DTO body when the id propertyh does not have any generator`
+                );
+            }
+            const props = this._entity.idProp.scalarProps!;
+            const offset = this.fields.length;
+            for (let i = 0; i < props.length; i++) {
+                this.returnProps.push(props[i]!);
+                this.returnIndices.push(offset + i);
+            }
+        }
+    }
+}
+
+interface InputRowCreatorParent {
+    readonly prop: EntityProp;
+    readonly parent: InputRowReaderCreatorGenerator;
 }
 
 function mapperFnName(path: string): string {
@@ -367,4 +538,11 @@ function toScreamingSnakeCase(text: string): string {
         .replace(/([a-z])([A-Z])/g, '$1_$2')
         .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
         .toLowerCase();
+}
+
+function remove<E>(arr: Array<E>, value: E) {
+    const index = arr.indexOf(value);
+    if (index !== -1) {
+        arr.splice(index, 1);
+    }
 }

@@ -26,8 +26,9 @@ import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
 import { belongTo, fromDtoFields, Metadata, MetadataField } from "./metadata";
 import { prop } from "@/schema/prop";
-import { createInputRowReader, InputRowReader } from "./input_row_reader";
+import { __InputRowReaderOptions, createInputRowReader, InputRowReader, inputRowReaderKey } from "./input_row_reader";
 import { InputFlags } from "./input_flags";
+import { __AssociatedSaveModeOptions } from "@/index_internal";
 
 export function dtoMapper(
     dto: Dto, 
@@ -50,6 +51,8 @@ export function dtoMapper(
 export class DtoMapper {
 
     private _dtoRowReader: DtoRowReader | undefined = undefined;
+
+    private _inputRowReaderKey: string | undefined;
 
     private _inputRowReader: InputRowReader | undefined = undefined;
 
@@ -82,12 +85,21 @@ export class DtoMapper {
         return rowReader;
     }
 
-    get inputRowReader(): InputRowReader {
-        let rowRader = this._inputRowReader;
-        if (rowRader == null) {
-            this._inputRowReader = rowRader = createInputRowReader(this);
+    inputRowReader(
+        options?: __InputRowReaderOptions
+    ): InputRowReader {
+        let inputRowRader = this._inputRowReader;
+        const key = inputRowReaderKey(options);
+        if (key !== this._inputRowReaderKey) {
+            if (this.associatedProp != null) {
+                throw new StateError(
+                    `The sub mapper of input DTO cannot create the input row reader automatically, please access the reader of parent mapper at first`
+                );
+            }
+            this._inputRowReaderKey = key;
+            this._inputRowReader = inputRowRader = createInputRowReader(this, options);
         }
-        return rowRader;
+        return inputRowRader!;
     }
 
     get span(): number {
