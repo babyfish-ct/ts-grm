@@ -951,6 +951,15 @@ export class EntityProp {
         return storageType;
     }
 
+    get finalNullable(): boolean {
+        for (let prop: EntityProp | undefined = this; prop != null; prop = prop.parentProp) {
+            if (prop.nullable) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     toStorage(strategy: DatabaseStrategy): PropStorage | undefined {
         if (this._storageResolver?.namingStrategy === strategy.namingStrategy
             && this._storageResolver?.keywordStrategy === strategy.keywordStrategy) {

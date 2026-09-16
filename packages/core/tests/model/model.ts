@@ -216,7 +216,8 @@ export const TREE_NODE = model.abstract("TreeNode", "id", class {
     ctx.unique("name", "parentNode");
     ctx.table({
         discriminator: "TYPE"
-    })
+    });
+    ctx.id("IDENTITY");
 });
 
 export const CATEGORY = model.extends(TREE_NODE)(

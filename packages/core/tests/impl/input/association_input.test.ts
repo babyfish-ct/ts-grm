@@ -73,10 +73,10 @@ describe("SimpleInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnProps, $returnIndices, $preAssociatedMap);
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
-                    return [input.name, input.edition, input.price, parent.get(2)]
+                    return [input.name, input.edition, input.price, parent.get(2), undefined];
                 }
                 idIndex(subpath) {
                     return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
@@ -84,34 +84,32 @@ describe("SimpleInputTest", () => {
                 static __store_reader = $preAssociatedMap.get("store");
             }
         `);
-        expect(reader.returnProps.map(p => p.toString())).toEqual(["Book.id"]);
-        expect(reader.returnIndices).toEqual([4]);
         
         const storeReader = reader.preAssociatedMap.get("store")!;
         expectCode(storeReader.constructor.toString(), `
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnProps, $returnIndices, $preAssociatedMap);
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
-                    return [input.name, input.version]
+                    return [input.name, input.version, undefined];
                 }
                 idIndex(subpath) {
                     return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);
-        expect(storeReader.returnProps.map(p => p.toString())).toEqual(["BookStore.id"]);
+        expect(storeReader.returnIndices.map(i => storeReader.fields[i]!.prop.toString())).toEqual(["BookStore.id"]);
         expect(storeReader.returnIndices).toEqual([2]);
     });
 
     it("o2m", () => {
         const input = dto.input(TREE_NODE, c => [
-            c.parentNodeId,
-            c.name,
-            c.childNodes.with(c => [
-                c.name
+            c.parentNodeId.key(),
+            c.name.key(),
+            c.childNodes.backRefAsKey().with(c => [
+                c.name.key()
             ])
         ]);
         expect(mapperJson(input.mapper)).toEqual({
@@ -121,12 +119,14 @@ describe("SimpleInputTest", () => {
                     "prop": "TreeNode.parentNodeId",
                     "paths": ["parentNodeId"],
                     "ref": true,
-                    "columnIndex": 0
+                    "columnIndex": 0,
+                    "key": true
                 },
                 {
                     "prop": "TreeNode.name",
                     "paths": ["name"],
-                    "columnIndex": 1
+                    "columnIndex": 1,
+                    "key": true
                 },
                 {
                     "prop": "TreeNode.id",
@@ -144,7 +144,8 @@ describe("SimpleInputTest", () => {
                             {
                                 "prop": "TreeNode.name",
                                 "paths": ["name"],
-                                "columnIndex": 0
+                                "columnIndex": 0,
+                                "key": true
                             }
                         ]
                     },
@@ -152,5 +153,55 @@ describe("SimpleInputTest", () => {
                 }
             ]
         });
+
+        const reader = input.mapper.inputRowReader();
+        expectCode(reader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.parentNodeId, input.name, undefined];
+                }
+                idIndex(subpath) {
+                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
+                }
+            }
+        `);
+        expect(reader.fields.map(f => f.prop.toString())).toEqual([
+            "TreeNode.parentNodeId",
+            "TreeNode.name",
+            "TreeNode.id"
+        ]);
+        expect(reader.keyIndices).toEqual([0, 1]);
+        expect(reader.insertIndices).toEqual([]);
+        expect(reader.updateIndices).toEqual([]);
+        expect(reader.returnIndices).toEqual([2]);
+
+        const childNodesReader = reader.postAssociatedMap.get("childNodes")!;
+        expectCode(childNodesReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.name, undefined, parent.get(2)];
+                }
+                idIndex(subpath) {
+                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
+                }
+            }
+        `);
+        expect(childNodesReader.fields.map(f => f.prop.toString())).toEqual([
+            "TreeNode.name",
+            "TreeNode.id",
+            "TreeNode.parentNodeId"
+        ]);
+        expect(childNodesReader.keyIndices).toEqual([0, 2]);
+        expect(childNodesReader.insertIndices).toEqual([]);
+        expect(childNodesReader.updateIndices).toEqual([]);
+        expect(childNodesReader.returnIndices).toEqual([1]);
     });
 });
