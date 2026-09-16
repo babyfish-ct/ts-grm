@@ -22,8 +22,6 @@ import { ArgumentError } from "@/error/common";
 import { InputFlags } from "./input_flags";
 import { __AssociatedSaveModeOptions } from "@/index_internal";
 import { FetchProp } from "./dto";
-import { is } from "zod/v4/locales/index.js";
-import { prop } from "@/schema/prop";
 
 export interface InputRow {
 
@@ -324,7 +322,7 @@ class InputRowReaderCreatorGenerator {
                     w.code(`parent.get(${fieldIndexOf(this._parent.generator._fields, path)})`);
                 } else {
                     const thisProp = field.prop.asEntityProp?.rootProp!;
-                    const targetKeyProp = thisProp.targetKeyProp!.sub(thisProp.subPath);
+                    const targetKeyProp = thisProp.targetKeyProp!.sub(field.prop.subPath);
                     const associatedReader = this._preAssociatedMap.get(referenceProp.path)!;
                     w.code(`parent.get(${associatedReader.indexOf(targetKeyProp.path)})`);
                 }
@@ -345,8 +343,10 @@ class InputRowReaderCreatorGenerator {
         if (typeof path === "string") {
             w.code(".").code(path);
         } else {
+            let op = "."
             for (const part of path) {
-                w.code("?.").code(part);
+                w.code(op).code(part);
+                op = "?.";
             }
         }
     }
@@ -371,7 +371,6 @@ class InputRowReaderContext {
     readonly preAssociatedMap = new Map<string, InputRowReader>();
     readonly postAssociatedLazyCreatorMap = new Map<string, LazyInputRowReaderCreator>();
 
-    private readonly _idName: string;
     private _idIndex = -1;
 
     constructor(
@@ -380,7 +379,6 @@ class InputRowReaderContext {
         private readonly _parent: InputRowCreatorParent | undefined,
         private readonly _options: __InputRowReaderOptions | undefined
     ) {
-        this._idName = _entity.idProp.name;
         this._mode = this._path === ""
             ? _options?.root ?? "UPSERT"
             : _options?.associated != null
@@ -399,7 +397,9 @@ class InputRowReaderContext {
             return;
         }
         const index = this.fields.length;
-        if (field.prop.name === this._idName) {
+        const isId = field.prop.asEntityProp?.rootProp?.isIdProp;
+        const isExplicit = field.paths.length !== 0;
+        if (isId) {
             if ((field.inputFlags & InputFlags.NonWritable) !== 0) {
                 throw new ArgumentError(
                     `Illegal object format at the path "${
@@ -413,9 +413,11 @@ class InputRowReaderContext {
         }
         this.fields.push(field);
         const flags = field.inputFlags;
-        if ((flags & InputFlags.Key) !== 0) {
+        if (isId && isExplicit) {
             this.keyIndices.push(index);
-        } else if (field.paths.length === 0) {
+        } else if ((flags & InputFlags.Key) !== 0) {
+            this.keyIndices.push(index);
+        } else if (field.paths.length === 0 && field.implicit) {
             this.returnIndices.push(index);
         } else {
             if ((flags & InputFlags.NonInsertable) === 0) {

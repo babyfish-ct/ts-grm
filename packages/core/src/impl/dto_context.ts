@@ -121,7 +121,7 @@ export class AbstractDtoContext {
     get $allScalars(): AllScalarsMapping {
         let mapping = this._allScalarsMapping;
         if (mapping == null) {
-            this._allScalarsMapping = mapping = new AllScalarsMapping(this, undefined);
+            this._allScalarsMapping = mapping = new AllScalarsMapping(this, undefined, false);
         }
         return mapping;
     }
