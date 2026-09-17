@@ -96,6 +96,8 @@ export class AbstractDtoContext {
 
     private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
 
+    private _implicitAllScalarsMappings: AllScalarsMapping | undefined = undefined;
+
     readonly $entity: Entity;
 
     readonly $embeddedProp: EntityProp | undefined;
@@ -122,6 +124,14 @@ export class AbstractDtoContext {
         let mapping = this._allScalarsMapping;
         if (mapping == null) {
             this._allScalarsMapping = mapping = new AllScalarsMapping(this, undefined, false);
+        }
+        return mapping;
+    }
+
+    get $implicitAllScalars(): AllScalarsMapping {
+        let mapping = this._implicitAllScalarsMappings;
+        if (mapping == null) {
+            this._implicitAllScalarsMappings = mapping = new AllScalarsMapping(this, undefined, true);
         }
         return mapping;
     }

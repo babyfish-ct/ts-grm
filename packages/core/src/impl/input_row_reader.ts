@@ -417,14 +417,16 @@ class InputRowReaderContext {
             this.keyIndices.push(index);
         } else if ((flags & InputFlags.Key) !== 0) {
             this.keyIndices.push(index);
-        } else if (field.paths.length === 0 && field.implicit) {
+        } else if (field.paths.length === 0 && field.implicit && isId) {
             this.returnIndices.push(index);
         } else {
             if ((flags & InputFlags.NonInsertable) === 0) {
                 this.insertIndices.push(index);
+                remove(this.returnIndices, index);
             }
             if ((flags & InputFlags.NonUpdateable) === 0) {
                 this.updateIndices.push(index);
+                remove(this.returnIndices, index);
             }
         }
     }

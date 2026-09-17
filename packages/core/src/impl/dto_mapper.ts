@@ -949,7 +949,7 @@ function implicitDtoField(
 ): DtoField {
     if (prop.props != null) {
         const ctx = newDtoContext(prop, DtoContextFlags.None);
-        const childDto = createDto(ctx, downcastTo, (c: AbstractDtoContext) => [c.$allScalars]);
+        const childDto = createDto(ctx, downcastTo, (c: AbstractDtoContext) => [c.$implicitAllScalars]);
         return {
             implicit: true,
             path: undefined,

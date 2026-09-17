@@ -72,6 +72,49 @@ describe("EmbeddedAssociationInputTest", () => {
         ]);
 
         const reader = input.mapper.inputRowReader();
-        console.log(reader.constructor.toString());
+        expectCode(reader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
+                }
+                idIndex(subpath) {
+                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
+                }
+            }
+        `);
+        expect(reader.fields.map(f => f.prop.toString())).toEqual([
+            "Order.id.x",
+            "Order.id.y.a",
+            "Order.id.y.b",
+            "Order.name"
+        ]);
+        expect(reader.keyIndices).toEqual([0, 1, 2]);
+        expect(reader.insertIndices).toEqual([3]);
+        expect(reader.updateIndices).toEqual([3]);
+        expect(reader.returnIndices).toEqual([]);
+
+        const itemsReader = reader.postAssociatedMap.get("items")!;
+        expectCode(itemsReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.id, parent.get(0), parent.get(1), parent.get(2)];
+                }
+                idIndex(subpath) {
+                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
+                }
+            }
+        `);
+        expect(itemsReader.keyIndices).toEqual([0]);
+        expect(itemsReader.insertIndices).toEqual([1, 2, 3]);
+        expect(itemsReader.updateIndices).toEqual([1, 2, 3]);
+        expect(itemsReader.returnIndices).toEqual([]);
     });
 });

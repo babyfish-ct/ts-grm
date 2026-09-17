@@ -48,7 +48,8 @@ export class AllScalarsMapping implements AbstractDtoMapping {
 
     constructor(
         private readonly _context: AbstractDtoContext,
-        private readonly _excludedKeys: ReadonlyArray<string> | undefined
+        private readonly _excludedKeys: ReadonlyArray<string> | undefined,
+        private readonly _implicit: boolean        
     ) {
         if (_context.declaredOnly) {
             throw new StateError(`"$allScalars" cannot be used in the scope of "$instanceOf"`);
@@ -75,7 +76,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
     exclude(
         ...keys: ReadonlyArray<string>
     ): AllScalarsMapping {
-        return new AllScalarsMapping(this._context, keys);
+        return new AllScalarsMapping(this._context, keys, this._implicit);
     }
 
     toFields(
@@ -93,7 +94,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         return {
-            implicit: false,
+            implicit: this._implicit,
             path: finalPath(prop.name),
             downcastTo,
             prop,
@@ -116,6 +117,9 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             return undefined;
         }
         const ctx = newDtoContext(prop, DtoContextFlags.None);
+        if (this._implicit) {
+            return createDto(ctx, undefined, (c: AbstractDtoContext) => [c.$implicitAllScalars], undefined, finalInputFlags());
+        }
         return createDto(ctx, undefined, (c: AbstractDtoContext) => [c.$allScalars], undefined, finalInputFlags());
     }
 }
