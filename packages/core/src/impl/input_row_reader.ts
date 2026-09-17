@@ -132,35 +132,35 @@ export function createInputRowReader(
     mapper: DtoMapper,
     options: __InputRowReaderOptions | undefined
 ): InputRowReader {
-    const creator = getInputRowReaderCreator(mapper, options);
-    return new creator();
+    const ctor = getInputRowReaderCtor(mapper, options);
+    return new ctor();
 }
 
-type InputRowReaderCreator = new () => InputRowReader;
+type InputRowReaderCtor = new () => InputRowReader;
 
 type LazyInputRowReaderCreator = () => InputRowReader;
 
-const INPUT_ROW_READER_CREATOR_MAP = new Map<string, InputRowReaderCreator>();
+const INPUT_ROW_READER_CREATOR_MAP = new Map<string, InputRowReaderCtor>();
 
-function getInputRowReaderCreator(
+function getInputRowReaderCtor(
     mapper: DtoMapper,
     options: __InputRowReaderOptions | undefined
-): InputRowReaderCreator {
+): InputRowReaderCtor {
     const hash = mapper.hash + "|" + inputRowReaderKey(options);
-    let creator = INPUT_ROW_READER_CREATOR_MAP.get(hash);
-    if (creator == null) {
-        creator = createInputRowReaderCreator("", mapper, options, undefined);
-        INPUT_ROW_READER_CREATOR_MAP.set(hash, creator);
+    let ctor = INPUT_ROW_READER_CREATOR_MAP.get(hash);
+    if (ctor == null) {
+        ctor = createInputRowReaderCtor("", mapper, options, undefined);
+        INPUT_ROW_READER_CREATOR_MAP.set(hash, ctor);
     }
-    return creator;
+    return ctor;
 }
 
-function createInputRowReaderCreator(
+function createInputRowReaderCtor(
     path: string,
     mapper: DtoMapper,
     options: __InputRowReaderOptions | undefined,
-    parent: InputRowCreatorParent | undefined
-): InputRowReaderCreator {
+    parent: InputRowCtorParent | undefined
+): InputRowReaderCtor {
     const fieldMap = new Map<Entity, Array<DtoMapperField>>();
     for (const field of mapper.fields) {
         if ((field.inputFlags & InputFlags.NonWritable) === InputFlags.NonWritable) {
@@ -176,15 +176,15 @@ function createInputRowReaderCreator(
             fields.push(field);
         }
     }
-    const creatorMap = new Map<Entity, InputRowReaderCreator>();
+    const ctorMap = new Map<Entity, InputRowReaderCtor>();
     for (const [entity, fields] of fieldMap.entries()) {
-        const creator = new InputRowReaderCreatorGenerator(path, options, entity, fields, parent).toCreator();
-        creatorMap.set(entity, creator);
+        const ctor = new InputRowReaderCtorGenerator(path, options, entity, fields, parent).toCtor();
+        ctorMap.set(entity, ctor);
     }
-    return creatorMap.get(mapper.entity.tableEntity)!;
+    return ctorMap.get(mapper.entity.tableEntity)!;
 }
 
-class InputRowReaderCreatorGenerator {
+class InputRowReaderCtorGenerator {
 
     private readonly _writer = new CodeWriter();
 
@@ -209,7 +209,7 @@ class InputRowReaderCreatorGenerator {
         options: __InputRowReaderOptions | undefined,
         private readonly _entity: Entity,
         originalFields: ReadonlyArray<DtoMapperField>,
-        private readonly _parent: InputRowCreatorParent | undefined
+        private readonly _parent: InputRowCtorParent | undefined
     ) {
         const ctx = new InputRowReaderContext(path !== "" ? path : "<root>", _entity, _parent, options);
         for (const field of originalFields) {
@@ -233,7 +233,7 @@ class InputRowReaderCreatorGenerator {
         this._inputFunMap = inputFnMap;
     }
     
-    toCreator(): InputRowReaderCreator {
+    toCtor(): InputRowReaderCtor {
         const w = this._writer;
         w.code("return class extends $baseClass ");
         w.scope("CURLY_BRACKETS", () => {
@@ -376,7 +376,7 @@ class InputRowReaderContext {
     constructor(
         private readonly _path: string,
         private readonly _entity: Entity,
-        private readonly _parent: InputRowCreatorParent | undefined,
+        private readonly _parent: InputRowCtorParent | undefined,
         private readonly _options: __InputRowReaderOptions | undefined
     ) {
         this._mode = this._path === ""
@@ -386,7 +386,7 @@ class InputRowReaderContext {
                 : "REPLACE";
     }
 
-    add(field: DtoMapperField, generator: InputRowReaderCreatorGenerator) {
+    add(field: DtoMapperField, generator: InputRowReaderCtorGenerator) {
         if (this._association(field, generator)) {
             return;
         }
@@ -433,26 +433,26 @@ class InputRowReaderContext {
 
     private _association(
         field: DtoMapperField, 
-        generator: InputRowReaderCreatorGenerator
+        generator: InputRowReaderCtorGenerator
     ): boolean {
         if (field.subMapper != null) {
             if (field.prop.referenceKeyProp != null) {
-                const creator = createInputRowReaderCreator(
+                const ctor = createInputRowReaderCtor(
                     `${this._path}.${field.prop.name}${field.recursiveDepth != null ? "*" : ""}`, 
                     field.subMapper,
                     this._options,
                     undefined
                 );
-                this.preAssociatedMap.set(field.prop.path, new creator());
+                this.preAssociatedMap.set(field.prop.path, new ctor());
             } else {
                 const lazyCreeator: LazyInputRowReaderCreator = () => {
-                    const creator = createInputRowReaderCreator(
+                    const ctor = createInputRowReaderCtor(
                         `${this._path}.${field.prop.name}${field.recursiveDepth != null ? "*" : ""}`, 
                         field.subMapper!,
                         this._options,
-                        new InputRowCreatorParent(field, generator)
+                        new InputRowCtorParent(field, generator)
                     );
-                    return new creator();
+                    return new ctor();
                 }
                 this.postAssociatedLazyCreatorMap.set(field.prop.path, lazyCreeator);
             }
@@ -519,7 +519,7 @@ class InputRowReaderContext {
     }
 }
 
-class InputRowCreatorParent {
+class InputRowCtorParent {
     
     readonly prop: EntityProp;
     
@@ -529,7 +529,7 @@ class InputRowCreatorParent {
 
     constructor(
         field: DtoMapperField, 
-        readonly generator: InputRowReaderCreatorGenerator
+        readonly generator: InputRowReaderCtorGenerator
     ) {
         this.prop = field.prop.asEntityProp!;
         const mappedBy = this.prop.mappedByProp;
