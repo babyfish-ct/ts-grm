@@ -91,8 +91,43 @@ describe("PolymorphismInputTest", () => {
                 }
             }
         `);
+        expect(reader.keyIndices).toEqual([0, 1]);
+        expect(reader.insertIndices).toEqual([2, 3]);
+        expect(reader.updateIndices).toEqual([2, 3]);
+        expect(reader.returnIndices).toEqual([4]);
 
         const electronicBookReader = reader.postAssociatedMap.get("<derived:ElectronicBook>")!;
-        console.log(electronicBookReader.constructor.toString());
+        expectCode(electronicBookReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.address, input.__typename, input.as("Book").get(4)];
+                }
+            }
+        `);
+        expect(electronicBookReader.keyIndices).toEqual([2]);
+        expect(electronicBookReader.insertIndices).toEqual([0, 1]);
+        expect(electronicBookReader.updateIndices).toEqual([0, 1]);
+        expect(electronicBookReader.returnIndices).toEqual([]);
+
+        const pdfElectronicBookReader = electronicBookReader.postAssociatedMap.get("<derived:PdfElectronicBook>")!;
+        expectCode(pdfElectronicBookReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.pdfVersion, input.as("ElectronicBook").get(2)];
+                }
+            }
+        `);
+        expect(pdfElectronicBookReader.keyIndices).toEqual([1]);
+        expect(pdfElectronicBookReader.insertIndices).toEqual([0]);
+        expect(pdfElectronicBookReader.updateIndices).toEqual([0]);
+        expect(pdfElectronicBookReader.returnIndices).toEqual([]);
     });
 });

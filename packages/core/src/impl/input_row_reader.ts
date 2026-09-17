@@ -257,11 +257,11 @@ class InputRowReaderCtorGenerator {
         private readonly _entityNode: EntityNode,
         private readonly _parent: InputRowReaderCtorParent | undefined
     ) {
-        const ctx = new InputRowReaderContext(path !== "" ? path : "<root>", direction, options, _entityNode, _parent);
+        const ctx = new InputRowReaderContext(this, path !== "" ? path : "<root>", direction, options, _entityNode, _parent);
         for (const field of _entityNode.fields) {
-            ctx.add(field, this);
+            ctx.add(field);
         }
-        ctx.finish(this);
+        ctx.finish();
         const inputFnMap = new Map<string, MapperFn>();
         for (const field of ctx.fields) {
             const fn = field.mapperFn;
@@ -361,9 +361,11 @@ class InputRowReaderCtorGenerator {
 
     private _writeExpr(field: DtoMapperField) {
         const w = this._writer;
-        const superReader = this._preAssociatedMap.get("<super>");
-        if (superReader != null && field.prop.asEntityProp?.isIdProp === true) {
-            const index = superReader.indexOf(field.prop.path);
+        if (this._entityNode.superNode != null && field.prop.asEntityProp?.isIdProp === true) {
+            const superReader = this._preAssociatedMap.get("<super>");
+            const index = superReader != null
+                ? superReader.indexOf(field.prop.path)
+                : fieldIndexOf(this._parent!.generator._fields, field.prop.path);
             w.code(`input.as("${this._entityNode.superNode!.raw.name}").get(${index})`);
         } else if (field.paths.length === 0) {
             const referenceProp = field.prop.asEntityProp?.rootProp?.referenceProp;
@@ -420,8 +422,9 @@ class InputRowReaderContext {
     private _idIndex = -1;
 
     constructor(
+        readonly _self: InputRowReaderCtorGenerator,
         private readonly _path: string,
-        private readonly _direction: InheritanceDirection,
+        direction: InheritanceDirection,
         private readonly _options: __InputRowReaderOptions | undefined,
         private readonly _entityNode: EntityNode,
         private readonly _parent: InputRowReaderCtorParent | undefined
@@ -431,7 +434,7 @@ class InputRowReaderContext {
             : _options?.associated != null
                 ? _options?.associated[_path] ?? "REPLACE"
                 : "REPLACE";
-        if (_entityNode.superNode != null && (_direction & InheritanceDirection.Super) !== 0) {
+        if (_entityNode.superNode != null && (direction & InheritanceDirection.Super) !== 0) {
             const superCtor = new InputRowReaderCtorGenerator(
                 _path,
                 InheritanceDirection.Super,
@@ -442,10 +445,25 @@ class InputRowReaderContext {
             const superReader = new superCtor();
             this.preAssociatedMap.set("<super>", superReader);
         }
+        if (_entityNode.dereviedNodes.length !== 0 && (direction & InheritanceDirection.Derived) !== 0) {
+            for (const derivedNode of _entityNode.dereviedNodes) {
+                const lazyCreator: LazyInputRowReaderCreator = () => {
+                    const derivedCtor = new InputRowReaderCtorGenerator(
+                        this._path,
+                        InheritanceDirection.Derived,
+                        this._options,
+                        derivedNode,
+                        new InputRowReaderCtorParent("SUPER", undefined, _self)
+                    ).generate();
+                    return new derivedCtor();
+                }
+                this.postAssociatedLazyCreatorMap.set(`<derived:${derivedNode.raw.name}>`, lazyCreator);
+            }
+        }
     }
 
-    add(field: DtoMapperField, generator: InputRowReaderCtorGenerator) {
-        if (this._association(field, generator)) {
+    add(field: DtoMapperField) {
+        if (this._association(field)) {
             return;
         }
         if (field.columnIndex == null) {
@@ -500,10 +518,7 @@ class InputRowReaderContext {
         }
     }
 
-    private _association(
-        field: DtoMapperField, 
-        generator: InputRowReaderCtorGenerator
-    ): boolean {
+    private _association(field: DtoMapperField): boolean {
         if (field.subMapper != null) {
             if (field.prop.referenceKeyProp != null) {
                 const ctor = createInputRowReaderCtor(
@@ -519,7 +534,7 @@ class InputRowReaderContext {
                         `${this._path}.${field.prop.name}${field.recursiveDepth != null ? "*" : ""}`, 
                         field.subMapper!,
                         this._options,
-                        new InputRowReaderCtorParent("REFERENCE", field, generator)
+                        new InputRowReaderCtorParent("REFERENCE", field, this._self)
                     );
                     return new ctor();
                 }
@@ -530,10 +545,7 @@ class InputRowReaderContext {
         return false;
     }
 
-    finish(
-        generator: InputRowReaderCtorGenerator
-    ) {
-        this._addDerivedTypes(generator);
+    finish() {
         if (this._idIndex === -1) {
             const props = this._entityNode.raw.idProp.scalarProps!;
             if (this._entityNode.superNode != null) {
@@ -579,26 +591,6 @@ class InputRowReaderContext {
         this._addBackRefProps()
     }
 
-    private _addDerivedTypes(
-        generator: InputRowReaderCtorGenerator
-    ) {
-        if (this._entityNode.dereviedNodes.length !== 0 && (this._direction & InheritanceDirection.Derived) !== 0) {
-            for (const derivedNode of this._entityNode.dereviedNodes) {
-                const lazyCreator: LazyInputRowReaderCreator = () => {
-                    const derivedCtor = new InputRowReaderCtorGenerator(
-                        this._path,
-                        InheritanceDirection.Derived,
-                        this._options,
-                        derivedNode,
-                        new InputRowReaderCtorParent("SUPER", undefined, generator)
-                    ).generate();
-                    return new derivedCtor();
-                }
-                this.postAssociatedLazyCreatorMap.set(`<derived:${derivedNode.raw.name}>`, lazyCreator);
-            }
-        }
-    }
-
     private _addBackRefProps() {
         const backRefProp = this._parent?.backRefProp;
         if (backRefProp == null) {
@@ -622,7 +614,7 @@ class InputRowReaderContext {
 
 class InputRowReaderCtorParent {
     
-    readonly prop: EntityProp;
+    readonly prop: EntityProp | undefined;
     
     readonly backRefProp: EntityProp | undefined;
     
@@ -633,7 +625,7 @@ class InputRowReaderCtorParent {
         field: DtoMapperField | undefined, 
         readonly generator: InputRowReaderCtorGenerator
     ) {
-        this.prop = field?.prop.asEntityProp!;
+        this.prop = field?.prop?.asEntityProp!;
         const mappedBy = this?.prop?.mappedByProp;
         if (mappedBy != null) {
             if (mappedBy.associationType === "ONE_TO_ONE" || mappedBy.associationType === "MANY_TO_ONE") {
