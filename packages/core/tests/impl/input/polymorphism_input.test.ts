@@ -1,11 +1,11 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
-import { PDF_ELECTRONIC_BOOK } from "../../model/model";
+import { BOOK, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
 import { expectCode } from "../../utils";
 
 describe("PolymorphismInputTest", () => {
 
-    it("multipleSuper", () => {
+    it("multipleTablesSuper", () => {
         const input = dto.input(PDF_ELECTRONIC_BOOK, c => [
             c.name.key(),
             c.edition.key(),
@@ -64,5 +64,35 @@ describe("PolymorphismInputTest", () => {
         expect(superSuperReader.insertIndices).toEqual([2]);
         expect(superSuperReader.updateIndices).toEqual([2]);
         expect(superSuperReader.returnIndices).toEqual([3]);
+    });
+
+    it("multipTablesDerived", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.$instanceOf(ELECTRONIC_BOOK, c => [
+                c.address,
+                c.$instanceOf(PDF_ELECTRONIC_BOOK, c => [
+                    c.pdfVersion
+                ])
+            ])
+        ]);
+
+        const reader = input.mapper.inputRowReader();
+        expectCode(reader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.name, input.edition, input.price, input.__typename, undefined];
+                }
+            }
+        `);
+
+        const electronicBookReader = reader.postAssociatedMap.get("<derived:ElectronicBook>")!;
+        console.log(electronicBookReader.constructor.toString());
     });
 });
