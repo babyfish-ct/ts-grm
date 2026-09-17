@@ -34,6 +34,8 @@ export class Entity {
 
     readonly superEntity: Entity | undefined;
 
+    readonly idGenerator: __IdGenerator<any> | undefined;
+
     private _phase = 0;
 
     private _idProp: EntityProp | undefined = undefined;
@@ -96,6 +98,9 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? (superModel as AnyModelImpl).toUnresolvedEntity().resolve(1)
             : undefined;
+        this.idGenerator = this.superEntity != null
+            ? this.superEntity.idGenerator
+            : this._options.idGenerator;
         this.tableSettings = this._createTableSettings(_options.tableOptions);
         this.identity = ++Entity._nextIdentity;
         this.tableEntity = this.tableSettings.sharedTable
@@ -490,10 +495,6 @@ export class Entity {
             this._tableCtor = ctor = createEntityTableClass(this);
         }
         return ctor;
-    }
-
-    get idGenerator(): __IdGenerator<any> | undefined {
-        return this._options.idGenerator;
     }
 
     toJSON(): any {

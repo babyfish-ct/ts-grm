@@ -19,13 +19,10 @@ describe("EmbeddedAssociationInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.id, parent.get(0), parent.get(1), parent.get(2)];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
                 static __order_reader = $preAssociatedMap.get("order");
             }
@@ -46,13 +43,10 @@ describe("EmbeddedAssociationInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);
@@ -76,13 +70,10 @@ describe("EmbeddedAssociationInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);
@@ -102,13 +93,10 @@ describe("EmbeddedAssociationInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.id, parent.get(0), parent.get(1), parent.get(2)];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);

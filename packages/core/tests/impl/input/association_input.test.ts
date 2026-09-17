@@ -73,13 +73,10 @@ describe("SimpleInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.name, input.edition, input.price, parent.get(2), undefined];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
                 static __store_reader = $preAssociatedMap.get("store");
             }
@@ -90,13 +87,10 @@ describe("SimpleInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.name, input.version, undefined];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);
@@ -159,13 +153,10 @@ describe("SimpleInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.parentNodeId, input.name, undefined];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);
@@ -184,13 +175,10 @@ describe("SimpleInputTest", () => {
             class extends $baseClass {
 
                 constructor() {
-                    super($fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
                 }
                 read(parent, input) {
                     return [input.name, undefined, parent.get(2)];
-                }
-                idIndex(subpath) {
-                    return subpath === "" ? this.indexOf("id") : this.indexOf("id." + subpath);
                 }
             }
         `);
