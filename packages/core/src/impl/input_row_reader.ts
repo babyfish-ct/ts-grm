@@ -372,7 +372,7 @@ class InputRowReaderCtorGenerator {
             if (referenceProp == null) {
                 w.code("undefined");
             } else {
-                if (referenceProp.rootProp === this._parent?.prop?.mappedByProp) {
+                if (referenceProp.rootProp === this._parent?.toThis?.prop) {
                     const idName = this._parent.generator._entityNode.raw.idProp.name;
                     const path = field.prop.subPath == "" ? idName : `${idName}.${field.prop.subPath}`;
                     w.code(`parent.get(${fieldIndexOf(this._parent.generator._fields, path)})`);
@@ -453,7 +453,7 @@ class InputRowReaderContext {
                         InheritanceDirection.Derived,
                         this._options,
                         derivedNode,
-                        new InputRowReaderCtorParent("SUPER", undefined, _self)
+                        InputRowReaderCtorParent.forDerived(this._self)
                     ).generate();
                     return new derivedCtor();
                 }
@@ -534,7 +534,11 @@ class InputRowReaderContext {
                         `${this._path}.${field.prop.name}${field.recursiveDepth != null ? "*" : ""}`, 
                         field.subMapper!,
                         this._options,
-                        new InputRowReaderCtorParent("REFERENCE", field, this._self)
+                        InputRowReaderCtorParent.forChild(
+                            this._self, 
+                            field.prop.asEntityProp!.mappedByProp!, 
+                            (field.inputFlags & InputFlags.BackRefAsKey) !== 0
+                        )
                     );
                     return new ctor();
                 }
@@ -592,7 +596,7 @@ class InputRowReaderContext {
     }
 
     private _addBackRefProps() {
-        const backRefProp = this._parent?.backRefProp;
+        const backRefProp = this._parent?.toThis?.prop;
         if (backRefProp == null) {
             return;
         }
@@ -602,7 +606,7 @@ class InputRowReaderContext {
             const index = this.fields.length;
             const field = createField(prop, index, nullable || prop.finalNullable);
             this.fields.push(field);
-            if (this._parent!.backRefAsKey) {
+            if (this._parent!.toThis!.key) {
                 this.keyIndices.push(index);
             } else {
                 this.insertIndices.push(index);
@@ -614,25 +618,40 @@ class InputRowReaderContext {
 
 class InputRowReaderCtorParent {
     
-    readonly prop: EntityProp | undefined;
-    
-    readonly backRefProp: EntityProp | undefined;
-    
-    readonly backRefAsKey: boolean;
+    readonly toThis: {
+        readonly prop: EntityProp;
+        readonly key: boolean;
+    } | undefined;
 
-    constructor(
-        readonly kind: "REFERENCE" | "SUPER",
-        field: DtoMapperField | undefined, 
-        readonly generator: InputRowReaderCtorGenerator
+    readonly toTargetProp: EntityProp | undefined;
+
+    private constructor(
+        readonly generator: InputRowReaderCtorGenerator,
+        toThisProp: EntityProp | undefined,
+        toThisAsKey: boolean,
+        toTargetProp: EntityProp | undefined
     ) {
-        this.prop = field?.prop?.asEntityProp!;
-        const mappedBy = this?.prop?.mappedByProp;
-        if (mappedBy != null) {
-            if (mappedBy.associationType === "ONE_TO_ONE" || mappedBy.associationType === "MANY_TO_ONE") {
-                this.backRefProp = mappedBy;
-            }
+        if (toThisProp != null) {
+            this.toThis = {
+                prop: toThisProp,
+                key: toThisAsKey
+            };
         }
-        this.backRefAsKey = field != null && (field.inputFlags & InputFlags.BackRefAsKey) !== 0;
+        this.toTargetProp = toTargetProp;
+    }
+
+    static forDerived(
+        generator: InputRowReaderCtorGenerator
+    ): InputRowReaderCtorParent {
+        return new InputRowReaderCtorParent(generator, undefined, false, undefined);
+    }
+
+    static forChild(
+        generator: InputRowReaderCtorGenerator,
+        backRefProp: EntityProp, 
+        backRefAsKey: boolean
+    ): InputRowReaderCtorParent {
+        return new InputRowReaderCtorParent(generator, backRefProp, backRefAsKey, undefined);
     }
 }
 
