@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { BOOK, TREE_NODE } from "../../model/model";
 import { mapperJson } from "../view/utils";
 import { expectCode } from "../../utils";
+import { InputRowReader } from "@/impl/input_row_reader";
 
 describe("SimpleInputTest", () => {
 
@@ -170,7 +171,7 @@ describe("SimpleInputTest", () => {
         expect(reader.updateIndices).toEqual([]);
         expect(reader.returnIndices).toEqual([2]);
 
-        const childNodesReader = reader.postAssociatedMap.get("childNodes")!;
+        const childNodesReader = reader.postAssociatedMap.get("childNodes") as InputRowReader;
         expectCode(childNodesReader.constructor.toString(), `
             class extends $baseClass {
 
@@ -191,5 +192,67 @@ describe("SimpleInputTest", () => {
         expect(childNodesReader.insertIndices).toEqual([]);
         expect(childNodesReader.updateIndices).toEqual([]);
         expect(childNodesReader.returnIndices).toEqual([1]);
+    });
+
+    it("m2m", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.authors.with(c => [
+                c.name.key()
+            ])
+        ]);
+
+        const reader = input.mapper.inputRowReader();
+        expectCode(reader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.name, input.edition, input.price, undefined];
+                }
+            }
+        `);
+        expect(reader.keyIndices).toEqual([0, 1]);
+        expect(reader.insertIndices).toEqual([2]);
+        expect(reader.updateIndices).toEqual([2]);
+        expect(reader.returnIndices).toEqual([3]);
+
+        const middleReader = reader.postAssociatedMap.get("authors")!;
+        expectCode(middleReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, target) {
+                    return [parent.get(3), target.get(2)];
+                }
+            }
+        `);
+        expect(middleReader.keyIndices).toEqual([0, 1]);
+        expect(middleReader.insertIndices).toEqual([]);
+        expect(middleReader.updateIndices).toEqual([]);
+        expect(middleReader.returnIndices).toEqual([]);
+
+        const authorReader = middleReader.preAssociatedMap.get("target")!;
+        expectCode(authorReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.name?.firstName, input.name?.lastName, undefined];
+                }
+            }
+        `);
+        expect(authorReader.keyIndices).toEqual([0, 1]);
+        expect(authorReader.insertIndices).toEqual([]);
+        expect(authorReader.updateIndices).toEqual([]);
+        expect(authorReader.returnIndices).toEqual([2]);
     });
 });

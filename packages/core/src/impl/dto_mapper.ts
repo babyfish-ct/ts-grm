@@ -89,7 +89,7 @@ export class DtoMapper {
         options?: __InputRowReaderOptions
     ): InputRowReader {
         let inputRowRader = this._inputRowReader;
-        const key = inputRowReaderKey(options);
+        const key = inputRowReaderKey(this, options);
         if (key !== this._inputRowReaderKey) {
             if (this.associatedProp != null) {
                 throw new StateError(
@@ -162,7 +162,13 @@ export class DtoMapper {
         if (hash == null) {
             this._hash = hash =
                 this.input 
-                    ? this.entity.name
+                    ? `${
+                        this.entity.name
+                    }|${
+                        this.associatedProp?.toString()
+                    }|(${
+                        this.fields.map(f => fieldHash(f)).join(",")
+                    })`
                     : `${
                         this.entity.name
                     }|${

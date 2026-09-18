@@ -1,6 +1,6 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
-import { ORDER, ORDER_ITEM } from "../../model/model";
+import { ORDER, ORDER_ITEM, TAG } from "../../model/model";
 import { expectCode } from "../../utils";
 
 describe("EmbeddedAssociationInputTest", () => {
@@ -104,5 +104,67 @@ describe("EmbeddedAssociationInputTest", () => {
         expect(itemsReader.insertIndices).toEqual([1, 2, 3]);
         expect(itemsReader.updateIndices).toEqual([1, 2, 3]);
         expect(itemsReader.returnIndices).toEqual([]);
+    });
+
+    it("m2m", () => {
+        const input = dto.input(TAG, c => [
+            c.id,
+            c.name,
+            c.orders.with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
+
+        const reader = input.mapper.inputRowReader();
+        expectCode(reader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.id?.low, input.id?.high, input.name];
+                }
+            }
+        `);
+        expect(reader.keyIndices).toEqual([0, 1]);
+        expect(reader.insertIndices).toEqual([2]);
+        expect(reader.updateIndices).toEqual([2]);
+        expect(reader.returnIndices).toEqual([]);
+
+        const middleReader = reader.postAssociatedMap.get("orders")!;
+        expectCode(middleReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, target) {
+                    return [parent.get(0), parent.get(1), target.get(0), target.get(1), target.get(2)];
+                }
+            }
+        `);
+        expect(middleReader.keyIndices).toEqual([0, 1, 2, 3, 4]);
+        expect(middleReader.insertIndices).toEqual([]);
+        expect(middleReader.updateIndices).toEqual([]);
+        expect(middleReader.returnIndices).toEqual([]);
+
+        const orderReader = middleReader.preAssociatedMap.get("target")!;
+        expectCode(orderReader.constructor.toString(), `
+            class extends $baseClass {
+
+                constructor() {
+                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+                }
+                read(parent, input) {
+                    return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
+                }
+            }
+        `);
+        expect(orderReader.keyIndices).toEqual([0, 1, 2]);
+        expect(orderReader.insertIndices).toEqual([3]);
+        expect(orderReader.updateIndices).toEqual([3]);
+        expect(middleReader.returnIndices).toEqual([]);
     });
 });

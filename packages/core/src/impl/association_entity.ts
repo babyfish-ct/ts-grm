@@ -218,6 +218,13 @@ class AssociationPropImpl implements AssociationProp {
     get isMiddleTableProp(): true {
         return true;
     }
+
+    get path() {
+        const subPath = this.subPath;
+        return subPath === "" 
+            ? this.name
+            : `${this.name}.${subPath}`
+    }
     
     get subPath(): string {
         if (this.parentProp == null) {
