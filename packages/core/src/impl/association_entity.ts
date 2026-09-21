@@ -162,7 +162,7 @@ export interface AssociationProp {
 
     readonly isMiddleTableProp: true;
 
-    readonly declaredEntity: AssociationEntity;
+    readonly declaringEntity: AssociationEntity;
 
     readonly rootProp: AssociationProp;
 
@@ -197,6 +197,8 @@ export interface AssociationProp {
     toStorage(
         strategy: DatabaseStrategy
     ): Column | Columns | undefined;
+
+    readonly scalarProps: ReadonlyArray<AssociationProp> | undefined;
 }
 
 class AssociationPropImpl implements AssociationProp {
@@ -206,9 +208,11 @@ class AssociationPropImpl implements AssociationProp {
     private _storage: Column | Columns | undefined = undefined;
 
     private _storageResolver: DatabaseStrategy | undefined = undefined;
+
+    private _scalarProps: ReadonlyArray<AssociationProp> | undefined;
  
     constructor(
-        readonly declaredEntity: AssociationEntity,    
+        readonly declaringEntity: AssociationEntity,    
         readonly name: string,
         readonly targetEntity: Entity | undefined,
         readonly parentProp: AssociationProp | undefined
@@ -307,17 +311,17 @@ class AssociationPropImpl implements AssociationProp {
             return rootProp.referenceKeyProp.toStorage(strategy);
         }
         if (this.parentProp == null) {
-            const middleTable = this.declaredEntity.originalProp.toStorage(strategy) as MiddleTable;
+            const middleTable = this.declaringEntity.originalProp.toStorage(strategy) as MiddleTable;
             const isSource = rootProp.referenceProp!.name === "source";
             if (isSource) {
                 return columnsToStorage(
-                    this.declaredEntity.isInverseOriginalProp
+                    this.declaringEntity.isInverseOriginalProp
                         ? middleTable.toTargetColumns
                         : middleTable.toThisColumns
                 );
             }
             return columnsToStorage(
-                this.declaredEntity.isInverseOriginalProp
+                this.declaringEntity.isInverseOriginalProp
                     ? middleTable.toThisColumns
                     : middleTable.toTargetColumns
             );
@@ -357,7 +361,7 @@ class AssociationPropImpl implements AssociationProp {
         const parent = this.parentProp;
         return parent != null 
             ? `${parent.toString()}.${this.name}`
-            : `${this.declaredEntity.toString()}.${this.name}`;
+            : `${this.declaringEntity.toString()}.${this.name}`;
     }
 
     fillProps(entityProp: EntityProp) {
@@ -369,7 +373,7 @@ class AssociationPropImpl implements AssociationProp {
         const subProps = new Map<string, AssociationProp>();
         for (const subEntityProp of entityProp.props.values()) {
             const subProp = new AssociationPropImpl(
-                this.declaredEntity,
+                this.declaringEntity,
                 subEntityProp.name,
                 undefined,
                 this
@@ -388,6 +392,22 @@ class AssociationPropImpl implements AssociationProp {
                 (subProp as AssociationPropImpl).collectProps(key, map);
             }
         }
+    }
+
+    get scalarProps(): ReadonlyArray<AssociationProp> | undefined {
+        if (this.storageType == null) {
+            return undefined;
+        }
+        let scalarProps = this._scalarProps;
+        if (scalarProps == null) {
+            if (this.props == null) {
+                scalarProps = [this];
+            } else {
+                scalarProps = Array.from(this.props.values());
+            }
+            this._scalarProps = scalarProps;
+        }
+        return scalarProps;
     }
 }
 
