@@ -79,7 +79,7 @@ export class InverseFetchProp {
     }
 
     get name(): string {
-        return `←${this.prop.declaringEntity.name}.${this.prop.name}`;
+        return `←(${this.prop.declaringEntity.name}.${this.prop.name})`;
     }
 
     get path(): string {

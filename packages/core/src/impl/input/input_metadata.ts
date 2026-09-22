@@ -19,6 +19,7 @@ import { Entity } from "../entity";
 import { EntityProp } from "../entity_prop";
 import { InputFlags } from "../input_flags";
 import { createEntityNode, EntityNode } from "./entity_node";
+import { InverseFetchProp } from "../dto";
 
 export function createInputMetadata(
     mapper: DtoMapper
@@ -40,9 +41,11 @@ class InputMetadata {
         readonly source: Entity | AssociationEntity,
         fields: ReadonlyArray<DtoMapperField> | undefined
     ) {
-        this._scalars = source instanceof Entity
+        this._scalars = fields != null
             ? toScalarFields(fields!)
-            : toMiddleTableScalarFields(source);
+            : source instanceof AssociationEntity 
+                ? toMiddleTableScalarFields(source)
+                : [];
     }
 
     private readonly _preMetadatas: Array<InputMetadata> = [];
@@ -101,7 +104,9 @@ class InputMetadata {
             const targetKeyProp = referenceProp.targetKeyProp!.sub(scalar.prop.subPath);
             const index = targetMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$ref(${targetMetadataIndex},${index})`];
-            (scalar as any).kind = ScalarKind.Insert | ScalarKind.Update;
+            if (referenceProp instanceof EntityProp) {
+                (scalar as any).kind = ScalarKind.Insert | ScalarKind.Update;
+            }
         }
     }
 
@@ -120,7 +125,9 @@ class InputMetadata {
             const targetKeyProp = backRefProp.targetKeyProp!.sub(scalar.prop.subPath);
             const index = backRefMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$bref(${index})`];
-            (scalar as any).kind = ScalarKind.Insert | ScalarKind.Update;
+            if (backRefProp instanceof EntityProp) {
+                (scalar as any).kind = ScalarKind.Insert | ScalarKind.Update;
+            }
         }
     }
 
@@ -133,10 +140,10 @@ class InputMetadata {
             }
         }
         if (prop.declaringEntity !== this.source) {
-            throw new ArgumentError(`The property "${prop.toString}" does not belong to the entity "${(this.source as Entity).name}"`);
+            throw new ArgumentError(`The property "${prop.toString()}" does not belong to the entity "${(this.source as Entity).name}"`);
         }
         if (prop.scalarType == null) {
-            throw new ArgumentError(`The property "${prop.toString}" is not scalar property"`);
+            throw new ArgumentError(`The property "${prop.toString()}" is not scalar property"`);
         }
         const field: InputMetadataScalar = {
             path: undefined,
@@ -183,7 +190,7 @@ class InputMetadata {
         return {
             path: this.path,
             scalars: this.scalars.map(f => `${
-                f.path?.join(".") ?? ""
+                f.path?.map(p => p === ".." ? "$parent" : p)?.join(".") ?? ""
             }:${
                 f.prop?.toString() ?? ""
             }:${
@@ -201,7 +208,7 @@ class InputMetadata {
     }
 }
 
-export type InputMetadataKey = "SUPER" | Entity | EntityProp | AssociationProp;
+export type InputMetadataKey = "SUPER" | Entity | EntityProp | AssociationProp | InverseFetchProp;
 
 export type InputMetadataScalar = {
     readonly path: ReadonlyArray<string> | undefined;
@@ -289,7 +296,7 @@ function toMiddleTableScalarFields0(
         return [toMiddleTableScalarField1(prop)];
     }
     const arr: Array<InputMetadataScalar> = [];
-    for (const subProp of prop.props.values()) {
+    for (const subProp of prop.scalarProps!) {
         arr.push(toMiddleTableScalarField1(subProp));
     }
     return arr;
@@ -299,7 +306,7 @@ function toMiddleTableScalarField1(
     prop: AssociationProp
 ): InputMetadataScalar {
     return {
-        path: [prop.referenceProp!.name],
+        path: [prop.rootProp.referenceProp!.name],
         prop,
         kind: ScalarKind.Key
     };
@@ -310,7 +317,7 @@ function processPreAssociations(
     fields: ReadonlyArray<DtoMapperField>
 ): void {
     for (const field of fields) {
-        if (field.subMapper == null || field.prop.asEntityProp!.referenceKeyProp == null) {
+        if (field.subMapper == null || field.prop.asEntityProp?.referenceKeyProp == null) {
             continue;
         }
         const entityNode = createEntityNode(field.subMapper!);
@@ -325,10 +332,22 @@ function processPostAssociations(
     fields: ReadonlyArray<DtoMapperField>
 ): void {
     for (const field of fields) {
-        if (field.subMapper == null || field.prop.asEntityProp!.referenceKeyProp != null) {
+        if (field.subMapper == null || field.prop.asEntityProp?.referenceKeyProp != null) {
             continue;
         }
-        if (field.prop.asEntityProp!.storageType === "MIDDLE_TABLE") {
+        if (field.prop instanceof InverseFetchProp) {
+            const middleEntity = field.bridgeProp?.middleEntity!;
+            const sourceProp = middleEntity.joinThisProp!;
+            const middleMetadata = createInputMetadataImpl(
+                metadata,
+                field.prop,
+                field.recursiveDepth != null,
+                createEntityNode(field.subMapper),
+                InheritanceDirection.Both
+            );
+            (middleMetadata as any)._backRef(sourceProp, metadata);
+            (metadata as any)._addPostMetadata(middleMetadata);
+        } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
             const associationEntity = (metadata.source as Entity).association(field.prop.name);
             const middleMetadata = new InputMetadata(
                 metadata, 
@@ -340,9 +359,9 @@ function processPostAssociations(
             (middleMetadata as any)._backRef(associationEntity.sourceProp, metadata);
             (metadata as any)._addPostMetadata(middleMetadata);
             const entityNode = createEntityNode(field.subMapper!);
-            const postMetadata = createInputMetadataImpl(middleMetadata, associationEntity.targetProp, field.recursiveDepth != null, entityNode, InheritanceDirection.Both); 
-            (middleMetadata as any)._ref(associationEntity.targetProp, postMetadata, middleMetadata.preMetadatas.length);   
-            (middleMetadata as any)._addPreMetadata(postMetadata);
+            const preMetadata = createInputMetadataImpl(middleMetadata, associationEntity.targetProp, field.recursiveDepth != null, entityNode, InheritanceDirection.Both); 
+            (middleMetadata as any)._ref(associationEntity.targetProp, preMetadata, middleMetadata.preMetadatas.length);   
+            (middleMetadata as any)._addPreMetadata(preMetadata);
         } else {
             const entityNode = createEntityNode(field.subMapper!);
             const postMetadata = createInputMetadataImpl(metadata, field.prop.asEntityProp!, field.recursiveDepth != null, entityNode, InheritanceDirection.Both);    

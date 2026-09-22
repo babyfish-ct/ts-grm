@@ -389,7 +389,7 @@ describe("JoinEntityTest", () => {
         });
         expect(courseRow.implicit).toEqual(undefined);
 
-        const linkMapper = view.mapper.fields.find(f => f.prop.name === "←LearningLink.course")!.subMapper!;
+        const linkMapper = view.mapper.fields.find(f => f.prop.name === "←(LearningLink.course)")!.subMapper!;
         expectCode(linkMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parents, reader) {

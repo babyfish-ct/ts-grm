@@ -1,6 +1,6 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
-import { AUTHOR, BOOK } from "../../model/model";
+import { AUTHOR } from "../../model/model";
 import { expectCode } from "../../utils";
 
 describe("FlatInputTest", () => {

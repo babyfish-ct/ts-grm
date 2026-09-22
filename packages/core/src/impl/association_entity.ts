@@ -400,12 +400,18 @@ class AssociationPropImpl implements AssociationProp {
         }
         let scalarProps = this._scalarProps;
         if (scalarProps == null) {
-            if (this.props == null) {
-                scalarProps = [this];
-            } else {
-                scalarProps = Array.from(this.props.values());
+            const arr: Array<AssociationProp> = [];
+            function process(prop: AssociationProp) {
+                if (prop.props == null) {
+                    arr.push(prop);
+                } else {
+                    for (const subProp of prop.props.values()) {
+                        process(subProp);
+                    }
+                }
             }
-            this._scalarProps = scalarProps;
+            process(this);
+            this._scalarProps = scalarProps = arr;
         }
         return scalarProps;
     }
