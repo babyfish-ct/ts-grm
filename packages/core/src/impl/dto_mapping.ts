@@ -234,39 +234,102 @@ export class FlatMapping implements AbstractDtoMapping {
     }
 
     prefix(prefix: string): FlatMapping {
-        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType, this._inputFlags);
+        return new FlatMapping(
+            this._prop, 
+            prefix, 
+            this._context, 
+            this._body, 
+            this._filter, 
+            this._fetchType, 
+            this._inputFlags
+        );
     }
 
     with(body: DtoBody): FlatMapping {
-        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType, this._inputFlags);
+        return new FlatMapping(
+            this._prop, 
+            this._prefix, 
+            this._context, 
+            body, 
+            this._filter, 
+            this._fetchType, 
+            this._inputFlags
+        );
     }
 
     filter(filter: Filter): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "filter"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType, this._inputFlags);
+        return new FlatMapping(
+            this._prop, 
+            this._prefix, 
+            this._context, 
+            this._body, 
+            filter, 
+            this._fetchType, 
+            this._inputFlags
+        );
     }
 
     fetch(fetchType: ReferenceFetchType): FlatMapping {
         if (this._prop.targetEntity == null) {
             throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "fetch"`);
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType, this._inputFlags);
+        return new FlatMapping(
+            this._prop, 
+            this._prefix, 
+            this._context, 
+            this._body, 
+            this._filter, 
+            fetchType, 
+            this._inputFlags
+        );
     }
 
     key(): FlatMapping {
         if ((this._inputFlags & InputFlags.Key) !== 0) {
             return this;
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, this._fetchType, this._inputFlags | InputFlags.Key);
+        return new FlatMapping(
+            this._prop, 
+            this._prefix, 
+            this._context, 
+            this._body, 
+            this._filter, 
+            this._fetchType, 
+            this._inputFlags | InputFlags.Key
+        );
+    }
+
+    refAsKey(): FlatMapping {
+        if ((this._inputFlags & InputFlags.RefAsKey) !== 0) {
+            return this;
+        }
+        return new FlatMapping(
+            this._prop, 
+            this._prefix, 
+            this._context, 
+            this._body, 
+            this._filter, 
+            this._fetchType, 
+            this._inputFlags | InputFlags.RefAsKey
+        );
     }
 
     backRefAsKey(): FlatMapping {
         if ((this._inputFlags & InputFlags.BackRefAsKey) !== 0) {
             return this;
         }
-        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, this._fetchType, this._inputFlags | InputFlags.BackRefAsKey);
+        return new FlatMapping(
+            this._prop, 
+            this._prefix, 
+            this._context, 
+            this._body, 
+            this._filter, 
+            this._fetchType, 
+            this._inputFlags | InputFlags.BackRefAsKey
+        );
     }
 
     toFields(
@@ -343,7 +406,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
         private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
         private readonly _maxRows: number | undefined,
         private readonly _depth: number,
-        private readonly _backRefAsKey: boolean
+        private readonly _inputFlags: InputFlags
     ) {}
 
     static of(prop: EntityProp): RecursiveMapping {
@@ -354,7 +417,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             undefined,
             undefined,
             -1,
-            false
+            InputFlags.None
         );
     }
 
@@ -366,7 +429,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._orders,
             this._maxRows,
             this._depth,
-            this._backRefAsKey
+            this._inputFlags
         );
     }
 
@@ -378,7 +441,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._orders,
             this._maxRows,
             this._depth,
-            this._backRefAsKey
+            this._inputFlags
         );
     }
 
@@ -404,7 +467,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             toEntityPropOrders(this.prop.targetEntity!, orders),
             this._maxRows,
             this._depth,
-            this._backRefAsKey
+            this._inputFlags
         );
     }
 
@@ -424,7 +487,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._orders,
             maxRows,
             this._depth,
-            this._backRefAsKey
+            this._inputFlags
         );
     }
 
@@ -439,12 +502,12 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._orders,
             this._maxRows,
             depth,
-            this._backRefAsKey
+            this._inputFlags
         );
     }
 
-    backRefAsKey(): RecursiveMapping {
-        if (this._backRefAsKey) {
+    refAsKey(): RecursiveMapping {
+        if ((this._inputFlags & InputFlags.RefAsKey) !== 0) {
             return this;
         }
         return new RecursiveMapping(
@@ -454,7 +517,22 @@ export class RecursiveMapping implements AbstractDtoMapping {
             this._orders,
             this._maxRows,
             this._depth,
-            true
+            InputFlags.RefAsKey
+        );
+    }
+
+    backRefAsKey(): RecursiveMapping {
+        if ((this._inputFlags & InputFlags.BackRefAsKey) !== 0) {
+            return this;
+        }
+        return new RecursiveMapping(
+            this.prop,
+            this._alias,
+            this._filter,
+            this._orders,
+            this._maxRows,
+            this._depth,
+            InputFlags.BackRefAsKey
         );
     }
 
@@ -468,7 +546,7 @@ export class RecursiveMapping implements AbstractDtoMapping {
             prop: this.prop,
             bridgeProp: undefined,
             dto: undefined,
-            inputFlags: this._backRefAsKey ? InputFlags.BackRefAsKey : InputFlags.None,
+            inputFlags: this._inputFlags,
             fetchType: undefined,
             predicateFn: this._filter,
             orders: this._orders ?? this.prop.orders,
@@ -857,7 +935,24 @@ export class ReferenceMapping extends AssociationMapping {
         );
     }
 
+    refAsKey(): ReferenceMapping {
+        if ((this._inputFlags & InputFlags.RefAsKey) !== 0) {
+            return this;
+        }
+        return new ReferenceMapping(
+            this._prop,
+            this._alias,
+            this._body,
+            this._filter,
+            this._inputFlags | InputFlags.RefAsKey,
+            this._fetchType
+        );
+    }
+
     backRefAsKey(): ReferenceMapping {
+        if ((this._inputFlags & InputFlags.BackRefAsKey) !== 0) {
+            return this;
+        }
         return new ReferenceMapping(
             this._prop,
             this._alias,

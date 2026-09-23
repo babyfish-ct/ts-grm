@@ -131,6 +131,9 @@ export interface __InputReferenceRecursiveMapping<
     as<TAlias extends string>(
         alias: TAlias
     ): __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
+
+    refAsKey(
+    ): __InputReferenceRecursiveMapping<TModel, TDeclaring, TSuperDeclarings, TDtoKind, TPropName, TAlias, TMember>;
 }
 
 export interface __InversedInputReferenceRecursiveMapping<

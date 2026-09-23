@@ -16,8 +16,9 @@ export enum InputFlags {
     None = 0,
     Ref = 1 << 0,
     Key = 1 << 1,
-    BackRefAsKey = 1 << 2,
-    NonInsertable = 1 << 3,
-    NonUpdateable = 1 << 4,
+    RefAsKey = 1 << 2,
+    BackRefAsKey = 1 << 3,
+    NonInsertable = 1 << 4,
+    NonUpdateable = 1 << 5,
     NonWritable = NonInsertable | NonUpdateable
 }

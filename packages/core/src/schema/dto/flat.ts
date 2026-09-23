@@ -282,6 +282,9 @@ export interface __InputReferenceFlatMapping<
     with<const TMappings extends __TargetMappings<TModel, TMember>>(
         body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
     ): __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
+
+    refAsKey(
+    ): __InputReferenceFlatMapping<TModel, TDeclaring, TDtoKind, TPropName, TPrefix, TMember, TMappings, TNullity>;
 }
 
 export interface __InverseInputReferenceFlatMapping<

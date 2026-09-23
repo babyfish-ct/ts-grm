@@ -1,6 +1,6 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
-import { AUTHOR, BOOK, BOOK_STORE, COURSE, ELECTRONIC_BOOK, ORDER, ORDER_ITEM, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TAG } from "../../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, CATEGORY, COURSE, ELECTRONIC_BOOK, ITEM, LIBRARY, ORDER, ORDER_ITEM, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TAG } from "../../model/model";
 import { createInputMetadata } from "@/impl/input/input_metadata";
 
 describe("InputMetadataTest", () => {
@@ -350,7 +350,7 @@ describe("InputMetadataTest", () => {
         });
     });
 
-    it("flod", () => {
+    it("fold", () => {
         const input = dto.input(BOOK, c => [
             c.$fold("scalars", c => [
                 c.name.key(),
@@ -444,6 +444,324 @@ describe("InputMetadataTest", () => {
                             "scalars": [
                                 "$parent.name:Student.name:k",
                                 ":Student.id:r"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ],
+                    "postMetadatas": []
+                }
+            ]
+        });
+    });
+
+    it("recursiveM2O", () => {
+        const input = dto.input(CATEGORY, c => [
+            c.name.key(),
+            c.manager,
+            c.$recursive("parentNode").refAsKey()
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "manager:Category.manager:iu",
+                "$iref(2):Category.id:iu"
+            ],
+            "preMetadatas": [
+                {
+                    "path": "<super>",
+                    "scalars": [
+                        "name:TreeNode.name:k",
+                        "$ref(0,2):TreeNode.parentNodeId:k",
+                        ":TreeNode.id:r"
+                    ],
+                    "preMetadatas": [
+                        {
+                            "path": "<super>.parentNode",
+                            "scalars": [
+                                "name:TreeNode.name:k",
+                                ":TreeNode.parentNodeId:r",
+                                ":TreeNode.id:r"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ],
+                    "postMetadatas": []
+                }
+            ],
+            "postMetadatas": []
+        });
+    });
+
+    it("recursiveO2M", () => {
+        const input = dto.input(ITEM, c => [
+            c.name.key(),
+            c.price,
+            c.tags.with(c => [
+                c.name.key()
+            ]),
+            c.parentNodeId.key(),
+            c.$recursive("childNodes").backRefAsKey()
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "price:Item.price:iu",
+                "$iref(2):Item.id:iu"
+            ],
+            "preMetadatas": [
+                {
+                    "path": "<super>",
+                    "scalars": [
+                        "name:TreeNode.name:k",
+                        "parentNodeId:TreeNode.parentNodeId:k",
+                        ":TreeNode.id:r"
+                    ],
+                    "preMetadatas": [],
+                    "postMetadatas": [
+                        {
+                            "path": "<super>.childNodes",
+                            "scalars": [
+                                "name:TreeNode.name:k",
+                                ":TreeNode.id:r",
+                                "$bref(2):TreeNode.parentNodeId:k"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ]
+                }
+            ],
+            "postMetadatas": [
+                {
+                    "path": "middleTable(tags)",
+                    "scalars": [
+                        "$bref(1):MiddleTable(Item.tags).sourceId:k",
+                        "$ref(0,1):MiddleTable(Item.tags).targetId.low:k",
+                        "$ref(0,2):MiddleTable(Item.tags).targetId.high:k"
+                    ],
+                    "preMetadatas": [
+                        {
+                            "path": "middleTable(tags).target",
+                            "scalars": [
+                                "name:Tag.name:k",
+                                ":Tag.id.low:r",
+                                ":Tag.id.high:r"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ],
+                    "postMetadatas": []
+                }
+            ]
+        });
+    });
+
+    it("recursiveM2M", () => {
+        const input = dto.input(LIBRARY, c => [
+            c.name.key(),
+            c.version.key(),
+            c.$recursive("dependencies"),
+            c.$recursive("dependents"),
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "name:Library.name:k",
+                "version:Library.version:k",
+                ":Library.id:r"
+            ],
+            "preMetadatas": [],
+            "postMetadatas": [
+                {
+                    "path": "middleTable(dependencies)",
+                    "scalars": [
+                        "$bref(2):MiddleTable(Library.dependencies).sourceId:k",
+                        "$ref(0,2):MiddleTable(Library.dependencies).targetId:k"
+                    ],
+                    "preMetadatas": [
+                        {
+                            "path": "middleTable(dependencies).target",
+                            "scalars": [
+                                "name:Library.name:k",
+                                "version:Library.version:k",
+                                ":Library.id:r"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ],
+                    "postMetadatas": []
+                },
+                {
+                    "path": "middleTable(dependents)",
+                    "scalars": [
+                        "$bref(2):MiddleTable(Library.dependents).sourceId:k",
+                        "$ref(0,2):MiddleTable(Library.dependents).targetId:k"
+                    ],
+                    "preMetadatas": [
+                        {
+                            "path": "middleTable(dependents).target",
+                            "scalars": [
+                                "name:Library.name:k",
+                                "version:Library.version:k",
+                                ":Library.id:r"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ],
+                    "postMetadatas": []
+                }
+            ]
+        });
+    });
+
+    it("m2oRef", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.$ref("store", c => [
+                c.name
+            ])
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu",
+                "$ref(0,1):Book.storeId:iu"
+            ],
+            "preMetadatas": [
+                {
+                    "path": "store",
+                    "scalars": [
+                        "name:BookStore.name:k",
+                        ":BookStore.id:r"
+                    ],
+                    "preMetadatas": [],
+                    "postMetadatas": []
+                }
+            ],
+            "postMetadatas": []
+        });
+    });
+
+    it("flatRef", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.$flatRef("store", c => [
+                c.name
+            ])
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu",
+                "$ref(0,1):Book.storeId:iu"
+            ],
+            "preMetadatas": [
+                {
+                    "path": "store",
+                    "scalars": [
+                        "$parent.storeName:BookStore.name:k",
+                        ":BookStore.id:r"
+                    ],
+                    "preMetadatas": [],
+                    "postMetadatas": []
+                }
+            ],
+            "postMetadatas": []
+        });
+    });
+
+    it("m2mRef", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.$ref("authors", c => [
+                c.name
+            ])
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu",
+                ":Book.id:r"
+            ],
+            "preMetadatas": [],
+            "postMetadatas": [
+                {
+                    "path": "middleTable(authors)",
+                    "scalars": [
+                        "$bref(3):MiddleTable(Book.authors).sourceId:k",
+                        "$ref(0,2):MiddleTable(Book.authors).targetId:k"
+                    ],
+                    "preMetadatas": [
+                        {
+                            "path": "middleTable(authors).target",
+                            "scalars": [
+                                "name.firstName:Author.name.firstName:k",
+                                "name.lastName:Author.name.lastName:k",
+                                ":Author.id:r"
+                            ],
+                            "preMetadatas": [],
+                            "postMetadatas": []
+                        }
+                    ],
+                    "postMetadatas": []
+                }
+            ]
+        });
+    });
+
+    it("asscociatedKeys", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.$associatedKeys("authors", "authorIds")
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": "",
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu",
+                ":Book.id:r",
+                "authorIds::iu"
+            ],
+            "preMetadatas": [],
+            "postMetadatas": [
+                {
+                    "path": "middleTable(authors)",
+                    "scalars": [
+                        "$bref(3):MiddleTable(Book.authors).sourceId:k",
+                        "$ref(0,0):MiddleTable(Book.authors).targetId:k"
+                    ],
+                    "preMetadatas": [
+                        {
+                            "path": "middleTable(authors).target",
+                            "scalars": [
+                                "id:Author.id:iu"
                             ],
                             "preMetadatas": [],
                             "postMetadatas": []
