@@ -2,6 +2,7 @@ import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE, CATEGORY, COURSE, ELECTRONIC_BOOK, ITEM, LIBRARY, ORDER, ORDER_ITEM, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TAG } from "../../model/model";
 import { createInputMetadata } from "@/impl/input/input_metadata";
+import { mapperJson } from "../view/utils";
 
 describe("InputMetadataTest", () => {
 
@@ -22,7 +23,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -33,7 +34,7 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "<derived:PaperBook>",
+                    "path": ["<derived:PaperBook>"],
                     "scalars": [
                         "size.width:PaperBook.size.width:iu",
                         "size.height:PaperBook.size.height:iu",
@@ -43,7 +44,7 @@ describe("InputMetadataTest", () => {
                     "postMetadatas": []
                 },
                 {
-                    "path": "<derived:ElectronicBook>",
+                    "path": ["<derived:ElectronicBook>"],
                     "scalars": [
                         "address:ElectronicBook.address:iu",
                         "__typename::iu",
@@ -52,7 +53,7 @@ describe("InputMetadataTest", () => {
                     "preMetadatas": [],
                     "postMetadatas": [
                         {
-                            "path": "<derived:ElectronicBook>.<derived:PdfElectronicBook>",
+                            "path": ["<derived:PdfElectronicBook>"],
                             "scalars": [
                                 "pdfVersion:PdfElectronicBook.pdfVersion:iu",
                                 "$iref(2):PdfElectronicBook.id:iu"
@@ -78,7 +79,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -87,7 +88,7 @@ describe("InputMetadataTest", () => {
             ],
             "preMetadatas": [
                 {
-                    "path": "store",
+                    "path": ["store"],
                     "scalars": [
                         "name:BookStore.name:k",
                         "version:BookStore.version:iu",
@@ -111,7 +112,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "id:OrderItem.id:iu",
                 "$ref(0,0):OrderItem.orderId.x:iu",
@@ -120,7 +121,7 @@ describe("InputMetadataTest", () => {
             ],
             "preMetadatas": [
                 {
-                    "path": "order",
+                    "path": ["order"],
                     "scalars": [
                         "id.x:Order.id.x:iu",
                         "id.y.a:Order.id.y.a:iu",
@@ -147,7 +148,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:BookStore.name:k",
                 "version:BookStore.version:iu",
@@ -156,7 +157,7 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "books",
+                    "path": ["books"],
                     "scalars": [
                         "name:Book.name:k",
                         "edition:Book.edition:k",
@@ -180,7 +181,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "id.x:Order.id.x:iu",
                 "id.y.a:Order.id.y.a:iu",
@@ -190,7 +191,7 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "items",
+                    "path": ["items"],
                     "scalars": [
                         "id:OrderItem.id:iu",
                         "$bref(0):OrderItem.orderId.x:iu",
@@ -216,7 +217,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -226,14 +227,14 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "middleTable(authors)",
+                    "path": ["<middletable:authors>"],
                     "scalars": [
                         "$bref(3):MiddleTable(Book.authors).sourceId:k",
                         "$ref(0,3):MiddleTable(Book.authors).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(authors).target",
+                            "path": ["authors"],
                             "scalars": [
                                 "name.firstName:Author.name.firstName:k",
                                 "name.lastName:Author.name.lastName:k",
@@ -261,7 +262,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "id.low:Tag.id.low:k",
                 "id.high:Tag.id.high:k",
@@ -270,7 +271,7 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "middleTable(orders)",
+                    "path": ["<middletable:orders>"],
                     "scalars": [
                         "$bref(0):MiddleTable(Tag.orders).sourceId.low:k",
                         "$bref(1):MiddleTable(Tag.orders).sourceId.high:k",
@@ -280,7 +281,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(orders).target",
+                            "path": ["orders"],
                             "scalars": [
                                 "id.x:Order.id.x:k",
                                 "id.y.a:Order.id.y.a:k",
@@ -304,7 +305,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "theFirstName:Author.name.firstName:k",
                 "theLastName:Author.name.lastName:k",
@@ -327,7 +328,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -336,7 +337,7 @@ describe("InputMetadataTest", () => {
             ],
             "preMetadatas": [
                 {
-                    "path": "store",
+                    "path": undefined,
                     "scalars": [
                         "$parent.storeName:BookStore.name:k",
                         "$parent.storeVersion:BookStore.version:iu",
@@ -357,7 +358,7 @@ describe("InputMetadataTest", () => {
                 c.edition.key(),
                 c.price
             ]),
-            c.$fold("assocaitions", c => [
+            c.$fold("associations", c => [
                 c.$flat("store").with(c => [
                     c.name.key(),
                     c.version
@@ -370,7 +371,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "scalars.name:Book.name:k",
                 "scalars.edition:Book.edition:k",
@@ -380,10 +381,10 @@ describe("InputMetadataTest", () => {
             ],
             "preMetadatas": [
                 {
-                    "path": "store",
+                    "path": undefined,
                     "scalars": [
-                        "$parent.assocaitions.storeName:BookStore.name:k",
-                        "$parent.assocaitions.storeVersion:BookStore.version:iu",
+                        "$parent.associations.storeName:BookStore.name:k",
+                        "$parent.associations.storeVersion:BookStore.version:iu",
                         ":BookStore.id:r"
                     ],
                     "preMetadatas": [],
@@ -392,14 +393,14 @@ describe("InputMetadataTest", () => {
             ],
             "postMetadatas": [
                 {
-                    "path": "middleTable(authors)",
+                    "path": ["associations", "<middletable:authors>"],
                     "scalars": [
                         "$bref(4):MiddleTable(Book.authors).sourceId:k",
                         "$ref(0,3):MiddleTable(Book.authors).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(authors).target",
+                            "path": ["associations", "authors"],
                             "scalars": [
                                 "firstName:Author.name.firstName:k",
                                 "lastName:Author.name.lastName:k",
@@ -425,7 +426,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Course.name:k",
                 ":Course.id:r"
@@ -433,14 +434,14 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "←(LearningLink.course)",
+                    "path": ["students"],
                     "scalars": [
                         "$ref(0,1):LearningLink.studentId:iu",
                         "$bref(1):LearningLink.courseId:iu"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "←(LearningLink.course).student",
+                            "path": undefined,
                             "scalars": [
                                 "$parent.name:Student.name:k",
                                 ":Student.id:r"
@@ -463,14 +464,14 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "manager:Category.manager:iu",
                 "$iref(2):Category.id:iu"
             ],
             "preMetadatas": [
                 {
-                    "path": "<super>",
+                    "path": ["<super>"],
                     "scalars": [
                         "name:TreeNode.name:k",
                         "$ref(0,2):TreeNode.parentNodeId:k",
@@ -478,7 +479,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": "<super>.parentNode",
+                            "path": ["parentNode"],
                             "scalars": [
                                 "name:TreeNode.name:k",
                                 ":TreeNode.parentNodeId:r",
@@ -507,14 +508,14 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "price:Item.price:iu",
                 "$iref(2):Item.id:iu"
             ],
             "preMetadatas": [
                 {
-                    "path": "<super>",
+                    "path": ["<super>"],
                     "scalars": [
                         "name:TreeNode.name:k",
                         "parentNodeId:TreeNode.parentNodeId:k",
@@ -523,7 +524,7 @@ describe("InputMetadataTest", () => {
                     "preMetadatas": [],
                     "postMetadatas": [
                         {
-                            "path": "<super>.childNodes",
+                            "path": ["childNodes"],
                             "scalars": [
                                 "name:TreeNode.name:k",
                                 ":TreeNode.id:r",
@@ -537,7 +538,7 @@ describe("InputMetadataTest", () => {
             ],
             "postMetadatas": [
                 {
-                    "path": "middleTable(tags)",
+                    "path": ["<middletable:tags>"],
                     "scalars": [
                         "$bref(1):MiddleTable(Item.tags).sourceId:k",
                         "$ref(0,1):MiddleTable(Item.tags).targetId.low:k",
@@ -545,7 +546,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(tags).target",
+                            "path": ["tags"],
                             "scalars": [
                                 "name:Tag.name:k",
                                 ":Tag.id.low:r",
@@ -570,7 +571,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Library.name:k",
                 "version:Library.version:k",
@@ -579,14 +580,14 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "middleTable(dependencies)",
+                    "path": ["<middletable:dependencies>"],
                     "scalars": [
                         "$bref(2):MiddleTable(Library.dependencies).sourceId:k",
                         "$ref(0,2):MiddleTable(Library.dependencies).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(dependencies).target",
+                            "path": ["dependencies"],
                             "scalars": [
                                 "name:Library.name:k",
                                 "version:Library.version:k",
@@ -599,14 +600,14 @@ describe("InputMetadataTest", () => {
                     "postMetadatas": []
                 },
                 {
-                    "path": "middleTable(dependents)",
+                    "path": ["<middletable:dependents>"],
                     "scalars": [
                         "$bref(2):MiddleTable(Library.dependents).sourceId:k",
                         "$ref(0,2):MiddleTable(Library.dependents).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(dependents).target",
+                            "path": ["dependents"],
                             "scalars": [
                                 "name:Library.name:k",
                                 "version:Library.version:k",
@@ -633,7 +634,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -642,7 +643,7 @@ describe("InputMetadataTest", () => {
             ],
             "preMetadatas": [
                 {
-                    "path": "store",
+                    "path": ["store"],
                     "scalars": [
                         "name:BookStore.name:k",
                         ":BookStore.id:r"
@@ -666,7 +667,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -675,7 +676,7 @@ describe("InputMetadataTest", () => {
             ],
             "preMetadatas": [
                 {
-                    "path": "store",
+                    "path": undefined,
                     "scalars": [
                         "$parent.storeName:BookStore.name:k",
                         ":BookStore.id:r"
@@ -699,7 +700,7 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
@@ -709,14 +710,14 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "middleTable(authors)",
+                    "path": ["<middletable:authors>"],
                     "scalars": [
                         "$bref(3):MiddleTable(Book.authors).sourceId:k",
                         "$ref(0,2):MiddleTable(Book.authors).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(authors).target",
+                            "path": ["authors"],
                             "scalars": [
                                 "name.firstName:Author.name.firstName:k",
                                 "name.lastName:Author.name.lastName:k",
@@ -741,27 +742,26 @@ describe("InputMetadataTest", () => {
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": "",
+            "path": undefined,
             "scalars": [
                 "name:Book.name:k",
                 "edition:Book.edition:k",
                 "price:Book.price:iu",
-                ":Book.id:r",
-                "authorIds::iu"
+                ":Book.id:r"
             ],
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": "middleTable(authors)",
+                    "path": ["authors"],
                     "scalars": [
                         "$bref(3):MiddleTable(Book.authors).sourceId:k",
                         "$ref(0,0):MiddleTable(Book.authors).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": "middleTable(authors).target",
+                            "path": ["authors"],
                             "scalars": [
-                                "id:Author.id:iu"
+                                ".:Author.id:iu"
                             ],
                             "preMetadatas": [],
                             "postMetadatas": []

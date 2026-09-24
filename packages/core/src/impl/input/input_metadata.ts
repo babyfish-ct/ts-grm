@@ -19,33 +19,42 @@ import { Entity } from "../entity";
 import { EntityProp } from "../entity_prop";
 import { InputFlags } from "../input_flags";
 import { createEntityNode, EntityNode } from "./entity_node";
-import { InverseFetchProp } from "../dto";
+import { AbstractFormulaProp, InverseFetchProp } from "../dto";
 
 export function createInputMetadata(
     mapper: DtoMapper
 ): InputMetadata {
     const entityNode = createEntityNode(mapper);
-    return createInputMetadataImpl(undefined, undefined, undefined, entityNode, InheritanceDirection.Both, false);
+    return createInputMetadataImpl(
+        undefined, 
+        undefined, 
+        undefined, 
+        undefined, 
+        entityNode, 
+        InheritanceDirection.Both, 
+        false
+    );
 }
 
 class InputMetadata {
 
     private readonly _scalars: Array<InputMetadataScalar>;
 
-    private _path: string | undefined = undefined;
+    private _location: string | undefined = undefined;
 
     constructor(
         readonly parent: InputMetadata | undefined,
         readonly key: InputMetadataKey | undefined,
+        readonly path: ReadonlyArray<string> | undefined,
         readonly recursiveDepth: number | undefined,
         readonly source: Entity | AssociationEntity,
         fields: ReadonlyArray<DtoMapperField> | undefined,
         refOnly: boolean
     ) {
         this._scalars = fields != null
-            ? toScalarFields(fields!, refOnly)
+            ? toScalars(fields!, refOnly)
             : source instanceof AssociationEntity 
-                ? toMiddleTableScalarFields(source)
+                ? toMiddleTableScalars(source)
                 : [];
     }
 
@@ -162,11 +171,11 @@ class InputMetadata {
         return index;
     }
 
-    get path(): string {
-        let path = this._path;
-        if (path == null) {
+    get location(): string {
+        let location = this._location;
+        if (location == null) {
             if (this.key == null) {
-                path = "";
+                location = "";
             } else {
                 let p: string;
                 if (this.key === "SUPER") {
@@ -183,14 +192,14 @@ class InputMetadata {
                     p += "*";
                 }
                 if (this.parent != null) {
-                    const pp = this.parent.path; 
+                    const pp = this.parent.location; 
                     p = pp === "" ? p : `${pp}.${p}`;
                 }
-                path = p;
+                location = p;
             }
-            this._path = path;
+            this._location = location;
         }
-        return path;
+        return location;
     }
 
     toJSON(): any {
@@ -226,20 +235,45 @@ export type InputMetadataScalar = {
 function createInputMetadataImpl(
     parent: InputMetadata | undefined,
     key: InputMetadataKey | undefined,
+    path: ReadonlyArray<string> | undefined,
     recursiveDepth: number | undefined,
     entityNode: EntityNode,
     direction: InheritanceDirection,
     refOnly: boolean
 ): InputMetadata {
-    const metadata = new InputMetadata(parent, key, recursiveDepth, entityNode.raw, entityNode.fields, refOnly);
+    const metadata = new InputMetadata(
+        parent, 
+        key, 
+        path, 
+        recursiveDepth, 
+        entityNode.raw, 
+        entityNode.fields, 
+        refOnly
+    );
     if (entityNode.superNode != null && (direction & InheritanceDirection.Super) !== 0) {
-        const superMetadata = createInputMetadataImpl(metadata, "SUPER", undefined, entityNode.superNode, InheritanceDirection.Super, false);
+        const superMetadata = createInputMetadataImpl(
+            metadata, 
+            "SUPER", 
+            ["<super>"], 
+            undefined, 
+            entityNode.superNode, 
+            InheritanceDirection.Super, 
+            false
+        );
         (metadata as any)._inheritanceRef(superMetadata);
         (metadata as any)._addPreMetadata(superMetadata);
     }
     if (entityNode.derivedNodes.length !== 0 && (direction & InheritanceDirection.Derived) !== 0) {
         for (const derivedNode of entityNode.derivedNodes) {
-            const derivedMetadata = createInputMetadataImpl(metadata, derivedNode.raw, undefined, derivedNode, InheritanceDirection.Derived, false);
+            const derivedMetadata = createInputMetadataImpl(
+                metadata, 
+                derivedNode.raw, 
+                [`<derived:${derivedNode.raw.name}>`], 
+                undefined, 
+                derivedNode, 
+                InheritanceDirection.Derived, 
+                false
+            );
             (derivedMetadata as any)._inheritanceRef(metadata);
             (metadata as any)._addPostMetadata(derivedMetadata);
         }
@@ -249,13 +283,15 @@ function createInputMetadataImpl(
     return metadata;
 }
 
-function toScalarFields(
+function toScalars(
     fields: ReadonlyArray<DtoMapperField>,
     isParentRef: boolean
 ): Array<InputMetadataScalar> {
     const arr: Array<InputMetadataScalar> = [];
     for (const field of fields) {
-        if (field.prop.associationType != null || field.subMapper != null) {
+        if (field.prop instanceof AbstractFormulaProp
+            || field.prop.associationType != null 
+            || field.subMapper != null) {
             continue;
         }
         let kind: ScalarKind = 0 as ScalarKind;
@@ -289,29 +325,29 @@ function toScalarFields(
     return arr;
 }
 
-function toMiddleTableScalarFields(
+function toMiddleTableScalars(
     associationEntity: AssociationEntity
 ): Array<InputMetadataScalar> {
     return [
-        ...toMiddleTableScalarFields0(associationEntity.sourceKeyProp),
-        ...toMiddleTableScalarFields0(associationEntity.targetKeyProp)
+        ...toMiddleTableScalars0(associationEntity.sourceKeyProp),
+        ...toMiddleTableScalars0(associationEntity.targetKeyProp)
     ];
 }
 
-function toMiddleTableScalarFields0(
+function toMiddleTableScalars0(
     prop: AssociationProp
 ): ReadonlyArray<InputMetadataScalar> {
     if (prop.props == null) {
-        return [toMiddleTableScalarField1(prop)];
+        return [toMiddleTableScalar(prop)];
     }
     const arr: Array<InputMetadataScalar> = [];
     for (const subProp of prop.scalarProps!) {
-        arr.push(toMiddleTableScalarField1(subProp));
+        arr.push(toMiddleTableScalar(subProp));
     }
     return arr;
 }
 
-function toMiddleTableScalarField1(
+function toMiddleTableScalar(
     prop: AssociationProp
 ): InputMetadataScalar {
     return {
@@ -334,6 +370,11 @@ function processPreAssociations(
         const preMetadata = createInputMetadataImpl(
             metadata, 
             field.prop.asEntityProp!, 
+            field.paths.length === 0 
+                ? undefined 
+                : typeof field.paths[0] === "string"
+                    ? [field.paths[0]!]
+                    : field.paths[0]!,
             applyRecursive ? field.recursiveDepth : undefined, 
             entityNode, 
             InheritanceDirection.Both,
@@ -361,6 +402,12 @@ function processPostAssociations(
         if (field.subMapper == null || field.prop.asEntityProp?.referenceKeyProp != null) {
             continue;
         }
+        const path = 
+            field.paths.length === 0 
+                ? undefined 
+                : typeof field.paths[0] === "string"
+                    ? [field.paths[0]!]
+                    : field.paths[0]!;
         let targetMetadata: InputMetadata;
         if (field.prop instanceof InverseFetchProp) {
             const middleEntity = field.bridgeProp?.middleEntity!;
@@ -368,6 +415,7 @@ function processPostAssociations(
             const middleMetadata = createInputMetadataImpl(
                 metadata,
                 field.prop,
+                path,
                 applyRecursive ? field.recursiveDepth : undefined,
                 createEntityNode(field.subMapper),
                 InheritanceDirection.Both,
@@ -381,6 +429,7 @@ function processPostAssociations(
             const middleMetadata = new InputMetadata(
                 metadata, 
                 field.prop.asEntityProp!, 
+                middleTablePath(path),
                 applyRecursive ? field.recursiveDepth : undefined, 
                 associationEntity,
                 undefined,
@@ -392,6 +441,7 @@ function processPostAssociations(
             targetMetadata = createInputMetadataImpl(
                 middleMetadata, 
                 associationEntity.targetProp, 
+                path,
                 applyRecursive ? field.recursiveDepth : undefined, 
                 entityNode, 
                 InheritanceDirection.Both,
@@ -402,13 +452,20 @@ function processPostAssociations(
                 false,
                 targetMetadata, 
                 middleMetadata.preMetadatas.length
-            );   
+            );
+            if (field.paths != null) {
+                const path = field.paths[0]!;
+                if (Array.isArray(path) && path[0]!.startsWith("<implicit:")) {
+                    (targetMetadata.scalars[0] as any).path = ["."];
+                }
+            }
             (middleMetadata as any)._addPreMetadata(targetMetadata);
         } else {
             const entityNode = createEntityNode(field.subMapper!);
             targetMetadata = createInputMetadataImpl(
                 metadata, 
                 field.prop.asEntityProp!, 
+                path,
                 applyRecursive ? field.recursiveDepth : undefined, 
                 entityNode, 
                 InheritanceDirection.Both,
@@ -438,4 +495,18 @@ enum ScalarKind {
     Insert = 1 << 1,
     Update = 1 << 2,
     Return = 1 << 3
+}
+
+function middleTablePath(
+    path: ReadonlyArray<string> | undefined
+): ReadonlyArray<string> | undefined {
+    if (path == null) {
+        return undefined;
+    }
+    if (path.length === 1) {
+        return [`<middletable:${path[0]!}>`];
+    }
+    const arr = [...path];
+    arr[arr.length - 1] = `<middletable:${path[arr.length - 1]!}>`;
+    return arr;
 }
