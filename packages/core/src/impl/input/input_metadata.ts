@@ -37,9 +37,11 @@ export function createInputMetadata(
     );
 }
 
-class InputMetadata {
+export class InputMetadata {
 
     private readonly _scalars: Array<InputMetadataScalar>;
+
+    private _preMetadataReferences: ReadonlyArray<boolean> | undefined;
 
     private _location: string | undefined = undefined;
 
@@ -74,6 +76,23 @@ class InputMetadata {
 
     get postMetadatas(): ReadonlyArray<InputMetadata> {
         return this._postMetadatas;
+    }
+
+    isReferencePreMetadata(index: number): boolean {
+        let boolArr = this._preMetadataReferences;
+        if (boolArr == null) {
+            const arr: Array<boolean> = [];
+            for (const preMetadata of this._postMetadatas) {
+                const key = preMetadata.key;
+                let isReference = false;
+                if (key instanceof EntityProp) {
+                    isReference = key.associationType === "ONE_TO_ONE" || key.associationType === "MANY_TO_ONE";
+                }
+                arr.push(isReference);
+            }
+            this._preMetadataReferences = boolArr = arr;
+        }
+        return boolArr[index] !== false;
     }
 
     // @ts-ignore
