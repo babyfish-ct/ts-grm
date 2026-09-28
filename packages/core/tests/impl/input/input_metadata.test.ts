@@ -1,8 +1,7 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
-import { AUTHOR, BOOK, BOOK_STORE, CATEGORY, COURSE, ELECTRONIC_BOOK, ITEM, LIBRARY, ORDER, ORDER_ITEM, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TAG } from "../../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, CATEGORY, COURSE, ELECTRONIC_BOOK, ITEM, LIBRARY, ORDER, ORDER_ITEM, PAPER_BOOK, PDF_ELECTRONIC_BOOK, STUDENT, TAG } from "../../model/model";
 import { createInputMetadata } from "@/impl/input/input_metadata";
-import { mapperJson } from "../view/utils";
 
 describe("InputMetadataTest", () => {
 
@@ -210,7 +209,7 @@ describe("InputMetadataTest", () => {
             c.name.key(),
             c.edition.key(),
             c.price,
-            c.authors.with(c => [
+            c.authors.as("authorList").with(c => [
                 c.name.key(),
                 c.gender
             ])
@@ -227,14 +226,14 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": ["<middletable:authors>"],
+                    "path": ["authorList"],
                     "scalars": [
                         "$bref(3):MiddleTable(Book.authors).sourceId:k",
                         "$ref(0,3):MiddleTable(Book.authors).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": ["authors"],
+                            "path": [".."],
                             "scalars": [
                                 "name.firstName:Author.name.firstName:k",
                                 "name.lastName:Author.name.lastName:k",
@@ -255,7 +254,7 @@ describe("InputMetadataTest", () => {
         const input = dto.input(TAG, c => [
             c.id.key(),
             c.name,
-            c.orders.with(c => [
+            c.orders.as("orderList").with(c => [
                 c.id.key(),
                 c.name
             ])
@@ -271,7 +270,7 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": ["<middletable:orders>"],
+                    "path": ["orderList"],
                     "scalars": [
                         "$bref(0):MiddleTable(Tag.orders).sourceId.low:k",
                         "$bref(1):MiddleTable(Tag.orders).sourceId.high:k",
@@ -281,7 +280,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": ["orders"],
+                            "path": [".."],
                             "scalars": [
                                 "id.x:Order.id.x:k",
                                 "id.y.a:Order.id.y.a:k",
@@ -363,7 +362,7 @@ describe("InputMetadataTest", () => {
                     c.name.key(),
                     c.version
                 ]),
-                c.authors.with(c => [
+                c.authors.as("authorList").with(c => [
                     c.$flat("name").prefix("").key(),
                     c.gender
                 ])
@@ -393,14 +392,14 @@ describe("InputMetadataTest", () => {
             ],
             "postMetadatas": [
                 {
-                    "path": ["associations", "<middletable:authors>"],
+                    "path": ["associations", "authorList"],
                     "scalars": [
                         "$bref(4):MiddleTable(Book.authors).sourceId:k",
                         "$ref(0,3):MiddleTable(Book.authors).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": ["associations", "authors"],
+                            "path": [".."],
                             "scalars": [
                                 "firstName:Author.name.firstName:k",
                                 "lastName:Author.name.lastName:k",
@@ -538,7 +537,7 @@ describe("InputMetadataTest", () => {
             ],
             "postMetadatas": [
                 {
-                    "path": ["<middletable:tags>"],
+                    "path": ["tags"],
                     "scalars": [
                         "$bref(1):MiddleTable(Item.tags).sourceId:k",
                         "$ref(0,1):MiddleTable(Item.tags).targetId.low:k",
@@ -546,7 +545,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": ["tags"],
+                            "path": [".."],
                             "scalars": [
                                 "name:Tag.name:k",
                                 ":Tag.id.low:r",
@@ -580,14 +579,14 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": ["<middletable:dependencies>"],
+                    "path": ["dependencies"],
                     "scalars": [
                         "$bref(2):MiddleTable(Library.dependencies).sourceId:k",
                         "$ref(0,2):MiddleTable(Library.dependencies).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": ["dependencies"],
+                            "path": [".."],
                             "scalars": [
                                 "name:Library.name:k",
                                 "version:Library.version:k",
@@ -600,14 +599,14 @@ describe("InputMetadataTest", () => {
                     "postMetadatas": []
                 },
                 {
-                    "path": ["<middletable:dependents>"],
+                    "path": ["dependents"],
                     "scalars": [
                         "$bref(2):MiddleTable(Library.dependents).sourceId:k",
                         "$ref(0,2):MiddleTable(Library.dependents).targetId:k"
                     ],
                     "preMetadatas": [
                         {
-                            "path": ["dependents"],
+                            "path": [".."],
                             "scalars": [
                                 "name:Library.name:k",
                                 "version:Library.version:k",
@@ -696,6 +695,39 @@ describe("InputMetadataTest", () => {
             c.price,
             c.$ref("authors", c => [
                 c.name
+            ]).as("authorList")
+        ]);
+        const metadata = createInputMetadata(input.mapper);
+        expect(metadata.toJSON()).toEqual({
+            "path": undefined,
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu",
+                ":Book.id:r"
+            ],
+            "preMetadatas": [],
+            "postMetadatas": [
+                {
+                    "path": ["authorList"],
+                    "scalars": [
+                        "$bref(3):MiddleTable(Book.authors).sourceId:k",
+                        "$parent:MiddleTable(Book.authors).targetId:k"
+                    ],
+                    "preMetadatas": [],
+                    "postMetadatas": []
+                }
+            ]
+        });
+    });
+
+    it("m2mAsscociatedKeys", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.$fold("associatedKeys", c => [
+                c.$associatedKeys("authors", "authorIds")
             ])
         ]);
         const metadata = createInputMetadata(input.mapper);
@@ -710,63 +742,43 @@ describe("InputMetadataTest", () => {
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": ["<middletable:authors>"],
+                    "path": ["associatedKeys", "authorIds"],
                     "scalars": [
                         "$bref(3):MiddleTable(Book.authors).sourceId:k",
-                        "$ref(0,2):MiddleTable(Book.authors).targetId:k"
+                        "$parent:MiddleTable(Book.authors).targetId:k"
                     ],
-                    "preMetadatas": [
-                        {
-                            "path": ["authors"],
-                            "scalars": [
-                                "name.firstName:Author.name.firstName:k",
-                                "name.lastName:Author.name.lastName:k",
-                                ":Author.id:r"
-                            ],
-                            "preMetadatas": [],
-                            "postMetadatas": []
-                        }
-                    ],
+                    "preMetadatas": [],
                     "postMetadatas": []
                 }
             ]
         });
     });
 
-    it("asscociatedKeys", () => {
-        const input = dto.input(BOOK, c => [
-            c.name.key(),
-            c.edition.key(),
-            c.price,
-            c.$associatedKeys("authors", "authorIds")
+    it("joinEntityAssociatedKeys", () => {
+        const input = dto.input(STUDENT, c => [
+            c.name,
+            c.$fold("associations", c => [
+                c.$associatedKeys("courses", "courseIds")
+            ])
         ]);
         const metadata = createInputMetadata(input.mapper);
         expect(metadata.toJSON()).toEqual({
-            "path": undefined,
             "scalars": [
-                "name:Book.name:k",
-                "edition:Book.edition:k",
-                "price:Book.price:iu",
-                ":Book.id:r"
+                "name:Student.name:iu",
+                ":Student.id:r"
             ],
             "preMetadatas": [],
             "postMetadatas": [
                 {
-                    "path": ["authors"],
+                    "path": [
+                        "associations",
+                        "courseIds"
+                    ],
                     "scalars": [
-                        "$bref(3):MiddleTable(Book.authors).sourceId:k",
-                        "$ref(0,0):MiddleTable(Book.authors).targetId:k"
+                        "$parent:LearningLink.courseId:k",
+                        "$bref(1):LearningLink.studentId:iu"
                     ],
-                    "preMetadatas": [
-                        {
-                            "path": ["authors"],
-                            "scalars": [
-                                ".:Author.id:iu"
-                            ],
-                            "preMetadatas": [],
-                            "postMetadatas": []
-                        }
-                    ],
+                    "preMetadatas": [],
                     "postMetadatas": []
                 }
             ]
