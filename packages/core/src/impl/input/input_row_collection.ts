@@ -1,4 +1,18 @@
-import { EntityProp } from "../entity_prop";
+/*
+ * ts-grm is a pure TypeScript database ORM built on type-level programming.
+ * 
+ * Design principles:
+ * - Zero code generation, pure TypeScript type inference
+ * - No entity object instantiation — maps database rows directly to DTOs
+ * - No runtime reflection — performance on par with handwritten SQL
+ * - Full type safety, full SQL features
+ * - Like GraphQL, clients can query exact shape of data they need
+ * - Like the inversed GraphQL, clients can save exact shape of data they need
+ * 
+ * @author 陈涛 (Chen Tao)
+ */
+
+import { Entity } from "../entity";
 import { InputMetadata } from "./input_metadata";
 import { createInputCtor, InputRow, InputRowCtor } from "./input_row";
 
@@ -17,55 +31,143 @@ export function createInputCollection(
     metadata: InputMetadata,
     objs: ReadonlyArray<any>
 ): InputRowCollection {
-
-    const preCollections: Array<InputRowCollection> = [];
-    for (const preMetadata of metadata.preMetadatas) {
-        const key = preMetadata.key;
-        if (key === "SUPER") {
-            const preCollection = createInputCollection(preMetadata, objs);
-            preCollections.push(preCollection);
-            continue;
+    const rowCtor = createInputCtor(metadata);
+    const items: ReadonlyArray<InputRowItem> = objs.map(o => {
+        return {
+            data: o,
+            parent: undefined
         }
-        
+    })
+    return createInputCollectionImpl(rowCtor, metadata, items);
+}
+
+function createInputCollectionImpl(
+    rowCtor: InputRowCtor,
+    metadata: InputMetadata,
+    items: ReadonlyArray<InputRowItem>
+): InputRowCollection {
+    const collection = new InputRowCollectionImpl(rowCtor, metadata);
+    for (const item of items) {
+        collection.addRow(item.data, item.parent);
     }
-    throw new Error();
+    collection.preCollections = createPreCollections(collection, metadata);
+    collection.postCollections = createPostCollections(collection, metadata);
+    return collection;
+}
+
+function createPreCollections(
+    collection: InputRowCollectionImpl,
+    metadata: InputMetadata
+): ReadonlyArray<InputRowCollection> {
+    const preCollections: Array<InputRowCollection> = [];
+    const preMetadatas = metadata.preMetadatas;
+    for (let i = 0; i < preMetadatas.length; i++) {
+        const preMetadata = preMetadatas[i]!;
+        const preRowCtor = createInputCtor(preMetadata);
+        const key = preMetadata.key;
+        const preItems: Array<InputRowItem> = [];
+        if (key === "SUPER") {
+            for (const row of collection.rows) {
+                preItems.push({
+                    data: row.data,
+                    parent: row
+                });
+            }
+        } else {
+            for (const row of collection.rows) {
+                const pre = (collection.rowCtor as any).pre(row.data, i);
+                if (pre != null) {
+                    preItems.push({
+                        data: pre,
+                        parent: row
+                    });
+                }
+            }
+        }
+        const preCollection = createInputCollectionImpl(preRowCtor, preMetadata, preItems);
+        preCollections.push(preCollection);
+    }
+    return preCollections;
+}
+
+function createPostCollections(
+    collection: InputRowCollectionImpl,
+    metadata: InputMetadata
+): ReadonlyArray<InputRowCollection> {
+    const postCollections: Array<InputRowCollection> = [];
+    const postMetadatas = metadata.postMetadatas;
+    for (let i = 0; i < postMetadatas.length; i++) {
+        const postMetadata = postMetadatas[i]!;
+        const postRowCtor = createInputCtor(postMetadata);
+        const key = postMetadata.key;
+        const postItems: Array<InputRowItem> = [];
+        if (key instanceof Entity) {
+            for (const row of collection.rows) {
+                postItems.push({
+                    data: row.data,
+                    parent: row
+                });
+            }
+        } else {
+            for (const row of collection.rows) {
+                const post = (collection.rowCtor as any).pre(row.data, i);
+                if (Array.isArray(post)) {
+                    for (const e of post) {
+                        postItems.push({
+                            data: e,
+                            parent: row
+                        });
+                    }
+                } else if (post != null) {
+                    postItems.push({
+                        data: post,
+                        parent: row
+                    });
+                }
+            }
+        }
+        const preCollection = createInputCollectionImpl(postRowCtor, postMetadata, postItems);
+        postCollections.push(preCollection);
+    }
+    return postCollections;
+}
+
+interface InputRowItem {
+    readonly data: any;
+    readonly parent: InputRow | undefined;
 }
 
 class InputRowCollectionImpl implements InputRowCollection {
 
     private readonly _rows: Array<InputRow> = [];
 
-    private readonly _postCollections: Array<InputRowCollection> = [];
-
-    private readonly _rowCtor: InputRowCtor;
+    preCollections: ReadonlyArray<InputRowCollection> = [];
+        
+    postCollections: ReadonlyArray<InputRowCollection> = [];
 
     constructor(
-        readonly metadata: InputMetadata,
-        readonly preCollections: ReadonlyArray<InputRowCollection>
-    ) {
-        this._rowCtor = createInputCtor(metadata);
-    }
+        readonly rowCtor: InputRowCtor,
+        readonly metadata: InputMetadata
+    ) {}
 
     get rows(): ReadonlyArray<InputRow> {
         return this._rows;
-    }
-
-    get postCollections(): ReadonlyArray<InputRowCollection> {
-        return this._postCollections;
     }
 
     addRow(
         data: any, 
         parent: InputRow | undefined
     ) {
-        const row = new this._rowCtor(data, parent);
+        const row = new this.rowCtor(data, parent);
         this._rows.push(row);
     }
 
-    addPostCollection(
-        index: number, 
-        postCollection: InputRowCollection
-    ) {
-        this._postCollections[index] = postCollection;
+    toJSON() {
+        return {
+            path: this.metadata.path,
+            rows: this.rows,
+            preCollections: this.preCollections,
+            postCollections: this.postCollections
+        }
     }
 }

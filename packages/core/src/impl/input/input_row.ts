@@ -17,10 +17,8 @@ import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadat
 
 export abstract class InputRow {
 
-    private _preRows: Array<InputRow | Array<InputRow> | undefined> | undefined = undefined;
-
     constructor(
-        protected readonly data: any,
+        readonly data: any,
         protected readonly parent: InputRow | undefined
     ) {
     }
@@ -31,18 +29,21 @@ export abstract class InputRow {
 
     abstract set(col: number, value: any): void;
 
-    abstract pre(index: number): any;
-
     protected ref(
         preMetadataIndex: number, 
         colIndex: number
     ): any {
-        const preRows = this._preRows;
-        if (preRows == null) {
-            return undefined;
+        //
+        return 333;
+    }
+
+    toJSON() {
+        const size = this.metadata.scalars.length;
+        const arr = [];
+        for (let i = 0; i < size; i++) {
+            arr[i] = this.get(i);
         }
-        const preRow = preRows[preMetadataIndex] as InputRow | undefined;
-        return preRow?.get(colIndex);
+        return arr;
     }
 }
 
@@ -65,11 +66,10 @@ export function createInputCtor(
         writePre(metadata, writer);
         writePost(metadata, writer);
     });
-    console.log(writer.toString())
     const code = writer.toString();
     return new Function(
         "$baseClass", 
-        "$metadta",
+        "$metadata",
         code
     )(
         InputRow,
@@ -91,7 +91,7 @@ function writeMetadata(
 ) {
     writer.code("get metadata() ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code("return $meatadata").newLine(";")
+        writer.code("return $metadata").newLine(";")
     }).newLine();
 }
 
@@ -128,25 +128,26 @@ function writeGetter(
     writer: CodeWriter
 ) {
     writer.code("return ");
-    writerGetterExpr(scalar.path!, writer);
+    writerExpr("this.data.", scalar.path!, writer);
     writer.newLine(";");
 }
 
-function writerGetterExpr(
+function writerExpr(
+    root: string,
     path: ReadonlyArray<string>,
     writer: CodeWriter
 ) {
-    let op = "this.data.";
+    let op = root;
     for (const part of path!) {
         if (part === "$parent") {
             writer.code("this.parent.data");
-        } else if (part.startsWith("bref(")) {
-            const indexStr = part.substring(5, part.length - 1);
+        } else if (part.startsWith("$bref(")) {
+            const indexStr = part.substring(6, part.length - 1);
             writer.code("this.parent.get(").code(indexStr).code(")");
-        } else if (part.startsWith("ref(")) {
-            const indicesStr = part.substring(4, part.length - 1);
+        } else if (part.startsWith("$ref(")) {
+            const indicesStr = part.substring(5, part.length - 1);
             const indices = indicesStr.split(",");
-            writer.code("this.ref(").code(indices[0]!).code(",").code(indices[1]!).code(")");
+            writer.code("this.ref(").code(indices[0]!).code(", ").code(indices[1]!).code(")");
         } else {
             writer.code(op).code(part);
         }
@@ -195,7 +196,7 @@ function writePre(
     metadata: InputMetadata,
     writer: CodeWriter
 ) {
-    writer.code("pre(index) ");
+    writer.code("static pre(data, index) ");
     writer.scope("CURLY_BRACKETS", () => {
         const preMetadatas = metadata.preMetadatas;
         const preCount = preMetadatas.length;
@@ -206,11 +207,13 @@ function writePre(
                     continue;
                 }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    writerGetterExpr(preMetadatas[i]!.path!, writer);
+                    writer.code("return ");
+                    writerExpr("data.", preMetadatas[i]!.path!, writer);
+                    writer.newLine(";");
                 });
             }
             writer.code("default:").scope("BLANK", () => {
-                writer.code("return this.data").newLine(";");
+                writer.code("return data").newLine(";");
             });
         });    
     }).newLine();
@@ -220,7 +223,7 @@ function writePost(
     metadata: InputMetadata,
     writer: CodeWriter
 ) {
-    writer.code("post(index) ");
+    writer.code("static post(data, index) ");
     writer.scope("CURLY_BRACKETS", () => {
         const postMetadatas = metadata.postMetadatas;
         const postCount = postMetadatas.length;
@@ -231,11 +234,13 @@ function writePost(
                     continue;
                 }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    writerGetterExpr(postMetadatas[i]!.path!, writer);
+                    writer.code("return ");
+                    writerExpr("data.", postMetadatas[i]!.path!, writer);
+                    writer.newLine(";");
                 });
             }
             writer.code("default:").scope("BLANK", () => {
-                writer.code("return this.data").newLine(";");
+                writer.code("return data").newLine(";");
             });
         });    
     }).newLine();

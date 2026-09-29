@@ -1,9 +1,8 @@
-import { dto } from "@/index";
+import { dto, TypeOf } from "@/index";
 import { describe, it } from "vitest";
 import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
 import { createInputMetadata } from "@/impl/input/input_metadata";
-import { createInputCtor } from "@/impl/input/input_row";
-import { expectCode } from "../../utils";
+import { createInputCollection } from "@/impl/input/input_row_collection";
 
 describe("InputRowCtorTest", () => {
 
@@ -22,55 +21,68 @@ describe("InputRowCtorTest", () => {
                 ])
             ])
         ]);
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "GraphQL in Action",
+                edition: 3,
+                price: 34.9,
+                __typename: "PaperBook",
+                size: {
+                    width: 256,
+                    height: 128
+                }
+            },
+            {
+                name: "Yubabyte DB",
+                edition: 3,
+                price: 44.9,
+                __typename: "PdfElectronicBook",
+                address: "https://www.manning.com/",
+                pdfVersion: "2.0"
+            }
+        ];
         const metadata = createInputMetadata(input.mapper);
-        const ctor = createInputCtor(metadata);
-        expectCode(ctor.toString(), `
-            class ThisClass extends $baseClass {
-                _id = undefined;
-                constructor(data, parent) {
-                    super(data, parent);
+        const collection = createInputCollection(metadata, objs);
+        console.log(JSON.stringify(collection, null, 4));
+    });
+
+    it("m2o", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price,
+            c.store.with(c => [
+                c.name.key(),
+                c.version
+            ])
+        ]);
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "GraphQL in Action",
+                edition: 3,
+                price: 34.9,
+                store: {
+                    name: "MANING",
+                    version: 1
                 }
-                get metadata() {
-                    return $meatadata;
-                }
-                get(col) {
-                    switch (col) {
-                        case 0:
-                            return this.data.name;
-                        case 1:
-                            return this.data.edition;
-                        case 2:
-                            return this.data.price;
-                        case 3:
-                            return this.data.__typename;
-                        case 4:
-                            return this._id;
-                        default:
-                            return undefined;
-                    }
-                }
-                set(col, value) {
-                    switch (col) {
-                        case 4:
-                            this._id = value;
-                            break;
-                        default:
-                            throw new $argumentError("Illegal col index");
-                    }
-                }
-                pre(index) {
-                    switch (index) {
-                        default:
-                            return this.data;
-                    }
-                }
-                post(index) {
-                    switch (index) {
-                        default:
-                            return this.data;
-                    }
+            },
+            {
+                name: "Yugabyte DB",
+                edition: 3,
+                price: 34.9,
+                store: {
+                    name: "O'REIILY",
+                    version: 1
                 }
             }
-        `);
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        let id = 100;
+        for (const row of collection.preCollections[0]!.rows) {
+            row.set(2, ++id);
+        }
+        console.log(collection.rows[0]!.constructor.toString());
+        console.log(JSON.stringify(collection, null, 4));
     });
 });

@@ -415,7 +415,7 @@ function processPreAssociations(
             field.prop.asEntityProp!, 
             (field.inputFlags & InputFlags.RefAsKey) !== 0, 
             preMetadata, 
-            metadata.preMetadatas.length
+            metadata.postMetadatas.length
         );
         (metadata as any)._addPreMetadata(preMetadata);
         if (!applyRecursive && field.recursiveDepth != null) {
@@ -465,7 +465,7 @@ function processPostAssociations(
             );
             (middleMetadata as any)._backRef(sourceProp, false, metadata);
             (metadata as any)._addPostMetadata(middleMetadata);
-            targetMetadata = middleMetadata.preMetadatas[0]!;
+            targetMetadata = middleMetadata.postMetadatas[0]!;
         } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
             const associationEntity = (metadata.source as Entity).association(field.prop.name);
             const middleMetadata = new InputMetadata(
@@ -496,7 +496,7 @@ function processPostAssociations(
                     associationEntity.targetProp, 
                     false,
                     targetMetadata, 
-                    middleMetadata.preMetadatas.length
+                    middleMetadata.postMetadatas.length
                 );
                 (middleMetadata as any)._addPreMetadata(targetMetadata);
             }
