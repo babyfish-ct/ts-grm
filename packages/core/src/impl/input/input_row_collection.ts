@@ -35,7 +35,8 @@ export function createInputCollection(
     const items: ReadonlyArray<InputRowItem> = objs.map(o => {
         return {
             data: o,
-            parent: undefined
+            parent: undefined,
+            preIndex: undefined
         }
     })
     return createInputCollectionImpl(rowCtor, metadata, items);
@@ -48,7 +49,7 @@ function createInputCollectionImpl(
 ): InputRowCollection {
     const collection = new InputRowCollectionImpl(rowCtor, metadata);
     for (const item of items) {
-        collection.addRow(item.data, item.parent);
+        collection.add(item);
     }
     collection.preCollections = createPreCollections(collection, metadata);
     collection.postCollections = createPostCollections(collection, metadata);
@@ -70,7 +71,8 @@ function createPreCollections(
             for (const row of collection.rows) {
                 preItems.push({
                     data: row.data,
-                    parent: row
+                    parent: row,
+                    preIndex: i
                 });
             }
         } else {
@@ -79,7 +81,8 @@ function createPreCollections(
                 if (pre != null) {
                     preItems.push({
                         data: pre,
-                        parent: row
+                        parent: row,
+                        preIndex: i
                     });
                 }
             }
@@ -105,7 +108,8 @@ function createPostCollections(
             for (const row of collection.rows) {
                 postItems.push({
                     data: row.data,
-                    parent: row
+                    parent: row,
+                    preIndex: undefined
                 });
             }
         } else {
@@ -115,13 +119,15 @@ function createPostCollections(
                     for (const e of post) {
                         postItems.push({
                             data: e,
-                            parent: row
+                            parent: row,
+                            preIndex: undefined
                         });
                     }
                 } else if (post != null) {
                     postItems.push({
                         data: post,
-                        parent: row
+                        parent: row,
+                        preIndex: undefined
                     });
                 }
             }
@@ -135,6 +141,7 @@ function createPostCollections(
 interface InputRowItem {
     readonly data: any;
     readonly parent: InputRow | undefined;
+    readonly preIndex: number | undefined;
 }
 
 class InputRowCollectionImpl implements InputRowCollection {
@@ -154,12 +161,14 @@ class InputRowCollectionImpl implements InputRowCollection {
         return this._rows;
     }
 
-    addRow(
-        data: any, 
-        parent: InputRow | undefined
+    add(
+        item: InputRowItem
     ) {
-        const row = new this.rowCtor(data, parent);
+        const row = new this.rowCtor(item.data, item.parent);
         this._rows.push(row);
+        if (item.preIndex != null) {
+            (item.parent! as any)._setPreRow(item.preIndex, row);
+        }
     }
 
     toJSON() {

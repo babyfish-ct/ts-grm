@@ -17,6 +17,8 @@ import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadat
 
 export abstract class InputRow {
 
+    private _preRows: Array<InputRow> | undefined = undefined;
+
     constructor(
         readonly data: any,
         protected readonly parent: InputRow | undefined
@@ -33,8 +35,21 @@ export abstract class InputRow {
         preMetadataIndex: number, 
         colIndex: number
     ): any {
-        //
-        return 333;
+        const preRows = this._preRows;
+        if (preRows == null) {
+            return undefined;
+        }
+        const preRow = preRows[preMetadataIndex] as InputRow | undefined;
+        return preRow?.get(colIndex);
+    }
+
+    //@ts-ignore
+    private _setPreRow(index: number, row: InputRow) {
+        let preRows = this._preRows;
+        if (preRows == null) {
+            this._preRows = preRows = [];
+        }
+        preRows[index] = row;
     }
 
     toJSON() {
