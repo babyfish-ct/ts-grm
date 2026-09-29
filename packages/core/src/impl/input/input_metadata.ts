@@ -117,8 +117,8 @@ export class InputMetadata {
             }
             const superProp = (superMetadata.source as Entity).idProp!.sub(scalar.prop.subPath);
             const index = superMetadata._scalarIndexOf(superProp);
-            (scalar as any).path = [`$iref(${index})`];
-            (scalar as any).kind = ScalarKind.Insert | ScalarKind.Update;
+            (scalar as any).path = [`$bref(${index})`];
+            (scalar as any).kinds = ScalarKinds.Insert | ScalarKinds.Update;
         }
     }
 
@@ -137,9 +137,9 @@ export class InputMetadata {
             const index = targetMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$ref(${targetMetadataIndex},${index})`];
             if (referenceProp instanceof EntityProp) {
-                (scalar as any).kind = refAsKey 
-                    ? ScalarKind.Key
-                    : ScalarKind.Insert | ScalarKind.Update;
+                (scalar as any).kinds = refAsKey 
+                    ? ScalarKinds.Key
+                    : ScalarKinds.Insert | ScalarKinds.Update;
             }
         }
     }
@@ -161,9 +161,9 @@ export class InputMetadata {
             const index = backRefMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$bref(${index})`];
             if (backRefProp instanceof EntityProp) {
-                (scalar as any).kind = backRefAsKey
-                    ? ScalarKind.Key
-                    : ScalarKind.Insert | ScalarKind.Update;
+                (scalar as any).kinds = backRefAsKey
+                    ? ScalarKinds.Key
+                    : ScalarKinds.Insert | ScalarKinds.Update;
             }
         }
     }
@@ -185,7 +185,7 @@ export class InputMetadata {
         const field: InputMetadataScalar = {
             path: undefined,
             prop: prop,
-            kind: ScalarKind.Return
+            kinds: ScalarKinds.Return
         };
         const index = this._scalars.length;
         this._scalars.push(field);
@@ -231,13 +231,13 @@ export class InputMetadata {
             }:${
                 f.prop?.toString() ?? ""
             }:${
-                (f.kind & ScalarKind.Key) !== 0 ? "k" : ""
+                (f.kinds & ScalarKinds.Key) !== 0 ? "k" : ""
             }${
-                (f.kind & ScalarKind.Insert) !== 0 ? "i" : ""
+                (f.kinds & ScalarKinds.Insert) !== 0 ? "i" : ""
             }${
-                (f.kind & ScalarKind.Update) !== 0 ? "u" : ""
+                (f.kinds & ScalarKinds.Update) !== 0 ? "u" : ""
             }${
-                (f.kind & ScalarKind.Return) !== 0 ? "r" : ""
+                (f.kinds & ScalarKinds.Return) !== 0 ? "r" : ""
             }`),
             preMetadatas: this._preMetadatas.map(m => m.toJSON()),
             postMetadatas: this._postMetadatas.map(m => m.toJSON())
@@ -250,7 +250,7 @@ export type InputMetadataKey = "SUPER" | Entity | EntityProp | AssociationProp |
 export type InputMetadataScalar = {
     readonly path: ReadonlyArray<string> | undefined;
     readonly prop: EntityProp | AssociationProp | undefined; // undefined means __typename
-    readonly kind: ScalarKind;
+    readonly kinds: ScalarKinds;
 }
 
 function createInputMetadataImpl(
@@ -322,17 +322,17 @@ function toScalars(
             || field.subMapper != null) {
             continue;
         }
-        let kind: ScalarKind = 0 as ScalarKind;
+        let kind: ScalarKinds = 0 as ScalarKinds;
         if (isParentRef || (field.inputFlags & InputFlags.Key) !== 0) {
-            kind |= ScalarKind.Key;
+            kind |= ScalarKinds.Key;
         } else if (field.paths.length == 0) {
-            kind |= ScalarKind.Return;
+            kind |= ScalarKinds.Return;
         } else {
             if ((field.inputFlags & InputFlags.NonInsertable) === 0) {
-                kind |= ScalarKind.Insert;
+                kind |= ScalarKinds.Insert;
             }
             if ((field.inputFlags & InputFlags.NonUpdateable) === 0) {
-                kind |= ScalarKind.Update;
+                kind |= ScalarKinds.Update;
             }
         }
         if ((kind as number) === 0) {
@@ -347,7 +347,7 @@ function toScalars(
                 : field.paths[0]!;
         const scalarField: InputMetadataScalar = {
             path,
-            kind,
+            kinds: kind,
             prop: field.prop.asEntityProp,
         };
         arr.push(scalarField);
@@ -383,7 +383,7 @@ function toMiddleTableScalar(
     return {
         path: [".."],
         prop,
-        kind: ScalarKind.Key
+        kinds: ScalarKinds.Key
     };
 }
 
@@ -531,7 +531,7 @@ enum InheritanceDirection {
     Both = Super | Derived
 }
 
-enum ScalarKind {
+export enum ScalarKinds {
     Key = 1 << 0,
     Insert = 1 << 1,
     Update = 1 << 2,

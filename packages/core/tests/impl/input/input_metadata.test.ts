@@ -37,7 +37,7 @@ describe("InputMetadataTest", () => {
                     "scalars": [
                         "size.width:PaperBook.size.width:iu",
                         "size.height:PaperBook.size.height:iu",
-                        "$iref(4):PaperBook.id:iu"
+                        "$bref(4):PaperBook.id:iu"
                     ],
                     "preMetadatas": [],
                     "postMetadatas": []
@@ -47,7 +47,7 @@ describe("InputMetadataTest", () => {
                     "scalars": [
                         "address:ElectronicBook.address:iu",
                         "__typename::iu",
-                        "$iref(4):ElectronicBook.id:iu"
+                        "$bref(4):ElectronicBook.id:iu"
                     ],
                     "preMetadatas": [],
                     "postMetadatas": [
@@ -55,7 +55,7 @@ describe("InputMetadataTest", () => {
                             "path": ["<derived:PdfElectronicBook>"],
                             "scalars": [
                                 "pdfVersion:PdfElectronicBook.pdfVersion:iu",
-                                "$iref(2):PdfElectronicBook.id:iu"
+                                "$bref(2):PdfElectronicBook.id:iu"
                             ],
                             "preMetadatas": [],
                             "postMetadatas": []
@@ -466,7 +466,7 @@ describe("InputMetadataTest", () => {
             "path": undefined,
             "scalars": [
                 "manager:Category.manager:iu",
-                "$iref(2):Category.id:iu"
+                "$bref(2):Category.id:iu"
             ],
             "preMetadatas": [
                 {
@@ -510,7 +510,7 @@ describe("InputMetadataTest", () => {
             "path": undefined,
             "scalars": [
                 "price:Item.price:iu",
-                "$iref(2):Item.id:iu"
+                "$bref(2):Item.id:iu"
             ],
             "preMetadatas": [
                 {

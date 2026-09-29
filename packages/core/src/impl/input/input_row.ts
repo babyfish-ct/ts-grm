@@ -13,7 +13,7 @@
  */
 
 import { CodeWriter } from "../code_writer";
-import { InputMetadata, InputMetadataScalar } from "./input_metadata";
+import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
 
 export abstract class InputRow {
 
@@ -29,24 +29,9 @@ export abstract class InputRow {
 
     abstract get(col: number): any;
 
-    protected preRow(index: number, row: InputRow) {
-        if (row == null) {
-            return;
-        }
-        let preRows = this._preRows;
-        if (preRows == null) {
-            this._preRows = preRows = [];
-        }
-        if (this.metadata.isReferencePreMetadata(index)) {
-            preRows[index] = row;
-        } else {
-            let arr = preRows[index] as Array<InputRow> | undefined;
-            if (arr == null) {
-                preRows[index] = arr = [];
-            }
-            arr.push(row);
-        }
-    }
+    abstract set(col: number, value: any): void;
+
+    abstract pre(index: number): any;
 
     protected ref(
         preMetadataIndex: number, 
@@ -59,55 +44,36 @@ export abstract class InputRow {
         const preRow = preRows[preMetadataIndex] as InputRow | undefined;
         return preRow?.get(colIndex);
     }
-
-    protected createPreRow(data: any) {
-
-    }
-
-    protected abstract get preCtors(): ReadonlyArray<InputRowCtor>;
-
-    protected abstract get postCtors(): ReadonlyArray<InputRowCtor>; 
 }
 
-type InputRowCtor = new (
+export type InputRowCtor = new (
     data: any, 
     parent: InputRow | undefined
 ) => InputRow;
 
-function createInputCtor(
+export function createInputCtor(
     metadata: InputMetadata
 ): InputRowCtor {
-    const preCtors = metadata.preMetadatas.map(m => createInputCtor(m));
-    const postCtors = metadata.postMetadatas.map(m => createInputCtor(m));
-    return createInputCtorImpl(metadata, preCtors, postCtors);
-}
-
-function createInputCtorImpl(
-    metadata: InputMetadata,
-    preCtors: ReadonlyArray<InputRowCtor>,
-    postCtors: ReadonlyArray<InputRowCtor>
-): InputRowCtor {
     const writer = new CodeWriter();
-    writer.code("return new class ThisClass extends $baseClass ");
+    writer.code("return class ThisClass extends $baseClass ");
     writer.scope("CURLY_BRACKETS", () => {
+        writeModifableFields(metadata, writer);
         writeConstructor(writer);
         writeMetadata(writer);
         writeGet(metadata, writer);
-        writePreCrtors(writer);
-        writePostCrtors(writer);
+        writeSet(metadata, writer);
+        writePre(metadata, writer);
+        writePost(metadata, writer);
     });
+    console.log(writer.toString())
     const code = writer.toString();
     return new Function(
         "$baseClass", 
         "$metadta",
-        "$preCtors",
-        "$postCtors",
         code
     )(
         InputRow,
-        metadata,
-        preCtors,
-        postCtors
+        metadata
     );
 }
 
@@ -140,14 +106,18 @@ function writeGet(
             const scalars = metadata.scalars;
             const scalarCount = scalars.length;
             for (let i = 0; i < scalarCount; i++) {
-                writer.code("case ").code(i.toString()).code(":").newLine();
-                writer.scope("BLANK", () => {
-                    writeGetter(scalars[i]!, writer);
-                });
+                if ((scalars[i]!.kinds & ScalarKinds.Return) !== 0) {
+                    writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
+                        writer.code("return this._").code(scalars[i]!.prop!.name).newLine(";");
+                    });
+                } else if (scalars[i]!.path != null) {
+                    writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
+                        writeGetter(scalars[i]!, writer);
+                    });
+                }
             }
-            writer.code("default:").newLine();
-            writer.scope("BLANK", () => {
-                writer.code("break").newLine(";");
+            writer.code("default:").scope("BLANK", () => {
+                writer.code("return undefined").newLine(";");
             });
         });
     }).newLine();
@@ -158,16 +128,16 @@ function writeGetter(
     writer: CodeWriter
 ) {
     writer.code("return ");
-    writerGetterExpr(scalar, writer);
+    writerGetterExpr(scalar.path!, writer);
     writer.newLine(";");
 }
 
 function writerGetterExpr(
-    scalar: InputMetadataScalar,
+    path: ReadonlyArray<string>,
     writer: CodeWriter
 ) {
     let op = "this.data.";
-    for (const part of scalar.path!) {
+    for (const part of path!) {
         if (part === "$parent") {
             writer.code("this.parent.data");
         } else if (part.startsWith("bref(")) {
@@ -184,20 +154,95 @@ function writerGetterExpr(
     }
 }
 
-function writePreCrtors(
+function writeModifableFields(
+    metadata: InputMetadata,
     writer: CodeWriter
 ) {
-    writer.code("get preCtors() ");
+    for (const scalar of metadata.scalars) {
+        if ((scalar.kinds & ScalarKinds.Return) !== 0) {
+            writer.code("_").code(scalar.prop!.name).code(" = undefined").newLine(";");
+        }
+    }
+}
+
+function writeSet(
+    metadata: InputMetadata,
+    writer: CodeWriter
+) {
+    const scalars = metadata.scalars;
+    const scalarCount = scalars.length;
+    writer.code("set(col, value) ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code("return $preCtors").newLine(";");
+        writer.code("switch (col) ");
+        writer.scope("CURLY_BRACKETS", () => {
+            for (let i = 0; i < scalarCount; i++) {
+                if (scalars[i]!.prop == null || (scalars[i]!.kinds & ScalarKinds.Return) === 0) {
+                    continue;
+                }
+                writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
+                    writer.code("this._").code(scalars[i]!.prop!.name).code(" = value").newLine(";");
+                    writer.code("break").newLine(";");
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writer.code(`throw new $argumentError("Illegal col index")`).newLine(";");
+            });
+        });
     }).newLine();
 }
 
-function writePostCrtors(
+function writePre(
+    metadata: InputMetadata,
     writer: CodeWriter
 ) {
-    writer.code("get postCtors() ");
+    writer.code("pre(index) ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code("return $postCtors").newLine(";");
+        const preMetadatas = metadata.preMetadatas;
+        const preCount = preMetadatas.length;
+        writer.code("switch (index) ");
+        writer.scope("CURLY_BRACKETS", () => {
+            for (let i = 0; i < preCount; i++) {
+                if (isInheritancePath(preMetadatas[i]!.path!)) {
+                    continue;
+                }
+                writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
+                    writerGetterExpr(preMetadatas[i]!.path!, writer);
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writer.code("return this.data").newLine(";");
+            });
+        });    
     }).newLine();
+}
+
+function writePost(
+    metadata: InputMetadata,
+    writer: CodeWriter
+) {
+    writer.code("post(index) ");
+    writer.scope("CURLY_BRACKETS", () => {
+        const postMetadatas = metadata.postMetadatas;
+        const postCount = postMetadatas.length;
+        writer.code("switch (index) ");
+        writer.scope("CURLY_BRACKETS", () => {
+            for (let i = 0; i < postCount; i++) {
+                if (isInheritancePath(postMetadatas[i]!.path!)) {
+                    continue;
+                }
+                writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
+                    writerGetterExpr(postMetadatas[i]!.path!, writer);
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writer.code("return this.data").newLine(";");
+            });
+        });    
+    }).newLine();
+}
+
+function isInheritancePath(
+    path: ReadonlyArray<string>
+): boolean {
+    return path[path.length - 1]!.startsWith("<");
 }
