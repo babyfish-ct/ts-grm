@@ -50,7 +50,7 @@ describe("SimpleInputTest", () => {
             ],
             "preCollections": [
                 {
-                    "path": ["store"],
+                    "prop": "Book.store",
                     "rows": [
                         ["MANING", 1, 101],
                         ["O'REIILY", 1, 102]

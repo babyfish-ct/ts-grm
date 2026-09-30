@@ -41,14 +41,12 @@ describe("PolymorphismInputTest", () => {
             ],
             "preCollections": [
                 {
-                    "path": ["<super>"],
                     "rows": [
                         ["https://www.oreilly.com/", 101],
                         ["https://www.manning.com/", 102]
                     ],
                     "preCollections": [
                         {
-                            "path": ["<super>"],
                             "rows": [
                                 ["GraphQL in Action", 3, 34.9, 101],
                                 ["Yubabyte DB", 3, 44.9, 102]
@@ -105,19 +103,16 @@ describe("PolymorphismInputTest", () => {
             ],
             "postCollections": [
                 {
-                    "path": ["<derived:PaperBook>"],
                     "rows": [
                         [256, 128, 101]
                     ]
                 },
                 {
-                    "path": ["<derived:ElectronicBook>"],
                     "rows": [
                         ["https://www.manning.com/", "PdfElectronicBook", 102]
                     ],
                     "postCollections": [
                         {
-                            "path": ["<derived:PdfElectronicBook>"],
                             "rows": [
                                 ["2.0", 102]
                             ]

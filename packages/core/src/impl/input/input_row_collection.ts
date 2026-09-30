@@ -12,6 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { EntityProp } from "../entity_prop";
 import { InputMetadata } from "./input_metadata";
 import { createInputCtor, InputRow, InputRowCtor } from "./input_row";
 
@@ -167,12 +168,14 @@ class InputRowCollectionImpl implements InputRowCollection {
 
     toJSON() {
         const json = {
-            path: this.metadata.path,
             rows: this.rows.map(r => r.toJSON())
         };
-        const json2 = this.preCollections.length !== 0 
-            ? {...json, preCollections: this.preCollections.map(c => c.toJSON())}
+        const json1 = this.metadata.key instanceof EntityProp 
+            ? {...json, prop: this.metadata.key.toString()}
             : json;
+        const json2 = this.preCollections.length !== 0 
+            ? {...json1, preCollections: this.preCollections.map(c => c.toJSON())}
+            : json1;
         const json3 = this.postCollections.length !== 0
             ? {...json2, postCollections: this.postCollections.map(c => c.toJSON())}
             : json2;
