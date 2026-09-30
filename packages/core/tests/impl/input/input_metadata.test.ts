@@ -466,7 +466,7 @@ describe("InputMetadataTest", () => {
             "path": undefined,
             "scalars": [
                 "manager:Category.manager:iu",
-                "$bref(2):Category.id:iu"
+                "$ref(0, 2):Category.id:iu"
             ],
             "preMetadatas": [
                 {
@@ -510,7 +510,7 @@ describe("InputMetadataTest", () => {
             "path": undefined,
             "scalars": [
                 "price:Item.price:iu",
-                "$bref(2):Item.id:iu"
+                "$ref(0, 2):Item.id:iu"
             ],
             "preMetadatas": [
                 {

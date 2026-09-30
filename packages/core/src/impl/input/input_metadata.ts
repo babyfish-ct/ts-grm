@@ -106,17 +106,39 @@ export class InputMetadata {
     }
 
     // @ts-ignore
-    private _inheritanceRef(
+    private _superRef(
         superMetadata: InputMetadata
     ) {
-        this._scalarIndexOf((this.source as Entity).idProp);
         const idProp = (this.source as Entity).idProp;
+        const thisScalars = idProp.scalarProps!.map(p => {
+            const index = this._scalarIndexOf(p);
+            return this._scalars[index]!;
+        });
         for (const scalar of this._scalars) {
             if (scalar.prop?.rootProp !== idProp) {
                 continue;
             }
-            const superProp = (superMetadata.source as Entity).idProp!.sub(scalar.prop.subPath);
-            const index = superMetadata._scalarIndexOf(superProp);
+            for (const thisScalar of thisScalars) {
+                const superProp = (superMetadata.source as Entity).idProp!.sub(thisScalar.prop!.subPath);
+                const index = superMetadata._scalarIndexOf(superProp);
+                (thisScalar as any).path = [`$ref(0, ${index})`];
+                (thisScalar as any).kinds = ScalarKinds.Insert | ScalarKinds.Update;
+            }
+        }
+    }
+
+    // @ts-ignore
+    private _derivedRef(
+        derivedMetadata: InputMetadata
+    ) {
+        const idProp = (this.source as Entity).idProp;
+        this._scalarIndexOf(idProp);
+        for (const scalar of this._scalars) {
+            if (scalar.prop?.rootProp !== idProp) {
+                continue;
+            }
+            const derivedProp = (derivedMetadata.source as Entity).idProp!.sub(scalar.prop.subPath);
+            const index = derivedMetadata._scalarIndexOf(derivedProp);
             (scalar as any).path = [`$bref(${index})`];
             (scalar as any).kinds = ScalarKinds.Insert | ScalarKinds.Update;
         }
@@ -284,7 +306,7 @@ function createInputMetadataImpl(
             InheritanceDirection.Super, 
             false
         );
-        (metadata as any)._inheritanceRef(superMetadata);
+        (metadata as any)._superRef(superMetadata);
         (metadata as any)._addPreMetadata(superMetadata);
     }
     if (entityNode.derivedNodes.length !== 0 && (direction & InheritanceDirection.Derived) !== 0) {
@@ -299,7 +321,7 @@ function createInputMetadataImpl(
                 InheritanceDirection.Derived, 
                 false
             );
-            (derivedMetadata as any)._inheritanceRef(metadata);
+            (derivedMetadata as any)._derivedRef(metadata);
             (metadata as any)._addPostMetadata(derivedMetadata);
         }
     }

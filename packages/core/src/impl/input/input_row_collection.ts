@@ -12,7 +12,6 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { Entity } from "../entity";
 import { InputMetadata } from "./input_metadata";
 import { createInputCtor, InputRow, InputRowCtor } from "./input_row";
 
@@ -25,6 +24,8 @@ export interface InputRowCollection {
     readonly preCollections: ReadonlyArray<InputRowCollection>;
 
     readonly postCollections: ReadonlyArray<InputRowCollection>;
+
+    toJSON(): any;
 }
 
 export function createInputCollection(
@@ -102,34 +103,23 @@ function createPostCollections(
     for (let i = 0; i < postMetadatas.length; i++) {
         const postMetadata = postMetadatas[i]!;
         const postRowCtor = createInputCtor(postMetadata);
-        const key = postMetadata.key;
         const postItems: Array<InputRowItem> = [];
-        if (key instanceof Entity) {
-            for (const row of collection.rows) {
-                postItems.push({
-                    data: row.data,
-                    parent: row,
-                    preIndex: undefined
-                });
-            }
-        } else {
-            for (const row of collection.rows) {
-                const post = (collection.rowCtor as any).pre(row.data, i);
-                if (Array.isArray(post)) {
-                    for (const e of post) {
-                        postItems.push({
-                            data: e,
-                            parent: row,
-                            preIndex: undefined
-                        });
-                    }
-                } else if (post != null) {
+        for (const row of collection.rows) {
+            const post = (collection.rowCtor as any).post(row.data, i);
+            if (Array.isArray(post)) {
+                for (const e of post) {
                     postItems.push({
-                        data: post,
+                        data: e,
                         parent: row,
                         preIndex: undefined
                     });
                 }
+            } else if (post != null) {
+                postItems.push({
+                    data: post,
+                    parent: row,
+                    preIndex: undefined
+                });
             }
         }
         const preCollection = createInputCollectionImpl(postRowCtor, postMetadata, postItems);
@@ -161,6 +151,10 @@ class InputRowCollectionImpl implements InputRowCollection {
         return this._rows;
     }
 
+    set rows(_: any) {
+        console.log("FUCK");
+    }
+
     add(
         item: InputRowItem
     ) {
@@ -172,11 +166,16 @@ class InputRowCollectionImpl implements InputRowCollection {
     }
 
     toJSON() {
-        return {
+        const json = {
             path: this.metadata.path,
-            rows: this.rows,
-            preCollections: this.preCollections,
-            postCollections: this.postCollections
-        }
+            rows: this.rows.map(r => r.toJSON())
+        };
+        const json2 = this.preCollections.length !== 0 
+            ? {...json, preCollections: this.preCollections.map(c => c.toJSON())}
+            : json;
+        const json3 = this.postCollections.length !== 0
+            ? {...json2, postCollections: this.postCollections.map(c => c.toJSON())}
+            : json2;
+        return json3;
     }
 }

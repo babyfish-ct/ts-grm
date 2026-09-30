@@ -12,7 +12,9 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { ArgumentError } from "@/error/common";
 import { CodeWriter } from "../code_writer";
+import { Entity } from "../entity";
 import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
 
 export abstract class InputRow {
@@ -85,10 +87,12 @@ export function createInputCtor(
     return new Function(
         "$baseClass", 
         "$metadata",
+        "$argumentError",
         code
     )(
         InputRow,
-        metadata
+        metadata,
+        ArgumentError
     );
 }
 
@@ -218,7 +222,7 @@ function writePre(
         writer.code("switch (index) ");
         writer.scope("CURLY_BRACKETS", () => {
             for (let i = 0; i < preCount; i++) {
-                if (isInheritancePath(preMetadatas[i]!.path!)) {
+                if (preMetadatas[i]!.key! === "SUPER") {
                     continue;
                 }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
@@ -245,13 +249,19 @@ function writePost(
         writer.code("switch (index) ");
         writer.scope("CURLY_BRACKETS", () => {
             for (let i = 0; i < postCount; i++) {
-                if (isInheritancePath(postMetadatas[i]!.path!)) {
-                    continue;
-                }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    writer.code("return ");
-                    writerExpr("data.", postMetadatas[i]!.path!, writer);
-                    writer.newLine(";");
+                    const key = postMetadatas[i]!.key;
+                    if (key instanceof Entity) {
+                        writer.code(`return data.__typename === "${key.name}"`);
+                        for (const descendant of key.descendants) {
+                            writer.code(` || data.__typename === "${descendant.name}"`);
+                        }
+                        writer.code(" ? data : undefined").newLine(";");
+                    } else {
+                        writer.code("return ");
+                        writerExpr("data.", postMetadatas[i]!.path!, writer);
+                        writer.newLine(";");
+                    }
                 });
             }
             writer.code("default:").scope("BLANK", () => {
@@ -259,10 +269,4 @@ function writePost(
             });
         });    
     }).newLine();
-}
-
-function isInheritancePath(
-    path: ReadonlyArray<string>
-): boolean {
-    return path[path.length - 1]!.startsWith("<");
 }

@@ -1,9 +1,12 @@
-import { __AllModelMembers, __AssociatedProp, __AssociatedPropContract, __DeclaringArware, __MappedByOf, __OneToManyProp, __OneToManyPropContract, dto } from "@/index";
+import { __AllModelMembers, __AssociatedProp, __AssociatedPropContract, __DeclaringArware, __MappedByOf, __OneToManyProp, __OneToManyPropContract, dto, TypeOf } from "@/index";
 import { describe, it, expect } from "vitest";
 import { BOOK, TREE_NODE } from "../../model/model";
 import { mapperJson } from "../view/utils";
 import { expectCode } from "../../utils";
 import { InputRowReader } from "@/impl/input_row_reader";
+import { createInputMetadata } from "@/impl/input/input_metadata";
+import { createInputCollection } from "@/impl/input/input_row_collection";
+import { assignIds } from "./utils";
 
 describe("SimpleInputTest", () => {
 
@@ -17,86 +20,44 @@ describe("SimpleInputTest", () => {
                 c.version
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "GraphQL in Action",
+                edition: 3,
+                price: 34.9,
+                store: {
+                    name: "MANING",
+                    version: 1
+                }
+            },
+            {
+                name: "Yugabyte DB",
+                edition: 3,
+                price: 34.9,
+                store: {
+                    name: "O'REIILY",
+                    version: 1
+                }
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [0], 2, 101);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["GraphQL in Action", 3, 34.9, 101],
+                ["Yugabyte DB", 3, 34.9, 102]
+            ],
+            "preCollections": [
                 {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.storeId",
-                    "paths": [],
-                    "ref": true,
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
-                {
-                    "prop": "Book.store",
-                    "paths": ["store"],
-                    "subMapper": {
-                        "entity": "BookStore",
-                        "associatedProp": "Book.store",
-                        "fields": [
-                            {
-                                "prop": "BookStore.name",
-                                "paths": ["name"],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "BookStore.version",
-                                "paths": ["version"],
-                                "columnIndex": 1
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "path": ["store"],
+                    "rows": [
+                        ["MANING", 1, 101],
+                        ["O'REIILY", 1, 102]
+                    ]
                 }
             ]
         });
-
-        const reader = input.mapper.inputRowReader();
-        expectCode(reader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.name, input.edition, input.price, parent.get(2), undefined];
-                }
-                static __store_reader = $preAssociatedMap.get("store");
-            }
-        `);
-        
-        const storeReader = reader.preAssociatedMap.get("store")!;
-        expectCode(storeReader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.name, input.version, undefined];
-                }
-            }
-        `);
-        expect(storeReader.returnIndices.map(i => storeReader.fields[i]!.prop.toString())).toEqual(["BookStore.id"]);
-        expect(storeReader.returnIndices).toEqual([2]);
     });
 
     it("o2m", () => {
