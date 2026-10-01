@@ -233,7 +233,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": [".."],
+                            "path": ["."],
                             "scalars": [
                                 "name.firstName:Author.name.firstName:k",
                                 "name.lastName:Author.name.lastName:k",
@@ -280,7 +280,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": [".."],
+                            "path": ["."],
                             "scalars": [
                                 "id.x:Order.id.x:k",
                                 "id.y.a:Order.id.y.a:k",
@@ -399,7 +399,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": [".."],
+                            "path": ["."],
                             "scalars": [
                                 "firstName:Author.name.firstName:k",
                                 "lastName:Author.name.lastName:k",
@@ -545,7 +545,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": [".."],
+                            "path": ["."],
                             "scalars": [
                                 "name:Tag.name:k",
                                 ":Tag.id.low:r",
@@ -586,7 +586,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": [".."],
+                            "path": ["."],
                             "scalars": [
                                 "name:Library.name:k",
                                 "version:Library.version:k",
@@ -606,7 +606,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "preMetadatas": [
                         {
-                            "path": [".."],
+                            "path": ["."],
                             "scalars": [
                                 "name:Library.name:k",
                                 "version:Library.version:k",

@@ -201,7 +201,7 @@ export interface AssociationProp {
     readonly scalarProps: ReadonlyArray<AssociationProp> | undefined;
 }
 
-class AssociationPropImpl implements AssociationProp {
+export class AssociationPropImpl implements AssociationProp {
 
     private _span: number | undefined = undefined;
 

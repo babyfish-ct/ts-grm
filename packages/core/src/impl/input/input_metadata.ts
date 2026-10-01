@@ -508,7 +508,7 @@ function processPostAssociations(
                     middleMetadata, 
                     associationEntity.targetProp, 
                     undefined,
-                    [".."],
+                    ["."],
                     applyRecursive ? field.recursiveDepth : undefined, 
                     entityNode, 
                     InheritanceDirection.Both,

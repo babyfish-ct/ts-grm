@@ -16,6 +16,7 @@ import { ArgumentError } from "@/error/common";
 import { CodeWriter } from "../code_writer";
 import { Entity } from "../entity";
 import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
+import { AssociationPropImpl } from "../association_entity";
 
 export abstract class InputRow {
 
@@ -158,7 +159,7 @@ function writeExpr(
 ) {
     let op = root;
     const start = path.findIndex(part => part !== "..");
-    if (start != 0) {
+    if (start > 0) {
         writer.code("this");
         for (let i = start; i > 0; --i) {
             writer.code("?.parent");
@@ -231,6 +232,9 @@ function writePre(
         writer.scope("CURLY_BRACKETS", () => {
             for (let i = 0; i < preCount; i++) {
                 if (preMetadatas[i]!.key! === "SUPER") {
+                    continue;
+                }
+                if (preMetadatas[i]!.key instanceof AssociationPropImpl) {
                     continue;
                 }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
