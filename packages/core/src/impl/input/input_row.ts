@@ -17,6 +17,8 @@ import { CodeWriter } from "../code_writer";
 import { Entity } from "../entity";
 import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
 import { AssociationPropImpl } from "../association_entity";
+import { MapperFn } from "../dto_mapping";
+import { EntityProp } from "../entity_prop";
 
 export abstract class InputRow {
 
@@ -76,7 +78,8 @@ export function createInputCtor(
     const writer = new CodeWriter();
     writer.code("return class ThisClass extends $baseClass ");
     writer.scope("CURLY_BRACKETS", () => {
-        writeModifableFields(metadata, writer);
+        writeStaticFields(metadata, writer);
+        writeFields(metadata, writer);
         writeConstructor(writer);
         writeMetadata(writer);
         writeGet(metadata, writer);
@@ -88,13 +91,33 @@ export function createInputCtor(
     return new Function(
         "$baseClass", 
         "$metadata",
+        "$mapperFnArr",
         "$argumentError",
         code
     )(
         InputRow,
         metadata,
+        mapperFnArr(metadata),
         ArgumentError
     );
+}
+
+function mapperFnArr(
+    metadata: InputMetadata
+): ReadonlyArray<MapperFn | undefined> | undefined {
+    let arr: Array<MapperFn | undefined> | undefined = undefined;
+    const scalars = metadata.scalars;
+    const scalarCount = scalars.length;
+    for (let i = 0; i < scalarCount; i++) {
+        const fn = propFn(scalars[i]!);
+        if (fn != null) {
+            if (arr == null) {
+                arr = [];
+            }
+            arr[i] = (value: any) => value != null ? fn(value) : undefined;
+        }
+    }
+    return arr;
 }
 
 function writeConstructor(
@@ -148,7 +171,13 @@ function writeGetter(
     writer: CodeWriter
 ) {
     writer.code("return ");
-    writeExpr("this.data.", scalar.path!, writer);
+    if (propFn(scalar) == null) {
+        writeExpr("this.data.", scalar.path!, writer);
+    } else {
+        writer.code("ThisClass.").code(fnName(scalar)).code("(");
+        writeExpr("this.data.", scalar.path!, writer);
+        writer.code(")");
+    }
     writer.newLine(";");
 }
 
@@ -183,7 +212,20 @@ function writeExpr(
     }
 }
 
-function writeModifableFields(
+function writeStaticFields(
+    metadata: InputMetadata,
+    writer: CodeWriter
+) {
+    const scalars = metadata.scalars;
+    const scalarCount = scalars.length;
+    for (let i = 0; i < scalarCount; i++) {
+        if (propFn(scalars[i]!) != null) {
+            writer.code("static ").code(fnName(scalars[i]!)).code(" = $mapperFnArr[").code(i.toString()).code("]").newLine(";");
+        }
+    }
+}
+
+function writeFields(
     metadata: InputMetadata,
     writer: CodeWriter
 ) {
@@ -285,4 +327,15 @@ function writePost(
             });
         });    
     }).newLine();
+}
+
+function propFn(scalar: InputMetadataScalar): MapperFn | undefined {
+    if (scalar.prop instanceof EntityProp) {
+        return scalar.prop.inputFn;
+    }
+    return undefined;
+}
+
+function fnName(scalar: InputMetadataScalar): string {
+    return `__${scalar.prop?.name}_MapperFn`;
 }

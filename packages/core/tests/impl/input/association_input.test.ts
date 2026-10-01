@@ -111,7 +111,8 @@ describe("AssociationInputTest", () => {
             c.edition.key(),
             c.price,
             c.authors.with(c => [
-                c.$flat("name").prefix("").key()
+                c.$flat("name").prefix("").key(),
+                c.gender
             ])
         ]);
         const objs: ReadonlyArray<TypeOf<typeof input>> = [
@@ -120,24 +121,24 @@ describe("AssociationInputTest", () => {
                 edition: 3,
                 price: 59.9,
                 authors: [
-                    { firstName: "Eve", lastName: "Procello" },
-                    { firstName: "Alex", lastName: "Banks" }
+                    { firstName: "Eve", lastName: "Procello", gender: "FEMALE" },
+                    { firstName: "Alex", lastName: "Banks", gender: "MALE" }
                 ]
             }, {
                 name: "YugabyteDB: The Definitive Guide",
                 edition: 2,
                 price: 69.9,
                 authors: [
-                    { firstName: "Karthik", lastName: "Karthik" },
-                    { firstName: "Kannappan", lastName: "Muthukkaruppan" },
-                    { firstName: "Mikhail", lastName: "Bautin" }
+                    { firstName: "Karthik", lastName: "Karthik", gender: "MALE" },
+                    { firstName: "Kannappan", lastName: "Muthukkaruppan", gender: "MALE" },
+                    { firstName: "Mikhail", lastName: "Bautin", gender: "MALE" }
                 ]
             }
         ];
         const metadata = createInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [], 3, 101);
-        assignIds(collection, [{post: true, value: 0}, 0], 2, 501);
+        assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 ["Learning GraphQL", 3, 59.9, 101],
@@ -156,11 +157,11 @@ describe("AssociationInputTest", () => {
                     "preCollections": [
                         {
                             "rows": [
-                                ["Eve", "Procello", 501],
-                                ["Alex", "Banks", 502],
-                                ["Karthik", "Karthik", 503],
-                                ["Kannappan", "Muthukkaruppan", 504],
-                                ["Mikhail", "Bautin", 505]
+                                ["Eve", "Procello", "F", 501],
+                                ["Alex", "Banks", "M", 502],
+                                ["Karthik", "Karthik", "M", 503],
+                                ["Kannappan", "Muthukkaruppan", "M", 504],
+                                ["Mikhail", "Bautin", "M", 505]
                             ]
                         }
                     ]
