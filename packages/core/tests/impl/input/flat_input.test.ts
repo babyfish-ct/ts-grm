@@ -1,7 +1,6 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK } from "../../model/model";
-import { expectCode } from "../../utils";
 import { createInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
@@ -9,28 +8,28 @@ import { assignIds } from "./utils";
 describe("FlatInputTest", () => {
 
     it("flatEmbedded", () => {
-        
         const input = dto.input(AUTHOR, c => [
             c.$flat("name").prefix("the").key(),
             c.gender
         ]);
-
-        const reader = input.mapper.inputRowReader();
-        expectCode(reader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.theFirstName, input.theLastName, input.gender, undefined];
-                }
-            }
-        `);
-        expect(reader.keyIndices).toEqual([0, 1]);
-        expect(reader.insertIndices).toEqual([2]);
-        expect(reader.updateIndices).toEqual([2]);
-        expect(reader.returnIndices).toEqual([3]);
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            { theFirstName: "Eve", theLastName: "Procello", gender: "FEMALE" },
+            { theFirstName: "Alex", theLastName: "Banks", gender: "MALE" },
+            { theFirstName: "Karthik", theLastName: "Karthik", gender: "MALE" },
+            { theFirstName: "Kannappan", theLastName: "Muthukkaruppan", gender: "MALE" },
+            { theFirstName: "Mikhail", theLastName: "Bautin", gender: "MALE" }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Eve", "Procello", "F"],
+                ["Alex", "Banks", "M"],
+                ["Karthik", "Karthik", "M"],
+                ["Kannappan", "Muthukkaruppan", "M"],
+                ["Mikhail", "Bautin", "M"]
+            ]
+        });
     });
 
     it("flatReference", () => {

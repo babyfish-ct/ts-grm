@@ -20,7 +20,6 @@ import { EntityProp } from "../entity_prop";
 import { InputFlags } from "../input_flags";
 import { createEntityNode, EntityNode } from "./entity_node";
 import { AssociatedKeysFormulaProp, InverseFetchProp } from "../dto";
-import { MapperFn } from "../dto_mapping";
 
 export function createInputMetadata(
     mapper: DtoMapper
