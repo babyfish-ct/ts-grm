@@ -1,7 +1,6 @@
 import { __AllModelMembers, __AssociatedProp, __AssociatedPropContract, __DeclaringArware, __MappedByOf, __OneToManyProp, __OneToManyPropContract, dto, TypeOf } from "@/index";
 import { describe, it, expect } from "vitest";
 import { BOOK, TREE_NODE } from "../../model/model";
-import { expectCode } from "../../utils";
 import { createInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
