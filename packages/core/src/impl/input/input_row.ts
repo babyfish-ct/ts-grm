@@ -18,7 +18,6 @@ import { Entity } from "../entity";
 import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
 import { AssociationPropImpl } from "../association_entity";
 import { MapperFn } from "../dto_mapping";
-import { EntityProp } from "../entity_prop";
 
 export abstract class InputRow {
 
@@ -109,7 +108,7 @@ function mapperFnArr(
     const scalars = metadata.scalars;
     const scalarCount = scalars.length;
     for (let i = 0; i < scalarCount; i++) {
-        const fn = propFn(scalars[i]!);
+        const fn = scalars[i]!.fn;
         if (fn != null) {
             if (arr == null) {
                 arr = [];
@@ -171,7 +170,7 @@ function writeGetter(
     writer: CodeWriter
 ) {
     writer.code("return ");
-    if (propFn(scalar) == null) {
+    if (scalar.fn == null) {
         writeExpr("this.data.", scalar.path!, writer);
     } else {
         writer.code("ThisClass.").code(fnName(scalar)).code("(");
@@ -219,7 +218,7 @@ function writeStaticFields(
     const scalars = metadata.scalars;
     const scalarCount = scalars.length;
     for (let i = 0; i < scalarCount; i++) {
-        if (propFn(scalars[i]!) != null) {
+        if (scalars[i]!.fn != null) {
             writer.code("static ").code(fnName(scalars[i]!)).code(" = $mapperFnArr[").code(i.toString()).code("]").newLine(";");
         }
     }
@@ -327,13 +326,6 @@ function writePost(
             });
         });    
     }).newLine();
-}
-
-function propFn(scalar: InputMetadataScalar): MapperFn | undefined {
-    if (scalar.prop instanceof EntityProp) {
-        return scalar.prop.inputFn;
-    }
-    return undefined;
 }
 
 function fnName(scalar: InputMetadataScalar): string {

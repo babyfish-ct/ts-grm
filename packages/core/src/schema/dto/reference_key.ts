@@ -34,8 +34,8 @@ export type __ReferenceKeyContext<
             TModel, 
             __DeclaringModelName<TMembers[K]>,
             TDtoKind, 
-            __ReferenceKeyName<K, TMembers[K]>, 
-            K & string,
+            K & string, 
+            __ReferenceKeyName<K, TMembers[K]>,
             TMembers[K],
             [__AllScalarsMapping<TModel, TDtoKind, __TargetKeyMembersOf<TModel, TMembers[K]>, never>]
         >

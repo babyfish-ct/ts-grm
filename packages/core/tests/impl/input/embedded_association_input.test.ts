@@ -1,7 +1,9 @@
-import { dto } from "@/index";
+import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { ORDER, ORDER_ITEM, TAG } from "../../model/model";
 import { expectCode } from "../../utils";
+import { createInputMetadata } from "@/impl/input/input_metadata";
+import { createInputCollection } from "@/impl/input/input_row_collection";
 
 describe("EmbeddedAssociationInputTest", () => {
     
@@ -13,47 +15,45 @@ describe("EmbeddedAssociationInputTest", () => {
                 c.name
             ])
         ]);
-        
-        const reader = input.mapper.inputRowReader();
-        expectCode(reader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            { 
+                id: 1, 
+                order: {
+                    id: {
+                        x: 1,
+                        y: { a: 1, b: 1 }
+                    },
+                    name: "first-order"
                 }
-                read(parent, input) {
-                    return [input.id, parent.get(0), parent.get(1), parent.get(2)];
-                }
-                static __order_reader = $preAssociatedMap.get("order");
-            }
-        `);
-        expect(reader.fields.map(f => f.prop.toString())).toEqual([
-            "OrderItem.id",
-            "OrderItem.orderId.x",
-            "OrderItem.orderId.y.a",
-            "OrderItem.orderId.y.b",
-        ]);
-        expect(reader.keyIndices).toEqual([0]);
-        expect(reader.insertIndices).toEqual([1, 2, 3]);
-        expect(reader.updateIndices).toEqual([1, 2, 3]);
-        expect(reader.returnIndices).toEqual([]);
-
-        const orderReader = reader.preAssociatedMap.get("order")!;
-        expectCode(orderReader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
+            },
+            { 
+                id: 2, 
+                order: {
+                    id: {
+                        x: 1,
+                        y: { a: 1, b: 2 }
+                    },
+                    name: "second-order"
                 }
             }
-        `);
-        expect(orderReader.keyIndices).toEqual([0, 1, 2]);
-        expect(orderReader.insertIndices).toEqual([3]);
-        expect(orderReader.updateIndices).toEqual([3]);
-        expect(orderReader.returnIndices).toEqual([]);
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [1, 1, 1, 1],
+                [2, 1, 1, 2]
+            ],
+            "preCollections": [
+                {
+                    "prop": "OrderItem.order",
+                    "rows": [
+                        [1, 1, 1, "first-order"],
+                        [1, 1, 2, "second-order"]
+                    ]
+                }
+            ]
+        });
     });
 
     it("o2m", () => {

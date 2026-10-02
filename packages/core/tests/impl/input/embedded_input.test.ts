@@ -1,8 +1,11 @@
-import { dto } from "@/index";
+import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
 import { z } from "zod";
 import { mapperJson } from "../view/utils";
+import { createInputMetadata } from "@/impl/input/input_metadata";
+import { createInputCollection } from "@/impl/input/input_row_collection";
+import { assignIds } from "./utils";
 
 describe("EmbeddedInputTest", () => {
 
@@ -19,63 +22,56 @@ describe("EmbeddedInputTest", () => {
                 )
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
-                {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "Learning GraphQL",
+                edition: 3,
+                price: 59.9,
+                authors: [
+                    { name: { firstName: "Eve", lastName: "Procello" }, gender: "GIRL" },
+                    { name: { firstName: "Alex", lastName: "Banks" }, gender: "BOY" }
+                ]
+            }, {
+                name: "YugabyteDB: The Definitive Guide",
+                edition: 2,
+                price: 69.9,
+                authors: [
+                    { name: { firstName: "Karthik", lastName: "Karthik" }, gender: "BOY" },
+                    { name: { firstName: "Kannappan", lastName: "Muthukkaruppan" }, gender: "BOY" },
+                    { name: { firstName: "Mikhail", lastName: "Bautin" }, gender: "BOY" }
+                ]
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [], 3, 101);
+        assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Learning GraphQL", 3, 59.9, 101],
+                ["YugabyteDB: The Definitive Guide", 2, 69.9, 102]
+            ],
+            "postCollections": [
                 {
                     "prop": "Book.authors",
-                    "paths": ["authors"],
-                    "subMapper": {
-                        "entity": "Author",
-                        "associatedProp": "Book.authors",
-                        "fields": [
-                            {
-                                "prop": "Author.name.firstName",
-                                "paths": [
-                                    ["name", "firstName"]
-                                ],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "Author.name.lastName",
-                                "paths": [
-                                    ["name", "lastName"]
-                                ],
-                                "key": true,
-                                "columnIndex": 1
-                            },
-                            {
-                                "prop": "Author.gender",
-                                "paths": ["gender"],
-                                "columnIndex": 2
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "rows": [
+                        [101, 501],
+                        [101, 502],
+                        [102, 503],
+                        [102, 504],
+                        [102, 505]
+                    ],
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["Eve", "Procello", "F", 501],
+                                ["Alex", "Banks", "M", 502],
+                                ["Karthik", "Karthik", "M", 503],
+                                ["Kannappan", "Muthukkaruppan", "M", 504],
+                                ["Mikhail", "Bautin", "M", 505]
+                            ]
+                        }
+                    ]
                 }
             ]
         });
@@ -96,55 +92,56 @@ describe("EmbeddedInputTest", () => {
                 )
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "Learning GraphQL",
+                edition: 3,
+                price: 59.9,
+                authors: [
+                    { name: { firstName: "Eve" }, gender: "GIRL" },
+                    { name: { firstName: "Alex" }, gender: "BOY" }
+                ]
+            }, {
+                name: "YugabyteDB: The Definitive Guide",
+                edition: 2,
+                price: 69.9,
+                authors: [
+                    { name: { firstName: "Karthik" }, gender: "BOY" },
+                    { name: { firstName: "Kannappan" }, gender: "BOY" },
+                    { name: { firstName: "Mikhail" }, gender: "BOY" }
+                ]
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [], 3, 101);
+        assignIds(collection, [{post: true, value: 0}, 0], 2, 501);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Learning GraphQL", 3, 59.9, 101],
+                ["YugabyteDB: The Definitive Guide", 2, 69.9, 102]
+            ],
+            "postCollections": [
                 {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
-                {
+                    "rows": [
+                        [101, 501],
+                        [101, 502],
+                        [102, 503],
+                        [102, 504],
+                        [102, 505]
+                    ],
                     "prop": "Book.authors",
-                    "paths": ["authors"],
-                    "subMapper": {
-                        "entity": "Author",
-                        "associatedProp": "Book.authors",
-                        "fields": [
-                            {
-                                "prop": "Author.name.firstName",
-                                "paths": [
-                                    ["name", "firstName"]
-                                ],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "Author.gender",
-                                "paths": ["gender"],
-                                "columnIndex": 1
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["Eve", "F", 501],
+                                ["Alex", "M", 502],
+                                ["Karthik", "M", 503],
+                                ["Kannappan", "M", 504],
+                                ["Mikhail", "M", 505]
+                            ]
+                        }
+                    ]
                 }
             ]
         });
@@ -166,62 +163,56 @@ describe("EmbeddedInputTest", () => {
                 )
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
-                {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "Learning GraphQL",
+                edition: 3,
+                price: 59.9,
+                authors: [
+                    { name: { firstName: "Eve", lastName: "Procello" }, gender: "GIRL" },
+                    { name: { firstName: "Alex", lastName: "Banks" }, gender: "BOY" }
+                ]
+            }, {
+                name: "YugabyteDB: The Definitive Guide",
+                edition: 2,
+                price: 69.9,
+                authors: [
+                    { name: { firstName: "Karthik", lastName: "Karthik" }, gender: "BOY" },
+                    { name: { firstName: "Kannappan", lastName: "Muthukkaruppan" }, gender: "BOY" },
+                    { name: { firstName: "Mikhail", lastName: "Bautin" }, gender: "BOY" }
+                ]
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [], 3, 101);
+        assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Learning GraphQL", 3, 59.9, 101],
+                ["YugabyteDB: The Definitive Guide", 2, 69.9, 102]
+            ],
+            "postCollections": [
                 {
                     "prop": "Book.authors",
-                    "paths": ["authors"],
-                    "subMapper": {
-                        "entity": "Author",
-                        "associatedProp": "Book.authors",
-                        "fields": [
-                            {
-                                "prop": "Author.name.firstName",
-                                "paths": [
-                                    ["name", "firstName"]
-                                ],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "Author.name.lastName",
-                                "paths": [
-                                    ["name", "lastName"]
-                                ],
-                                "columnIndex": 1
-                            },
-                            {
-                                "prop": "Author.gender",
-                                "paths": ["gender"],
-                                "columnIndex": 2
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "rows": [
+                        [101, 501],
+                        [101, 502],
+                        [102, 503],
+                        [102, 504],
+                        [102, 505]
+                    ],
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["Eve", "Procello", "F", 501],
+                                ["Alex", "Banks", "M", 502],
+                                ["Karthik", "Karthik", "M", 503],
+                                ["Kannappan", "Muthukkaruppan", "M", 504],
+                                ["Mikhail", "Bautin", "M", 505]
+                            ]
+                        }
+                    ]
                 }
             ]
         });
@@ -231,33 +222,26 @@ describe("EmbeddedInputTest", () => {
         const input = dto.input(ORDER_ITEM, c => [
             c.orderId.key()
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "OrderItem",
-            "fields": [
-                {
-                    "prop": "OrderItem.orderId.x",
-                    "paths": [
-                        ["orderId", "x"]
-                    ],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "OrderItem.orderId.y.a",
-                    "paths": [
-                        ["orderId", "y", "a"]
-                    ],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "OrderItem.orderId.y.b",
-                    "paths": [
-                        ["orderId", "y", "b"]
-                    ],
-                    "key": true,
-                    "columnIndex": 2
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            { 
+                orderId: {
+                    x: 1,
+                    y: { a: 1, b: 1 }
                 }
+            },
+            { 
+                orderId: {
+                    x: 1,
+                    y: { a: 1, b: 2 }
+                }
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [1, 1, 1],
+                [1, 1, 2]
             ]
         });
     });
@@ -271,25 +255,26 @@ describe("EmbeddedInputTest", () => {
                 ])
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "OrderItem",
-            "fields": [
-                {
-                    "prop": "OrderItem.orderId.x",
-                    "paths": [
-                        ["orderId", "x"]
-                    ],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "OrderItem.orderId.y.b",
-                    "paths": [
-                        ["orderId", "y", "b"]
-                    ],
-                    "key": true,
-                    "columnIndex": 1
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            { 
+                orderId: {
+                    x: 1,
+                    y: { b: 1 }
                 }
+            },
+            { 
+                orderId: {
+                    x: 1,
+                    y: { b: 2 }
+                }
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [1, 1],
+                [1, 2]
             ]
         });
     });
@@ -307,59 +292,56 @@ describe("EmbeddedInputTest", () => {
                 )
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
-                {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "Learning GraphQL",
+                edition: 3,
+                price: 59.9,
+                authors: [
+                    { firstName: "Eve", lastName: "Procello", gender: "GIRL" },
+                    { firstName: "Alex", lastName: "Banks", gender: "BOY" }
+                ]
+            }, {
+                name: "YugabyteDB: The Definitive Guide",
+                edition: 2,
+                price: 69.9,
+                authors: [
+                    { firstName: "Karthik", lastName: "Karthik", gender: "BOY" },
+                    { firstName: "Kannappan", lastName: "Muthukkaruppan", gender: "BOY" },
+                    { firstName: "Mikhail", lastName: "Bautin", gender: "BOY" }
+                ]
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [], 3, 101);
+        assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Learning GraphQL", 3, 59.9, 101],
+                ["YugabyteDB: The Definitive Guide", 2, 69.9, 102]
+            ],
+            "postCollections": [
                 {
                     "prop": "Book.authors",
-                    "paths": ["authors"],
-                    "subMapper": {
-                        "entity": "Author",
-                        "associatedProp": "Book.authors",
-                        "fields": [
-                            {
-                                "prop": "Author.name.firstName",
-                                "paths": ["firstName"],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "Author.name.lastName",
-                                "paths": ["lastName"],
-                                "key": true,
-                                "columnIndex": 1
-                            },
-                            {
-                                "prop": "Author.gender",
-                                "paths": ["gender"],
-                                "columnIndex": 2
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "rows": [
+                        [101, 501],
+                        [101, 502],
+                        [102, 503],
+                        [102, 504],
+                        [102, 505]
+                    ],
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["Eve", "Procello", "F", 501],
+                                ["Alex", "Banks", "M", 502],
+                                ["Karthik", "Karthik", "M", 503],
+                                ["Kannappan", "Muthukkaruppan", "M", 504],
+                                ["Mikhail", "Bautin", "M", 505]
+                            ]
+                        }
+                    ]
                 }
             ]
         });
@@ -380,53 +362,56 @@ describe("EmbeddedInputTest", () => {
                 )
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "Learning GraphQL",
+                edition: 3,
+                price: 59.9,
+                authors: [
+                    { firstName: "Eve", gender: "GIRL" },
+                    { firstName: "Alex", gender: "BOY" }
+                ]
+            }, {
+                name: "YugabyteDB: The Definitive Guide",
+                edition: 2,
+                price: 69.9,
+                authors: [
+                    { firstName: "Karthik", gender: "BOY" },
+                    { firstName: "Kannappan", gender: "BOY" },
+                    { firstName: "Mikhail", gender: "BOY" }
+                ]
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [], 3, 101);
+        assignIds(collection, [{post: true, value: 0}, 0], 2, 501);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Learning GraphQL", 3, 59.9, 101],
+                ["YugabyteDB: The Definitive Guide", 2, 69.9, 102]
+            ],
+            "postCollections": [
                 {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
-                {
+                    "rows": [
+                        [101, 501],
+                        [101, 502],
+                        [102, 503],
+                        [102, 504],
+                        [102, 505]
+                    ],
                     "prop": "Book.authors",
-                    "paths": ["authors"],
-                    "subMapper": {
-                        "entity": "Author",
-                        "associatedProp": "Book.authors",
-                        "fields": [
-                            {
-                                "prop": "Author.name.firstName",
-                                "paths": ["firstName"],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "Author.gender",
-                                "paths": ["gender"],
-                                "columnIndex": 1
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["Eve", "F", 501],
+                                ["Alex", "M", 502],
+                                ["Karthik", "M", 503],
+                                ["Kannappan", "M", 504],
+                                ["Mikhail", "M", 505]
+                            ]
+                        }
+                    ]
                 }
             ]
         });
@@ -448,58 +433,56 @@ describe("EmbeddedInputTest", () => {
                 )
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "Book",
-            "fields": [
-                {
-                    "prop": "Book.name",
-                    "paths": ["name"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "Book.edition",
-                    "paths": ["edition"],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "Book.price",
-                    "paths": ["price"],
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "Book.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 3
-                },
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                name: "Learning GraphQL",
+                edition: 3,
+                price: 59.9,
+                authors: [
+                    { firstName: "Eve", lastName: "Procello", gender: "GIRL" },
+                    { firstName: "Alex", lastName: "Banks" , gender: "BOY" }
+                ]
+            }, {
+                name: "YugabyteDB: The Definitive Guide",
+                edition: 2,
+                price: 69.9,
+                authors: [
+                    { firstName: "Karthik", lastName: "Karthik", gender: "BOY" },
+                    { firstName: "Kannappan", lastName: "Muthukkaruppan", gender: "BOY" },
+                    { firstName: "Mikhail", lastName: "Bautin", gender: "BOY" }
+                ]
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        assignIds(collection, [], 3, 101);
+        assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["Learning GraphQL", 3, 59.9, 101],
+                ["YugabyteDB: The Definitive Guide", 2, 69.9, 102]
+            ],
+            "postCollections": [
                 {
                     "prop": "Book.authors",
-                    "paths": ["authors"],
-                    "subMapper": {
-                        "entity": "Author",
-                        "associatedProp": "Book.authors",
-                        "fields": [
-                            {
-                                "prop": "Author.name.firstName",
-                                "paths": ["firstName"],
-                                "key": true,
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "Author.name.lastName",
-                                "paths": ["lastName"],
-                                "columnIndex": 1
-                            },
-                            {
-                                "prop": "Author.gender",
-                                "paths": ["gender"],
-                                "columnIndex": 2
-                            }
-                        ]
-                    },
-                    "dependencies": [3]
+                    "rows": [
+                        [101, 501],
+                        [101, 502],
+                        [102, 503],
+                        [102, 504],
+                        [102, 505]
+                    ],
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["Eve", "Procello", "F", 501],
+                                ["Alex", "Banks", "M", 502],
+                                ["Karthik", "Karthik", "M", 503],
+                                ["Kannappan", "Muthukkaruppan", "M", 504],
+                                ["Mikhail", "Bautin", "M", 505]
+                            ]
+                        }
+                    ]
                 }
             ]
         });
@@ -509,31 +492,24 @@ describe("EmbeddedInputTest", () => {
         const input = dto.input(ORDER_ITEM, c => [
             c.$flat("orderId").key()
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "OrderItem",
-            "fields": [
-                {
-                    "prop": "OrderItem.orderId.x",
-                    "paths": ["orderIdX"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "OrderItem.orderId.y.a",
-                    "paths": [
-                        ["orderIdY", "a"]
-                    ],
-                    "key": true,
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "OrderItem.orderId.y.b",
-                    "paths": [
-                        ["orderIdY", "b"]
-                    ],
-                    "key": true,
-                    "columnIndex": 2
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            { 
+                orderIdX: 1,
+                orderIdY: { a: 1, b: 1 }
+            },
+            { 
+                orderIdX: 1,
+                orderIdY: {
+                    a:1 ,b: 2
                 }
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [1, 1, 1],
+                [1, 1, 2]
             ]
         });
     });
@@ -547,23 +523,26 @@ describe("EmbeddedInputTest", () => {
                 ])
             ])
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "OrderItem",
-            "fields": [
-                {
-                    "prop": "OrderItem.orderId.x",
-                    "paths": ["orderIdX"],
-                    "key": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "OrderItem.orderId.y.b",
-                    "paths": [
-                        ["orderIdY", "b"]
-                    ],
-                    "key": true,
-                    "columnIndex": 1
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            { 
+                orderIdX: 1,
+                orderIdY: {
+                    b: 1 
                 }
+            },
+            { 
+                orderIdX: 1,
+                orderIdY: {
+                    b: 2
+                }
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [1, 1],
+                [1, 2]
             ]
         });
     });

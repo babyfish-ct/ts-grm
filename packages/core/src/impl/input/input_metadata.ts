@@ -20,6 +20,7 @@ import { EntityProp } from "../entity_prop";
 import { InputFlags } from "../input_flags";
 import { createEntityNode, EntityNode } from "./entity_node";
 import { AssociatedKeysFormulaProp, InverseFetchProp } from "../dto";
+import { MapperFn } from "../dto_mapping";
 
 export function createInputMetadata(
     mapper: DtoMapper
@@ -207,7 +208,8 @@ export class InputMetadata {
         const field: InputMetadataScalar = {
             path: undefined,
             prop: prop,
-            kinds: ScalarKinds.Return
+            kinds: ScalarKinds.Return,
+            fn: mergedFn(undefined, prop instanceof EntityProp ? prop.inputFn : undefined)
         };
         const index = this._scalars.length;
         this._scalars.push(field);
@@ -273,6 +275,7 @@ export type InputMetadataScalar = {
     readonly path: ReadonlyArray<string> | undefined;
     readonly prop: EntityProp | AssociationProp | undefined; // undefined means __typename
     readonly kinds: ScalarKinds;
+    readonly fn: MapperFn | undefined;
 }
 
 function createInputMetadataImpl(
@@ -370,7 +373,8 @@ function toScalars(
         const scalarField: InputMetadataScalar = {
             path,
             kinds: kind,
-            prop: field.prop.asEntityProp
+            prop: field.prop.asEntityProp,
+            fn: mergedFn(field.mapperFn, field.prop.asEntityProp?.inputFn)
         };
         arr.push(scalarField);
     }
@@ -405,7 +409,8 @@ function toMiddleTableScalar(
     return {
         path: [".."],
         prop,
-        kinds: ScalarKinds.Key
+        kinds: ScalarKinds.Key,
+        fn: undefined
     };
 }
 
@@ -558,4 +563,20 @@ export enum ScalarKinds {
     Insert = 1 << 1,
     Update = 1 << 2,
     Return = 1 << 3
+}
+
+function mergedFn(
+    fn1: MapperFn | undefined,
+    fn2: MapperFn | undefined
+): MapperFn | undefined {
+    if (fn1 == null && fn2 == null) {
+        return undefined;
+    }
+    if (fn1 == null) {
+        return (value: any) => value != null ? fn2!(value) : undefined;
+    }
+    if (fn2 == null) {
+        return (value: any) => value != null ? fn1(value) : undefined;
+    }
+    return (value: any) => value != null ? fn2(fn1(value)) : undefined;
 }

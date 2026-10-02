@@ -152,10 +152,6 @@ class InputRowCollectionImpl implements InputRowCollection {
         return this._rows;
     }
 
-    set rows(_: any) {
-        console.log("FUCK");
-    }
-
     add(
         item: InputRowItem
     ) {

@@ -683,7 +683,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
                     ? acceptsNullOrUndefined(this._prop.formula.valueType)
                 : false,
             parameter: this._parameter,
-            mapperFn: this._output?.fn
+            mapperFn: this._output?.fn ?? this._input?.fn
         };
     }
 }
