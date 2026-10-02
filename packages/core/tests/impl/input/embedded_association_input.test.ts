@@ -17,7 +17,7 @@ describe("EmbeddedAssociationInputTest", () => {
         ]);
         const objs: ReadonlyArray<TypeOf<typeof input>> = [
             { 
-                id: 1, 
+                id: 101, 
                 order: {
                     id: {
                         x: 1,
@@ -27,7 +27,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 }
             },
             { 
-                id: 2, 
+                id: 102, 
                 order: {
                     id: {
                         x: 1,
@@ -41,8 +41,8 @@ describe("EmbeddedAssociationInputTest", () => {
         const collection = createInputCollection(metadata, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
-                [1, 1, 1, 1],
-                [2, 1, 1, 2]
+                [101, 1, 1, 1],
+                [102, 1, 1, 2]
             ],
             "preCollections": [
                 {
@@ -64,46 +64,49 @@ describe("EmbeddedAssociationInputTest", () => {
                 c.id
             ])
         ]);
-
-        const reader = input.mapper.inputRowReader();
-        expectCode(reader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
-                }
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                id: {
+                    x: 1,
+                    y: { a: 1, b: 1 },
+                },
+                name: "first-order",
+                items: [
+                    { id: 101 },
+                    { id: 102 }
+                ]
+            },
+            {
+                id: {
+                    x: 1,
+                    y: { a: 1, b: 2 },
+                },
+                name: "second-order",
+                items: [
+                    { id: 103 },
+                    { id: 104 }
+                ]
             }
-        `);
-        expect(reader.fields.map(f => f.prop.toString())).toEqual([
-            "Order.id.x",
-            "Order.id.y.a",
-            "Order.id.y.b",
-            "Order.name"
-        ]);
-        expect(reader.keyIndices).toEqual([0, 1, 2]);
-        expect(reader.insertIndices).toEqual([3]);
-        expect(reader.updateIndices).toEqual([3]);
-        expect(reader.returnIndices).toEqual([]);
-
-        const itemsReader = reader.postAssociatedMap.get("items")!;
-        expectCode(itemsReader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [1, 1, 1, "first-order"],
+                [1, 1, 2, "second-order"]
+            ],
+            "postCollections": [
+                {
+                    "prop": "Order.items",
+                    "rows": [
+                        [101, 1, 1, 1],
+                        [102, 1, 1, 1],
+                        [103, 1, 1, 2],
+                        [104, 1, 1, 2]
+                    ]
                 }
-                read(parent, input) {
-                    return [input.id, parent.get(0), parent.get(1), parent.get(2)];
-                }
-            }
-        `);
-        expect(itemsReader.keyIndices).toEqual([0]);
-        expect(itemsReader.insertIndices).toEqual([1, 2, 3]);
-        expect(itemsReader.updateIndices).toEqual([1, 2, 3]);
-        expect(itemsReader.returnIndices).toEqual([]);
+            ]
+        });
     });
 
     it("m2m", () => {
@@ -115,56 +118,74 @@ describe("EmbeddedAssociationInputTest", () => {
                 c.name
             ])
         ]);
-
-        const reader = input.mapper.inputRowReader();
-        expectCode(reader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.id?.low, input.id?.high, input.name];
-                }
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                id: { low: 10, high: 20 },
+                name: "blue",
+                orders: [
+                    { 
+                        id: {
+                            x: 1,
+                            y: {a: 1, b: 1}
+                        },
+                        name: "order-1"
+                    }, { 
+                        id: {
+                            x: 1,
+                            y: {a: 1, b: 2}
+                        },
+                        name: "order-2"
+                    }
+                ]
+            },
+            {
+                id: { low: 10, high: 30 },
+                name: "red",
+                orders: [
+                    { 
+                        id: {
+                            x: 2,
+                            y: {a: 1, b: 1}
+                        },
+                        name: "order-3"
+                    }, { 
+                        id: {
+                            x: 2,
+                            y: {a: 1, b: 2}
+                        },
+                        name: "order-4"
+                    }
+                ]
             }
-        `);
-        expect(reader.keyIndices).toEqual([0, 1]);
-        expect(reader.insertIndices).toEqual([2]);
-        expect(reader.updateIndices).toEqual([2]);
-        expect(reader.returnIndices).toEqual([]);
-
-        const middleReader = reader.postAssociatedMap.get("orders")!;
-        expectCode(middleReader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [10, 20, "blue"],
+                [10, 30, "red"]
+            ],
+            "postCollections": [
+                {
+                    "rows": [
+                        [10, 20, 1, 1, 1],
+                        [10, 20, 1, 1, 2],
+                        [10, 30, 2, 1, 1],
+                        [10, 30, 2, 1, 2]
+                    ],
+                    "prop": "Tag.orders",
+                    "preCollections": [
+                        {
+                            "rows": [
+                                [1, 1, 1, "order-1"],
+                                [1, 1, 2, "order-2"],
+                                [2, 1, 1, "order-3"],
+                                [2, 1, 2, "order-4"]
+                            ]
+                        }
+                    ]
                 }
-                read(parent, target) {
-                    return [parent.get(0), parent.get(1), target.get(0), target.get(1), target.get(2)];
-                }
-            }
-        `);
-        expect(middleReader.keyIndices).toEqual([0, 1, 2, 3, 4]);
-        expect(middleReader.insertIndices).toEqual([]);
-        expect(middleReader.updateIndices).toEqual([]);
-        expect(middleReader.returnIndices).toEqual([]);
-
-        const orderReader = middleReader.preAssociatedMap.get("target")!;
-        expectCode(orderReader.constructor.toString(), `
-            class extends $baseClass {
-
-                constructor() {
-                    super($entity, $fields, $keyIndices, $insertIndices, $updateIndices, $returnIndices, $preAssociatedMap, $postAssociatedLazyCreatorMap);
-                }
-                read(parent, input) {
-                    return [input.id?.x, input.id?.y?.a, input.id?.y?.b, input.name];
-                }
-            }
-        `);
-        expect(orderReader.keyIndices).toEqual([0, 1, 2]);
-        expect(orderReader.insertIndices).toEqual([3]);
-        expect(orderReader.updateIndices).toEqual([3]);
-        expect(middleReader.returnIndices).toEqual([]);
+            ]
+        });
     });
 });

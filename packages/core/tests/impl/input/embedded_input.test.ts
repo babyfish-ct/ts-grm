@@ -2,7 +2,6 @@ import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
 import { z } from "zod";
-import { mapperJson } from "../view/utils";
 import { createInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
