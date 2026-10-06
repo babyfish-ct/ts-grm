@@ -24,7 +24,7 @@ describe("FoldInputTest", () => {
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             associations: {
-                owner: {
+                owner?: {
                     name: string;
                     version: number;
                 } | null | undefined;

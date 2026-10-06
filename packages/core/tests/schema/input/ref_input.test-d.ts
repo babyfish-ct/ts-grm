@@ -19,7 +19,7 @@ describe("RefInputTest", () => {
             authorIds: number[];
             edition: number;
             name: string;
-            storeId: string | null | undefined;
+            storeId?: string | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never
@@ -46,7 +46,7 @@ describe("RefInputTest", () => {
             }[];
             edition: number;
             name: string;
-            owner: {
+            owner?: {
                 name: string;
             } | null | undefined;
         }>();
@@ -66,9 +66,9 @@ describe("RefInputTest", () => {
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             edition: number;
             name: string;
-            storeId: string | null | undefined;
-            storeName: string | null | undefined;
-            storeVersion: number | null | undefined;
+            storeId?: string | null | undefined;
+            storeName?: string | null | undefined;
+            storeVersion?: number | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never
@@ -86,9 +86,9 @@ describe("RefInputTest", () => {
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             edition: number;
             name: string;
-            ownerId: string | null | undefined;
-            ownerName: string | null | undefined;
-            ownerVersion: number | null | undefined;
+            ownerId?: string | null | undefined;
+            ownerName?: string | null | undefined;
+            ownerVersion?: number | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never

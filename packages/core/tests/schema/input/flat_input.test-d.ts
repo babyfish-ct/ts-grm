@@ -16,8 +16,8 @@ describe("FlatInputTest", () => {
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             edition: number;
             name: string;
-            ownerName: string | null | undefined;
-            ownerVersion: number | null | undefined;
+            ownerName?: string | null | undefined;
+            ownerVersion?: number | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             "store"

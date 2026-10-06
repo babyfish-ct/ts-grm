@@ -24,7 +24,7 @@ describe("PolymorphismInputTest", () => {
             __typename: "Category";
             name: string;
             manager: string;
-            upObj: UpObjBody | null | undefined;
+            upObj?: UpObjBody | null | undefined;
         } | {
             __typename: "Item";
             name: string;
@@ -32,13 +32,13 @@ describe("PolymorphismInputTest", () => {
             tags: {
                 name: string;
             }[];
-            upObj: UpObjBody | null | undefined;
+            upObj?: UpObjBody | null | undefined;
         };
         type DownObjBody = {
             __typename: "Category";
             name: string;
             manager: string;
-            downObjs: DownObjBody[] | null | undefined;
+            downObjs?: DownObjBody[] | null | undefined;
         } | {
             __typename: "Item";
             name: string;
@@ -46,14 +46,14 @@ describe("PolymorphismInputTest", () => {
             tags: {
                 name: string;
             }[];
-            downObjs: DownObjBody[] | null | undefined;
+            downObjs?: DownObjBody[] | null | undefined;
         };
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             __typename: "Category";
             name: string;
             manager: string;
-            upObj: UpObjBody | null | undefined;
-            downObjs: DownObjBody[] | null | undefined;
+            upObj?: UpObjBody | null | undefined;
+            downObjs?: DownObjBody[] | null | undefined;
         } | {
             __typename: "Item";
             name: string;
@@ -61,8 +61,8 @@ describe("PolymorphismInputTest", () => {
             tags: {
                 name: string;
             }[];
-            upObj: UpObjBody | null | undefined;
-            downObjs: DownObjBody[] | null | undefined;
+            upObj?: UpObjBody | null | undefined;
+            downObjs?: DownObjBody[] | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             "childNodes*" | "parentNode*" | "tags"

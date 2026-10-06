@@ -14,16 +14,16 @@ describe("RecursiveTest", () => {
         ]);
         type UpObjBody = {
             name: string;
-            upObj: UpObjBody | null | undefined;
+            upObj?: UpObjBody | null | undefined;
         };
         type DownObjBody = {
             name: string;
-            downObjs: Array<DownObjBody> | null | undefined;
+            downObjs?: Array<DownObjBody> | null | undefined;
         };
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             name: string;
-            upObj: UpObjBody | null | undefined;
-            downObjs: Array<DownObjBody> | null | undefined;
+            upObj?: UpObjBody | null | undefined;
+            downObjs?: Array<DownObjBody> | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             "parentNode*" | "childNodes*"
@@ -38,12 +38,12 @@ describe("RecursiveTest", () => {
         ]);
         interface ChildNodeBody {
             name: string;
-            children: Array<ChildNodeBody> | null | undefined;
+            children?: Array<ChildNodeBody> | null | undefined;
         }
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
-            parentNodeId: number | null | undefined,
+            parentNodeId?: number | null | undefined,
             name: string,
-            children: Array<ChildNodeBody> | null | undefined
+            children?: Array<ChildNodeBody> | null | undefined
         }>();
     });
 });

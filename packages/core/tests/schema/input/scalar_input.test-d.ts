@@ -27,7 +27,7 @@ describe("ScalarInputTest", () => {
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             id: number;
-            score: number | null | undefined;
+            score?: number | null | undefined;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never

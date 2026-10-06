@@ -65,4 +65,23 @@ export type __Mutable<T> =
         ? { -readonly [P in keyof T]: __Mutable<T[P]> }
         : T;
 
+export type __PrettifyInput<T> = 
+    T extends ReadonlyArray<infer U>
+        ? __PrettifyInput<U>[]
+    : T extends object
+        ? __SimplifyOptional<
+            { [K in Exclude<keyof T, __OptionalKeys<T>>]: __PrettifyInput<T[K]> } &
+            { [K in __OptionalKeys<T>]?: __PrettifyInput<T[K]> }
+        >
+    : T;
+
+export type __SimplifyOptional<T> = { [K in keyof T]: T[K] } & {};
+
+export type __OptionalKeys<T> = {
+    [K in keyof T]-?: 
+        undefined extends T[K]
+            ? K
+            : never;
+}[keyof T];
+
 export function suppressUnused(_x: any) {}

@@ -1,7 +1,6 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { ORDER, ORDER_ITEM, TAG } from "../../model/model";
-import { expectCode } from "../../utils";
 import { createInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 

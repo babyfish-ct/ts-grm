@@ -18,7 +18,7 @@ import { __AllAssociationMemberUnions, __DtoBody, __DtoMappingContract, __DtoTyp
 import { __AllModelMembers } from "../model_internal_types";
 import { createDto, DtoContextFlags, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
-import { __Prettify, __UnionToIntersection } from "@/auxiliary_types";
+import { __Prettify, __PrettifyInput, __UnionToIntersection } from "@/auxiliary_types";
 import { __ViewCreator } from "@/schema/dto/internal_types";
 import { __PropContract } from "../prop_internal_types";
 
@@ -112,7 +112,7 @@ function newInput<
     fn: __DtoBody<TModel, "INPUT", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): Input<
     TModel, 
-    __Prettify<__DtoType<TMappings, undefined>>,
+    __PrettifyInput<__DtoType<TMappings, undefined>>,
     __UnionToIntersection<__AllAssociationMemberUnions<TMappings>>
 > {
     const entity = Entity.of(model);

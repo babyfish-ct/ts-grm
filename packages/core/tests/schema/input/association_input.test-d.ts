@@ -16,7 +16,7 @@ describe("AssociationInputTest", () => {
             id: number;
             edition: number;
             name: string;
-            owner: {
+            owner?: {
                 id: string;
                 name: string;
                 version: number;
@@ -42,7 +42,7 @@ describe("AssociationInputTest", () => {
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             edition: number;
             name: string;
-            owner: {
+            owner?: {
                 name: string;
                 version: number;
             } | null | undefined;
@@ -70,7 +70,7 @@ describe("AssociationInputTest", () => {
         ]);
         expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
             learningLinks: {
-                score: number | null | undefined;
+                score?: number | null | undefined;
                 course: {
                     name: string;
                 };
