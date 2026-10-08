@@ -318,7 +318,11 @@ function writePost(
                         writer.code(" ? data : undefined").newLine(";");
                     } else {
                         writer.code("return ");
-                        writeExpr("data.", postMetadata.path!, writer);
+                        if (postMetadata.path!.length === 1 && postMetadata.path![0] === ".") {
+                            writeExpr("data.", metadata.parent!.path!, writer);
+                        } else {
+                            writeExpr("data.", postMetadata.path!, writer);
+                        }
                         writer.newLine(";");
                     }
                 });

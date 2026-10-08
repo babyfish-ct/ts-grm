@@ -41,15 +41,16 @@ export function createInputCollection(
             preIndex: undefined
         }
     })
-    return createInputCollectionImpl(rowCtor, metadata, items);
+    return createInputCollectionImpl(undefined, rowCtor, metadata, items);
 }
 
 function createInputCollectionImpl(
+    parent: InputRowCollectionImpl | undefined,
     rowCtor: InputRowCtor,
     metadata: InputMetadata,
     items: ReadonlyArray<InputRowItem>
 ): InputRowCollection {
-    const collection = new InputRowCollectionImpl(rowCtor, metadata);
+    const collection = new InputRowCollectionImpl(parent, rowCtor, metadata);
     for (const item of items) {
         collection.add(item);
     }
@@ -92,7 +93,7 @@ function createPreCollections(
                 }
             }
         }
-        const preCollection = createInputCollectionImpl(preRowCtor, preMetadata ?? metadata, preItems);
+        const preCollection = createInputCollectionImpl(collection, preRowCtor, preMetadata ?? metadata, preItems);
         preCollections.push(preCollection);
     }
     return preCollections;
@@ -109,7 +110,11 @@ function createPostCollections(
     const postMetadatas = metadata.postMetadatas;
     for (let i = 0; i < postMetadatas.length; i++) {
         const postMetadata = postMetadatas[i];
-        const postRowCtor = postMetadata != null ? createInputCtor(postMetadata) : collection.rowCtor;
+        const postRowCtor = postMetadata != null 
+            ? createInputCtor(postMetadata) 
+            : metadata.isUnderMiddleTable 
+                ? collection.parent!.rowCtor
+                : collection.rowCtor;
         const postItems: Array<InputRowItem> = [];
         for (const row of collection.rows) {
             const post = (collection.rowCtor as any).post(row.data, i);
@@ -129,7 +134,12 @@ function createPostCollections(
                 });
             }
         }
-        const preCollection = createInputCollectionImpl(postRowCtor, postMetadata ?? metadata, postItems);
+        const preCollection = createInputCollectionImpl(
+            collection, 
+            postRowCtor, 
+            postMetadata ?? (metadata.isUnderMiddleTable ? metadata.parent! : metadata), 
+            postItems
+        );
         postCollections.push(preCollection);
     }
     return postCollections;
@@ -150,6 +160,7 @@ class InputRowCollectionImpl implements InputRowCollection {
     postCollections: ReadonlyArray<InputRowCollection> = [];
 
     constructor(
+        readonly parent: InputRowCollectionImpl | undefined,
         readonly rowCtor: InputRowCtor,
         readonly metadata: InputMetadata
     ) {}

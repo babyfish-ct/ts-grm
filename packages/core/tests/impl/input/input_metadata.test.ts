@@ -601,7 +601,9 @@ describe("InputMetadataTest", () => {
                             ],
                             "recursiveDepth": -1,
                             "preMetadatas": [],
-                            "postMetadatas": []
+                            "postMetadatas": [
+                                undefined
+                            ]
                         }
                     ],
                     "postMetadatas": []
@@ -623,7 +625,9 @@ describe("InputMetadataTest", () => {
                             ],
                             "recursiveDepth": -1,
                             "preMetadatas": [],
-                            "postMetadatas": []
+                            "postMetadatas": [
+                                undefined
+                            ]
                         }
                     ],
                     "postMetadatas": []

@@ -96,6 +96,17 @@ export class InputMetadata {
         return boolArr[index] !== false;
     }
 
+    get isUnderMiddleTable(): boolean {
+        const p = this.parent;
+        if (p != null) {
+            const key = p.key;
+            if (key instanceof EntityProp) {
+                return key.storageType === "MIDDLE_TABLE" || key.storageType === "MIDDLE_ENTITY";
+            }
+        }
+        return false;
+    }
+
     // @ts-ignore
     private _addPreMetadata(metadata: InputMetadata) {
         this._preMetadatas.push(metadata);
@@ -512,11 +523,11 @@ function processPostAssociations(
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
             );
             (middleMetadata as any)._backRef(sourceProp, false, metadata);
-            (metadata as any)._addPostMetadata(middleMetadata);
-            if (field.recursiveDepth != null) {
-                //(mddleMetadata as any)._addPostRecursive(i);
-            }
             targetMetadata = middleMetadata.postMetadatas[0]!;
+            if (field.recursiveDepth != null) {
+                (targetMetadata as any)._addPostRecursive(metadata.postMetadatas.length);
+            }
+            (metadata as any)._addPostMetadata(middleMetadata);
         } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
             const associationEntity = (metadata.source as Entity).association(field.prop.name);
             const middleMetadata = new InputMetadata(
@@ -530,10 +541,6 @@ function processPostAssociations(
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
             );
             (middleMetadata as any)._backRef(associationEntity.sourceProp, true, metadata);
-            (metadata as any)._addPostMetadata(middleMetadata);
-            if (field.recursiveDepth != null) {
-                //(middleMetadata as any)._addPostRecursive(i);
-            }
             if ((configurableField.inputFlags & InputFlags.Ref) === 0) {
                 const entityNode = createEntityNode(field.subMapper!);
                 targetMetadata = createInputMetadataImpl(
@@ -553,7 +560,11 @@ function processPostAssociations(
                     middleMetadata.postMetadatas.length
                 );
                 (middleMetadata as any)._addPreMetadata(targetMetadata);
+                if (field.recursiveDepth != null) {
+                    (targetMetadata as any)._addPostRecursive(0);
+                }
             }
+            (metadata as any)._addPostMetadata(middleMetadata);
         } else {
             const entityNode = createEntityNode(field.subMapper!);
             targetMetadata = createInputMetadataImpl(
