@@ -484,7 +484,10 @@ describe("InputMetadataTest", () => {
                                 ":TreeNode.parentNodeId:r",
                                 ":TreeNode.id:r"
                             ],
-                            "preMetadatas": [],
+                            "recursiveDepth": -1,
+                            "preMetadatas": [
+                                undefined
+                            ],
                             "postMetadatas": []
                         }
                     ],
@@ -529,8 +532,11 @@ describe("InputMetadataTest", () => {
                                 ":TreeNode.id:r",
                                 "$bref(2):TreeNode.parentNodeId:k"
                             ],
+                            "recursiveDepth": -1,
                             "preMetadatas": [],
-                            "postMetadatas": []
+                            "postMetadatas": [
+                                undefined
+                            ]
                         }
                     ]
                 }
@@ -584,6 +590,7 @@ describe("InputMetadataTest", () => {
                         "$bref(2):MiddleTable(Library.dependencies).sourceId:k",
                         "$ref(0,2):MiddleTable(Library.dependencies).targetId:k"
                     ],
+                    "recursiveDepth": -1,
                     "preMetadatas": [
                         {
                             "path": ["."],
@@ -592,6 +599,7 @@ describe("InputMetadataTest", () => {
                                 "version:Library.version:k",
                                 ":Library.id:r"
                             ],
+                            "recursiveDepth": -1,
                             "preMetadatas": [],
                             "postMetadatas": []
                         }
@@ -604,6 +612,7 @@ describe("InputMetadataTest", () => {
                         "$bref(2):MiddleTable(Library.dependents).sourceId:k",
                         "$ref(0,2):MiddleTable(Library.dependents).targetId:k"
                     ],
+                    "recursiveDepth": -1,
                     "preMetadatas": [
                         {
                             "path": ["."],
@@ -612,6 +621,7 @@ describe("InputMetadataTest", () => {
                                 "version:Library.version:k",
                                 ":Library.id:r"
                             ],
+                            "recursiveDepth": -1,
                             "preMetadatas": [],
                             "postMetadatas": []
                         }

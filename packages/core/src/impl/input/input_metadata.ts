@@ -63,19 +63,19 @@ export class InputMetadata {
                 : [];
     }
 
-    private readonly _preMetadatas: Array<InputMetadata> = [];
+    private readonly _preMetadatas: Array<InputMetadata | undefined> = [];
 
-    private readonly _postMetadatas: Array<InputMetadata> = [];
+    private readonly _postMetadatas: Array<InputMetadata | undefined> = [];
 
     get scalars(): ReadonlyArray<InputMetadataScalar> {
         return this._scalars;
     }
 
-    get preMetadatas(): ReadonlyArray<InputMetadata> {
+    get preMetadatas(): ReadonlyArray<InputMetadata | undefined> {
         return this._preMetadatas;
     }
 
-    get postMetadatas(): ReadonlyArray<InputMetadata> {
+    get postMetadatas(): ReadonlyArray<InputMetadata | undefined> {
         return this._postMetadatas;
     }
 
@@ -84,7 +84,7 @@ export class InputMetadata {
         if (boolArr == null) {
             const arr: Array<boolean> = [];
             for (const preMetadata of this._postMetadatas) {
-                const key = preMetadata.key;
+                const key = preMetadata?.key ?? this.key;
                 let isReference = false;
                 if (key instanceof EntityProp) {
                     isReference = key.associationType === "ONE_TO_ONE" || key.associationType === "MANY_TO_ONE";
@@ -102,8 +102,24 @@ export class InputMetadata {
     }
 
     // @ts-ignore
+    private _addPreRecursive(index: number) {
+        if (this._preMetadatas.length < index) {
+            throw new ArgumentError(`Internal bug, pre recursive index: ${index}, preMetadataCount: ${this._preMetadatas.length}`);
+        }
+        this._preMetadatas.splice(index, 0, undefined);
+    }
+
+    // @ts-ignore
     private _addPostMetadata(metadata: InputMetadata) {
         this._postMetadatas.push(metadata);
+    }
+
+    // @ts-ignore
+    private _addPostRecursive(index: number) {
+        if (this._postMetadatas.length < index) {
+            throw new ArgumentError(`Internal bug, post recursive index: ${index}, postMetadataCount: ${this._postMetadatas.length}`);
+        }
+        this._postMetadatas.splice(index, 0, undefined);
     }
 
     // @ts-ignore
@@ -248,7 +264,7 @@ export class InputMetadata {
     }
 
     toJSON(): any {
-        return {
+        const json = {
             path: this.path,
             scalars: this.scalars.map(f => `${
                 f.path?.map(p => p === ".." ? "$parent" : p)?.join(".") ?? ""
@@ -263,9 +279,12 @@ export class InputMetadata {
             }${
                 (f.kinds & ScalarKinds.Return) !== 0 ? "r" : ""
             }`),
-            preMetadatas: this._preMetadatas.map(m => m.toJSON()),
-            postMetadatas: this._postMetadatas.map(m => m.toJSON())
-        }
+            preMetadatas: this._preMetadatas.map(m => m?.toJSON()),
+            postMetadatas: this._postMetadatas.map(m => m?.toJSON())
+        };
+        return this.recursiveDepth != null 
+            ? { ...json, recursiveDepth: this.recursiveDepth }
+            : json;
     }
 }
 
@@ -329,9 +348,9 @@ function createInputMetadataImpl(
         }
     }
     if (!refOnly) {
-        processPreAssociations(metadata, entityNode.fields, false);
+        processPreAssociations(metadata, entityNode.fields);
     }
-    processPostAssociations(metadata, entityNode.fields, false);
+    processPostAssociations(metadata, entityNode.fields);
     return metadata;
 }
 
@@ -416,10 +435,11 @@ function toMiddleTableScalar(
 
 function processPreAssociations(
     metadata: InputMetadata,
-    fields: ReadonlyArray<DtoMapperField>,
-    applyRecursive: boolean
+    fields: ReadonlyArray<DtoMapperField>
 ): void {
-    for (const field of fields) {
+    let fieldCount = fields.length;
+    for (let i = 0; i < fieldCount; i++) {
+        const field = fields[i]!;
         if (field.subMapper == null || field.prop.associationType == null || field.prop.asEntityProp?.referenceKeyProp == null) {
             continue;
         }
@@ -433,7 +453,7 @@ function processPreAssociations(
                 : typeof field.paths[0] === "string"
                     ? [field.paths[0]!]
                     : field.paths[0]!,
-            applyRecursive ? field.recursiveDepth : undefined, 
+            field.recursiveDepth, 
             entityNode, 
             InheritanceDirection.Both,
             (field.inputFlags & InputFlags.Ref) !== 0
@@ -442,19 +462,18 @@ function processPreAssociations(
             field.prop.asEntityProp!, 
             (field.inputFlags & InputFlags.RefAsKey) !== 0, 
             preMetadata, 
-            metadata.postMetadatas.length
+            metadata.preMetadatas.length
         );
-        (metadata as any)._addPreMetadata(preMetadata);
-        if (!applyRecursive && field.recursiveDepth != null) {
-            processPreAssociations(preMetadata, field.subMapper.fields, true);
+        if (field.recursiveDepth != null) {
+            (preMetadata as any)._addPreRecursive(metadata.preMetadatas.length);
         }
+        (metadata as any)._addPreMetadata(preMetadata);
     }
 }
 
 function processPostAssociations(
     metadata: InputMetadata,
-    fields: ReadonlyArray<DtoMapperField>,
-    applyRecursive: boolean
+    fields: ReadonlyArray<DtoMapperField>
 ): void {
     const overridePathMap = new Map<EntityProp, DtoMapperField>();
     for (const field of fields) {
@@ -462,7 +481,9 @@ function processPostAssociations(
             overridePathMap.set(field.prop.tsFormulaDependencies[0]!.asEntityProp, field);
         }
     }
-    for (const field of fields) {
+    const fieldCount = fields.length;
+    for (let i = 0; i < fieldCount; i++) {
+        const field = fields[i]!;
         if (field.subMapper == null || field.prop.asEntityProp?.referenceKeyProp != null) {
             continue;
         }
@@ -485,13 +506,16 @@ function processPostAssociations(
                 field.prop,
                 field.bridgeProp,
                 path,
-                applyRecursive ? field.recursiveDepth : undefined,
+                field.recursiveDepth,
                 createEntityNode(field.subMapper),
                 InheritanceDirection.Both,
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
             );
             (middleMetadata as any)._backRef(sourceProp, false, metadata);
             (metadata as any)._addPostMetadata(middleMetadata);
+            if (field.recursiveDepth != null) {
+                //(mddleMetadata as any)._addPostRecursive(i);
+            }
             targetMetadata = middleMetadata.postMetadatas[0]!;
         } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
             const associationEntity = (metadata.source as Entity).association(field.prop.name);
@@ -500,13 +524,16 @@ function processPostAssociations(
                 field.prop.asEntityProp!, 
                 field.bridgeProp,
                 path,
-                applyRecursive ? field.recursiveDepth : undefined, 
+                field.recursiveDepth, 
                 associationEntity,
                 undefined,
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
             );
             (middleMetadata as any)._backRef(associationEntity.sourceProp, true, metadata);
             (metadata as any)._addPostMetadata(middleMetadata);
+            if (field.recursiveDepth != null) {
+                //(middleMetadata as any)._addPostRecursive(i);
+            }
             if ((configurableField.inputFlags & InputFlags.Ref) === 0) {
                 const entityNode = createEntityNode(field.subMapper!);
                 targetMetadata = createInputMetadataImpl(
@@ -514,7 +541,7 @@ function processPostAssociations(
                     associationEntity.targetProp, 
                     undefined,
                     ["."],
-                    applyRecursive ? field.recursiveDepth : undefined, 
+                    field.recursiveDepth, 
                     entityNode, 
                     InheritanceDirection.Both,
                     (configurableField.inputFlags & InputFlags.Ref) !== 0
@@ -534,7 +561,7 @@ function processPostAssociations(
                 field.prop.asEntityProp!, 
                 field.bridgeProp,
                 path,
-                applyRecursive ? field.recursiveDepth : undefined, 
+                field.recursiveDepth, 
                 entityNode, 
                 InheritanceDirection.Both,
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
@@ -544,12 +571,12 @@ function processPostAssociations(
                 (configurableField.inputFlags & InputFlags.BackRefAsKey) !== 0,
                 metadata
             );
+            if (field.recursiveDepth != null) {
+                (targetMetadata as any)._addPostRecursive(metadata.postMetadatas.length);
+            }
             (metadata as any)._addPostMetadata(targetMetadata);
         }
-        if (field.recursiveDepth != null && !applyRecursive && targetMetadata != null) {
-            processPostAssociations(targetMetadata, field.subMapper.fields, true);
-        }
-    };
+    }
 }
 
 enum InheritanceDirection {

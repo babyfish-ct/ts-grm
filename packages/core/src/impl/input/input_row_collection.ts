@@ -62,12 +62,15 @@ function createPreCollections(
     collection: InputRowCollectionImpl,
     metadata: InputMetadata
 ): ReadonlyArray<InputRowCollection> {
+    if (collection.rows.length === 0) {
+        return [];
+    }
     const preCollections: Array<InputRowCollection> = [];
     const preMetadatas = metadata.preMetadatas;
     for (let i = 0; i < preMetadatas.length; i++) {
         const preMetadata = preMetadatas[i]!;
-        const preRowCtor = createInputCtor(preMetadata);
-        const key = preMetadata.key;
+        const preRowCtor = preMetadata != null ? createInputCtor(preMetadata) : collection.rowCtor;
+        const key = preMetadata?.key ?? metadata.key;
         const preItems: Array<InputRowItem> = [];
         if (key === "SUPER") {
             for (const row of collection.rows) {
@@ -89,7 +92,7 @@ function createPreCollections(
                 }
             }
         }
-        const preCollection = createInputCollectionImpl(preRowCtor, preMetadata, preItems);
+        const preCollection = createInputCollectionImpl(preRowCtor, preMetadata ?? metadata, preItems);
         preCollections.push(preCollection);
     }
     return preCollections;
@@ -99,11 +102,14 @@ function createPostCollections(
     collection: InputRowCollectionImpl,
     metadata: InputMetadata
 ): ReadonlyArray<InputRowCollection> {
+    if (collection.rows.length === 0) {
+        return [];
+    }
     const postCollections: Array<InputRowCollection> = [];
     const postMetadatas = metadata.postMetadatas;
     for (let i = 0; i < postMetadatas.length; i++) {
-        const postMetadata = postMetadatas[i]!;
-        const postRowCtor = createInputCtor(postMetadata);
+        const postMetadata = postMetadatas[i];
+        const postRowCtor = postMetadata != null ? createInputCtor(postMetadata) : collection.rowCtor;
         const postItems: Array<InputRowItem> = [];
         for (const row of collection.rows) {
             const post = (collection.rowCtor as any).post(row.data, i);
@@ -123,7 +129,7 @@ function createPostCollections(
                 });
             }
         }
-        const preCollection = createInputCollectionImpl(postRowCtor, postMetadata, postItems);
+        const preCollection = createInputCollectionImpl(postRowCtor, postMetadata ?? metadata, postItems);
         postCollections.push(preCollection);
     }
     return postCollections;

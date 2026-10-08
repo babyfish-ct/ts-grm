@@ -272,18 +272,19 @@ function writePre(
         writer.code("switch (index) ");
         writer.scope("CURLY_BRACKETS", () => {
             for (let i = 0; i < preCount; i++) {
-                if (preMetadatas[i]!.key! === "SUPER") {
+                const preMetadata = preMetadatas[i] ?? metadata;
+                if (preMetadata.key === "SUPER") {
                     continue;
                 }
-                if (preMetadatas[i]!.key instanceof AssociationPropImpl) {
+                if (preMetadata.key instanceof AssociationPropImpl) {
                     continue;
                 }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    if (preMetadatas[i]!.path == null) {
+                    if (preMetadata!.path == null) {
                         writer.code("return true").newLine(";");
                     } else {
                         writer.code("return ");
-                        writeExpr("data.", preMetadatas[i]!.path!, writer);
+                        writeExpr("data.", preMetadata.path!, writer);
                         writer.newLine(";");
                     }
                 });
@@ -307,7 +308,8 @@ function writePost(
         writer.scope("CURLY_BRACKETS", () => {
             for (let i = 0; i < postCount; i++) {
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    const key = postMetadatas[i]!.key;
+                    const postMetadata = postMetadatas[i] ?? metadata;
+                    const key = postMetadata.key;
                     if (key instanceof Entity) {
                         writer.code(`return data.__typename === "${key.name}"`);
                         for (const descendant of key.descendants) {
@@ -316,7 +318,7 @@ function writePost(
                         writer.code(" ? data : undefined").newLine(";");
                     } else {
                         writer.code("return ");
-                        writeExpr("data.", postMetadatas[i]!.path!, writer);
+                        writeExpr("data.", postMetadata.path!, writer);
                         writer.newLine(";");
                     }
                 });
