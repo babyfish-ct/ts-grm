@@ -108,29 +108,13 @@ export class InputMetadata {
     }
 
     // @ts-ignore
-    private _addPreMetadata(metadata: InputMetadata) {
+    private _addPreMetadata(metadata: InputMetadata | undefined) {
         this._preMetadatas.push(metadata);
     }
 
     // @ts-ignore
-    private _addPreRecursive(index: number) {
-        if (this._preMetadatas.length < index) {
-            throw new ArgumentError(`Internal bug, pre recursive index: ${index}, preMetadataCount: ${this._preMetadatas.length}`);
-        }
-        this._preMetadatas.splice(index, 0, undefined);
-    }
-
-    // @ts-ignore
-    private _addPostMetadata(metadata: InputMetadata) {
+    private _addPostMetadata(metadata: InputMetadata | undefined) {
         this._postMetadatas.push(metadata);
-    }
-
-    // @ts-ignore
-    private _addPostRecursive(index: number) {
-        if (this._postMetadatas.length < index) {
-            throw new ArgumentError(`Internal bug, post recursive index: ${index}, postMetadataCount: ${this._postMetadatas.length}`);
-        }
-        this._postMetadatas.splice(index, 0, undefined);
     }
 
     // @ts-ignore
@@ -176,15 +160,22 @@ export class InputMetadata {
     private _ref(
         referenceProp: EntityProp | AssociationProp, 
         refAsKey: boolean,
-        targetMetadata: InputMetadata, 
+        targetMetadata: InputMetadata | number, 
         targetMetadataIndex: number
-    ) {
-        for (const scalar of this._scalars) {
+    ): ReadonlyArray<number> {
+        const indices: Array<number> = [];
+        const scalars = this._scalars;
+        const count = this._scalars.length;
+        for (let i = 0; i < count; i++) {
+            const scalar = scalars[i]!;
             if (scalar.prop?.rootProp.referenceProp !== referenceProp) {
                 continue;
             }
+            indices.push(i);
             const targetKeyProp = referenceProp.targetKeyProp!.sub(scalar.prop.subPath);
-            const index = targetMetadata._scalarIndexOf(targetKeyProp);
+            const index = typeof targetMetadata === "number" 
+                ? targetMetadata
+                : targetMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$ref(${targetMetadataIndex},${index})`];
             if (referenceProp instanceof EntityProp) {
                 (scalar as any).kinds = refAsKey 
@@ -192,6 +183,7 @@ export class InputMetadata {
                     : ScalarKinds.Insert | ScalarKinds.Update;
             }
         }
+        return indices;
     }
 
     // @ts-ignore
@@ -199,14 +191,19 @@ export class InputMetadata {
         backRefProp: EntityProp | AssociationProp, 
         backRefAsKey: boolean,
         backRefMetadata: InputMetadata
-    ) {
+    ): ReadonlyArray<InputMetadataScalar> {
         for (const backRefKeyProp of backRefProp.referenceKeyProp!.scalarProps!) {
             this._scalarIndexOf(backRefKeyProp);
         }
-        for (const scalar of this._scalars) {
+        const changedScalars: Array<InputMetadataScalar> = [];
+        const scalars = this._scalars;
+        const count = this._scalars.length;
+        for (let i = 0; i < count; i++) {
+            const scalar = scalars[i]!;
             if (scalar.prop?.rootProp.referenceProp !== backRefProp) {
                 continue;
             }
+            changedScalars.push(scalar);
             const targetKeyProp = backRefProp.targetKeyProp!.sub(scalar.prop.subPath);
             const index = backRefMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$bref(${index})`];
@@ -216,6 +213,7 @@ export class InputMetadata {
                     : ScalarKinds.Insert | ScalarKinds.Update;
             }
         }
+        return changedScalars;
     }
 
     private _scalarIndexOf(prop: EntityProp | AssociationProp): number {
@@ -448,9 +446,9 @@ function processPreAssociations(
     metadata: InputMetadata,
     fields: ReadonlyArray<DtoMapperField>
 ): void {
-    let fieldCount = fields.length;
+    const fieldCount = fields.length;
     for (let i = 0; i < fieldCount; i++) {
-        const field = fields[i]!;
+        const field = fields[i]!
         if (field.subMapper == null || field.prop.associationType == null || field.prop.asEntityProp?.referenceKeyProp == null) {
             continue;
         }
@@ -469,14 +467,18 @@ function processPreAssociations(
             InheritanceDirection.Both,
             (field.inputFlags & InputFlags.Ref) !== 0
         );
-        (metadata as any)._ref(
+        const indices = (metadata as any)._ref(
             field.prop.asEntityProp!, 
             (field.inputFlags & InputFlags.RefAsKey) !== 0, 
             preMetadata, 
             metadata.preMetadatas.length
         );
         if (field.recursiveDepth != null) {
-            (preMetadata as any)._addPreRecursive(metadata.preMetadatas.length);
+            (preMetadata as any)._addPreMetadata(undefined);
+            for (const index of indices) {
+                (preMetadata.scalars[index] as any).path = metadata.scalars[index]!.path;
+                (preMetadata.scalars[index] as any).kinds = metadata.scalars[index]!.kinds;
+            }
         }
         (metadata as any)._addPreMetadata(preMetadata);
     }
@@ -492,9 +494,7 @@ function processPostAssociations(
             overridePathMap.set(field.prop.tsFormulaDependencies[0]!.asEntityProp, field);
         }
     }
-    const fieldCount = fields.length;
-    for (let i = 0; i < fieldCount; i++) {
-        const field = fields[i]!;
+    for (const field of fields) {
         if (field.subMapper == null || field.prop.asEntityProp?.referenceKeyProp != null) {
             continue;
         }
@@ -522,10 +522,15 @@ function processPostAssociations(
                 InheritanceDirection.Both,
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
             );
-            (middleMetadata as any)._backRef(sourceProp, false, metadata);
+            const changedScalars = (middleMetadata as any)._backRef(sourceProp, false, metadata);
             targetMetadata = middleMetadata.postMetadatas[0]!;
             if (field.recursiveDepth != null) {
-                (targetMetadata as any)._addPostRecursive(metadata.postMetadatas.length);
+                (targetMetadata as any)._addPostMetadata(undefined);
+                // for (const changedScalar of changedScalars) {
+                //     const scalar = targetMetadata.scalars.find(s => s.prop === changedScalar.prop);
+                //     (scalar as any).path = changedScalar.path;
+                //     (scalar as any).kinds = changedScalar.kinds;
+                // }
             }
             (metadata as any)._addPostMetadata(middleMetadata);
         } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
@@ -553,7 +558,7 @@ function processPostAssociations(
                     InheritanceDirection.Both,
                     (configurableField.inputFlags & InputFlags.Ref) !== 0
                 ); 
-                (middleMetadata as any)._ref(
+                const changedScalars = (middleMetadata as any)._ref(
                     associationEntity.targetProp, 
                     false,
                     targetMetadata, 
@@ -561,7 +566,14 @@ function processPostAssociations(
                 );
                 (middleMetadata as any)._addPreMetadata(targetMetadata);
                 if (field.recursiveDepth != null) {
-                    (targetMetadata as any)._addPostRecursive(0);
+                    (targetMetadata as any)._addPostMetadata(undefined);
+                    // for (const changedScalar of changedScalars) {
+                    //     const scalar = targetMetadata.scalars.find(s => s.prop === changedScalar.prop);
+                    //     if (scalar != null) {
+                    //         (scalar as any).path = changedScalar.path;
+                    //         (scalar as any).kinds = changedScalar.kinds;
+                    //     }
+                    // }
                 }
             }
             (metadata as any)._addPostMetadata(middleMetadata);
@@ -577,13 +589,18 @@ function processPostAssociations(
                 InheritanceDirection.Both,
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
             );    
-            (targetMetadata as any)._backRef(
+            const changedScalars = (targetMetadata as any)._backRef(
                 field.prop.asEntityProp!.mappedByProp!, 
                 (configurableField.inputFlags & InputFlags.BackRefAsKey) !== 0,
                 metadata
             );
             if (field.recursiveDepth != null) {
-                (targetMetadata as any)._addPostRecursive(metadata.postMetadatas.length);
+                (targetMetadata as any)._addPostMetadata(undefined);
+                // for (const changedScalar of changedScalars) {
+                //     const scalar = targetMetadata.scalars.find(s => s.prop === changedScalar.prop);
+                //     (scalar as any).path = changedScalar.path;
+                //     (scalar as any).kinds = changedScalar.kinds;
+                // }
             }
             (metadata as any)._addPostMetadata(targetMetadata);
         }

@@ -1,7 +1,6 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { LIBRARY, TREE_NODE } from "../../model/model";
-import { mapperJson } from "../view/utils";
 import { createInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
@@ -85,7 +84,78 @@ describe("RecursiveInputTest", () => {
         ];
         const metadata = createInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
-        console.log(JSON.stringify(collection, null, 4))
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [50, "DriverStore", 51],
+                [57, "spool", 58]
+            ],
+            "preCollections": [
+                {
+                    "rows": [
+                        [51, "System32", 52],
+                        [58, "System32",59]
+                    ],
+                    "prop": "TreeNode.parentNode",
+                    "preCollections": [
+                        {
+                            "rows": [
+                                [52, "Windows", 53],
+                                [59, "Windows", 60]
+                            ],
+                            "prop": "TreeNode.parentNode",
+                            "preCollections": [
+                                {
+                                    "rows": [
+                                        [53, "C:", undefined],
+                                        [60, "C:", undefined]
+                                    ],
+                                    "prop": "TreeNode.parentNode",
+                                    "preCollections": [
+                                        {
+                                            "rows": [],
+                                            "prop": "TreeNode.parentNode"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "postCollections": [
+                {
+                    "rows": [
+                        [54, "FileRepository", 50],
+                        [61, "drivers", 57]
+                    ],
+                    "prop": "TreeNode.childNodes",
+                    "postCollections": [
+                        {
+                            "rows": [
+                                [55, "prnms001.inf_amd64_x", 54],
+                                [62, "color", 61]
+                            ],
+                            "prop": "TreeNode.childNodes",
+                            "postCollections": [
+                                {
+                                    "rows": [
+                                        [56, "unknown", 55],
+                                        [63, ".icc", 62]
+                                    ],
+                                    "prop": "TreeNode.childNodes",
+                                    "postCollections": [
+                                        {
+                                            "rows": [],
+                                            "prop": "TreeNode.childNodes"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
     });
 
     it("differentShapeBasedOnM2M", () => {
@@ -295,55 +365,34 @@ describe("RecursiveInputTest", () => {
             c.name,
             c.$recursive("childNodes")
         ]);
-        expect(mapperJson(input.mapper)).toEqual({
-            "entity": "TreeNode",
-            "fields": [
-                {
-                    "prop": "TreeNode.parentNodeId",
-                    "paths": ["parentNodeId"],
-                    "ref": true,
-                    "columnIndex": 0
-                },
-                {
-                    "prop": "TreeNode.name",
-                    "paths": ["name"],
-                    "columnIndex": 1
-                },
-                {
-                    "prop": "TreeNode.id",
-                    "paths": [],
-                    "isDependent": true,
-                    "columnIndex": 2
-                },
-                {
-                    "prop": "TreeNode.childNodes",
-                    "paths": ["childNodes"],
-                    "subMapper": {
-                        "entity": "TreeNode",
-                        "associatedProp": "TreeNode.childNodes",
-                        "fields": [
+        const objs: ReadonlyArray<TypeOf<typeof input>> = [
+            {
+                parentNodeId: 3,
+                name: "Windows",
+                childNodes: [
+                    {
+                        name: "System32",
+                        childNodes: [
                             {
-                                "prop": "TreeNode.name",
-                                "paths": ["name"],
-                                "columnIndex": 0
-                            },
-                            {
-                                "prop": "TreeNode.id",
-                                "paths": [],
-                                "isDependent": true,
-                                "columnIndex": 1
-                            },
-                            {
-                                "prop": "TreeNode.childNodes",
-                                "paths": ["childNodes"],
-                                "dependencies": [1]
+                                name: "driver",
+                                childNodes: [
+                                    {name: "hosts"}
+                                ]
                             }
                         ]
-                    },
-                    "recursiveDepth": -1,
-                    "dependencies": [2]
-                }
-            ]
-        });
+                    }
+                ]
+            },
+            {
+                parentNodeId: 13,
+                name: "tools",
+            }
+        ];
+        const metadata = createInputMetadata(input.mapper);
+        const collection = createInputCollection(metadata, objs);
+        console.log(JSON.stringify(metadata, null, 4));
+        assignIds(collection, [], 2, 101);
+        assignIds(collection, [{post: true, value: 0}], 1, 201);
+        console.log(JSON.stringify(collection, null, 4));
     });
 });

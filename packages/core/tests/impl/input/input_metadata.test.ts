@@ -481,7 +481,7 @@ describe("InputMetadataTest", () => {
                             "path": ["parentNode"],
                             "scalars": [
                                 "name:TreeNode.name:k",
-                                ":TreeNode.parentNodeId:r",
+                                "$ref(0,2):TreeNode.parentNodeId:k",
                                 ":TreeNode.id:r"
                             ],
                             "recursiveDepth": -1,

@@ -21,6 +21,7 @@ export interface EntityNode {
     readonly fields: Array<DtoMapperField>;
     superNode: EntityNode | undefined;
     readonly derivedNodes: Array<EntityNode>;
+    toJSON(): any;
 }
 
 export function createEntityNode(
@@ -54,7 +55,8 @@ function createEntityNodeImpl(
             raw: entity, 
             fields,
             superNode: undefined, 
-            derivedNodes: []
+            derivedNodes: [],
+            toJSON
         });
     }
     const processed = new Set<Entity>();
@@ -80,4 +82,22 @@ function createEntityNodeImpl(
         process(entity, entity.superEntity);
     }
     return nodeMap.get(currentEntity.tableEntity)!;
+}
+
+function toJSON(this: EntityNode): any {
+    return _toJSON(this, 3);
+}
+
+function _toJSON(node: EntityNode, direction: number): any {
+    let json: any = { 
+        raw: node.raw.name, 
+        fields: node.fields.map(f => f.bridgeProp?.toString() ?? f.prop.toString()) 
+    };
+    if ((direction & 1) !== 0 && node.superNode != null) {
+        json = { ...json, superNode: _toJSON(node.superNode, 1) };
+    }
+    if ((direction & 2) !== 0 && node.derivedNodes.length !== 0) {
+        json = { ...json, derivedNodes: node.derivedNodes.map(n => _toJSON(n, 2)) };
+    }
+    return json;
 }
