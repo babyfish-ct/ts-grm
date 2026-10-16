@@ -71,6 +71,14 @@ export class InputMetadata {
         return this._scalars;
     }
 
+    scalar(prop: EntityProp): InputMetadataScalar {
+        const scalar = this._scalars.find(s => s.prop === prop); 
+        if (scalar == null) {
+            throw new ArgumentError(`There is no scalar based on "${prop.toString()}"`);
+        }
+        return scalar;
+    }
+
     get preMetadatas(): ReadonlyArray<InputMetadata | undefined> {
         return this._preMetadatas;
     }
@@ -127,7 +135,7 @@ export class InputMetadata {
             return this._scalars[index]!;
         });
         for (const scalar of this._scalars) {
-            if (scalar.prop?.rootProp !== idProp) {
+            if (scalar.prop?.rootProp.name !== idProp.name) {
                 continue;
             }
             for (const thisScalar of thisScalars) {
@@ -357,9 +365,9 @@ function createInputMetadataImpl(
         }
     }
     if (!refOnly) {
-        processPreAssociations(metadata, entityNode.fields);
+        processPreAssociations(metadata, entityNode);
     }
-    processPostAssociations(metadata, entityNode.fields);
+    processPostAssociations(metadata, entityNode);
     return metadata;
 }
 
@@ -444,50 +452,80 @@ function toMiddleTableScalar(
 
 function processPreAssociations(
     metadata: InputMetadata,
-    fields: ReadonlyArray<DtoMapperField>
+    entityNode: EntityNode
 ): void {
+    const fields = entityNode.fields;
     const fieldCount = fields.length;
     for (let i = 0; i < fieldCount; i++) {
         const field = fields[i]!
-        if (field.subMapper == null || field.prop.associationType == null || field.prop.asEntityProp?.referenceKeyProp == null) {
+        if ((field.subMapper == null && field.recursiveDepth == null) || field.prop.associationType == null || field.prop.asEntityProp?.referenceKeyProp == null) {
             continue;
         }
-        const entityNode = createEntityNode(field.subMapper!);
-        const preMetadata = createInputMetadataImpl(
-            metadata, 
-            field.prop.asEntityProp!, 
-            field.bridgeProp,
-            field.paths.length === 0 
-                ? undefined 
-                : typeof field.paths[0] === "string"
-                    ? [field.paths[0]!]
-                    : field.paths[0]!,
-            field.recursiveDepth, 
-            entityNode, 
-            InheritanceDirection.Both,
-            (field.inputFlags & InputFlags.Ref) !== 0
-        );
-        const indices = (metadata as any)._ref(
-            field.prop.asEntityProp!, 
-            (field.inputFlags & InputFlags.RefAsKey) !== 0, 
-            preMetadata, 
-            metadata.preMetadatas.length
-        );
-        if (field.recursiveDepth != null) {
-            (preMetadata as any)._addPreMetadata(undefined);
-            for (const index of indices) {
-                (preMetadata.scalars[index] as any).path = metadata.scalars[index]!.path;
-                (preMetadata.scalars[index] as any).kinds = metadata.scalars[index]!.kinds;
-            }
+        createPreMetadata(metadata, entityNode, field, false);
+    }
+}
+
+function createPreMetadata(
+    metadata: InputMetadata,
+    entityNode: EntityNode,
+    field: DtoMapperField,
+    recursiving: boolean
+): InputMetadata | undefined {
+    const preMetadata = createInputMetadataImpl(
+        metadata, 
+        field.prop.asEntityProp!, 
+        field.bridgeProp,
+        field.paths.length === 0 
+            ? undefined 
+            : typeof field.paths[0] === "string"
+                ? [field.paths[0]!]
+                : field.paths[0]!,
+        field.recursiveDepth, 
+        field.subMapper != null 
+            ? createEntityNode(field.subMapper)
+            : entityNode.filter(f => isRecursionAllowed(field.prop.declaringEntity, field.prop.asEntityProp!, f)), 
+        InheritanceDirection.Both,
+        (field.inputFlags & InputFlags.Ref) !== 0
+    );
+    const indices = (metadata as any)._ref(
+        field.prop.asEntityProp!, 
+        (field.inputFlags & InputFlags.RefAsKey) !== 0, 
+        preMetadata, 
+        metadata.preMetadatas.length
+    );
+    if (field.recursiveDepth != null) {
+        for (const index of indices) {
+            const preScalar = preMetadata.scalar(metadata.scalars[index]!.prop as EntityProp);
+            (preScalar as any).path = metadata.scalars[index]!.path;
+            (preScalar as any).kinds = metadata.scalars[index]!.kinds;
         }
-        (metadata as any)._addPreMetadata(preMetadata);
+    }
+    if (!recursiving) {
+        createRecursivePreMetadata(preMetadata, entityNode, field);
+    }
+    (metadata as any)._addPreMetadata(preMetadata);
+    return preMetadata;
+}
+
+function createRecursivePreMetadata(
+    targetMetadata: InputMetadata,
+    entityNode: EntityNode,
+    field: DtoMapperField
+) {
+    if (field.recursiveDepth == null) {
+        return;
+    }
+    const metadata = createPreMetadata(targetMetadata, entityNode, field, true);
+    if (metadata != null) {
+        (metadata as any)._addPreMetadata(undefined);
     }
 }
 
 function processPostAssociations(
     metadata: InputMetadata,
-    fields: ReadonlyArray<DtoMapperField>
+    entityNode: EntityNode,
 ): void {
+    const fields = entityNode.fields;
     const overridePathMap = new Map<EntityProp, DtoMapperField>();
     for (const field of fields) {
         if (field.prop instanceof AssociatedKeysFormulaProp) {
@@ -495,116 +533,137 @@ function processPostAssociations(
         }
     }
     for (const field of fields) {
-        if (field.subMapper == null || field.prop.asEntityProp?.referenceKeyProp != null) {
+        if ((field.subMapper == null && field.recursiveDepth == null) || field.prop.asEntityProp?.referenceKeyProp != null) {
             continue;
         }
         const configurableField = 
             overridePathMap.get(field.prop.asEntityProp!) 
             ?? (field.bridgeProp != null ? overridePathMap.get(field.bridgeProp) : undefined)
             ?? field; 
-        const path = 
-            configurableField.paths.length === 0 
-                ? undefined 
-                : typeof configurableField.paths[0] === "string"
-                    ? [configurableField.paths[0]!]
-                    : configurableField.paths[0]!;
+        createPostMetadata(metadata, entityNode, field, configurableField, false);
+    }
+}
+
+function createPostMetadata(
+    metadata: InputMetadata,
+    entityNode: EntityNode,
+    field: DtoMapperField,
+    configurableField: DtoMapperField,
+    recursiving: boolean
+): InputMetadata | undefined {
+    const path = 
+        configurableField.paths.length === 0 
+            ? undefined 
+            : typeof configurableField.paths[0] === "string"
+                ? [configurableField.paths[0]!]
+                : configurableField.paths[0]!;
+    if (field.prop instanceof InverseFetchProp) {
+        const middleEntity = field.bridgeProp?.middleEntity!;
+        const sourceProp = middleEntity.joinThisProp!;
+        const middleMetadata = createInputMetadataImpl(
+            metadata,
+            field.prop,
+            field.bridgeProp,
+            path,
+            field.recursiveDepth,
+            field.subMapper != null 
+                ? createEntityNode(field.subMapper)
+                : entityNode.filter(f => isRecursionAllowed(field.prop.declaringEntity, field.prop.asEntityProp!, f)),
+            InheritanceDirection.Both,
+            (configurableField.inputFlags & InputFlags.Ref) !== 0
+        );
+        (middleMetadata as any)._backRef(sourceProp, false, metadata);
+        (metadata as any)._addPostMetadata(middleMetadata);
+    } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
+        const associationEntity = (metadata.source as Entity).association(field.prop.name);
+        const middleMetadata = new InputMetadata(
+            metadata, 
+            field.prop.asEntityProp!, 
+            field.bridgeProp,
+            path,
+            field.recursiveDepth, 
+            associationEntity,
+            undefined,
+            (configurableField.inputFlags & InputFlags.Ref) !== 0
+        );
+        (middleMetadata as any)._backRef(associationEntity.sourceProp, true, metadata);
         let targetMetadata: InputMetadata | undefined = undefined;
-        if (field.prop instanceof InverseFetchProp) {
-            const middleEntity = field.bridgeProp?.middleEntity!;
-            const sourceProp = middleEntity.joinThisProp!;
-            const middleMetadata = createInputMetadataImpl(
-                metadata,
-                field.prop,
-                field.bridgeProp,
-                path,
-                field.recursiveDepth,
-                createEntityNode(field.subMapper),
-                InheritanceDirection.Both,
-                (configurableField.inputFlags & InputFlags.Ref) !== 0
-            );
-            const changedScalars = (middleMetadata as any)._backRef(sourceProp, false, metadata);
-            targetMetadata = middleMetadata.postMetadatas[0]!;
-            if (field.recursiveDepth != null) {
-                (targetMetadata as any)._addPostMetadata(undefined);
-                // for (const changedScalar of changedScalars) {
-                //     const scalar = targetMetadata.scalars.find(s => s.prop === changedScalar.prop);
-                //     (scalar as any).path = changedScalar.path;
-                //     (scalar as any).kinds = changedScalar.kinds;
-                // }
-            }
-            (metadata as any)._addPostMetadata(middleMetadata);
-        } else if (field.prop.asEntityProp?.storageType === "MIDDLE_TABLE") {
-            const associationEntity = (metadata.source as Entity).association(field.prop.name);
-            const middleMetadata = new InputMetadata(
-                metadata, 
-                field.prop.asEntityProp!, 
-                field.bridgeProp,
-                path,
-                field.recursiveDepth, 
-                associationEntity,
-                undefined,
-                (configurableField.inputFlags & InputFlags.Ref) !== 0
-            );
-            (middleMetadata as any)._backRef(associationEntity.sourceProp, true, metadata);
-            if ((configurableField.inputFlags & InputFlags.Ref) === 0) {
-                const entityNode = createEntityNode(field.subMapper!);
-                targetMetadata = createInputMetadataImpl(
-                    middleMetadata, 
-                    associationEntity.targetProp, 
-                    undefined,
-                    ["."],
-                    field.recursiveDepth, 
-                    entityNode, 
-                    InheritanceDirection.Both,
-                    (configurableField.inputFlags & InputFlags.Ref) !== 0
-                ); 
-                const changedScalars = (middleMetadata as any)._ref(
-                    associationEntity.targetProp, 
-                    false,
-                    targetMetadata, 
-                    middleMetadata.postMetadatas.length
-                );
-                (middleMetadata as any)._addPreMetadata(targetMetadata);
-                if (field.recursiveDepth != null) {
-                    (targetMetadata as any)._addPostMetadata(undefined);
-                    // for (const changedScalar of changedScalars) {
-                    //     const scalar = targetMetadata.scalars.find(s => s.prop === changedScalar.prop);
-                    //     if (scalar != null) {
-                    //         (scalar as any).path = changedScalar.path;
-                    //         (scalar as any).kinds = changedScalar.kinds;
-                    //     }
-                    // }
-                }
-            }
-            (metadata as any)._addPostMetadata(middleMetadata);
-        } else {
+        if ((configurableField.inputFlags & InputFlags.Ref) === 0) {
             const entityNode = createEntityNode(field.subMapper!);
             targetMetadata = createInputMetadataImpl(
-                metadata, 
-                field.prop.asEntityProp!, 
-                field.bridgeProp,
-                path,
+                middleMetadata, 
+                associationEntity.targetProp, 
+                undefined,
+                ["."],
                 field.recursiveDepth, 
                 entityNode, 
                 InheritanceDirection.Both,
                 (configurableField.inputFlags & InputFlags.Ref) !== 0
-            );    
-            const changedScalars = (targetMetadata as any)._backRef(
-                field.prop.asEntityProp!.mappedByProp!, 
-                (configurableField.inputFlags & InputFlags.BackRefAsKey) !== 0,
-                metadata
+            ); 
+            (middleMetadata as any)._ref(
+                associationEntity.targetProp, 
+                false,
+                targetMetadata, 
+                middleMetadata.postMetadatas.length
             );
-            if (field.recursiveDepth != null) {
-                (targetMetadata as any)._addPostMetadata(undefined);
-                // for (const changedScalar of changedScalars) {
-                //     const scalar = targetMetadata.scalars.find(s => s.prop === changedScalar.prop);
-                //     (scalar as any).path = changedScalar.path;
-                //     (scalar as any).kinds = changedScalar.kinds;
-                // }
+            (middleMetadata as any)._addPreMetadata(targetMetadata);
+            if (!recursiving) {
+                createRecursivePostMetadata(targetMetadata, entityNode, field, configurableField);
             }
-            (metadata as any)._addPostMetadata(targetMetadata);
         }
+        (metadata as any)._addPostMetadata(middleMetadata);
+        return targetMetadata;
+    } else {
+        const targetMetadata = createInputMetadataImpl(
+            metadata, 
+            field.prop.asEntityProp!, 
+            field.bridgeProp,
+            path,
+            field.recursiveDepth, 
+            field.subMapper != null 
+                ? createEntityNode(field.subMapper)
+                : entityNode.filter(f => isRecursionAllowed(field.prop.declaringEntity, field.prop.asEntityProp!, f)), 
+            InheritanceDirection.Both,
+            (configurableField.inputFlags & InputFlags.Ref) !== 0
+        );
+        (targetMetadata as any)._backRef(
+            field.prop.asEntityProp!.mappedByProp!, 
+            (configurableField.inputFlags & InputFlags.BackRefAsKey) !== 0,
+            metadata
+        );
+        if (!recursiving) {
+            createRecursivePostMetadata(targetMetadata, entityNode, field, configurableField);
+        }
+        (metadata as any)._addPostMetadata(targetMetadata);
+        return targetMetadata;
     }
+    return undefined;
+}
+
+function createRecursivePostMetadata(
+    targetMetadata: InputMetadata,
+    entityNode: EntityNode,
+    field: DtoMapperField,
+    configurableField: DtoMapperField,
+) {
+    if (field.recursiveDepth == null) {
+        return;
+    }
+    const metadata = createPostMetadata(targetMetadata, entityNode, configurableField, field, true);
+    if (metadata != null) {
+        (metadata as any)._addPostMetadata(undefined);
+    }
+}
+
+function isRecursionAllowed(
+    expectedEntity: Entity,
+    recursiveProp: EntityProp,
+    field: DtoMapperField,
+) {
+    if (field.downcastTo == null && !field.prop.declaringEntity.isAssignableFrom(expectedEntity)) {
+        return false;
+    }
+    return field.recursiveDepth == null || field.prop !== recursiveProp;
 }
 
 enum InheritanceDirection {

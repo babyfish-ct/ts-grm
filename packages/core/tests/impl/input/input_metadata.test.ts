@@ -486,7 +486,19 @@ describe("InputMetadataTest", () => {
                             ],
                             "recursiveDepth": -1,
                             "preMetadatas": [
-                                undefined
+                                {
+                                    "path": ["parentNode"],
+                                    "postMetadatas": [],
+                                    "preMetadatas": [
+                                        undefined
+                                    ],
+                                    "recursiveDepth": -1,
+                                    "scalars": [
+                                        "name:TreeNode.name:k",
+                                        "$ref(0,2):TreeNode.parentNodeId:k",
+                                        ":TreeNode.id:r",
+                                    ],
+                                }
                             ],
                             "postMetadatas": []
                         }
@@ -535,7 +547,17 @@ describe("InputMetadataTest", () => {
                             "recursiveDepth": -1,
                             "preMetadatas": [],
                             "postMetadatas": [
-                                undefined
+                                {
+                                    "path": ["childNodes"],
+                                    "postMetadatas": [undefined],
+                                    "preMetadatas": [],
+                                    "recursiveDepth": -1,
+                                    "scalars": [
+                                        "name:TreeNode.name:k",
+                                        ":TreeNode.id:r",
+                                        "$bref(1):TreeNode.parentNodeId:k",
+                                    ],
+                                }
                             ]
                         }
                     ]
@@ -602,7 +624,30 @@ describe("InputMetadataTest", () => {
                             "recursiveDepth": -1,
                             "preMetadatas": [],
                             "postMetadatas": [
-                                undefined
+                                {
+                                    "path": ["dependencies"],
+                                    "postMetadatas": [],
+                                    "preMetadatas": [
+                                        {
+                                            "path": ["."],
+                                            "postMetadatas": [
+                                                undefined,
+                                            ],
+                                            "preMetadatas": [],
+                                            "recursiveDepth": -1,
+                                            "scalars": [
+                                                "name:Library.name:k",
+                                                "version:Library.version:k",
+                                                ":Library.id:r",
+                                            ],
+                                        },
+                                    ],
+                                    "recursiveDepth": -1,
+                                    "scalars": [
+                                        "$bref(2):MiddleTable(Library.dependencies).sourceId:k",
+                                        "$ref(0,2):MiddleTable(Library.dependencies).targetId:k",
+                                    ],
+                                }
                             ]
                         }
                     ],
@@ -626,7 +671,30 @@ describe("InputMetadataTest", () => {
                             "recursiveDepth": -1,
                             "preMetadatas": [],
                             "postMetadatas": [
-                                undefined
+                                {
+                                    "path": ["dependents"],
+                                    "postMetadatas": [],
+                                    "preMetadatas": [
+                                        {
+                                            "path": ["."],
+                                            "postMetadatas": [
+                                                undefined,
+                                            ],
+                                            "preMetadatas": [],
+                                            "recursiveDepth": -1,
+                                            "scalars": [
+                                                "name:Library.name:k",
+                                                "version:Library.version:k",
+                                                ":Library.id:r",
+                                            ]
+                                        },
+                                    ],
+                                    "recursiveDepth": -1,
+                                    "scalars": [
+                                        "$bref(2):MiddleTable(Library.dependents).sourceId:k",
+                                        "$ref(0,2):MiddleTable(Library.dependents).targetId:k",
+                                    ]
+                                }
                             ]
                         }
                     ],

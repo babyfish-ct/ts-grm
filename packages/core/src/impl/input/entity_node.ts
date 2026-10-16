@@ -21,6 +21,7 @@ export interface EntityNode {
     readonly fields: Array<DtoMapperField>;
     superNode: EntityNode | undefined;
     readonly derivedNodes: Array<EntityNode>;
+    filter(fn: (field: DtoMapperField) => void): EntityNode;
     toJSON(): any;
 }
 
@@ -56,6 +57,7 @@ function createEntityNodeImpl(
             fields,
             superNode: undefined, 
             derivedNodes: [],
+            filter,
             toJSON
         });
     }
@@ -82,6 +84,16 @@ function createEntityNodeImpl(
         process(entity, entity.superEntity);
     }
     return nodeMap.get(currentEntity.tableEntity)!;
+}
+
+function filter(
+    this: EntityNode, 
+    fn: (field: DtoMapperField) => void
+): EntityNode {
+    return { 
+        ...this,
+        fields: this.fields.filter(fn)
+    };
 }
 
 function toJSON(this: EntityNode): any {

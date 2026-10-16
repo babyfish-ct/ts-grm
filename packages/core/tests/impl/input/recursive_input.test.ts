@@ -386,13 +386,65 @@ describe("RecursiveInputTest", () => {
             {
                 parentNodeId: 13,
                 name: "tools",
+                childNodes: [
+                    {
+                        name: "node",
+                        childNodes: [
+                            {
+                                name: "ts",
+                                childNodes: [
+                                    {name: "tsc"}
+                                ]
+                            }
+                        ]
+                    }
+                ]
             }
         ];
         const metadata = createInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
-        console.log(JSON.stringify(metadata, null, 4));
         assignIds(collection, [], 2, 101);
         assignIds(collection, [{post: true, value: 0}], 1, 201);
-        console.log(JSON.stringify(collection, null, 4));
+        assignIds(collection, [{post: true, value: 0}, {post: true, value: 0}], 1, 301);
+        assignIds(collection, [{post: true, value: 0}, {post: true, value: 0}, {post: true, value: 0}], 1, 401);
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                [3, "Windows", 101],
+                [13, "tools", 102]
+            ],
+            "postCollections": [
+                {
+                    "rows": [
+                        ["System32", 201, 101],
+                        ["node", 202, 102]
+                    ],
+                    "prop": "TreeNode.childNodes",
+                    "postCollections": [
+                        {
+                            "rows": [
+                                ["driver", 301, 201],
+                                ["ts", 302, 202]
+                            ],
+                            "prop": "TreeNode.childNodes",
+                            "postCollections": [
+                                {
+                                    "rows": [
+                                        ["hosts", 401, 301],
+                                        ["tsc", 402, 302]
+                                    ],
+                                    "prop": "TreeNode.childNodes",
+                                    "postCollections": [
+                                        {
+                                            "rows": [],
+                                            "prop": "TreeNode.childNodes"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
     });
 });
