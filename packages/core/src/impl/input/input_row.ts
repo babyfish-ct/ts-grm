@@ -71,7 +71,20 @@ export type InputRowCtor = new (
     parent: InputRow | undefined
 ) => InputRow;
 
-export function createInputCtor(
+const inputRowCtorMap = new Map<InputMetadata, InputRowCtor>();
+
+export function getInputCtor(
+    metadata: InputMetadata
+): InputRowCtor {
+    let inputRowCtor = inputRowCtorMap.get(metadata);
+    if (inputRowCtor == null) {
+        inputRowCtor = createInputCtor(metadata);
+        inputRowCtorMap.set(metadata, inputRowCtor);
+    }
+    return inputRowCtor;
+}
+
+function createInputCtor(
     metadata: InputMetadata
 ): InputRowCtor {
     const writer = new CodeWriter();

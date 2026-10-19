@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { STUDENT } from "../../model/model";
-import { createInputMetadata } from "@/impl/input/input_metadata";
+import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
@@ -33,7 +33,7 @@ describe("JoinEntityInputTest", () => {
                 ]
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [], 1, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 1, 501);
@@ -91,7 +91,7 @@ describe("JoinEntityInputTest", () => {
                 ]
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [], 1, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 1, 501);

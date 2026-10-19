@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
-import { createInputMetadata } from "@/impl/input/input_metadata";
+import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
@@ -31,7 +31,7 @@ describe("PolymorphismInputTest", () => {
                 pdfVersion: "3.0"
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [0, 0], 3, 101);
         expect(collection.toJSON()).toEqual({
@@ -93,7 +93,7 @@ describe("PolymorphismInputTest", () => {
                 pdfVersion: "2.0"
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [], 4, 101);
         expect(collection.toJSON()).toEqual({

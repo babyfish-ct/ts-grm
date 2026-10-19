@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { LIBRARY, TREE_NODE } from "../../model/model";
-import { createInputMetadata } from "@/impl/input/input_metadata";
+import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
@@ -82,7 +82,7 @@ describe("RecursiveInputTest", () => {
                 ]
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -233,7 +233,7 @@ describe("RecursiveInputTest", () => {
                 }
             ]
         }];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [], 2, 1);
         assignIds(collection, [{post: true, value: 0}, 0], 2, 101);
@@ -401,7 +401,7 @@ describe("RecursiveInputTest", () => {
                 ]
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         assignIds(collection, [], 2, 101);
         assignIds(collection, [{post: true, value: 0}], 1, 201);

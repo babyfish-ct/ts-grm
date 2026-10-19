@@ -1,7 +1,7 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { ORDER, ORDER_ITEM, TAG } from "../../model/model";
-import { createInputMetadata } from "@/impl/input/input_metadata";
+import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputCollection } from "@/impl/input/input_row_collection";
 
 describe("EmbeddedAssociationInputTest", () => {
@@ -36,7 +36,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 }
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -87,7 +87,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 ]
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -157,7 +157,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 ]
             }
         ];
-        const metadata = createInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper);
         const collection = createInputCollection(metadata, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [

@@ -22,7 +22,20 @@ import { createEntityNode, EntityNode } from "./entity_node";
 import { AssociatedKeysFormulaProp, InverseFetchProp } from "../dto";
 import { MapperFn } from "../dto_mapping";
 
-export function createInputMetadata(
+const metadataMap = new Map<string, InputMetadata>();
+
+export function getInputMetadata(
+    mapper: DtoMapper
+): InputMetadata {
+    let metadata = metadataMap.get(mapper.hash);
+    if (metadata == null) {
+        metadata = createInputMetadata(mapper);
+        metadataMap.set(mapper.hash, metadata);
+    }
+    return metadata;
+}
+
+function createInputMetadata(
     mapper: DtoMapper
 ): InputMetadata {
     const entityNode = createEntityNode(mapper);
