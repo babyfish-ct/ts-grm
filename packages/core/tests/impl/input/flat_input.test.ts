@@ -2,7 +2,7 @@ import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, TREE_NODE } from "../../model/model";
 import { getInputMetadata } from "@/impl/input/input_metadata";
-import { createInputCollection } from "@/impl/input/input_row_collection";
+import { createInputRowCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
 describe("FlatInputTest", () => {
@@ -20,7 +20,7 @@ describe("FlatInputTest", () => {
             { theFirstName: "Mikhail", theLastName: "Bautin", gender: "MALE" }
         ];
         const metadata = getInputMetadata(input.mapper);
-        const collection = createInputCollection(metadata, objs);
+        const collection = createInputRowCollection(metadata, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 ["Eve", "Procello", "F"],
@@ -59,7 +59,7 @@ describe("FlatInputTest", () => {
             }
         ];
         const metadata = getInputMetadata(input.mapper);
-        const collection = createInputCollection(metadata, objs);
+        const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -101,7 +101,7 @@ describe("FlatInputTest", () => {
             }
         ];
         const metadata = getInputMetadata(input.mapper);
-        const collection = createInputCollection(metadata, objs);
+        const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [0], 2, 101);
         assignIds(collection, [0, 0], 1, 201);
         console.log(JSON.stringify(collection, null, 4))

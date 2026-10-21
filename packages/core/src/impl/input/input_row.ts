@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { ArgumentError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
 import { CodeWriter } from "../code_writer";
 import { Entity } from "../entity";
 import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
@@ -30,6 +30,8 @@ export abstract class InputRow {
     }
 
     abstract get metadata(): InputMetadata;
+
+    abstract get hash(): any;
 
     abstract get(col: number): any;
 
@@ -94,6 +96,7 @@ function createInputCtor(
         writeFields(metadata, writer);
         writeConstructor(writer);
         writeMetadata(writer);
+        writeHash(metadata, writer);
         writeGet(metadata, writer);
         writeSet(metadata, writer);
         writePre(metadata, writer);
@@ -105,12 +108,14 @@ function createInputCtor(
         "$metadata",
         "$mapperFnArr",
         "$argumentError",
+        "$stateError",
         code
     )(
         InputRow,
         metadata,
         mapperFnArr(metadata),
-        ArgumentError
+        ArgumentError,
+        StateError
     );
 }
 
@@ -150,6 +155,29 @@ function writeMetadata(
     }).newLine();
 }
 
+function writeHash(
+    metadata: InputMetadata,
+    writer: CodeWriter
+) {
+    let keyScalars = metadata.keyScalars;
+    writer.code("get hash() ");
+    writer.scope("CURLY_BRACKETS", () => {
+        if (keyScalars.length === 1) {
+            writer.code("return ");
+            writeExpr(keyScalars[0]!, writer);
+            writer.newLine(";");
+        } else {
+            writer.code(`let hash = ""`).newLine(";");
+            for (const keyScalar of keyScalars) {
+                writer.code("hash += ");
+                writeExpr(keyScalar, writer);
+                writer.newLine(";");
+            }
+            writer.code("return hash").newLine(";");
+        }
+    }).newLine();
+}
+
 function writeGet(
     metadata: InputMetadata,
     writer: CodeWriter
@@ -161,15 +189,19 @@ function writeGet(
             const scalars = metadata.scalars;
             const scalarCount = scalars.length;
             for (let i = 0; i < scalarCount; i++) {
-                if ((scalars[i]!.kinds & ScalarKinds.Return) !== 0) {
-                    writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                        writer.code("return this._").code(scalars[i]!.prop!.name).newLine(";");
-                    });
-                } else if (scalars[i]!.path != null) {
-                    writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                        writeGetter(scalars[i]!, writer);
-                    });
-                }
+                writer.code("case ").code(i.toString()).code(":");
+                writer.scope("BLANK", () => {
+                    if ((scalars[i]!.kinds & ScalarKinds.Return) !== 0) {
+                        const propName = scalars[i]!.prop!.name;
+                        writer.code(`if (this._${propName} === undefined) `);
+                        writer.scope("CURLY_BRACKETS", () => {
+                            writer.code(`throw new $stateError("The returnable property '${propName}' has not been assigned")`).newLine(";");
+                        }).newLine();
+                    }
+                    writer.code("return ");
+                    writeExpr(scalars[i]!, writer);
+                    writer.newLine(";");
+                });
             }
             writer.code("default:").scope("BLANK", () => {
                 writer.code("return undefined").newLine(";");
@@ -178,22 +210,33 @@ function writeGet(
     }).newLine();
 }
 
-function writeGetter(
+function writeExpr(
     scalar: InputMetadataScalar,
     writer: CodeWriter
 ) {
-    writer.code("return ");
-    if (scalar.fn == null) {
-        writeExpr("this.data.", scalar.path!, writer);
+    if ((scalar.kinds & ScalarKinds.Return) !== 0) {
+        writer.code("this._").code(scalar.prop!.name);
+    } else if (scalar.path != null) {
+        writeExprImpl(scalar, writer);
     } else {
-        writer.code("ThisClass.").code(fnName(scalar)).code("(");
-        writeExpr("this.data.", scalar.path!, writer);
-        writer.code(")");
+        writer.code("null");
     }
-    writer.newLine(";");
 }
 
-function writeExpr(
+function writeExprImpl(
+    scalar: InputMetadataScalar,
+    writer: CodeWriter
+) {
+    if (scalar.fn == null) {
+        writeCoreExpr("this.data.", scalar.path!, writer);
+    } else {
+        writer.code("ThisClass.").code(fnName(scalar)).code("(");
+        writeCoreExpr("this.data.", scalar.path!, writer);
+        writer.code(")");
+    }
+}
+
+function writeCoreExpr(
     root: string,
     path: ReadonlyArray<string>,
     writer: CodeWriter
@@ -263,7 +306,7 @@ function writeSet(
                     continue;
                 }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    writer.code("this._").code(scalars[i]!.prop!.name).code(" = value").newLine(";");
+                    writer.code("this._").code(scalars[i]!.prop!.name).code(" = value ?? null").newLine(";");
                     writer.code("break").newLine(";");
                 });
             }
@@ -297,7 +340,7 @@ function writePre(
                         writer.code("return true").newLine(";");
                     } else {
                         writer.code("return ");
-                        writeExpr("data.", preMetadata.path!, writer);
+                        writeCoreExpr("data.", preMetadata.path!, writer);
                         writer.newLine(";");
                     }
                 });
@@ -332,9 +375,9 @@ function writePost(
                     } else {
                         writer.code("return ");
                         if (postMetadata.path!.length === 1 && postMetadata.path![0] === ".") {
-                            writeExpr("data.", metadata.parent!.path!, writer);
+                            writeCoreExpr("data.", metadata.parent!.path!, writer);
                         } else {
-                            writeExpr("data.", postMetadata.path!, writer);
+                            writeCoreExpr("data.", postMetadata.path!, writer);
                         }
                         writer.newLine(";");
                     }

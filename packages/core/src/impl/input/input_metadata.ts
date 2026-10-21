@@ -55,6 +55,8 @@ export class InputMetadata {
 
     private readonly _scalars: Array<InputMetadataScalar>;
 
+    private _keyScalars: ReadonlyArray<InputMetadataScalar> | undefined = undefined;
+
     private _preMetadataReferences: ReadonlyArray<boolean> | undefined;
 
     private _location: string | undefined = undefined;
@@ -82,6 +84,19 @@ export class InputMetadata {
 
     get scalars(): ReadonlyArray<InputMetadataScalar> {
         return this._scalars;
+    }
+
+    get keyScalars(): ReadonlyArray<InputMetadataScalar> {
+        let keyScalars = this._keyScalars;
+        if (keyScalars == null) {
+            keyScalars = this._scalars.filter(s => (s.kinds & ScalarKinds.Key) !== 0);
+            if (keyScalars.length === 0) {
+                const idPropName = (this.source as Entity).idProp.name;
+                keyScalars = this._scalars.filter(s => s.prop?.rootProp.name === idPropName);
+            }
+            this._keyScalars = keyScalars;
+        }
+        return keyScalars;
     }
 
     scalar(prop: EntityProp): InputMetadataScalar {

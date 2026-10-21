@@ -29,26 +29,26 @@ export interface InputRowCollection {
     toJSON(): any;
 }
 
-export function createInputCollection(
+export function createInputRowCollection(
     metadata: InputMetadata,
     objs: ReadonlyArray<any>
 ): InputRowCollection {
     const rowCtor = getInputCtor(metadata);
-    const items: ReadonlyArray<InputRowItem> = objs.map(o => {
+    const items: ReadonlyArray<InputItem> = objs.map(o => {
         return {
             data: o,
-            parent: undefined,
+            parentItemIndex: undefined,
             preIndex: undefined
         }
     })
-    return createInputCollectionImpl(undefined, rowCtor, metadata, items);
+    return createInputRowCollectionImpl(undefined, rowCtor, metadata, items);
 }
 
-function createInputCollectionImpl(
+function createInputRowCollectionImpl(
     parent: InputRowCollectionImplementor | undefined,
     rowCtor: InputRowCtor,
     metadata: InputMetadata,
-    items: ReadonlyArray<InputRowItem>
+    items: ReadonlyArray<InputItem>
 ): InputRowCollectionImplementor {
     const collection = new InputRowCollectionImpl(parent, rowCtor, metadata);
     for (const item of items) {
@@ -63,42 +63,40 @@ function createPreCollections(
     collection: InputRowCollectionImplementor,
     metadata: InputMetadata
 ): ReadonlyArray<InputRowCollection> {
-    if (collection.rows.length === 0) {
+    if (collection.items.length === 0) {
         return [];
     }
     const preCollections: Array<InputRowCollection> = [];
     const preMetadatas = metadata.preMetadatas;
     for (let i = 0; i < preMetadatas.length; i++) {
         const preMetadata = preMetadatas[i]!;
-        const index = i;
-        const preCollectionCreator: InputRowCollectionCreator = () => {
-            const preRowCtor = preMetadata != null ? getInputCtor(preMetadata) : collection.rowCtor;
-            const key = preMetadata?.key ?? metadata.key;
-            const preItems: Array<InputRowItem> = [];
-            if (key === "SUPER") {
-                for (const row of collection.rows) {
+        const preRowCtor = preMetadata != null ? getInputCtor(preMetadata) : collection.rowCtor;
+        const key = preMetadata?.key ?? metadata.key;
+        const items = collection.items;
+        const size = items.length;
+        const preItems: Array<InputItem> = [];
+        if (key === "SUPER") {
+            for (let ii = 0; ii < size; ii++) {
+                preItems.push({
+                    data: items[ii]!.data,
+                    parentItemIndex: ii,
+                    preIndex: i
+                });
+            }
+        } else {
+            for (let ii = 0; ii < size; ii++) {
+                const pre = (collection.rowCtor as any).pre(items[ii]!.data, i);
+                if (pre != null) {
                     preItems.push({
-                        data: row.data,
-                        parent: row,
-                        preIndex: index
+                        data: pre,
+                        parentItemIndex: ii,
+                        preIndex: i
                     });
                 }
-            } else {
-                for (const row of collection.rows) {
-                    const pre = (collection.rowCtor as any).pre(row.data, index);
-                    if (pre != null) {
-                        preItems.push({
-                            data: pre,
-                            parent: row,
-                            preIndex: index
-                        });
-                    }
-                }
             }
-            return createInputCollectionImpl(collection, preRowCtor, preMetadata ?? metadata, preItems);
-        };
-        // preCollections.push(preCollectionCreator());
-        preCollections.push(new LazyInputRowCollectionImpl(preCollectionCreator));
+        }
+        const preCollection = createInputRowCollectionImpl(collection, preRowCtor, preMetadata ?? metadata, preItems);
+        preCollections.push(preCollection);
     }
     return preCollections;
 }
@@ -107,54 +105,53 @@ function createPostCollections(
     collection: InputRowCollectionImplementor,
     metadata: InputMetadata
 ): ReadonlyArray<InputRowCollection> {
-    if (collection.rows.length === 0) {
+    if (collection.items.length === 0) {
         return [];
     }
     const postCollections: Array<InputRowCollection> = [];
     const postMetadatas = metadata.postMetadatas;
     for (let i = 0; i < postMetadatas.length; i++) {
         const postMetadata = postMetadatas[i];
-        const index = i;
-        const postCollectionCreator: InputRowCollectionCreator = () => {
-            const postRowCtor = postMetadata != null 
-                ? getInputCtor(postMetadata) 
-                : metadata.isUnderMiddleTable 
-                    ? collection.parent!.rowCtor
-                    : collection.rowCtor;
-            const postItems: Array<InputRowItem> = [];
-            for (const row of collection.rows) {
-                const post = (collection.rowCtor as any).post(row.data, index);
-                if (Array.isArray(post)) {
-                    for (const e of post) {
-                        postItems.push({
-                            data: e,
-                            parent: row,
-                            preIndex: undefined
-                        });
-                    }
-                } else if (post != null) {
+        const postRowCtor = postMetadata != null 
+            ? getInputCtor(postMetadata) 
+            : metadata.isUnderMiddleTable 
+                ? collection.parent!.rowCtor
+                : collection.rowCtor;
+        const items = collection.items;
+        const size = items.length;
+        const postItems: Array<InputItem> = [];
+        for (let ii = 0; ii < size; ii++) {
+            const post = (collection.rowCtor as any).post(items[ii]!.data, i);
+            if (Array.isArray(post)) {
+                for (const e of post) {
                     postItems.push({
-                        data: post,
-                        parent: row,
+                        data: e,
+                        parentItemIndex: ii,
                         preIndex: undefined
                     });
                 }
+            } else if (post != null) {
+                postItems.push({
+                    data: post,
+                    parentItemIndex: ii,
+                    preIndex: undefined
+                });
             }
-            return createInputCollectionImpl(
-                collection, 
-                postRowCtor, 
-                postMetadata ?? (metadata.isUnderMiddleTable ? metadata.parent! : metadata), 
-                postItems
-            );
-        };
-        postCollections.push(new LazyInputRowCollectionImpl(postCollectionCreator));
+        }
+        const postCollection = createInputRowCollectionImpl(
+            collection, 
+            postRowCtor, 
+            postMetadata ?? (metadata.isUnderMiddleTable ? metadata.parent! : metadata), 
+            postItems
+        );
+        postCollections.push(postCollection);
     }
     return postCollections;
 }
 
-interface InputRowItem {
+interface InputItem {
     readonly data: any;
-    readonly parent: InputRow | undefined;
+    readonly parentItemIndex: number | undefined;
     readonly preIndex: number | undefined;
 }
 
@@ -168,12 +165,18 @@ interface InputRowCollectionImplementor extends InputRowCollection {
 
     readonly postCollections: ReadonlyArray<InputRowCollection>;
 
-    load(): void;
+    readonly items: ReadonlyArray<InputItem>;
+
+    rowByItemIndex(itemIndex: number): InputRow | undefined;
 }
 
 class InputRowCollectionImpl implements InputRowCollectionImplementor {
 
-    private readonly _rows: Array<InputRow> = [];
+    private readonly _items: Array<InputItem> = [];
+
+    private _rows: ReadonlyArray<InputRow> | undefined = undefined;
+
+    private _rowIndices: ReadonlyArray<number> | undefined = undefined;
 
     readonly preCollections: Array<InputRowCollection> = [];
         
@@ -183,24 +186,74 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
         readonly parent: InputRowCollectionImplementor | undefined,
         readonly rowCtor: InputRowCtor,
         readonly metadata: InputMetadata
-    ) {}
-
-    get rows(): ReadonlyArray<InputRow> {
-        return this._rows;
-    }
-
-    add(
-        item: InputRowItem
     ) {
-        const row = new this.rowCtor(item.data, item.parent);
-        this._rows.push(row);
-        if (item.preIndex != null) {
-            (item.parent! as any)._setPreRow(item.preIndex, row);
+        if (metadata.parent != null && parent == null) {
+            throw new Error("FUCK")
         }
     }
 
+    get items(): ReadonlyArray<InputItem> {
+        return this._items;
+    }
+
+    get rows(): ReadonlyArray<InputRow> {
+        for (const preCollection of this.preCollections) {
+            preCollection.rows;
+        }
+        let rows = this._rows;
+        if (rows == null) {
+            this._init();
+            rows = this._rows!;
+        }
+        return rows;
+    }
+
+    rowByItemIndex(itemIndex: number): InputRow | undefined {
+        let indices = this._rowIndices;
+        if (indices == null) {
+            this._init();
+            indices = this._rowIndices!;
+        }
+        const rowIndex = indices[itemIndex]!;
+        return rowIndex != null ? this._rows![rowIndex]! : undefined;
+    }
+
+    private _init() {
+        const indexMap = new Map<any, number>();
+        const rows: Array<InputRow> = [];
+        const indices: Array<number> = [];
+        const items = this._items;
+        const size = items.length;
+        for (let i = 0; i < size; i++) {
+            const item = items[i]!;
+            const parentRow = item.parentItemIndex != null
+                    ? this.parent!.rowByItemIndex(item.parentItemIndex)
+                    : undefined;
+            const row = new this.rowCtor(item.data, parentRow);
+            const hash = row.hash;
+            // let index = indexMap.get(hash);
+            // if (index == null) {
+            //     index = rows.length;
+            //     indexMap.set(hash, index);
+            // }
+            const index = rows.length;
+            rows[index] = row;
+            if (item.preIndex != null) {
+                (parentRow as any)._setPreRow(item.preIndex, row);
+            }
+            indices.push(index);
+        }
+        this._rows = rows;
+        this._rowIndices = indices;
+    }
+
+    add(
+        item: InputItem
+    ) {
+        this._items.push(item);
+    }
+
     toJSON() {
-        this.load();
         const json = {
             rows: this.rows.map(r => r.toJSON())
         };
@@ -215,71 +268,6 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
             : json2;
         return json3;
     }
-
-    load() {
-        for (const preCollection of this.preCollections) {
-            (preCollection as InputRowCollectionImplementor).load();
-        }
-        for (const postCollection of this.postCollections) {
-            (postCollection as InputRowCollectionImplementor).load();
-        }
-    }
 }
 
-type InputRowCollectionCreator = () => InputRowCollectionImplementor;
-
-class LazyInputRowCollectionImpl implements InputRowCollectionImplementor {
-
-    private _raw: InputRowCollectionImplementor | undefined;
-
-    constructor(
-        private readonly _creator: InputRowCollectionCreator
-    ) {}
-
-    private get raw(): InputRowCollectionImplementor {
-        let raw = this._raw;
-        if (raw == null) {
-            this._raw = raw = this._creator();
-        }
-        return raw;
-    }
-
-    get metadata(): InputMetadata {
-        return this.raw.metadata;
-    }
-
-    get rows(): ReadonlyArray<InputRow> {
-        return this.raw.rows;
-    }
-
-    get preCollections(): ReadonlyArray<InputRowCollection> {
-        return this.raw.preCollections;
-    }
-
-    get postCollections(): ReadonlyArray<InputRowCollection> {
-        return this.raw.postCollections;
-    }
-
-    toJSON(): any {
-        this.load();
-        return this.raw.toJSON();
-    }
-
-    load() {
-        for (const preCollection of this.preCollections) {
-            (preCollection as InputRowCollectionImplementor).load();
-        }
-        for (const postCollection of this.postCollections) {
-            (postCollection as InputRowCollectionImplementor).load();
-        }
-        this.raw;
-    }
-
-    get parent(): InputRowCollectionImplementor | undefined {
-        return this.raw.parent;
-    }
-
-    get rowCtor(): InputRowCtor {
-        return this.raw.rowCtor;
-    }
-}
+let depth = 0

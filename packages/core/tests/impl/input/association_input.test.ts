@@ -2,7 +2,7 @@ import { __AllModelMembers, __AssociatedProp, __AssociatedPropContract, __Declar
 import { describe, it, expect } from "vitest";
 import { BOOK, TREE_NODE } from "../../model/model";
 import { getInputMetadata } from "@/impl/input/input_metadata";
-import { createInputCollection } from "@/impl/input/input_row_collection";
+import { createInputRowCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
 describe("AssociationInputTest", () => {
@@ -38,7 +38,7 @@ describe("AssociationInputTest", () => {
             }
         ];
         const metadata = getInputMetadata(input.mapper);
-        const collection = createInputCollection(metadata, objs);
+        const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -84,8 +84,10 @@ describe("AssociationInputTest", () => {
             }
         ];
         const metadata = getInputMetadata(input.mapper);
-        const collection = createInputCollection(metadata, objs);
+        const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [], 2, 101);
+        const row = collection.postCollections[0]!.rows[0]!;
+        console.log(row.hash);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [6, "Dairy", 101],
@@ -136,7 +138,7 @@ describe("AssociationInputTest", () => {
             }
         ];
         const metadata = getInputMetadata(input.mapper);
-        const collection = createInputCollection(metadata, objs);
+        const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
