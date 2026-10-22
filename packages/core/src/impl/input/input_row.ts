@@ -16,22 +16,27 @@ import { ArgumentError, StateError } from "@/error/common";
 import { CodeWriter } from "../code_writer";
 import { Entity } from "../entity";
 import { InputMetadata, InputMetadataScalar, ScalarKinds } from "./input_metadata";
-import { AssociationPropImpl } from "../association_entity";
+import { AssociationEntity, AssociationPropImpl } from "../association_entity";
 import { MapperFn } from "../dto_mapping";
+import { InputRowCollection, InputRowCollectionImplementor } from "./input_row_collection";
 
 export abstract class InputRow {
 
     private _preRows: Array<InputRow> | undefined = undefined;
 
+    private _isMiddleTableRow: boolean;
+
     constructor(
+        readonly owner: InputRowCollection,
         readonly data: any,
         protected readonly parent: InputRow | undefined
     ) {
+        this._isMiddleTableRow = this.owner.metadata.source instanceof AssociationEntity;
     }
 
     abstract get metadata(): InputMetadata;
 
-    abstract get hash(): any;
+    abstract hash(collection: InputRowCollection): any;
 
     abstract get(col: number): any;
 
@@ -41,6 +46,10 @@ export abstract class InputRow {
         preMetadataIndex: number, 
         colIndex: number
     ): any {
+        if (this._isMiddleTableRow) { 
+            const collection = this.owner.preCollections[preMetadataIndex] as InputRowCollectionImplementor | undefined;
+            return collection?.row(this.data)?.get(colIndex);
+        }
         const preRows = this._preRows;
         if (preRows == null) {
             return undefined;
@@ -69,6 +78,7 @@ export abstract class InputRow {
 }
 
 export type InputRowCtor = new (
+    owner: InputRowCollection,
     data: any, 
     parent: InputRow | undefined
 ) => InputRow;
@@ -140,9 +150,9 @@ function mapperFnArr(
 function writeConstructor(
     writer: CodeWriter
 ) {
-    writer.code("constructor(data, parent) ");
+    writer.code("constructor(owner, data, parent) ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code("super(data, parent)").newLine(";");
+        writer.code("super(owner, data, parent)").newLine(";");
     }).newLine();
 }
 
@@ -160,7 +170,7 @@ function writeHash(
     writer: CodeWriter
 ) {
     let keyScalars = metadata.keyScalars;
-    writer.code("get hash() ");
+    writer.code("hash(collection) ");
     writer.scope("CURLY_BRACKETS", () => {
         if (keyScalars.length === 1) {
             writer.code("return ");
@@ -168,14 +178,38 @@ function writeHash(
             writer.newLine(";");
         } else {
             writer.code(`let hash = ""`).newLine(";");
+            let addSp = false;
             for (const keyScalar of keyScalars) {
+                if (addSp) {
+                    writer.code(`hash += "\x1F"`).newLine(";");
+                } else {
+                    addSp = true;
+                }
                 writer.code("hash += ");
-                writeExpr(keyScalar, writer);
-                writer.newLine(";");
+                if (metadata.source instanceof Entity) {
+                    writeExpr(keyScalar, writer);
+                } else {
+                    writeMiddleValueForHash(keyScalar, writer);
+                }
+                writer.code(`?? ""`).newLine(";");
             }
             writer.code("return hash").newLine(";");
         }
     }).newLine();
+}
+
+function writeMiddleValueForHash(
+    scalar: InputMetadataScalar,
+    writer: CodeWriter
+): any {
+    const path = scalar.path![0]!;
+    if (path.startsWith("$ref(")) {
+        const indicesStr = path.substring(5, path.length - 1);
+        const indices = indicesStr.split(",").map(s => parseInt(s));
+        writer.code(`collection.preCollections[${indices[0]}].row(this.data).get(${indices[1]})`);
+    } else {
+        writeExpr(scalar, writer);
+    }
 }
 
 function writeGet(

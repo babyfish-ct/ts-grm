@@ -12,6 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { Entity } from "../entity";
 import { EntityProp } from "../entity_prop";
 import { InputMetadata } from "./input_metadata";
 import { getInputCtor, InputRow, InputRowCtor } from "./input_row";
@@ -155,7 +156,7 @@ interface InputItem {
     readonly preIndex: number | undefined;
 }
 
-interface InputRowCollectionImplementor extends InputRowCollection {
+export interface InputRowCollectionImplementor extends InputRowCollection {
 
     readonly parent: InputRowCollectionImplementor | undefined;
     
@@ -168,6 +169,8 @@ interface InputRowCollectionImplementor extends InputRowCollection {
     readonly items: ReadonlyArray<InputItem>;
 
     rowByItemIndex(itemIndex: number): InputRow | undefined;
+
+    row(data: any): InputRow | undefined;
 }
 
 class InputRowCollectionImpl implements InputRowCollectionImplementor {
@@ -177,6 +180,8 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
     private _rows: ReadonlyArray<InputRow> | undefined = undefined;
 
     private _rowIndices: ReadonlyArray<number> | undefined = undefined;
+
+    private _dataIndexMap: ReadonlyMap<any, number> | undefined = undefined;
 
     readonly preCollections: Array<InputRowCollection> = [];
         
@@ -218,33 +223,50 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
         return rowIndex != null ? this._rows![rowIndex]! : undefined;
     }
 
+    row(data: any): InputRow | undefined {
+        let dataIndexMap = this._dataIndexMap;
+        if (dataIndexMap == null) {
+            this._init();
+            dataIndexMap = this._dataIndexMap!;
+        }
+        const rowIndex = dataIndexMap.get(data);
+        return rowIndex != null ? this._rows![rowIndex]! : undefined;
+    }
+
     private _init() {
-        const indexMap = new Map<any, number>();
+        console.log("Init", this.metadata.source.toString());
+        const dataIndexMap = new Map<any, number>();
         const rows: Array<InputRow> = [];
         const indices: Array<number> = [];
+
+        const indexMap = new Map<any, number>();
         const items = this._items;
         const size = items.length;
         for (let i = 0; i < size; i++) {
             const item = items[i]!;
-            const parentRow = item.parentItemIndex != null
+            const parentRow = this.parent?.metadata.source instanceof Entity && item.parentItemIndex != null
                     ? this.parent!.rowByItemIndex(item.parentItemIndex)
                     : undefined;
-            const row = new this.rowCtor(item.data, parentRow);
-            const hash = row.hash;
-            // let index = indexMap.get(hash);
-            // if (index == null) {
-            //     index = rows.length;
-            //     indexMap.set(hash, index);
-            // }
-            const index = rows.length;
+            const row = new this.rowCtor(this, item.data, parentRow);
+            const hash = row.hash(this);
+            console.log(hash);
+            let index = indexMap.get(hash);
+            if (index == null) {
+                index = rows.length;
+                indexMap.set(hash, index);
+            } else {
+                (rows[index] as any)._refTarget = row;
+            }
+            dataIndexMap.set(item.data, index);
             rows[index] = row;
-            if (item.preIndex != null) {
+            if (parentRow != null) {
                 (parentRow as any)._setPreRow(item.preIndex, row);
             }
             indices.push(index);
         }
         this._rows = rows;
         this._rowIndices = indices;
+        this._dataIndexMap = dataIndexMap;
     }
 
     add(

@@ -139,8 +139,12 @@ describe("AssociationInputTest", () => {
         ];
         const metadata = getInputMetadata(input.mapper);
         const collection = createInputRowCollection(metadata, objs);
+        console.log(collection.postCollections[0]!.rowCtor.toString())
+        console.log(collection.postCollections[0]!.preCollections[0]!.rowCtor.toString())
         assignIds(collection, [], 3, 101);
+        console.log("----");
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
+        console.log("----");
         expect(collection.toJSON()).toEqual({
             "rows": [
                 ["Learning GraphQL", 3, 59.9, 101],

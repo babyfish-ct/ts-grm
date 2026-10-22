@@ -497,6 +497,10 @@ export class Entity {
         return ctor;
     }
 
+    toString(): string {
+        return this.name;
+    }
+
     toJSON(): any {
         return {
             entity: true,
