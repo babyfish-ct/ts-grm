@@ -225,13 +225,6 @@ function writeGet(
             for (let i = 0; i < scalarCount; i++) {
                 writer.code("case ").code(i.toString()).code(":");
                 writer.scope("BLANK", () => {
-                    if ((scalars[i]!.kinds & ScalarKinds.Return) !== 0) {
-                        const propName = scalars[i]!.prop!.name;
-                        writer.code(`if (this._${propName} === undefined) `);
-                        writer.scope("CURLY_BRACKETS", () => {
-                            writer.code(`throw new $stateError("The returnable property '${propName}' has not been assigned")`).newLine(";");
-                        }).newLine();
-                    }
                     writer.code("return ");
                     writeExpr(scalars[i]!, writer);
                     writer.newLine(";");

@@ -84,7 +84,7 @@ describe("FlatInputTest", () => {
             c.$flat("parentNode").prefix("parent").refAsKey().with(c => [
                 c.name.key(),
                 c.$flat("parentNode").prefix("parent").refAsKey().with(c => [
-                    c.name
+                    c.name.key()
                 ])
             ])
         ]);
@@ -104,6 +104,29 @@ describe("FlatInputTest", () => {
         const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [0], 2, 101);
         assignIds(collection, [0, 0], 1, 201);
-        console.log(JSON.stringify(collection, null, 4))
+        expect(collection.toJSON()).toEqual({
+            "rows": [
+                ["system32", 101],
+                ["ts", 102]
+            ],
+            "preCollections": [
+                {
+                    "rows": [
+                        ["windows", 201, 101],
+                        ["tools", 202, 102]
+                    ],
+                    "prop": "TreeNode.parentNode",
+                    "preCollections": [
+                        {
+                            "rows": [
+                                ["C:", 201],
+                                ["D:", 202]
+                            ],
+                            "prop": "TreeNode.parentNode"
+                        }
+                    ]
+                }
+            ]
+        });
     });
 });

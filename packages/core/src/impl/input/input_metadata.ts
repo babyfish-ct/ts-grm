@@ -94,6 +94,11 @@ export class InputMetadata {
                 const idPropName = (this.source as Entity).idProp.name;
                 keyScalars = this._scalars.filter(s => s.prop?.rootProp.name === idPropName);
             }
+            if (keyScalars.length === 0) {
+                throw new ArgumentError(
+                    `Illegal input collection at "${this.location}", no key scalars`
+                );
+            }
             this._keyScalars = keyScalars;
         }
         return keyScalars;
