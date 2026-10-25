@@ -26,10 +26,12 @@ export abstract class InputRow {
 
     private _isMiddleTableRow: boolean;
 
+    private _parent: InputRow | null | undefined = undefined;
+
     constructor(
-        readonly owner: InputRowCollection,
+        readonly owner: InputRowCollectionImplementor,
         readonly data: any,
-        protected readonly parent: InputRow | undefined
+        private readonly _parentDataIndex: number | undefined
     ) {
         this._isMiddleTableRow = this.owner.metadata.source instanceof AssociationEntity;
     }
@@ -42,20 +44,26 @@ export abstract class InputRow {
 
     abstract set(col: number, value: any): void;
 
+    protected get parent(): InputRow | undefined {
+        let parent = this._parent;
+        if (parent === undefined) {
+            const parentCollection = this.owner.parent!;
+            parent = parentCollection.rowByItemIndex(this._parentDataIndex!) ?? null;
+            this._parent = parent;
+        }
+        return parent ?? undefined;
+    }
+
     protected ref(
         preMetadataIndex: number, 
         colIndex: number
     ): any {
+        const collection = this.owner.preCollections[preMetadataIndex] as InputRowCollectionImplementor | undefined;
         if (this._isMiddleTableRow) { 
-            const collection = this.owner.preCollections[preMetadataIndex] as InputRowCollectionImplementor | undefined;
             return collection?.row(this.data)?.get(colIndex);
         }
-        const preRows = this._preRows;
-        if (preRows == null) {
-            return undefined;
-        }
-        const preRow = preRows[preMetadataIndex] as InputRow | undefined;
-        return preRow?.get(colIndex);
+        const pre = (this.owner.rowCtor as any).pre(this.data, preMetadataIndex);
+        return collection?.row(pre)?.get(colIndex);
     }
 
     //@ts-ignore
@@ -80,7 +88,7 @@ export abstract class InputRow {
 export type InputRowCtor = new (
     owner: InputRowCollection,
     data: any, 
-    parent: InputRow | undefined
+    parentDataIndex: number | undefined
 ) => InputRow;
 
 const inputRowCtorMap = new Map<InputMetadata, InputRowCtor>();
@@ -113,6 +121,7 @@ function createInputCtor(
         writePost(metadata, writer);
     });
     const code = writer.toString();
+    console.log(metadata.source.toString(), code);
     return new Function(
         "$baseClass", 
         "$metadata",
@@ -150,9 +159,9 @@ function mapperFnArr(
 function writeConstructor(
     writer: CodeWriter
 ) {
-    writer.code("constructor(owner, data, parent) ");
+    writer.code("constructor(owner, data, parentDataIndex) ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code("super(owner, data, parent)").newLine(";");
+        writer.code("super(owner, data, parentDataIndex)").newLine(";");
     }).newLine();
 }
 

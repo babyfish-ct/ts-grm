@@ -12,7 +12,6 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { Entity } from "../entity";
 import { EntityProp } from "../entity_prop";
 import { InputMetadata } from "./input_metadata";
 import { getInputCtor, InputRow, InputRowCtor } from "./input_row";
@@ -244,10 +243,7 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
         const size = items.length;
         for (let i = 0; i < size; i++) {
             const item = items[i]!;
-            const parentRow = this.parent?.metadata.source instanceof Entity && item.parentItemIndex != null
-                    ? this.parent!.rowByItemIndex(item.parentItemIndex)
-                    : undefined;
-            const row = new this.rowCtor(this, item.data, parentRow);
+            const row = new this.rowCtor(this, item.data, item.parentItemIndex);
             const hash = row.hash(this);
             console.log(hash);
             let index = indexMap.get(hash);
@@ -259,9 +255,6 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
             }
             dataIndexMap.set(item.data, index);
             rows[index] = row;
-            if (parentRow != null) {
-                (parentRow as any)._setPreRow(item.preIndex, row);
-            }
             indices.push(index);
         }
         this._rows = rows;
@@ -291,5 +284,3 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
         return json3;
     }
 }
-
-let depth = 0

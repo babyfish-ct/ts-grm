@@ -86,8 +86,6 @@ describe("AssociationInputTest", () => {
         const metadata = getInputMetadata(input.mapper);
         const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [], 2, 101);
-        const row = collection.postCollections[0]!.rows[0]!;
-        console.log(row.hash);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [6, "Dairy", 101],
