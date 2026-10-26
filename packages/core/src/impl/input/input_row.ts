@@ -121,7 +121,6 @@ function createInputCtor(
         writePost(metadata, writer);
     });
     const code = writer.toString();
-    console.log(metadata.source.toString(), code);
     return new Function(
         "$baseClass", 
         "$metadata",
@@ -371,14 +370,13 @@ function writePre(
                 if (preMetadata.key instanceof AssociationPropImpl) {
                     continue;
                 }
+                if (preMetadata.path == null) {
+                    continue;
+                }
                 writer.code("case ").code(i.toString()).code(":").scope("BLANK", () => {
-                    if (preMetadata!.path == null) {
-                        writer.code("return true").newLine(";");
-                    } else {
-                        writer.code("return ");
-                        writeCoreExpr("data.", preMetadata.path!, writer);
-                        writer.newLine(";");
-                    }
+                    writer.code("return ");
+                    writeCoreExpr("data.", preMetadata.path!, writer);
+                    writer.newLine(";");
                 });
             }
             writer.code("default:").scope("BLANK", () => {

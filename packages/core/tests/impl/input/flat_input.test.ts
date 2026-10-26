@@ -60,6 +60,7 @@ describe("FlatInputTest", () => {
         ];
         const metadata = getInputMetadata(input.mapper);
         const collection = createInputRowCollection(metadata, objs);
+        console.log(JSON.stringify(metadata, null, 4));
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [

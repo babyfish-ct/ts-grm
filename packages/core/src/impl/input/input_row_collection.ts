@@ -233,7 +233,6 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
     }
 
     private _init() {
-        console.log("Init", this.metadata.source.toString());
         const dataIndexMap = new Map<any, number>();
         const rows: Array<InputRow> = [];
         const indices: Array<number> = [];
@@ -245,7 +244,6 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
             const item = items[i]!;
             const row = new this.rowCtor(this, item.data, item.parentItemIndex);
             const hash = row.hash(this);
-            console.log(hash);
             let index = indexMap.get(hash);
             if (index == null) {
                 index = rows.length;
