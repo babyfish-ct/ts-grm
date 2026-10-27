@@ -329,14 +329,13 @@ describe("RecursiveInputTest", () => {
                                                 {
                                                     "rows": [
                                                         [501, 601],
-                                                        [502, 602]
+                                                        [502, 601]
                                                     ],
                                                     "prop": "Library.dependents",
                                                     "preCollections": [
                                                         {
                                                             "rows": [
-                                                                ["express", "4.18.2", 601],
-                                                                ["express", "4.18.2", 602]
+                                                                ["express", "4.18.2", 601]
                                                             ],
                                                             "postCollections": [
                                                                 {
