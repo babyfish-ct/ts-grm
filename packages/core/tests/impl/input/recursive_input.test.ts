@@ -361,8 +361,8 @@ describe("RecursiveInputTest", () => {
 
     it("backRef", () => {
         const input = dto.input(TREE_NODE, c => [
-            c.parentNodeId,
-            c.name,
+            c.parentNodeId.key(),
+            c.name.key(),
             c.$recursive("childNodes")
         ]);
         const objs: ReadonlyArray<TypeOf<typeof input>> = [
