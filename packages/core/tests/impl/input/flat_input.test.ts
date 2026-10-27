@@ -60,7 +60,6 @@ describe("FlatInputTest", () => {
         ];
         const metadata = getInputMetadata(input.mapper);
         const collection = createInputRowCollection(metadata, objs);
-        console.log(JSON.stringify(metadata, null, 4));
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -103,8 +102,10 @@ describe("FlatInputTest", () => {
         ];
         const metadata = getInputMetadata(input.mapper);
         const collection = createInputRowCollection(metadata, objs);
+        console.log(collection.preCollections[0].rowCtor.toString())
         assignIds(collection, [0], 2, 101);
         assignIds(collection, [0, 0], 1, 201);
+        
         expect(collection.toJSON()).toEqual({
             "rows": [
                 ["system32", 101],

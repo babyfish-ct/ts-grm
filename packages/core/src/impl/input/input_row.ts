@@ -22,11 +22,11 @@ import { InputRowCollection, InputRowCollectionImplementor } from "./input_row_c
 
 export abstract class InputRow {
 
-    private _preRows: Array<InputRow> | undefined = undefined;
-
     private _isMiddleTableRow: boolean;
 
     private _parent: InputRow | null | undefined = undefined;
+
+    private _parentRef: DataRef | null | undefined;
 
     constructor(
         readonly owner: InputRowCollectionImplementor,
@@ -54,25 +54,39 @@ export abstract class InputRow {
         return parent ?? undefined;
     }
 
+    protected get parentRef(): DataRef | undefined {
+        let parentRef = this._parentRef;
+        if (parentRef === undefined) {
+            this._parentRef = parentRef = InputRow._parentRef(this.owner, this._parentDataIndex) ?? null;
+        }
+        return parentRef ?? undefined;
+    }
+
+    private static _parentRef(
+        collection: InputRowCollectionImplementor,
+        parentItemIndex: number | undefined
+    ): DataRef | undefined {
+        if (parentItemIndex == null) {
+            return undefined;
+        }
+        const parentCollection = collection.parent!;
+        const parentItem = parentCollection.items[parentItemIndex]!;
+        return {
+            data: parentItem!.data,
+            parentRef: InputRow._parentRef(parentCollection, parentItem?.parentItemIndex)
+        };
+    }
+
     protected ref(
         preMetadataIndex: number, 
         colIndex: number
     ): any {
-        const collection = this.owner.preCollections[preMetadataIndex] as InputRowCollectionImplementor | undefined;
+        const preCollection = this.owner.preCollections[preMetadataIndex] as InputRowCollectionImplementor | undefined;
         if (this._isMiddleTableRow) { 
-            return collection?.row(this.data)?.get(colIndex);
+            return preCollection?.row(this.data)?.get(colIndex);
         }
         const pre = (this.owner.rowCtor as any).pre(this.data, preMetadataIndex);
-        return collection?.row(pre)?.get(colIndex);
-    }
-
-    //@ts-ignore
-    private _setPreRow(index: number, row: InputRow) {
-        let preRows = this._preRows;
-        if (preRows == null) {
-            this._preRows = preRows = [];
-        }
-        preRows[index] = row;
+        return preCollection?.row(pre)?.get(colIndex);
     }
 
     toJSON() {
@@ -83,6 +97,11 @@ export abstract class InputRow {
         }
         return arr;
     }
+}
+
+export interface DataRef {
+    readonly data: any;
+    readonly parentRef: DataRef | undefined; 
 }
 
 export type InputRowCtor = new (
@@ -117,6 +136,7 @@ function createInputCtor(
         writeHash(metadata, writer);
         writeGet(metadata, writer);
         writeSet(metadata, writer);
+        writeStaticGet(metadata, writer);
         writePre(metadata, writer);
         writePost(metadata, writer);
     });
@@ -199,7 +219,7 @@ function writeHash(
                 } else {
                     writeMiddleValueForHash(keyScalar, writer);
                 }
-                writer.code(`?? ""`).newLine(";");
+                writer.code(` ?? ""`).newLine(";");
             }
             writer.code("return hash").newLine(";");
         }
@@ -245,6 +265,34 @@ function writeGet(
     }).newLine();
 }
 
+function writeStaticGet(
+    metadata: InputMetadata,
+    writer: CodeWriter
+) {
+    writer.code("static get(data, col) ");
+    writer.scope("CURLY_BRACKETS", () => {
+        writer.code("switch (col) ");
+        writer.scope("CURLY_BRACKETS", () => {
+            const scalars = metadata.scalars;
+            const scalarCount = scalars.length;
+            for (let i = 0; i < scalarCount; i++) {
+                if (scalars[i]!.path == null) {
+                    continue;
+                }
+                writer.code("case ").code(i.toString()).code(":");
+                writer.scope("BLANK", () => {
+                    writer.code("return ");
+                    writeExprImpl(scalars[i]!, "data.", writer);
+                    writer.newLine(";");
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writer.code("throw new Error();").newLine(";");
+            });
+        });
+    }).newLine();
+}
+
 function writeExpr(
     scalar: InputMetadataScalar,
     writer: CodeWriter
@@ -252,7 +300,7 @@ function writeExpr(
     if ((scalar.kinds & ScalarKinds.Return) !== 0) {
         writer.code("this._").code(scalar.prop!.name);
     } else if (scalar.path != null) {
-        writeExprImpl(scalar, writer);
+        writeExprImpl(scalar, "this.data.", writer);
     } else {
         writer.code("null");
     }
@@ -260,13 +308,14 @@ function writeExpr(
 
 function writeExprImpl(
     scalar: InputMetadataScalar,
+    prefix: string,
     writer: CodeWriter
 ) {
     if (scalar.fn == null) {
-        writeCoreExpr("this.data.", scalar.path!, writer);
+        writeCoreExpr(prefix, scalar.path!, writer);
     } else {
         writer.code("ThisClass.").code(fnName(scalar)).code("(");
-        writeCoreExpr("this.data.", scalar.path!, writer);
+        writeCoreExpr(prefix, scalar.path!, writer);
         writer.code(")");
     }
 }
@@ -281,7 +330,7 @@ function writeCoreExpr(
     if (start > 0) {
         writer.code("this");
         for (let i = start; i > 0; --i) {
-            writer.code("?.parent");
+            writer.code("?.parentRef");
         }
         op = "?.data?.";
     }
