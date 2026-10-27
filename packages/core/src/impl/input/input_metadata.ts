@@ -219,7 +219,7 @@ export class InputMetadata {
                 : targetMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$ref(${targetMetadataIndex},${index})`];
             if (referenceProp instanceof EntityProp) {
-                (scalar as any).kinds = refAsKey 
+                (scalar as any).kinds = refAsKey || this.keyBridge != null
                     ? ScalarKinds.Key
                     : ScalarKinds.Insert | ScalarKinds.Update;
             }
@@ -249,7 +249,7 @@ export class InputMetadata {
             const index = backRefMetadata._scalarIndexOf(targetKeyProp);
             (scalar as any).path = [`$bref(${index})`];
             if (backRefProp instanceof EntityProp) {
-                (scalar as any).kinds = backRefAsKey
+                (scalar as any).kinds = backRefAsKey || this.keyBridge != null
                     ? ScalarKinds.Key
                     : ScalarKinds.Insert | ScalarKinds.Update;
             }

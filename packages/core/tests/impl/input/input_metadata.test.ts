@@ -435,8 +435,8 @@ describe("InputMetadataTest", () => {
                 {
                     "path": ["students"],
                     "scalars": [
-                        "$ref(0,1):LearningLink.studentId:iu",
-                        "$bref(1):LearningLink.courseId:iu"
+                        "$ref(0,1):LearningLink.studentId:k",
+                        "$bref(1):LearningLink.courseId:k"
                     ],
                     "preMetadatas": [
                         {
@@ -858,7 +858,7 @@ describe("InputMetadataTest", () => {
                     ],
                     "scalars": [
                         "$parent:LearningLink.courseId:k",
-                        "$bref(1):LearningLink.studentId:iu"
+                        "$bref(1):LearningLink.studentId:k"
                     ],
                     "preMetadatas": [],
                     "postMetadatas": []

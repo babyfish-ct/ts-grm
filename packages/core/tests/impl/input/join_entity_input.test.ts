@@ -70,7 +70,7 @@ describe("JoinEntityInputTest", () => {
     it("implicit", () => {
         
         const input = dto.input(STUDENT, c => [
-            c.name,
+            c.name.key(),
             c.courses.with(c => [
                 c.name.key()
             ])
@@ -90,7 +90,7 @@ describe("JoinEntityInputTest", () => {
                     { name: "Computer" },
                 ]
             }
-        ];
+        ];  
         const metadata = getInputMetadata(input.mapper);
         const collection = createInputRowCollection(metadata, objs);
         assignIds(collection, [], 1, 101);

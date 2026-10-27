@@ -191,9 +191,6 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
         readonly rowCtor: InputRowCtor,
         readonly metadata: InputMetadata
     ) {
-        if (metadata.parent != null && parent == null) {
-            throw new Error("FUCK")
-        }
     }
 
     get items(): ReadonlyArray<InputItem> {
