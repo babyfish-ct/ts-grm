@@ -24,6 +24,7 @@ import { AssociationProp } from "../association_entity";
 import { AbstractAssociationTable } from "../association_table";
 import { EnumSetProvider, ScalarProvider } from "@/schema/scalar";
 import { ExplicitDataType } from "../explicit";
+import { AbstractExpr } from "./expr";
 
 export interface PropExprContract {
     readonly table: AbstractEntityTable | AbstractAssociationTable;
@@ -69,6 +70,8 @@ export function createTableProp(
             return new PropStrExpr(directTable, prop, isAssociation);
         case "DATETIME":
             return new PropDtExpr(directTable, prop, isAssociation);
+        case "BOOL":
+            return new PropBoolExpr(directTable, prop, isAssociation);
         default:
             throw new ArgumentError(
             `Cannot create table prop for "${
@@ -116,6 +119,43 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 }
 
 class PropStrExpr extends AbstractStrExpr implements PropExprContract {
+
+    private readonly _provider: ScalarProvider<any, any> | undefined;
+
+    private readonly _explicitDataType: ExplicitDataType;
+
+    constructor(
+        readonly table: AbstractEntityTable | AbstractAssociationTable,
+        readonly prop: EntityProp | AssociationProp,
+        readonly isAssociation: boolean
+    ) {
+        super();
+        if (prop instanceof EntityProp) {
+            this._provider = prop.scalarProvider;
+        } else {
+            this._provider = undefined;
+        }
+        this._explicitDataType = prop.explicitDataType;
+    }
+
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this._provider;
+    }
+    
+    override get explicitDataType(): ExplicitDataType {
+        return this._explicitDataType;
+    }
+
+    override get isPropExpr(): boolean {
+        return true;
+    }
+
+    override accept(visitor: Visitor): void {
+        visitor.visitPropExpr(this);
+    }
+}
+
+class PropBoolExpr extends AbstractExpr<boolean> implements PropExprContract {
 
     private readonly _provider: ScalarProvider<any, any> | undefined;
 

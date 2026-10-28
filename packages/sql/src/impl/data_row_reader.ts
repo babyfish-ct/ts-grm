@@ -76,22 +76,7 @@ export class DataRowReader implements spi.DataReader {
                 ? explicitDataTypes[colIndex]
                 : undefined;
             const value = row[colIndex];
-            if (explicitDataType === spi.ExplicitDataType.BOOL) {
-                return toBoolean(value);
-            }
-            if (explicitDataType === spi.ExplicitDataType.DATETIME) {
-                return toDateTime(value);
-            }
-            if (explicitDataType === spi.ExplicitDataType.INTEGER && typeof value === "string") {
-                return parseInt(value);
-            }
-            if (explicitDataType === spi.ExplicitDataType.FLOAT && typeof value === "string") {
-                return parseFloat(value);
-            }
-            if (explicitDataType === spi.ExplicitDataType.STRING && typeof value === "number") {
-                return value.toString();
-            }
-            return value;
+            return convert(value, explicitDataType);
         }
         if (explicitDataTypes == null) {
             return row.slice(colIndex, colIndex + span);
@@ -101,15 +86,7 @@ export class DataRowReader implements spi.DataReader {
         for (let i = colIndex; i < max; i++) {
             const explicitDataType = explicitDataTypes[i];
             const value = row[i];
-            if (explicitDataType === spi.ExplicitDataType.INTEGER && typeof value === "string") {
-                values.push(parseInt(value));
-            } else if (explicitDataType === spi.ExplicitDataType.FLOAT && typeof value === "string") {
-                values.push(parseFloat(value));
-            } else if (explicitDataType === spi.ExplicitDataType.STRING && typeof value === "number") {
-                values.push(value.toString());
-            } else {
-                values.push(value);
-            }
+            values.push(convert(value, explicitDataType));
         }
         return values;
     }
@@ -210,6 +187,28 @@ class RowIndex {
     reset() {
         this._val = -1;
     }
+}
+
+function convert(
+    value: any, 
+    explicitDataType: spi.ExplicitDataType | undefined
+): any {
+    if (explicitDataType === spi.ExplicitDataType.BOOL && value != null) {
+        return toBoolean(value);
+    }
+    if (explicitDataType === spi.ExplicitDataType.DATETIME && value != null) {
+        return toDateTime(value);
+    }
+    if (explicitDataType === spi.ExplicitDataType.INTEGER && typeof value === "string") {
+        return parseInt(value);
+    }
+    if (explicitDataType === spi.ExplicitDataType.FLOAT && typeof value === "string") {
+        return parseFloat(value);
+    }
+    if (explicitDataType === spi.ExplicitDataType.STRING && typeof value === "number") {
+        return value.toString();
+    }
+    return value;
 }
 
 function toBoolean(value: any): boolean {

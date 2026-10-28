@@ -8,4 +8,5 @@ export default defineConfig({
   minify: false,
   treeshake: true,
   outDir: 'dist',
+  target: "node18"
 });

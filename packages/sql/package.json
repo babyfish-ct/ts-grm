@@ -1,10 +1,11 @@
 {
   "name": "@ts-grm/sql",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "engines": { "node": ">=18.0.0" },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
