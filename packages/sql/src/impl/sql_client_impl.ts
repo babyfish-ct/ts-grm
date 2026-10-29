@@ -58,7 +58,8 @@ import {
     __ModelOf,
     FindManyOptions,
     FetchedView,
-    NumExpression
+    NumExpression,
+    suppressUnused
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -414,15 +415,18 @@ export class SqlClientImpl implements SqlClientImplementor {
     ): Promise<SaveManyWithViewResult<TInput, TView>>;
 
     async save<TInput extends Input<any, any, any>>(
-        _input: TInput,
-        _data: TypeOf<TInput> | ReadonlyArray<TypeOf<TInput>>,
-        _options?: SaveOptions<TInput> & {
+        input: TInput,
+        data: TypeOf<TInput> | ReadonlyArray<TypeOf<TInput>>,
+        options?: SaveOptions<TInput> & {
             readonly view?: View<any, any>
         }
     ): Promise<SaveResult<TInput> & {
         readonly row?: any;
         readonly rows?: ReadonlyArray<any>
     }> {
+        const collection = spi.createInputRowCollection(input, data);
+        suppressUnused(options);
+        suppressUnused(collection);
         throw new Error("UnsupportedOperation");
     }
 }

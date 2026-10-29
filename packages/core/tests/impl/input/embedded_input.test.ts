@@ -2,7 +2,6 @@ import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
 import { z } from "zod";
-import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputRowCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
@@ -41,8 +40,7 @@ describe("EmbeddedInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
@@ -111,8 +109,7 @@ describe("EmbeddedInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 2, 501);
         expect(collection.toJSON()).toEqual({
@@ -182,8 +179,7 @@ describe("EmbeddedInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
@@ -235,8 +231,7 @@ describe("EmbeddedInputTest", () => {
                 }
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [1, 1, 1],
@@ -268,8 +263,7 @@ describe("EmbeddedInputTest", () => {
                 }
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [1, 1],
@@ -311,8 +305,7 @@ describe("EmbeddedInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
@@ -381,8 +374,7 @@ describe("EmbeddedInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 2, 501);
         expect(collection.toJSON()).toEqual({
@@ -452,8 +444,7 @@ describe("EmbeddedInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
@@ -503,8 +494,7 @@ describe("EmbeddedInputTest", () => {
                 }
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [1, 1, 1],
@@ -536,8 +526,7 @@ describe("EmbeddedInputTest", () => {
                 }
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [1, 1],

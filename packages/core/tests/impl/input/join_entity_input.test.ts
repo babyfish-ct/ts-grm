@@ -1,7 +1,6 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { STUDENT } from "../../model/model";
-import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputRowCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
@@ -33,8 +32,7 @@ describe("JoinEntityInputTest", () => {
                 ]
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 1, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 1, 501);
         expect(collection.toJSON()).toEqual({
@@ -90,9 +88,8 @@ describe("JoinEntityInputTest", () => {
                     { name: "Computer" },
                 ]
             }
-        ];  
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        ];
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [], 1, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 1, 501);
         expect(collection.toJSON()).toEqual({

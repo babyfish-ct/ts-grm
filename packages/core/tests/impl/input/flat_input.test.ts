@@ -1,7 +1,6 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, TREE_NODE } from "../../model/model";
-import { getInputMetadata } from "@/impl/input/input_metadata";
 import { createInputRowCollection } from "@/impl/input/input_row_collection";
 import { assignIds } from "./utils";
 
@@ -19,8 +18,7 @@ describe("FlatInputTest", () => {
             { theFirstName: "Kannappan", theLastName: "Muthukkaruppan", gender: "MALE" },
             { theFirstName: "Mikhail", theLastName: "Bautin", gender: "MALE" }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 ["Eve", "Procello", "F"],
@@ -58,8 +56,7 @@ describe("FlatInputTest", () => {
                 storeVersion: 1
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -100,8 +97,7 @@ describe("FlatInputTest", () => {
                 parentParentName: "D:"
             }
         ];
-        const metadata = getInputMetadata(input.mapper);
-        const collection = createInputRowCollection(metadata, objs);
+        const collection = createInputRowCollection(input, objs);
         assignIds(collection, [0], 2, 101);
         assignIds(collection, [0, 0], 1, 201);
         

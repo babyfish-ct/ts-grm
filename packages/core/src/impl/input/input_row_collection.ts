@@ -12,9 +12,12 @@
  * @author 陈涛 (Chen Tao)
  */
 
+import { Input } from "@/schema/dto/api";
 import { EntityProp } from "../entity_prop";
-import { InputMetadata } from "./input_metadata";
+import { getInputMetadata, InputMetadata } from "./input_metadata";
 import { getInputCtor, InputRow, InputRowCtor } from "./input_row";
+import { __TargetModelOf } from "@/index_internal";
+import { AnyModel } from "@/schema/model";
 
 export interface InputRowCollection {
 
@@ -29,10 +32,14 @@ export interface InputRowCollection {
     toJSON(): any;
 }
 
-export function createInputRowCollection(
-    metadata: InputMetadata,
-    objs: ReadonlyArray<any>
+export function createInputRowCollection<
+    TModel extends AnyModel,
+    T
+>(
+    input: Input<TModel, T, any>,
+    objs: ReadonlyArray<T>
 ): InputRowCollection {
+    const metadata = getInputMetadata(input.mapper);
     const rowCtor = getInputCtor(metadata);
     const items: ReadonlyArray<InputItem> = objs.map(o => {
         return {
