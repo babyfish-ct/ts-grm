@@ -35,7 +35,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 }
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [101, 1, 1, 1],
@@ -85,7 +85,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [1, 1, 1, "first-order"],
@@ -154,7 +154,7 @@ describe("EmbeddedAssociationInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [10, 20, "blue"],

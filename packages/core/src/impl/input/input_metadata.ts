@@ -21,22 +21,68 @@ import { InputFlags } from "../input_flags";
 import { createEntityNode, EntityNode } from "./entity_node";
 import { AssociatedKeysFormulaProp, InverseFetchProp } from "../dto";
 import { MapperFn } from "../dto_mapping";
+import { AssociatedSaveMode, RootSaveMode, SaveOptions, SaveWithViewOptions } from "@/dsl";
+import { __AssociatedSaveModeOptions, __DissociationOptions } from "@/index_internal";
+import { DissociateMode, InputAssociationMembers, View } from "@/schema/dto/api";
 
 const metadataMap = new Map<string, InputMetadata>();
 
 export function getInputMetadata(
-    mapper: DtoMapper
+    mapper: DtoMapper,
+    options: MetadataOptions | undefined
 ): InputMetadata {
-    let metadata = metadataMap.get(mapper.hash);
+    const finalOptions = options ?? new MetadataOptions(undefined);
+    const hash = `m(${mapper.hash})|o(${finalOptions?.hash})`;
+    let metadata = metadataMap.get(hash);
     if (metadata == null) {
-        metadata = createInputMetadata(mapper);
-        metadataMap.set(mapper.hash, metadata);
+        metadata = createInputMetadata(mapper, finalOptions);
+        metadataMap.set(hash, metadata);
     }
     return metadata;
 }
 
+export class MetadataOptions {
+
+    readonly root: RootSaveMode;
+    readonly associated: __AssociatedSaveModeOptions<InputAssociationMembers<any>>;
+    readonly dissociation: __DissociationOptions<InputAssociationMembers<any>>;
+    readonly view: View<any, any> | undefined;
+    
+    private _hash: string | undefined = undefined;
+
+    constructor(
+        saveOptions: SaveOptions<any> | SaveWithViewOptions<any, any> | undefined
+    ) {
+        this.root = saveOptions?.root ?? "UPSERT";
+        this.associated = saveOptions?.associated ?? {};
+        this.dissociation = saveOptions?.dissociation ?? {};
+        this.view = (saveOptions as SaveWithViewOptions<any, any> | undefined)?.view;
+    }
+
+    get hash(): string {
+        let h = this._hash;
+        if (h == null) {
+            this._hash = h = `so(${
+                rootSaveModeHash(this.root)
+            }|${
+                Object.entries(this.associated)
+                    .map(tuple => `${tuple[0]}:${associatedSaveModeHash(tuple[1] as AssociatedSaveMode)}`)
+                    .join(",")
+            }|${
+                Object.entries(this.dissociation)
+                    .map(tuple => `${tuple[0]}:${dissociateModeHash(tuple[1] as DissociateMode)}`)
+                    .join(",")
+            }|${
+                this.view != null ? "v" : ""
+            })`;
+        }
+        return h;
+    }
+}
+
 function createInputMetadata(
-    mapper: DtoMapper
+    mapper: DtoMapper,
+    options: MetadataOptions
 ): InputMetadata {
     const entityNode = createEntityNode(mapper);
     return createInputMetadataImpl(
@@ -47,7 +93,8 @@ function createInputMetadata(
         undefined, 
         entityNode, 
         InheritanceDirection.Both, 
-        false
+        false,
+        options
     );
 }
 
@@ -69,10 +116,16 @@ export class InputMetadata {
         readonly recursiveDepth: number | undefined,
         readonly source: Entity | AssociationEntity,
         fields: ReadonlyArray<DtoMapperField> | undefined,
-        refOnly: boolean
+        refOnly: boolean,
+        options: MetadataOptions
     ) {
         this._scalars = fields != null
-            ? toScalars(fields!, refOnly, keyBridge?.middleEntity?.joinTargetProp?.referenceKeyProp)
+            ? toScalars(
+                fields!, 
+                refOnly, 
+                keyBridge?.middleEntity?.joinTargetProp?.referenceKeyProp, 
+                options.view != null ? source as Entity : undefined
+            )
             : source instanceof AssociationEntity 
                 ? toMiddleTableScalars(source)
                 : [];
@@ -355,7 +408,8 @@ function createInputMetadataImpl(
     recursiveDepth: number | undefined,
     entityNode: EntityNode,
     direction: InheritanceDirection,
-    refOnly: boolean
+    refOnly: boolean,
+    options: MetadataOptions
 ): InputMetadata {
     const metadata = new InputMetadata(
         parent, 
@@ -365,7 +419,8 @@ function createInputMetadataImpl(
         recursiveDepth, 
         entityNode.raw, 
         entityNode.fields, 
-        refOnly
+        refOnly,
+        options
     );
     if (entityNode.superNode != null && (direction & InheritanceDirection.Super) !== 0) {
         const superMetadata = createInputMetadataImpl(
@@ -376,7 +431,8 @@ function createInputMetadataImpl(
             undefined, 
             entityNode.superNode, 
             InheritanceDirection.Super, 
-            false
+            false,
+            options
         );
         (metadata as any)._superRef(superMetadata);
         (metadata as any)._addPreMetadata(superMetadata);
@@ -391,23 +447,25 @@ function createInputMetadataImpl(
                 undefined, 
                 derivedNode, 
                 InheritanceDirection.Derived, 
-                false
+                false,
+                options
             );
             (derivedMetadata as any)._derivedRef(metadata);
             (metadata as any)._addPostMetadata(derivedMetadata);
         }
     }
     if (!refOnly) {
-        processPreAssociations(metadata, entityNode);
+        processPreAssociations(metadata, entityNode, options);
     }
-    processPostAssociations(metadata, entityNode);
+    processPostAssociations(metadata, entityNode, options);
     return metadata;
 }
 
 function toScalars(
     fields: ReadonlyArray<DtoMapperField>,
     isParentRef: boolean,
-    refOnlyReferenceKeyProp: EntityProp | undefined
+    refOnlyReferenceKeyProp: EntityProp | undefined,
+    withId: Entity | undefined
 ): Array<InputMetadataScalar> {
     const arr: Array<InputMetadataScalar> = [];
     for (const field of fields) {
@@ -447,6 +505,19 @@ function toScalars(
         };
         arr.push(scalarField);
     }
+    if (withId != null) {
+        for (const prop of withId.idProp.scalarProps!) {
+            if (arr.find(s => s.prop === prop) == null) {
+                const scalarField: InputMetadataScalar = {
+                    path: undefined,
+                    kinds: ScalarKinds.Return,
+                    prop,
+                    fn: mergedFn(undefined, prop.inputFn)
+                };
+                arr.push(scalarField);
+            }
+        }
+    }
     return arr;
 }
 
@@ -485,7 +556,8 @@ function toMiddleTableScalar(
 
 function processPreAssociations(
     metadata: InputMetadata,
-    entityNode: EntityNode
+    entityNode: EntityNode,
+    options: MetadataOptions
 ): void {
     const fields = entityNode.fields;
     const fieldCount = fields.length;
@@ -494,7 +566,7 @@ function processPreAssociations(
         if ((field.subMapper == null && field.recursiveDepth == null) || field.prop.associationType == null || field.prop.asEntityProp?.referenceKeyProp == null) {
             continue;
         }
-        createPreMetadata(metadata, entityNode, field, false);
+        createPreMetadata(metadata, entityNode, field, false, options);
     }
 }
 
@@ -502,7 +574,8 @@ function createPreMetadata(
     metadata: InputMetadata,
     entityNode: EntityNode,
     field: DtoMapperField,
-    recursiving: boolean
+    recursiving: boolean,
+    options: MetadataOptions
 ): InputMetadata | undefined {
     const preMetadata = createInputMetadataImpl(
         metadata, 
@@ -518,7 +591,8 @@ function createPreMetadata(
             ? createEntityNode(field.subMapper)
             : entityNode.filter(f => isRecursionAllowed(field.prop.declaringEntity, field.prop.asEntityProp!, f)), 
         InheritanceDirection.Both,
-        (field.inputFlags & InputFlags.Ref) !== 0
+        (field.inputFlags & InputFlags.Ref) !== 0,
+        options
     );
     const indices = (metadata as any)._ref(
         field.prop.asEntityProp!, 
@@ -534,7 +608,7 @@ function createPreMetadata(
         }
     }
     if (!recursiving) {
-        createRecursivePreMetadata(preMetadata, entityNode, field);
+        createRecursivePreMetadata(preMetadata, entityNode, field, options);
     }
     (metadata as any)._addPreMetadata(preMetadata);
     return preMetadata;
@@ -543,12 +617,13 @@ function createPreMetadata(
 function createRecursivePreMetadata(
     targetMetadata: InputMetadata,
     entityNode: EntityNode,
-    field: DtoMapperField
+    field: DtoMapperField,
+    options: MetadataOptions
 ) {
     if (field.recursiveDepth == null) {
         return;
     }
-    const metadata = createPreMetadata(targetMetadata, entityNode, field, true);
+    const metadata = createPreMetadata(targetMetadata, entityNode, field, true, options);
     if (metadata != null) {
         (metadata as any)._addPreMetadata(undefined);
     }
@@ -557,6 +632,7 @@ function createRecursivePreMetadata(
 function processPostAssociations(
     metadata: InputMetadata,
     entityNode: EntityNode,
+    options: MetadataOptions
 ): void {
     const fields = entityNode.fields;
     const overridePathMap = new Map<EntityProp, DtoMapperField>();
@@ -573,7 +649,7 @@ function processPostAssociations(
             overridePathMap.get(field.prop.asEntityProp!) 
             ?? (field.bridgeProp != null ? overridePathMap.get(field.bridgeProp) : undefined)
             ?? field; 
-        createPostMetadata(metadata, entityNode, field, configurableField, false);
+        createPostMetadata(metadata, entityNode, field, configurableField, false, options);
     }
 }
 
@@ -582,7 +658,8 @@ function createPostMetadata(
     entityNode: EntityNode,
     field: DtoMapperField,
     configurableField: DtoMapperField,
-    recursiving: boolean
+    recursiving: boolean,
+    options: MetadataOptions
 ): InputMetadata | undefined {
     const path = 
         configurableField.paths.length === 0 
@@ -603,7 +680,8 @@ function createPostMetadata(
                 ? createEntityNode(field.subMapper)
                 : entityNode.filter(f => isRecursionAllowed(field.prop.declaringEntity, field.prop.asEntityProp!, f)),
             InheritanceDirection.Both,
-            (configurableField.inputFlags & InputFlags.Ref) !== 0
+            (configurableField.inputFlags & InputFlags.Ref) !== 0,
+            options
         );
         (middleMetadata as any)._backRef(sourceProp, false, metadata);
         (metadata as any)._addPostMetadata(middleMetadata);
@@ -617,7 +695,8 @@ function createPostMetadata(
             field.recursiveDepth, 
             associationEntity,
             undefined,
-            (configurableField.inputFlags & InputFlags.Ref) !== 0
+            (configurableField.inputFlags & InputFlags.Ref) !== 0,
+            options
         );
         (middleMetadata as any)._backRef(associationEntity.sourceProp, true, metadata);
         let targetMetadata: InputMetadata | undefined = undefined;
@@ -631,7 +710,8 @@ function createPostMetadata(
                 field.recursiveDepth, 
                 entityNode, 
                 InheritanceDirection.Both,
-                (configurableField.inputFlags & InputFlags.Ref) !== 0
+                (configurableField.inputFlags & InputFlags.Ref) !== 0,
+                options
             ); 
             (middleMetadata as any)._ref(
                 associationEntity.targetProp, 
@@ -641,7 +721,7 @@ function createPostMetadata(
             );
             (middleMetadata as any)._addPreMetadata(targetMetadata);
             if (!recursiving) {
-                createRecursivePostMetadata(targetMetadata, entityNode, field, configurableField);
+                createRecursivePostMetadata(targetMetadata, entityNode, field, configurableField, options);
             }
         }
         (metadata as any)._addPostMetadata(middleMetadata);
@@ -657,7 +737,8 @@ function createPostMetadata(
                 ? createEntityNode(field.subMapper)
                 : entityNode.filter(f => isRecursionAllowed(field.prop.declaringEntity, field.prop.asEntityProp!, f)), 
             InheritanceDirection.Both,
-            (configurableField.inputFlags & InputFlags.Ref) !== 0
+            (configurableField.inputFlags & InputFlags.Ref) !== 0,
+            options
         );
         (targetMetadata as any)._backRef(
             field.prop.asEntityProp!.mappedByProp!, 
@@ -665,7 +746,7 @@ function createPostMetadata(
             metadata
         );
         if (!recursiving) {
-            createRecursivePostMetadata(targetMetadata, entityNode, field, configurableField);
+            createRecursivePostMetadata(targetMetadata, entityNode, field, configurableField, options);
         }
         (metadata as any)._addPostMetadata(targetMetadata);
         return targetMetadata;
@@ -678,11 +759,12 @@ function createRecursivePostMetadata(
     entityNode: EntityNode,
     field: DtoMapperField,
     configurableField: DtoMapperField,
+    options: MetadataOptions
 ) {
     if (field.recursiveDepth == null) {
         return;
     }
-    const metadata = createPostMetadata(targetMetadata, entityNode, configurableField, field, true);
+    const metadata = createPostMetadata(targetMetadata, entityNode, configurableField, field, true, options);
     if (metadata != null) {
         (metadata as any)._addPostMetadata(undefined);
     }
@@ -726,4 +808,47 @@ function mergedFn(
         return (value: any) => value != null ? fn1(value) : undefined;
     }
     return (value: any) => value != null ? fn2(fn1(value)) : undefined;
+}
+
+function rootSaveModeHash(mode: RootSaveMode): string {
+    switch (mode) {
+        case "UPSERT":
+            return "iu";
+        case "INSERT":
+            return "i";
+        case "INSERT_IF_ABSENT":
+            return "ia";
+        case "UPDATE":
+            return "u";
+        case "NON_IDEMPOTENT_UPSERT":
+            return "niu";
+    }
+}
+
+function associatedSaveModeHash(mode: AssociatedSaveMode): string {
+    switch (mode) {
+        case "REPLACE":
+            return "r";
+        case "UPSERT":
+            return "iu"
+        case "INSERT":
+            return "i";
+        case "INSERT_IF_ABSENT":
+            return "ia";
+        case "UPDATE":
+            return "u";
+        case "VIOLENTLY_REPLACE":
+            return "vr";    
+    }
+}
+
+function dissociateModeHash(mode: DissociateMode): string {
+    switch (mode) {
+        case "ERROR":
+            return "e";
+        case "DELETE":
+            return "d";
+        case "SET_NULL":
+            return "n"
+    }
 }

@@ -1,7 +1,7 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE, CATEGORY, COURSE, ELECTRONIC_BOOK, ITEM, LIBRARY, ORDER, ORDER_ITEM, PAPER_BOOK, PDF_ELECTRONIC_BOOK, STUDENT, TAG } from "../../model/model";
-import { getInputMetadata } from "@/impl/input/input_metadata";
+import { getInputMetadata, MetadataOptions } from "@/impl/input/input_metadata";
 
 describe("InputMetadataTest", () => {
 
@@ -20,7 +20,7 @@ describe("InputMetadataTest", () => {
                 ])
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -76,7 +76,7 @@ describe("InputMetadataTest", () => {
                 c.version
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -109,7 +109,7 @@ describe("InputMetadataTest", () => {
                 c.name
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -145,7 +145,7 @@ describe("InputMetadataTest", () => {
                 c.price
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -178,7 +178,7 @@ describe("InputMetadataTest", () => {
                 c.id
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -214,7 +214,7 @@ describe("InputMetadataTest", () => {
                 c.gender
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -259,7 +259,7 @@ describe("InputMetadataTest", () => {
                 c.name
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -302,7 +302,7 @@ describe("InputMetadataTest", () => {
             c.$flat("name").prefix("the").key(),
             c.gender
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -325,7 +325,7 @@ describe("InputMetadataTest", () => {
                 c.version
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -368,7 +368,7 @@ describe("InputMetadataTest", () => {
                 ])
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -423,7 +423,7 @@ describe("InputMetadataTest", () => {
                 c.name.key()
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -461,7 +461,7 @@ describe("InputMetadataTest", () => {
             c.manager,
             c.$recursive("parentNode").refAsKey()
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -520,7 +520,7 @@ describe("InputMetadataTest", () => {
             c.parentNodeId.key(),
             c.$recursive("childNodes").backRefAsKey()
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -596,7 +596,7 @@ describe("InputMetadataTest", () => {
             c.$recursive("dependencies"),
             c.$recursive("dependents"),
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -713,7 +713,7 @@ describe("InputMetadataTest", () => {
                 c.name
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -746,7 +746,7 @@ describe("InputMetadataTest", () => {
                 c.name
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -779,7 +779,7 @@ describe("InputMetadataTest", () => {
                 c.name
             ]).as("authorList")
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -812,7 +812,7 @@ describe("InputMetadataTest", () => {
                 c.$associatedKeys("authors", "authorIds")
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "path": undefined,
             "scalars": [
@@ -843,7 +843,7 @@ describe("InputMetadataTest", () => {
                 c.$associatedKeys("courses", "courseIds")
             ])
         ]);
-        const metadata = getInputMetadata(input.mapper);
+        const metadata = getInputMetadata(input.mapper, undefined);
         expect(metadata.toJSON()).toEqual({
             "scalars": [
                 "name:Student.name:iu",
@@ -864,6 +864,45 @@ describe("InputMetadataTest", () => {
                     "postMetadatas": []
                 }
             ]
+        });
+    });
+
+    it("withoutId", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price
+        ]);
+        const metadata = getInputMetadata(input.mapper, undefined);
+        expect(metadata.toJSON()).toEqual({
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu"
+            ],
+            "preMetadatas": [],
+            "postMetadatas": []
+        });
+    });
+
+    it("withId", () => {
+        const input = dto.input(BOOK, c => [
+            c.name.key(),
+            c.edition.key(),
+            c.price
+        ]);
+        const metadata = getInputMetadata(input.mapper, new MetadataOptions({
+            view: dto.view(BOOK, _ => [])
+        }));
+        expect(metadata.toJSON()).toEqual({
+            "scalars": [
+                "name:Book.name:k",
+                "edition:Book.edition:k",
+                "price:Book.price:iu",
+                ":Book.id:r"
+            ],
+            "preMetadatas": [],
+            "postMetadatas": []
         });
     });
 });

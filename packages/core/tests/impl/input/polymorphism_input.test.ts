@@ -30,7 +30,7 @@ describe("PolymorphismInputTest", () => {
                 pdfVersion: "3.0"
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [0, 0], 3, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -91,7 +91,7 @@ describe("PolymorphismInputTest", () => {
                 pdfVersion: "2.0"
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 4, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [

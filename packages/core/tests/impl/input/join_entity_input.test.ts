@@ -32,7 +32,7 @@ describe("JoinEntityInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 1, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 1, 501);
         expect(collection.toJSON()).toEqual({
@@ -89,7 +89,7 @@ describe("JoinEntityInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 1, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 1, 501);
         expect(collection.toJSON()).toEqual({

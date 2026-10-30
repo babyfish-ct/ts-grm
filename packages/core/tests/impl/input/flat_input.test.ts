@@ -18,7 +18,7 @@ describe("FlatInputTest", () => {
             { theFirstName: "Kannappan", theLastName: "Muthukkaruppan", gender: "MALE" },
             { theFirstName: "Mikhail", theLastName: "Bautin", gender: "MALE" }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 ["Eve", "Procello", "F"],
@@ -56,7 +56,7 @@ describe("FlatInputTest", () => {
                 storeVersion: 1
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -97,7 +97,7 @@ describe("FlatInputTest", () => {
                 parentParentName: "D:"
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [0], 2, 101);
         assignIds(collection, [0, 0], 1, 201);
         

@@ -14,7 +14,7 @@
 
 import { Input } from "@/schema/dto/api";
 import { EntityProp } from "../entity_prop";
-import { getInputMetadata, InputMetadata } from "./input_metadata";
+import { getInputMetadata, InputMetadata, MetadataOptions } from "./input_metadata";
 import { getInputCtor, InputRow, InputRowCtor } from "./input_row";
 import { __TargetModelOf } from "@/index_internal";
 import { AnyModel } from "@/schema/model";
@@ -37,9 +37,10 @@ export function createInputRowCollection<
     T
 >(
     input: Input<TModel, T, any>,
-    objs: ReadonlyArray<T>
+    objs: ReadonlyArray<T>,
+    options: MetadataOptions | undefined
 ): InputRowCollection {
-    const metadata = getInputMetadata(input.mapper);
+    const metadata = getInputMetadata(input.mapper, options);
     const rowCtor = getInputCtor(metadata);
     const items: ReadonlyArray<InputItem> = objs.map(o => {
         return {

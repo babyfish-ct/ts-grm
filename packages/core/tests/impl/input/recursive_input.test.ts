@@ -81,7 +81,7 @@ describe("RecursiveInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         expect(collection.toJSON()).toEqual({
             "rows": [
                 [50, "DriverStore", 51],
@@ -231,7 +231,7 @@ describe("RecursiveInputTest", () => {
                 }
             ]
         }];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 2, 1);
         assignIds(collection, [{post: true, value: 0}, 0], 2, 101);
         assignIds(collection, [{post: true, value: 0}, 0, {post: true, value: 0}, 0], 2, 201);
@@ -397,7 +397,7 @@ describe("RecursiveInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 2, 101);
         assignIds(collection, [{post: true, value: 0}], 1, 201);
         assignIds(collection, [{post: true, value: 0}, {post: true, value: 0}], 1, 301);

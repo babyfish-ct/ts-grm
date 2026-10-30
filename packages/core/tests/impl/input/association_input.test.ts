@@ -36,7 +36,7 @@ describe("AssociationInputTest", () => {
                 }
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [0], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -81,7 +81,7 @@ describe("AssociationInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 2, 101);
         expect(collection.toJSON()).toEqual({
             "rows": [
@@ -132,7 +132,7 @@ describe("AssociationInputTest", () => {
                 ]
             }
         ];
-        const collection = createInputRowCollection(input, objs);
+        const collection = createInputRowCollection(input, objs, undefined);
         assignIds(collection, [], 3, 101);
         assignIds(collection, [{post: true, value: 0}, 0], 3, 501);
         expect(collection.toJSON()).toEqual({
