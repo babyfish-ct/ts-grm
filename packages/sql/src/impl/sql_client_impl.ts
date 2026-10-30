@@ -424,7 +424,11 @@ export class SqlClientImpl implements SqlClientImplementor {
         readonly row?: any;
         readonly rows?: ReadonlyArray<any>
     }> {
-        const collection = spi.createInputRowCollection(input, data, undefined);
+        const collection = spi.createInputRowCollection(
+            input, 
+            data, 
+            new spi.MetadataOptions(options)
+        );
         suppressUnused(options);
         suppressUnused(collection);
         throw new Error("UnsupportedOperation");
