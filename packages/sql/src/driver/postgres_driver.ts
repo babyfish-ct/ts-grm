@@ -293,6 +293,7 @@ const unitMap: Record<TimeUnit, string> = {
 function typeName(tp: ScalarType<any>): string | undefined {
     switch (tp.kind) {
         case "STR":
+            return `varchar(${tp.length})`
         case "TEXT":
             return "text";
         case "BOOL":
