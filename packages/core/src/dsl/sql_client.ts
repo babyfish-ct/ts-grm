@@ -24,7 +24,10 @@ import { Input, TypeOf, View } from "@/schema/dto/api";
 import { __ModelOf } from "@/schema/dto/internal_types";
 import { ModelOrder } from "@/schema/order";
 import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions } from "@/index_internal";
-import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult, SaveWithViewOptions } from "./mutation";
+import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult, SaveWithViewOptions } from "./save";
+import { Predicate } from "./expression";
+import { MutableUpdate, Update } from "./update";
+import { Delete } from "./delete";
 
 export interface SqlClient {
 
@@ -78,6 +81,20 @@ export interface SqlClient {
             ) => TProjection
         ]
     ): AtomRootQuery<TProjection>;
+
+    createUpdate<
+        const TModel extends AnyModel | AnyAssociationModel,
+    >(
+        model: TModel,
+        fn: (u: MutableUpdate<TModel>, table: Table<TModel, "ARBITRARY">) => void
+    ): Update;
+
+    createDelete<
+        const TModel extends AnyModel | AnyAssociationModel
+    >(
+        model: TModel,
+        fn: (table: Table<TModel, "ARBITRARY">) => Predicate | null | undefined
+    ): Delete;
 
     execute<R>(
         fn: () => Promise<R>

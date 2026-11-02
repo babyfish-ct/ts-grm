@@ -23,6 +23,8 @@ export interface InputRowCollection {
 
     readonly metadata: InputMetadata;
 
+    readonly isEmpty: boolean;
+
     readonly rows: ReadonlyArray<InputRow>;
 
     readonly preCollections: ReadonlyArray<InputRowCollection>;
@@ -199,6 +201,10 @@ class InputRowCollectionImpl implements InputRowCollectionImplementor {
         readonly rowCtor: InputRowCtor,
         readonly metadata: InputMetadata
     ) {
+    }
+
+    get isEmpty(): boolean {
+        return this._items.length === 0;
     }
 
     get items(): ReadonlyArray<InputItem> {

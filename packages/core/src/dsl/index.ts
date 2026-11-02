@@ -13,7 +13,7 @@
  */
 
 import { count, sum, min, max, avg } from "./aggregate";
-import { and, constant, not, or } from "./expression";
+import { and, constant, literal, not, or } from "./expression";
 import { all, any, exists, notExists, subQuery } from "./sub_query";
 import { unionAll, union, except, exceptAll, intersect, intersectAll } from "./merged_query";
 import { native } from "./native";
@@ -44,7 +44,9 @@ export type {
     SaveResult,
     SaveOneWithViewResult,
     SaveManyWithViewResult
-} from "./mutation";
+} from "./save";
+export type { MutableUpdate, Update } from "./update";
+export type { Delete } from "./delete";
 export type { 
     RootQuery, 
     AtomRootQuery,
@@ -130,6 +132,7 @@ export const dsl = {
     derivedModel,
     cteModel,
     associationModel,
+    literal,
     constant,
     tuple,
     native

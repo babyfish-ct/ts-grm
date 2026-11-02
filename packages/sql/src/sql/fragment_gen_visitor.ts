@@ -23,6 +23,7 @@ import { BaseQueryMetadata } from "./base_query_metadata";
 import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
+import { createRenderTools } from "./render_tools";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -46,79 +47,12 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         super();
         this._strategy = sqlClient.strategy;
         this._nodeRender = sqlClient.driver.nodeRender;
-        const that = this;
-        this._compositeStack = new class extends Stack<Composite> {
-            constructor() {
-                super(undefined);
-            }
-            override with(composite: Composite | undefined): Disposable {
-                if (composite == null) {
-                    return super.with(undefined);
-                }
-                const parent = this.currentOrUndefined;
-                if (parent != null) {
-                    parent.add(composite);
-                }
-                return super.with(composite);
-            }
-        };
-        this._precedenceStack = new class extends Stack<number> {
-
-            constructor() {
-                super(Precedence.ROOT);
-            }
-
-            override with(precedence: number): Disposable {
-                const current = this.current;
-                const disposable = super.with(precedence);
-                if (precedence === Precedence.ROOT) {
-                    return disposable;
-                }
-                if (current <= precedence) {
-                    return disposable;
-                }
-                const noIndentParenDisposable = that._compositeStack.with(new Scope("NO_INDENT_PAREN"));
-                return {
-                    [Symbol.dispose]() {
-                        noIndentParenDisposable[Symbol.dispose]();
-                        disposable[Symbol.dispose]();
-                    }
-                };
-            }
-        };
         const driverName = this.sqlClient.driver.name;
-        this._nodeRenderContext = new class implements NodeRenderContext {
-
-            get driverName(): string {
-                return driverName;
-            }
-
-            text(value: string): void {
-                that._compositeStack.current.add(value);
-            }
-            
-            separator(): void {
-                that._compositeStack.current.separator();
-            }
-        
-            withComposite(composite: Composite): Disposable {
-                return that._compositeStack.with(composite);
-            }
-        
-            withPrecedence(precedence: number): Disposable {
-                return that._precedenceStack.with(precedence);
-            }
-        
-            render(node: spi.Node | Value | string): void {
-                if (typeof node === "string") {
-                    that._compositeStack.current.add(node);
-                } else if (node instanceof Value) {
-                    that._compositeStack.current.add(node);
-                } else {
-                    node.accept(that);
-                }
-            }
-        }
+        [
+            this._compositeStack, 
+            this._precedenceStack, 
+            this._nodeRenderContext
+        ] = createRenderTools(driverName, this);
         this._tableFragmentCreator = new TableFragmentCreator(
             this.sqlClient,
             (realTable, columnName) => this._createColumn(realTable, columnName),
@@ -750,4 +684,3 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         }
     }
 }
-

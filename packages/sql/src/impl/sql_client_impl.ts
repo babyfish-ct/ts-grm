@@ -59,7 +59,11 @@ import {
     FindManyOptions,
     FetchedView,
     NumExpression,
-    suppressUnused
+    suppressUnused,
+    MutableUpdate,
+    Update,
+    Delete,
+    Predicate
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -76,6 +80,7 @@ import { Executor } from "@/transaction/executor";
 import { toExpressionOrders } from "./expression_orders";
 import { NoDataError, TooManyDataError } from "@/error/data_count_error";
 import { Validator } from "./validator";
+import { save } from "./mutation_executor/save";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -224,6 +229,28 @@ export class SqlClientImpl implements SqlClientImplementor {
             return query.distinct();
         }
         return query;
+    }
+
+    createUpdate<
+        const TModel extends AnyModel | AnyAssociationModel,
+    >(
+        model: TModel,
+        fn: (u: MutableUpdate<TModel>, table: Table<TModel, "ARBITRARY">) => void
+    ): Update {
+        suppressUnused(model);
+        suppressUnused(fn);
+        throw new Error("UnsupportedOperationError");
+    }
+
+    createDelete<
+        const TModel extends AnyModel | AnyAssociationModel
+    >(
+        model: TModel,
+        fn: (table: Table<TModel, "ARBITRARY">) => Predicate | null | undefined
+    ): Delete {
+        suppressUnused(model);
+        suppressUnused(fn);
+        throw new Error("UnsupportedOperationError");
     }
 
     isDirectAssociatedKey(
@@ -414,7 +441,7 @@ export class SqlClientImpl implements SqlClientImplementor {
         options?: SaveWithViewOptions<TInput, TView>
     ): Promise<SaveManyWithViewResult<TInput, TView>>;
 
-    async save<TInput extends Input<any, any, any>>(
+    save<TInput extends Input<any, any, any>>(
         input: TInput,
         data: TypeOf<TInput> | ReadonlyArray<TypeOf<TInput>>,
         options?: SaveOptions<TInput> & {
@@ -424,14 +451,7 @@ export class SqlClientImpl implements SqlClientImplementor {
         readonly row?: any;
         readonly rows?: ReadonlyArray<any>
     }> {
-        const collection = spi.createInputRowCollection(
-            input, 
-            data, 
-            new spi.MetadataOptions(options)
-        );
-        suppressUnused(options);
-        suppressUnused(collection);
-        throw new Error("UnsupportedOperation");
+        return save(this, input, data, options);
     }
 }
 

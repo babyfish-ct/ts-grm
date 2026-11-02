@@ -117,7 +117,7 @@ export class InputMetadata {
         readonly source: Entity | AssociationEntity,
         fields: ReadonlyArray<DtoMapperField> | undefined,
         refOnly: boolean,
-        options: MetadataOptions
+        readonly options: MetadataOptions
     ) {
         this._scalars = fields != null
             ? toScalars(

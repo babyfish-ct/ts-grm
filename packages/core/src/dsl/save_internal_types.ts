@@ -13,7 +13,7 @@
  */
 
 import { __OneToManyPropContract, __Prettify } from "@/index_internal";
-import { AssociatedSaveMode } from "./mutation";
+import { AssociatedSaveMode } from "./save";
 import { DissociateMode } from "@/schema/dto/api";
 
 export type __AssociatedSaveModeOptions<

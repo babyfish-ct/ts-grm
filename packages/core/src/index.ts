@@ -206,5 +206,8 @@ export type  {
     SaveResult,
     SaveOneWithViewResult,
     SaveManyWithViewResult,
+    MutableUpdate,
+    Update,
+    Delete
 } from "./dsl";
 

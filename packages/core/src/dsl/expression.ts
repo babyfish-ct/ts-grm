@@ -168,6 +168,28 @@ export type ExpressionLike = {
     }
 };
 
+export function literal(value: number): NumExpression<number>;
+
+export function literal<
+    T extends string,
+    TAs extends "AS_NUMBER" | "AS_ENUM_SET"
+>(
+    value: T, 
+    as: TAs
+): TAs extends "AS_NUMBER" 
+    ? NumExpression<string>
+    : EnumSetExpression<T>;
+
+export function literal(value: string): StrExpression<string>;
+
+export function literal(value: Date): DateExpression<Date>;
+
+export function literal<T>(value: T): Expression<T>;
+
+export function literal(value: any): any {
+    return getInternalFactory().createLiteral(value);
+}
+
 export function constant(
     value: number
 ): NumExpression<number> {

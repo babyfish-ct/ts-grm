@@ -14,7 +14,7 @@
 
 import { __ModelOf, __Prettify } from "@/index_internal";
 import { Input, InputAssociationMembers, TypeOf, View } from "@/schema/dto/api";
-import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions } from "./mutation_internal_types";
+import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions } from "./save_internal_types";
 
 export type RootSaveMode = "UPSERT" | "INSERT" | "INSERT_IF_ABSENT" | "UPDATE" | "NON_IDEMPOTENT_UPSERT";
 

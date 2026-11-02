@@ -37,7 +37,7 @@ export class SqlBuilder {
 
     private _nextTableAlias = 0;
 
-    constructor(
+    private constructor(
         readonly sqlClient: SqlClientImplementor,
         private _pretty: boolean,
         readonly parameter: SqlLoggerParameterType,
