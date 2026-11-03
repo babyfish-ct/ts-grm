@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { __AssociationType, __PropContract } from "@/schema/prop_internal_types";
+import { __AssociationType, __PropContract, __ScalarBehavior } from "@/schema/prop_internal_types";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -41,6 +41,8 @@ export class EntityProp {
     private _rootProp: EntityProp | undefined = undefined;
 
     private _scalarType: ScalarType<any> | undefined = undefined;
+
+    private _scalarBehavior: __ScalarBehavior | undefined = undefined;
 
     private _explicitDataType = ExplicitDataType.NONE;
 
@@ -119,6 +121,7 @@ export class EntityProp {
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this._scalarType = _data.scalarType; 
+        this._scalarBehavior = _data.scalarBehavior;
         this._explicitDataType = _data.explicitDataType;
         this.associationType = _data.associationType;
         if (_data.props != null) {
@@ -186,6 +189,10 @@ export class EntityProp {
 
     get scalarType(): ScalarType<any> | undefined {
         return this._scalarType;
+    }
+
+    get scalarBehavior(): __ScalarBehavior | undefined {
+        return this._scalarBehavior;
     }
 
     get explicitDataType(): ExplicitDataType {
@@ -751,6 +758,7 @@ export class EntityProp {
             return;
         }
         this._scalarType = referenceProp.targetKeyProp!.scalarType;
+        this._scalarBehavior = referenceProp.targetKeyProp!.scalarBehavior;
         this._explicitDataType = referenceProp.targetKeyProp!.explicitDataType;
         this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
     }

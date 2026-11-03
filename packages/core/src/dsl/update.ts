@@ -10,11 +10,11 @@ export interface MutableUpdate<TModel extends AnyModel | AnyAssociationModel> {
     >(
         key: TKey,
         value: __UpdatedValue<__UpdatedMembers<TModel>[TKey]>
-    ): MutableUpdate<TModel>;
+    ): this;
 
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
-    ): MutableUpdate<TModel>;
+    ): this;
 }
 
 export interface Update {

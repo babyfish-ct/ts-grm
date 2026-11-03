@@ -625,7 +625,12 @@ describe("SchemaCreatorTest", () => {
                         "type": "STR",
                         "nullable": false,
                         "length": 50
-                    }
+                    },
+                    {
+                        "name": "DELETED_AT",
+                        "nullable": true,
+                        "type": "DATETIME",
+                    },
                 ],
                 "constraints": [
                     {
@@ -1166,6 +1171,7 @@ describe("SchemaCreatorTest", () => {
                 ID integer not null, 
                 NAME text not null, 
                 TEXT text not null, 
+                DELETED_AT text null, 
 
                 constraint COMMENT_constraint_1
                     primary key(ID)

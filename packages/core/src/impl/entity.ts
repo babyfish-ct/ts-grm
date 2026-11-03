@@ -323,6 +323,7 @@ export class Entity {
                         : "NULLABLE"
                     : "NONNULL",
                 scalarType: undefined,
+                scalarBehavior: undefined,
                 explicitDataType: ExplicitDataType.NONE,
                 scalarProvider: undefined,
                 props: undefined,

@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { AUTHOR } from "../../model/model";
+import { AUTHOR, COMMENT } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { dto, TypeOf } from "@/index";
 
@@ -29,6 +29,16 @@ describe("AllScalarsTest", () => {
                 firstName: string;
                 lastName: string;
             };
+        }>();
+    });
+
+    it("autoExclude", () => {
+        const view = dto.view(COMMENT, c => [
+            c.$allScalars
+        ]);
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            id: number;
+            name: string;
         }>();
     });
 

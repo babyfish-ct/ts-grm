@@ -33,6 +33,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.BOOL, 
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.BOOL
         });
     },
@@ -41,6 +42,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I8, 
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.INTEGER
         });
     },
@@ -49,6 +51,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I16,
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.INTEGER
         });
     },
@@ -57,6 +60,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I32,
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.INTEGER
         });
     },
@@ -65,6 +69,7 @@ export const prop = {
         return new __I64Prop({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.I64,
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.INTEGER
         });
     },
@@ -73,6 +78,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.F32,
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.FLOAT
         });
     },
@@ -81,6 +87,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.F64,
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.FLOAT
         });
     },
@@ -89,6 +96,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.numeric(precision, scale),
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.FLOAT
         });
     },
@@ -97,6 +105,7 @@ export const prop = {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: ScalarType.DATETIME,
+            scalarBehavior: "NORMAL",
             explicitDataType: ExplicitDataType.DATETIME
         });
     },
@@ -109,13 +118,13 @@ export const prop = {
 
     json<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", true> {
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", "NORMAL", true> {
         return this.scalar(scalars.jsonProvider(valueType));
     },
 
     jsonb<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", true> {
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", "NORMAL", true> {
         return this.scalar(scalars.jsonbProvider(valueType));
     },
 

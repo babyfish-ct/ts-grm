@@ -26,8 +26,10 @@ export type __AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "
 
 export type __NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
 
+export type __ScalarBehavior = "NORMAL" | "EXCLUSIVE" | "DELETED_FLAG";
+
 export type __EmbeddedMember = 
-    __ScalarPropContract<any, any, any> 
+    __ScalarPropContract<any, any, any, any> 
     | __ForeignKeyPropLike<__OneToOnePropContract<any, any, "COLUMNS", never, any, any>>
     | __ForeignKeyPropLike<__ManyToOnePropContract<any, any, "COLUMNS", never, any, any>>
     | __EmbeddedPropContract<any, any, any>;
@@ -62,25 +64,44 @@ export interface __AssociatedLikePropContract<
 export interface __ScalarPropContract<
     T, 
     TNullity extends __NullityType,
+    TBehavior extends __ScalarBehavior,
     TCustomized extends boolean
 > extends __ScalarLikePropContract<T, TNullity> {
 
     readonly __scalarProp: true;
 
+    readonly __behavior?: TBehavior;
+    
     readonly __customized?: TCustomized;
 }
 
-export interface __StrPropContract<T, TNullity extends __NullityType> extends __ScalarPropContract<T, TNullity, false> {
+export interface __StrPropContract<
+    T, 
+    TNullity extends __NullityType,
+    TBehavior extends __ScalarBehavior
+> extends __ScalarPropContract<
+    T, 
+    TNullity, 
+    TBehavior,
+    false
+> {
 
     readonly __strProp: true;
 }
 
-export interface __I64PropContract<T extends string | number, TNullity extends __NullityType> extends __ScalarPropContract<T, TNullity, false> {
+export interface __I64PropContract<
+    T extends string | number, 
+    TNullity extends __NullityType,
+    TBehavior extends __ScalarBehavior
+> extends __ScalarPropContract<T, TNullity, TBehavior, false> {
 
     readonly __i64Prop: true;
 }
 
-export interface __EnumSetPropContract<T extends string> extends __ScalarPropContract<ReadonlyArray<T>, "NONNULL", true> {
+export interface __EnumSetPropContract<
+    T extends string,
+    TBehavior extends __ScalarBehavior
+> extends __ScalarPropContract<ReadonlyArray<T>, "NONNULL", TBehavior, true> {
 
     readonly __enumSetProp: true;
 }

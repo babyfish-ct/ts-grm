@@ -275,7 +275,7 @@ export type __CalculatorSourceKeys<
     TModelMembers extends object 
     ? { 
         [K in keyof TModelMembers]: 
-            TModelMembers[K] extends __ScalarPropContract<any, any, any>
+            TModelMembers[K] extends __ScalarPropContract<any, any, any, any>
                 ? K
             : TModelMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
@@ -323,7 +323,7 @@ export type __UniqueKeysImpl<TFlattenCtorMembers> =
             [
                 K in keyof TFlattenCtorMembers as 
                     TFlattenCtorMembers[K] extends
-                        __ScalarPropContract<any, any, any> 
+                        __ScalarPropContract<any, any, "NORMAL", any> 
                         | __OneToOnePropContract<any, any, "COLUMNS", never, any, any>
                         | __ManyToOnePropContract<any, any, "COLUMNS", never, any, any>
                         ? K
@@ -338,7 +338,7 @@ export type __OrderedKeys<TModel extends AnyModel> =
 export type __OrderedKeysImpl<TFlattenCtorMembers extends object> = 
     { 
         [K in keyof TFlattenCtorMembers]: 
-            TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any>
+            TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any, any>
                 ? K
                 : never
     }[keyof TFlattenCtorMembers];
@@ -381,18 +381,18 @@ export type __DerivedModel<
 export type __IdGenerator<
     TIdMember
 > = 
-    TIdMember extends __I64PropContract<infer Value, any>
+    TIdMember extends __I64PropContract<infer Value, any, "NORMAL">
         ? "IDENTITY"
         | { readonly sequenceName: string; }
         | UserIdGenerator<Value>
-    : TIdMember extends __ScalarPropContract<number, any, any>
+    : TIdMember extends __ScalarPropContract<number, any, "NORMAL", any>
         ? "IDENTITY"
         | { readonly sequenceName: string; }
         | UserIdGenerator<number>
     : UserIdGenerator<__DataType<TIdMember>>;
 
 export type __DataType<TProp> = 
-    TProp extends __ScalarPropContract<infer Value, any, any>
+    TProp extends __ScalarPropContract<infer Value, any, any, any>
         ? Value
     : TProp extends __EmbeddedPropContract<infer Props, any, any>
         ? { readonly [K in keyof Props]: __DataType<Props[K]> }

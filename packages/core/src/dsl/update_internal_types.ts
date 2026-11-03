@@ -31,12 +31,12 @@ export type __UpdatedMembersImpl<TFlattenCtorMembers> =
         ? { 
             [
                 K in keyof TFlattenCtorMembers as 
-                    TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any> 
+                    TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any, any> 
                         ? K
                     : TFlattenCtorMembers[K] extends __ReferencePropContract<infer TargetModel, any, "COLUMNS", never, any, infer TargetKey>
                         ? `${K & string}${Capitalize<__RequiredModelKey<TargetModel, TargetKey>>}`
                     : never
-            ]: TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any> 
+            ]: TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any, any> 
                 ? __MakeExpression<"NONNULL", TFlattenCtorMembers[K]>
             : TFlattenCtorMembers[K] extends __ReferencePropContract<infer TargetModel, infer Nullity, "COLUMNS", never, any, infer TargetKey>
                 ? __MakeExpression<Nullity, __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>]>

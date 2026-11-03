@@ -62,7 +62,7 @@ export type __CriteriaMemberKey<
     TMembers,
     TKey extends keyof TMembers
 > = 
-    TMembers[TKey] extends __ScalarPropContract<any, any, any>
+    TMembers[TKey] extends __ScalarPropContract<any, any, any, any>
         ? TKey
     : TMembers[TKey] extends __EmbeddedPropContract<any, any, any>
         ? TKey
@@ -104,14 +104,14 @@ export interface __CriteriaInstanceOfBinding<
 export type __CriteriaMember<TProp, TNullity extends __NullityType> =
     TProp extends __PropContract<any, infer Nullity>
         ? Nullity extends "NULLABLE"
-            ? TProp extends __ScalarPropContract<any, any, any>
+            ? TProp extends __ScalarPropContract<any, any, any, any>
                 ? { readonly $isNull: boolean } | __NonNullCriteriaMember<TProp, TNullity>
                 : __NonNullCriteriaMember<TProp, TNullity>
             : __NonNullCriteriaMember<TProp, TNullity>
         : never;
 
 export type __NonNullCriteriaMember<TProp, TNullity extends __NullityType> =
-    TProp extends __ScalarPropContract<any, any, any>
+    TProp extends __ScalarPropContract<any, any, any, any>
         ? __CriteriaScalarType<TProp>
     : TProp extends __EmbeddedPropContract<infer R, infer Nullity, any>
         ? { [K in keyof R]?: __CriteriaMember<R[K], __CombinedNullity<TNullity, Nullity>> } & __CriteriaMembers<"", R, TNullity>
@@ -137,9 +137,9 @@ export type __NonNullCriteriaReferenceKeyMember<
     >;
 
 export type __CriteriaScalarType<TProp> =
-    TProp extends __I64PropContract<any, any>
+    TProp extends __I64PropContract<any, any, any>
         ? string | number | __CriteriaCmpJson<string> | __CriteriaCmpJson<number>
-    : TProp extends __ScalarPropContract<infer R, any, any>
+    : TProp extends __ScalarPropContract<infer R, any, any, any>
         ? R extends string
             ? string | __CriteriaStrJson
         : R extends Date

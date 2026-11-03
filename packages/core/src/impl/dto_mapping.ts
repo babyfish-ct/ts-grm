@@ -67,6 +67,7 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             this._props = props = allProps.filter(p => 
                 p.referenceProp == null 
                 && (p.scalarType != null || p.props != null) 
+                && (p.scalarBehavior == null || p.scalarBehavior === "NORMAL")
                 && (ex == null || !ex.isMatched(p))
             );
         }

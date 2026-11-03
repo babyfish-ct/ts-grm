@@ -73,7 +73,7 @@ export type __DslMembers<
 > = 
     { 
         [K in keyof TMembers as
-            TMembers[K] extends __ScalarPropContract<any, any, any>
+            TMembers[K] extends __ScalarPropContract<any, any, any, any>
                 ? K
             : TMembers[K] extends __EmbeddedPropContract<any, any, any> 
                 ? K
@@ -84,7 +84,7 @@ export type __DslMembers<
             : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
                 ? K
             : never
-        ]: TMembers[K] extends __ScalarPropContract<any, any, any>
+        ]: TMembers[K] extends __ScalarPropContract<any, any, any, any>
             ? __MakeExpression<TNullity, TMembers[K]>
         : TMembers[K] extends __EmbeddedPropContract<infer R, infer Nullity, any>
             ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, TJoinPolicy>
@@ -101,10 +101,10 @@ export type __MakeExpression<
     TNullity extends __NullityType, 
     TProp
 > =
-    TProp extends __ScalarPropContract<infer R, infer Nullity, infer Customized>
-        ? TProp extends __I64PropContract<infer R, any>
+    TProp extends __ScalarPropContract<infer R, infer Nullity, any, infer Customized>
+        ? TProp extends __I64PropContract<infer R, any, any>
             ? NumExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
-        : TProp extends __EnumSetPropContract<infer R>
+        : TProp extends __EnumSetPropContract<infer R, any>
             ? EnumSetExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
         : Customized extends true
             ? Expression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>

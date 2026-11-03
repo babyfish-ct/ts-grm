@@ -44,7 +44,7 @@ export interface __AllScalarsMapping<
     TExcludedKeys extends keyof TMembers
 > extends __AllScalarsMappingContract<TModel, TDtoKind, TMembers, TExcludedKeys> {
     
-    exclude<const TExcludedKeys extends AtLeastOne<__ScalarKeys<TMembers>>>(
+    exclude<const TExcludedKeys extends AtLeastOne<__IncludedScalarKeys<TMembers>>>(
         ...keys: TExcludedKeys
     ): __AllScalarsMapping<
         TModel,
@@ -54,10 +54,10 @@ export interface __AllScalarsMapping<
     >;
 }
 
-type __ScalarKeys<TMembers> = 
+export type __IncludedScalarKeys<TMembers> = 
     keyof {
         [K in keyof TMembers as 
-            TMembers[K] extends __ScalarPropContract<any, any, any>
+            TMembers[K] extends __ScalarPropContract<any, any, "NORMAL", any>
                 ? K
             : TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
@@ -72,7 +72,7 @@ export type __AllScalarsDtoType<
     TMapping extends __AllScalarsMapping<any, infer DtoKind, infer Members, infer ExcludedKeys>
         ? { 
             [
-                K in __ScalarKeys<Members> as 
+                K in __IncludedScalarKeys<Members> as 
                     K extends ExcludedKeys
                         ? never
                         : __IsAllowed<__DeclaringModelName<Members[K]>, TAllowedDeclarings> extends true
@@ -87,7 +87,7 @@ export type __MemberType<
     TMember, 
     TDtoKind extends __DtoKind
 > =
-    TMember extends __ScalarPropContract<infer R, infer Nullity, any>
+    TMember extends __ScalarPropContract<infer R, infer Nullity, any, any>
         ? __WithNullity<R, Nullity, TDtoKind>
     : TMember extends __EmbeddedPropContract<infer NestedProps, infer Nullity, any>
         ? __WithNullity<

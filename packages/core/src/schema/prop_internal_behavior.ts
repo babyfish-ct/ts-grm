@@ -63,7 +63,8 @@ import {
     __StrPropContract, 
     __TargetKeyOf, 
     __TargetModelOf, 
-    __TsFormulaPropContract 
+    __TsFormulaPropContract, 
+    __ScalarBehavior
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
 import { ExplicitDataType } from "@/impl/explicit";
@@ -83,8 +84,9 @@ implements __PropContract<T, TNullity> {
 export class __ScalarProp<
     T, 
     TNullity extends __NullityType = "NONNULL",
+    TBehavior extends __ScalarBehavior = "NORMAL",
     TCustomized extends boolean = false
-> extends __Prop<T, TNullity> implements __ScalarPropContract<T, TNullity, TCustomized> {
+> extends __Prop<T, TNullity> implements __ScalarPropContract<T, TNullity, TBehavior, TCustomized> {
 
     readonly __scalarLikeProp = true;
 
@@ -92,47 +94,75 @@ export class __ScalarProp<
 
     declare readonly __customized?: TCustomized;
 
+    declare readonly __behavior?: TBehavior;
+
     constructor(data: __PropData) {
         super(data);
     }
 
-    nullable(): __ScalarProp<T, "NULLABLE"> {
-        return new __ScalarProp({...this.__data, nullity: "NULLABLE"})
+    nullable(): __ScalarProp<T, "NULLABLE", TBehavior, TCustomized> {
+        return new __ScalarProp({...this.__data, nullity: "NULLABLE"});
+    }
+
+    exclude(): __ScalarProp<T, TNullity, "EXCLUSIVE", TCustomized> {
+        return new __ScalarProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
     }
 }
 
 export class __StrProp<
-    TNullity extends __NullityType = "NONNULL"
-> extends __ScalarProp<string, TNullity> implements __StrPropContract<string, TNullity> {
+    TNullity extends __NullityType = "NONNULL",
+    TBehavior extends __ScalarBehavior = "NORMAL"
+> extends __ScalarProp<string, TNullity, TBehavior, false> implements __StrPropContract<string, TNullity, TBehavior> {
 
     readonly __strProp = true;
 
-    override nullable(): __StrProp<"NULLABLE"> {
+    override nullable(): __StrProp<"NULLABLE", TBehavior> {
         return new __StrProp({...this.__data, nullity: "NULLABLE"});
+    }
+
+    override exclude(): __StrProp<TNullity, "EXCLUSIVE"> {
+        return new __StrProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
     }
 }
 
 export class __I64Prop<
     T extends string | number, 
-    TNullity extends __NullityType = "NONNULL"
-> extends __ScalarProp<T, TNullity> implements __I64PropContract<T, TNullity> {
+    TNullity extends __NullityType = "NONNULL",
+    TBehavior extends __ScalarBehavior = "NORMAL"
+> extends __ScalarProp<T, TNullity, TBehavior, false> implements __I64PropContract<T, TNullity, TBehavior> {
 
     readonly __i64Prop = true;
 
-    override nullable(): __I64Prop<T, "NULLABLE"> {
+    override nullable(): __I64Prop<T, "NULLABLE", TBehavior> {
         return new __I64Prop({...this.__data, nullity: "NULLABLE"});
     }
 
-    asString(): __I64Prop<string, TNullity> {
+    override exclude(): __I64Prop<T, TNullity, "EXCLUSIVE"> {
+        return new __I64Prop({...this.__data, scalarBehavior: "EXCLUSIVE"});
+    }
+
+    asString(): __I64Prop<string, TNullity, TBehavior> {
         return new __I64Prop({...this.__data, explicitDataType: ExplicitDataType.STRING});
     }
 }
 
 export class __EnumSetProp<
-    TEnum extends string
-> extends __ScalarProp<ReadonlyArray<TEnum>, "NONNULL", true> implements __EnumSetPropContract<TEnum> {
+    TEnum extends string,
+    TBehavior extends __ScalarBehavior = "NORMAL"
+> extends __ScalarProp<ReadonlyArray<TEnum>, "NONNULL", TBehavior, true> implements __EnumSetPropContract<TEnum, TBehavior> {
 
     readonly __enumSetProp = true;
+
+    /**
+     * @deprecated
+     */
+    override nullable(): __ScalarProp<ReadonlyArray<TEnum>, "NULLABLE", TBehavior, true> {
+        throw new Error("EnumSet property cannot be nullable");
+    }
+
+    override exclude(): __EnumSetProp<TEnum, "EXCLUSIVE"> {
+        return new __EnumSetProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
+    } 
 }
 
 export class __EmbeddedProp<
@@ -158,8 +188,8 @@ export type __FollowPrefix<TKey extends string, TParentKey extends string> =
     `${TParentKey}.${TKey}`;
 
 export type __FollowNullity<TProp, TParentNullity extends __NullityType> =
-    TProp extends __ScalarPropContract<infer T, infer Nullity, infer Customized>
-        ? __ScalarProp<T, __CombinedNullity<TParentNullity, Nullity>, Customized>
+    TProp extends __ScalarPropContract<infer T, infer Nullity, infer Behavior, infer Customized>
+        ? __ScalarProp<T, __CombinedNullity<TParentNullity, Nullity>, Behavior, Customized>
         : never;
 
 export abstract class __AssociatedProp<
@@ -900,17 +930,27 @@ export type __ScalarPropCreator = {
     
     <TValueType extends StandardSchemaV1>(
         provider: ScalarProvider<TValueType, any>
-    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", true>;
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", "NORMAL", true>;
 }
 
 export function __scalarPropCreator(): __ScalarPropCreator {
     function impl(
         provider: ScalarProvider<any, any>
-    ): __ScalarProp<any, "NONNULL", true> {
+    ): __ScalarProp<any, "NONNULL", "NORMAL", true> {
         if (provider instanceof EnumSetProvider) {
-            return new __EnumSetProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider as any});
+            return new __EnumSetProp({
+                ...__EMPTY_PROP_DEFINITION_DATA, 
+                scalarType: provider.sqlType, 
+                scalarBehavior: "NORMAL",
+                scalarProvider: provider as any
+            });
         }
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: provider.sqlType, 
+            scalarBehavior: "NORMAL",
+            scalarProvider: provider
+        });
     };
     return impl as any;
 }
@@ -919,15 +959,15 @@ export type __EnumCreator = {
 
     <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
-    ): __ScalarProp<TValues[number], "NONNULL", true>;
+    ): __ScalarProp<TValues[number], "NONNULL", "NORMAL", true>;
 
     <TMap extends { readonly [key: string]: string; }>(
         map: TMap
-    ): __ScalarProp<keyof TMap, "NONNULL", true>;
+    ): __ScalarProp<keyof TMap, "NONNULL", "NORMAL", true>;
 
     <TMap extends { readonly [key: string]: number; }>(
         map: TMap
-    ): __ScalarProp<keyof TMap, "NONNULL", true>;
+    ): __ScalarProp<keyof TMap, "NONNULL", "NORMAL", true>;
 }
 
 export function __enumCreator(): __EnumCreator {
@@ -936,6 +976,7 @@ export function __enumCreator(): __EnumCreator {
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: scalarProvider.sqlType,
+            scalarBehavior: "NORMAL",
             scalarProvider
         });
     }
@@ -959,6 +1000,7 @@ export function __enumSetCreator(): __EnumSetCreator {
         return new __EnumSetProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: scalarProvider.sqlType,
+            scalarBehavior: "NORMAL",
             scalarProvider: scalarProvider as any
         });
     }
@@ -977,6 +1019,7 @@ export type __CombinedNullity<
 export type __PropData = {
     readonly nullity: __NullityType;
     readonly scalarType: ScalarType<any> | undefined;
+    readonly scalarBehavior: __ScalarBehavior | undefined;
     readonly explicitDataType: ExplicitDataType;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
     readonly props: Record<string, __PropContract<any, any>> | undefined;
@@ -1040,6 +1083,7 @@ export type __CalculatorData = {
 export const __EMPTY_PROP_DEFINITION_DATA: __PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
+    scalarBehavior: undefined,
     explicitDataType: ExplicitDataType.NONE,
     scalarProvider: undefined,
     props: undefined,

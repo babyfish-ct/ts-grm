@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { useSqliteClientWithData } from "../data_utils";
-import { AUTHOR, BOOK, BOOK_STORE, STUDENT } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, COMMENT, STUDENT } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
 
@@ -21,15 +21,15 @@ describe("SimpleSqliteFetchTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
-            select 
-                tb_1_.ID,
-                tb_1_.NAME,
-                tb_1_.EDITION
-            from BOOK tb_1_
-            where 
-                tb_1_.STORE_ID = ?
-            order by 
-                tb_1_.EDITION desc
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.EDITION
+                from BOOK tb_1_
+                where 
+                    tb_1_.STORE_ID = ?
+                order by 
+                    tb_1_.EDITION desc
             `,
             args: [2],
             purpose: "query"
@@ -39,6 +39,35 @@ describe("SimpleSqliteFetchTest", () => {
             {"id":11,"name":"GraphQL in Action","edition":2},
             {"id":10,"name":"GraphQL in Action","edition":1}
         ]);
+    });
+    
+    it("autoExclude", async() => {
+        const view = dto.view(COMMENT, c => [
+            c.$allScalars
+        ]);
+        const row = await sqlClient.createQuery(COMMENT, (q, comment) => {
+            q.where(comment.id.eq(1));
+            return q.select(comment.fetch(view));
+        }).fetchRequired();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.TEXT
+                from "COMMENT" tb_1_
+                where 
+                    tb_1_.ID = ?
+                limit ?
+            `,
+            args: [1, 2],
+            purpose: "query"
+        });
+        expect(row).toEqual({
+            "id": 1,
+            "name": "Delayed",
+            "text": "Delyaed, delive faster"
+        });
     });
 
     it("m2o", async() => {

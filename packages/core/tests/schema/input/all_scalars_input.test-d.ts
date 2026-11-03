@@ -1,6 +1,6 @@
 import { dto, TypeOf } from "@/index";
 import { describe, expectTypeOf, it } from "vitest";
-import { AUTHOR } from "../../model/model";
+import { AUTHOR, COMMENT } from "../../model/model";
 import { InputAssociationMembers } from "@/schema/dto/api";
 
 describe("AllScalarsInput", () => {
@@ -16,6 +16,19 @@ describe("AllScalarsInput", () => {
                 lastName: string;
             };
             gender: "FEMALE" | "MALE";
+        }>();
+        expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
+            never
+        >();
+    });
+
+    it("autoExclude", () => {
+        const input = dto.input(COMMENT, c => [
+            c.$allScalars
+        ]);
+        expectTypeOf<TypeOf<typeof input>>().toEqualTypeOf<{
+            id: number;
+            name: string;
         }>();
         expectTypeOf<keyof InputAssociationMembers<typeof input>>().toEqualTypeOf<
             never

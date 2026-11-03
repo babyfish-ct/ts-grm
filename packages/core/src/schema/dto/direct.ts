@@ -138,7 +138,7 @@ export type __DirectContext<
 
 export type __IsScalarLikeProp<TMember, TDtoKind extends __DtoKind> =
     TDtoKind extends "INPUT" | "INPUT_REF"
-        ? TMember extends __ScalarPropContract<any, any, any> ? true : false
+        ? TMember extends __ScalarPropContract<any, any, any, any> ? true : false
         : TMember extends __ScalarLikePropContract<any, any> ? true : false;
 
 export type __ScalarTypeOf<TMember> =
