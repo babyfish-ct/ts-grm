@@ -76,11 +76,10 @@ export interface __ScalarPropContract<
 }
 
 export interface __StrPropContract<
-    T, 
     TNullity extends __NullityType,
     TBehavior extends __ScalarBehavior
 > extends __ScalarPropContract<
-    T, 
+    string, 
     TNullity, 
     TBehavior,
     false

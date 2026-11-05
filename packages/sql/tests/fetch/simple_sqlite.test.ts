@@ -57,7 +57,9 @@ describe("SimpleSqliteFetchTest", () => {
                     tb_1_.TEXT
                 from "COMMENT" tb_1_
                 where 
-                    tb_1_.ID = ?
+                        tb_1_.ID = ?
+                    and
+                        tb_1_.DELETED_AT is null
                 limit ?
             `,
             args: [1, 2],

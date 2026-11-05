@@ -415,7 +415,9 @@ describe("AssociatedSqlTest", () => {
                         inner join ORDER_COMMENT_MAPPING tb_3_ on 
                             tb_2_.ID = tb_3_.COMMENT_ID
                         where 
-                            (tb_3_.order_x, tb_3_.order_y_a, tb_3_.order_y_b) = (tb_1_.X, tb_1_.A, tb_1_.B)
+                                (tb_3_.order_x, tb_3_.order_y_a, tb_3_.order_y_b) = (tb_1_.X, tb_1_.A, tb_1_.B)
+                            and
+                                tb_2_.DELETED_AT is null
                     ) between ? and ?
             `,
             args: [10, 20],

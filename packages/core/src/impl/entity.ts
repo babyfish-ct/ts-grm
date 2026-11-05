@@ -27,6 +27,7 @@ import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
 import { __IdGenerator, __PropData } from "@/index_internal";
 import { ExplicitDataType } from "./explicit";
+import { Filter } from "./dto_mapping";
 
 export class Entity {
 
@@ -61,6 +62,10 @@ export class Entity {
     private _descendants: Set<Entity> | undefined = undefined;
 
     private _discriminatorValues: ReadonlyArray<string | number> | undefined = undefined;
+
+    private _deletedProps: ReadonlyArray<EntityProp> | undefined = undefined;
+
+    private _deletedFilters: ReadonlyArray<Filter> | undefined = undefined;
 
     private static _nextIdentity = 0;
 
@@ -150,6 +155,49 @@ export class Entity {
         this.resolve(2);
         return this._uniqueConstraintArr ?? 
             makeErr(`The uniqueConstraintArr of ${this.name} is not initialized`);
+    }
+
+    get deletedProps(): ReadonlyArray<EntityProp> {
+        let deletedProps = this._deletedProps;
+        if (deletedProps == null) {
+            const superArr = this.superEntity?.deletedProps;
+            let arr: Array<EntityProp> | undefined = undefined;
+            for (const prop of this.declaredPropMap.values()) {
+                if (prop.scalarBehavior === "DELETED_FLAG") {
+                    if (superArr != null && superArr.length !== 0) {
+                        throw new PropError(
+                            this.name,
+                            prop.name,
+                            dedent `The property "${
+                                prop.name
+                            }" cannot be deleted flags because the super entity ${
+                                this.superEntity?.name
+                            } has defined some properties with deleted flag`
+                        );
+                    }
+                    if (arr == null) {
+                        arr = [];
+                    }
+                    arr.push(prop);
+                }
+            }
+            this._deletedProps = deletedProps = arr ?? [];
+        }
+        return deletedProps;
+    }
+
+    get deletedFilters(): ReadonlyArray<Filter> {
+        let deletedFilters = this._deletedFilters;
+        if (deletedFilters == null) {
+            this._deletedFilters = deletedFilters = this.deletedProps.map(prop => {
+                const filter: Filter = (table) => {
+                    const expr = table.__expression(prop);
+                    return prop.deletedOptions!.undeletedFilter(expr) ?? undefined;
+                }
+                return filter;
+            });
+        }
+        return deletedFilters;
     }
 
     association(
@@ -326,6 +374,7 @@ export class Entity {
                 scalarBehavior: undefined,
                 explicitDataType: ExplicitDataType.NONE,
                 scalarProvider: undefined,
+                deletedOptions: undefined,
                 props: undefined,
                 targetModelRef: undefined,
                 associationType: undefined,

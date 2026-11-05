@@ -68,6 +68,8 @@ import {
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
 import { ExplicitDataType } from "@/impl/explicit";
+import { __MakeExpression, __UpdatedValue } from "@/index_internal";
+import { Predicate } from "@/dsl";
 
 export class __Prop<T, TNullity extends __NullityType> 
 implements __PropContract<T, TNullity> {
@@ -81,7 +83,7 @@ implements __PropContract<T, TNullity> {
     protected constructor(readonly __data: __PropData) {}
 }
 
-export class __ScalarProp<
+export class __FrozenScalarProp<
     T, 
     TNullity extends __NullityType = "NONNULL",
     TBehavior extends __ScalarBehavior = "NORMAL",
@@ -99,70 +101,140 @@ export class __ScalarProp<
     constructor(data: __PropData) {
         super(data);
     }
+}
+
+export class __ScalarProp<
+    T, 
+    TNullity extends __NullityType = "NONNULL",
+    TBehavior extends __ScalarBehavior = "NORMAL",
+    TCustomized extends boolean = false
+> extends __FrozenScalarProp<T, TNullity, TBehavior, TCustomized> {
+
+    constructor(data: __PropData) {
+        super(data);
+    }
 
     nullable(): __ScalarProp<T, "NULLABLE", TBehavior, TCustomized> {
         return new __ScalarProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    exclude(): __ScalarProp<T, TNullity, "EXCLUSIVE", TCustomized> {
-        return new __ScalarProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
+    excluded(): __FrozenScalarProp<T, TNullity, "EXCLUSIVE", TCustomized> {
+        return new __FrozenScalarProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
     }
+
+    deleted(
+        options: __DeletedOptions<
+            __MakeExpression<
+                "NONNULL", 
+                __ScalarProp<T, TNullity, TBehavior, TCustomized>
+            >
+        >
+    ): __FrozenScalarProp<T, TNullity, "DELETED_FLAG", TCustomized> {
+        return new __FrozenScalarProp({...this.__data, scalarBehavior: "DELETED_FLAG", deletedOptions: options});
+    }
+}
+
+export class __FrozenStrProp<
+    TNullity extends __NullityType = "NONNULL",
+    TBehavior extends __ScalarBehavior = "NORMAL"
+> extends __FrozenScalarProp<string, TNullity, TBehavior, false> implements __StrPropContract<TNullity, TBehavior> {
+
+    readonly __strProp = true;
 }
 
 export class __StrProp<
     TNullity extends __NullityType = "NONNULL",
     TBehavior extends __ScalarBehavior = "NORMAL"
-> extends __ScalarProp<string, TNullity, TBehavior, false> implements __StrPropContract<string, TNullity, TBehavior> {
+> extends __FrozenStrProp<TNullity, TBehavior> {
 
-    readonly __strProp = true;
-
-    override nullable(): __StrProp<"NULLABLE", TBehavior> {
+    nullable(): __StrProp<"NULLABLE", TBehavior> {
         return new __StrProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    override exclude(): __StrProp<TNullity, "EXCLUSIVE"> {
-        return new __StrProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
+    excluded(): __FrozenStrProp<TNullity, "EXCLUSIVE"> {
+        return new __FrozenStrProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
     }
+
+    deleted(
+        options: __DeletedOptions<
+            __MakeExpression<
+                "NONNULL", 
+                __ScalarProp<string, TNullity, TBehavior, false>
+            >
+        >
+    ): __FrozenStrProp<TNullity, "DELETED_FLAG"> {
+        return new __FrozenStrProp({...this.__data, scalarBehavior: "DELETED_FLAG", deletedOptions: options});
+    }
+}
+
+export class __FrozenI64Prop<
+    T extends string | number, 
+    TNullity extends __NullityType = "NONNULL",
+    TBehavior extends __ScalarBehavior = "NORMAL"
+> extends __FrozenScalarProp<T, TNullity, TBehavior, false> implements __I64PropContract<T, TNullity, TBehavior> {
+
+    readonly __i64Prop = true;
 }
 
 export class __I64Prop<
     T extends string | number, 
     TNullity extends __NullityType = "NONNULL",
     TBehavior extends __ScalarBehavior = "NORMAL"
-> extends __ScalarProp<T, TNullity, TBehavior, false> implements __I64PropContract<T, TNullity, TBehavior> {
+> extends __FrozenI64Prop<T, TNullity, TBehavior> {
 
     readonly __i64Prop = true;
 
-    override nullable(): __I64Prop<T, "NULLABLE", TBehavior> {
+    nullable(): __I64Prop<T, "NULLABLE", TBehavior> {
         return new __I64Prop({...this.__data, nullity: "NULLABLE"});
-    }
-
-    override exclude(): __I64Prop<T, TNullity, "EXCLUSIVE"> {
-        return new __I64Prop({...this.__data, scalarBehavior: "EXCLUSIVE"});
     }
 
     asString(): __I64Prop<string, TNullity, TBehavior> {
         return new __I64Prop({...this.__data, explicitDataType: ExplicitDataType.STRING});
     }
+
+    excluded(): __FrozenI64Prop<T, TNullity, "EXCLUSIVE"> {
+        return new __FrozenI64Prop({...this.__data, scalarBehavior: "EXCLUSIVE"});
+    }
+
+    deleted(
+        options: __DeletedOptions<
+            __MakeExpression<
+                "NONNULL", 
+                __ScalarProp<T, TNullity, TBehavior, false>
+            >
+        >
+    ): __FrozenI64Prop<T, TNullity, "DELETED_FLAG"> {
+        return new __FrozenI64Prop({...this.__data, scalarBehavior: "DELETED_FLAG", deletedOptions: options});
+    }
+}
+
+export class __FrozenEnumSetProp<
+    TEnum extends string,
+    TBehavior extends __ScalarBehavior = "NORMAL"
+> extends __FrozenScalarProp<ReadonlyArray<TEnum>, "NONNULL", TBehavior, true> implements __EnumSetPropContract<TEnum, TBehavior> {
+
+    readonly __enumSetProp = true;
 }
 
 export class __EnumSetProp<
     TEnum extends string,
     TBehavior extends __ScalarBehavior = "NORMAL"
-> extends __ScalarProp<ReadonlyArray<TEnum>, "NONNULL", TBehavior, true> implements __EnumSetPropContract<TEnum, TBehavior> {
+> extends __FrozenEnumSetProp<TEnum, TBehavior> {
 
-    readonly __enumSetProp = true;
-
-    /**
-     * @deprecated
-     */
-    override nullable(): __ScalarProp<ReadonlyArray<TEnum>, "NULLABLE", TBehavior, true> {
-        throw new Error("EnumSet property cannot be nullable");
+    excluded(): __FrozenEnumSetProp<TEnum, "EXCLUSIVE"> {
+        return new __FrozenEnumSetProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
     }
 
-    override exclude(): __EnumSetProp<TEnum, "EXCLUSIVE"> {
-        return new __EnumSetProp({...this.__data, scalarBehavior: "EXCLUSIVE"});
-    } 
+    deleted(
+        options: __DeletedOptions<
+            __MakeExpression<
+                "NONNULL", 
+                __ScalarProp<ReadonlyArray<TEnum>, "NONNULL", TBehavior, true>
+            >
+        >
+    ): __FrozenEnumSetProp<TEnum, "DELETED_FLAG"> {
+        return new __FrozenEnumSetProp({...this.__data, scalarBehavior: "DELETED_FLAG", deletedOptions: options});
+    }
 }
 
 export class __EmbeddedProp<
@@ -943,7 +1015,7 @@ export function __scalarPropCreator(): __ScalarPropCreator {
                 scalarType: provider.sqlType, 
                 scalarBehavior: "NORMAL",
                 scalarProvider: provider as any
-            });
+            }) as any;
         }
         return new __ScalarProp({
             ...__EMPTY_PROP_DEFINITION_DATA, 
@@ -1022,6 +1094,7 @@ export type __PropData = {
     readonly scalarBehavior: __ScalarBehavior | undefined;
     readonly explicitDataType: ExplicitDataType;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
+    readonly deletedOptions: __DeletedOptions<any> | undefined;
     readonly props: Record<string, __PropContract<any, any>> | undefined;
     readonly targetModelRef: __ModelRef<AnyModel> | undefined;
     readonly associationType: __AssociationType | undefined;
@@ -1080,12 +1153,20 @@ export type __CalculatorData = {
     readonly calculator: Calculator;
 };
 
+export interface __DeletedOptions<TExpression> {
+
+    readonly undeletedFilter: (expression: TExpression) => Predicate | null | undefined;
+
+    readonly deletedValue: () => __UpdatedValue<TExpression>;
+}
+
 export const __EMPTY_PROP_DEFINITION_DATA: __PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
     scalarBehavior: undefined,
     explicitDataType: ExplicitDataType.NONE,
     scalarProvider: undefined,
+    deletedOptions: undefined,
     props: undefined,
     targetModelRef: undefined,
     associationType: undefined,

@@ -296,6 +296,8 @@ describe("InternalInverseJoinSqlTest", () => {
                             (tb_2_.order_x, tb_2_.order_y_a, tb_2_.order_y_b) = (?, ?, ?)
                         )
                     and
+                        tb_1_.DELETED_AT is null
+                    and
                         length(cast(tb_1_.TEXT as text)) >= ?
             `,
             args: [1, 1, 1, 2, 1, 1, 10],

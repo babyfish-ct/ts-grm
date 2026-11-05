@@ -28,7 +28,7 @@ import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
 import { View } from "@/schema/dto/api";
-import { __ForeignKeyData, __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
+import { __DeletedOptions, __ForeignKeyData, __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
 import { MapperFn } from "./dto_mapping";
 import { ExplicitDataType } from "./explicit";
 
@@ -193,6 +193,10 @@ export class EntityProp {
 
     get scalarBehavior(): __ScalarBehavior | undefined {
         return this._scalarBehavior;
+    }
+
+    get deletedOptions(): __DeletedOptions<any> | undefined {
+        return this._data.deletedOptions;
     }
 
     get explicitDataType(): ExplicitDataType {

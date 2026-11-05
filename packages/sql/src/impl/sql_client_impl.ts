@@ -311,7 +311,11 @@ export class SqlClientImpl implements SqlClientImplementor {
         const filters: Array<AnyFilter> = [];
         for (let e: spi.Entity | undefined = entity; 
             e != null; 
-            e = e.superEntity) {
+            e = e.superEntity
+        ) {
+            for (const filter of entity.deletedFilters) {
+                filters.push(filter as any);
+            }
             const arr = this._configuredFilterMap?.get(e);
             if (arr != null) {
                 filters.push(...arr);

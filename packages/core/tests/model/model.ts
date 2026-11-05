@@ -340,7 +340,10 @@ export const TAG = model("Tag", "id", class {
 export const COMMENT = model("Comment", "id", class {
     id = prop.i64()
     name = prop.str(50)
-    deletedAt = prop.dt().exclude().nullable()
+    deletedAt = prop.dt().nullable().deleted({
+        undeletedFilter: expr => expr.isNull(),
+        deletedValue: () => new Date()
+    })
 });
 
 export const STUDENT = model("Student", "id", class {
