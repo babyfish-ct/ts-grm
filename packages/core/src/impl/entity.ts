@@ -405,7 +405,23 @@ export class Entity {
                 but there is no such attribute.`
             );
         }
+        if (idProp.declaringEntity === this) {
+            this._validateIdProp(idProp);
+        }
         return idProp;
+    }
+
+    private _validateIdProp(prop: EntityProp) {
+        if (prop.props != null) {
+            for (const subProp of prop.props.values()) {
+                this._validateIdProp(subProp);
+            }
+        } else if (prop.scalarBehavior === "DELETED_FLAG") {
+            throw new ModelError(
+                this.name,
+                dedent `The property "${prop.toString()}" cannot be id because it is deleted flags`
+            );
+        }
     }
 
     private _createAllProps(): ReadonlyMap<string, EntityProp> {
