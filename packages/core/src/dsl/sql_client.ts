@@ -28,6 +28,7 @@ import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult,
 import { Predicate } from "./expression";
 import { MutableUpdate, Update } from "./update";
 import { Delete } from "./delete";
+import { MutableMergeCreator } from "./merge";
 
 export interface SqlClient {
 
@@ -82,15 +83,21 @@ export interface SqlClient {
         ]
     ): AtomRootQuery<TProjection>;
 
+    createMerge<
+        TModel extends AnyModel | AnyAssociationModel
+    >(
+        model: TModel
+    ): MutableMergeCreator<TModel>;
+
     createUpdate<
-        const TModel extends AnyModel | AnyAssociationModel,
+        TModel extends AnyModel | AnyAssociationModel
     >(
         model: TModel,
         fn: (u: MutableUpdate<TModel>, table: Table<TModel, "ARBITRARY">) => void
     ): Update;
 
     createDelete<
-        const TModel extends AnyModel | AnyAssociationModel
+        TModel extends AnyModel | AnyAssociationModel
     >(
         model: TModel,
         fn: (table: Table<TModel, "ARBITRARY">) => Predicate | null | undefined

@@ -68,7 +68,7 @@ import {
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
 import { ExplicitDataType } from "@/impl/explicit";
-import { __MakeExpression, __UpdatedValue } from "@/index_internal";
+import { __MakeExpression, __MutatedValue } from "@/index_internal";
 import { Predicate } from "@/dsl";
 
 export class __Prop<T, TNullity extends __NullityType> 
@@ -1157,7 +1157,7 @@ export interface __DeletedOptions<TExpression> {
 
     readonly undeletedFilter: (expression: TExpression) => Predicate | null | undefined;
 
-    readonly deletedValue: () => __UpdatedValue<TExpression>;
+    readonly deletedValue: () => __MutatedValue<TExpression>;
 }
 
 export const __EMPTY_PROP_DEFINITION_DATA: __PropData = {

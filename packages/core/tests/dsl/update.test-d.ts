@@ -1,7 +1,7 @@
 import { dsl, SqlClient } from "@/dsl";
 import { describe, it } from "node:test";
 import { AUTHOR, BOOK, LEARNING_LINK } from "../model/model";
-import { __UpdatedMembers } from "@/index";
+import { __MutatedMembers } from "@/index";
 import { expectTypeOf } from "vitest";
 import { NumExpression, StrExpression } from "@/dsl/expression";
 
@@ -14,7 +14,7 @@ describe("UpdateTest", () => {
     const sqlClient = createSqlClient();
 
     it("updateEntity", () => {
-        type Members = __UpdatedMembers<typeof BOOK>;
+        type Members = __MutatedMembers<typeof BOOK>;
         expectTypeOf<Members>().toEqualTypeOf<{
             readonly edition: NumExpression<number>;
             readonly id: NumExpression<number>;
@@ -32,7 +32,7 @@ describe("UpdateTest", () => {
 
     it("updateAssociation", () => {
         const association = dsl.associationModel(AUTHOR, "books");
-        type Members = __UpdatedMembers<typeof association>;
+        type Members = __MutatedMembers<typeof association>;
         expectTypeOf<Omit<Members, "">>().toEqualTypeOf<{
             readonly sourceId: NumExpression<number>;
             readonly targetId: NumExpression<number>;
@@ -45,7 +45,7 @@ describe("UpdateTest", () => {
     });
 
     it("nullableScalar", () => {
-        type Members = __UpdatedMembers<typeof LEARNING_LINK>;
+        type Members = __MutatedMembers<typeof LEARNING_LINK>;
         expectTypeOf<Members>().toEqualTypeOf<{
             readonly courseId: NumExpression<number>;
             readonly id: NumExpression<number>;

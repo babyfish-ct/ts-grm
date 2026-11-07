@@ -14,6 +14,9 @@
 
 import { OrderNullsType } from "@/schema/order";
 import { ExpressionLike } from "./expression";
+import { __ReferencePropContract, __ScalarPropContract } from "@/schema/prop_internal_types";
+import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
+import { __MakeExpression } from "./table_internal_types";
 
 export class ExpressionOrder {
     

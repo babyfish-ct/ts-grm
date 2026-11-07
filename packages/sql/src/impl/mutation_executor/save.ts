@@ -1,3 +1,17 @@
+/*
+ * ts-grm is a pure TypeScript database ORM built on type-level programming.
+ * 
+ * Design principles:
+ * - Zero code generation, pure TypeScript type inference
+ * - No entity object instantiation — maps database rows directly to DTOs
+ * - No runtime reflection — performance on par with handwritten SQL
+ * - Full type safety, full SQL features
+ * - Like GraphQL, clients can query exact shape of data they need
+ * - Like the inversed GraphQL, clients can save exact shape of data they need
+ * 
+ * @author 陈涛 (Chen Tao)
+ */
+
 import { SqlBuilder } from "@/sql/sql_builder";
 import { SqlClientImplementor } from "@/sql_client";
 import { Input, SaveOptions, SaveResult, spi, TypeOf, View } from "@ts-grm/core";
@@ -47,7 +61,15 @@ async function saveCollecrtionImpl(
         const mode = metadata.options.root;
         switch (mode) {
             case "INSERT":
-
+            case "INSERT_IF_ABSENT":
+                insert(sqlClient, collection, mode === "INSERT_IF_ABSENT");
+                break;
+            case "UPDATE":
+                update(sqlClient, collection);
+                break;
+            case "UPSERT":
+                upsert(sqlClient, collection);
+                break;
         }
     }
 }
@@ -55,7 +77,7 @@ async function saveCollecrtionImpl(
 function insert(
     sqlClient: SqlClientImplementor,
     collection: spi.InputRowCollection,
-    ignoreDuplicated: boolean
+    ignoreConflict: boolean
 ) {
     const builder = SqlBuilder.of(sqlClient);
     builder

@@ -1,15 +1,18 @@
 import { AnyModel } from "@/schema/model";
 import { Predicate } from "./expression";
 import { AnyAssociationModel } from "./association";
-import { __UpdatedMembers, __UpdatedValue } from "./update_internal_types";
+import { __MutatedMembers, __MutatedValue } from "./mutate_internal_types";
+import { __ReferencePropContract, __ScalarPropContract } from "@/schema/prop_internal_types";
+import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
+import { __MakeExpression } from "./table_internal_types";
 
 export interface MutableUpdate<TModel extends AnyModel | AnyAssociationModel> {
 
     set<
-        TKey extends keyof __UpdatedMembers<TModel>
+        TKey extends keyof __MutatedMembers<TModel>
     >(
         key: TKey,
-        value: __UpdatedValue<__UpdatedMembers<TModel>[TKey]>
+        value: __MutatedValue<__MutatedMembers<TModel>[TKey]>
     ): this;
 
     where(
@@ -18,5 +21,5 @@ export interface MutableUpdate<TModel extends AnyModel | AnyAssociationModel> {
 }
 
 export interface Update {
-
+    
 }

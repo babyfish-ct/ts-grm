@@ -206,6 +206,11 @@ export type  {
     SaveResult,
     SaveOneWithViewResult,
     SaveManyWithViewResult,
+    MutableMergeCreator,
+    MutableMergeMatcher,
+    MutableMergeMatched,
+    MutableMergeUnmatched,
+    Merge,
     MutableUpdate,
     Update,
     Delete
