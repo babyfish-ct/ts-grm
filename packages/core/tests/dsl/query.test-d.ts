@@ -316,7 +316,7 @@ describe("QueryTest", () => {
                     joinType: "LEFT",
                     filter: ctx => ctx.source.book.name.eq(ctx.target.store.name)
                 }
-            );
+            ).$acceptMulti();
             q.where(
                 baseBook.rank.lte(3),
                 baseStore.rank.lte(3)

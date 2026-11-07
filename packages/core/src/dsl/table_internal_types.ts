@@ -250,7 +250,8 @@ export type __WeakJoinAction<
             >(
                 targetModel: TTargetModel,
                 filter: FilterType<TModel, TTargetModel>
-            ): __TableRiskWrapper<__EntityTableMembers<
+            ): __TableRiskWrapper<
+                __EntityTableMembers<
                     TTargetModel, 
                     __AllModelMembers<TTargetModel>, 
                     "NONNULL", 
@@ -284,7 +285,13 @@ export type __WeakJoinAction<
             >(
                 targetModel: TTargetModel,
                 filter: FilterType<TModel, TTargetModel>
-            ): BaseTable<BaseQueryMapOf<TTargetModel>, TJoinPolicy>;
+            ): __TableRiskWrapper<
+                BaseTable<
+                    BaseQueryMapOf<TTargetModel>, 
+                    TJoinPolicy
+                >,
+                TJoinPolicy
+            >;
 
             join<
                 TTargetModel extends BaseModel<any>,
@@ -296,10 +303,13 @@ export type __WeakJoinAction<
                     readonly filter: FilterType<TModel, TTargetModel>,
                     readonly ignoreTargetFilters?: boolean
                 }
-            ): BaseTable<
-                TJoinType extends "LEFT"
-                    ? __NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
-                    : BaseQueryMapOf<TTargetModel>, 
+            ): __TableRiskWrapper<
+                BaseTable<
+                    TJoinType extends "LEFT"
+                        ? __NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
+                        : BaseQueryMapOf<TTargetModel>, 
+                    TJoinPolicy
+                >,
                 TJoinPolicy
             >;
         };

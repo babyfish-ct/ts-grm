@@ -5,25 +5,34 @@ import { BOOK } from "../model/model";
 describe("JoinPolicyTest", () => {
 
     it("arbitraryEntity", () => {
-        type Keys = Exclude<keyof Table<typeof BOOK, "ARBITRARY">, "__type">;
+        type T = Table<typeof BOOK, "ARBITRARY">;
+        type Keys = Exclude<keyof T, "__type">;
         expectTypeOf<Keys>().toEqualTypeOf<
             "as" | "is" | "join" | "association" | "match"| "count" | "fetch" 
             | "every" | "none" | "noneIf" | "some" | "someIf"
             | "id" | "name" | "edition" | "price" | "store" | "storeId" | "authors"
         >();
+        expectTypeOf<HasRisk<T["authors"]>>().toEqualTypeOf<false>();
+        expectTypeOf<HasRisk<T["association"]>>().toEqualTypeOf<false>();
+        expectTypeOf<HasRisk<T["join"]>>().toEqualTypeOf<false>();
     });
 
     it("referenceEntity", () => {
-        type Keys = Exclude<keyof Table<typeof BOOK, "REFERENCE">, "__type">;
+        type T = Table<typeof BOOK, "REFERENCE">;
+        type Keys = Exclude<keyof T, "__type">;
         expectTypeOf<Keys>().toEqualTypeOf<
             "as" | "is" | "join" | "association" | "match"| "count" | "fetch" 
             | "every" | "none" | "noneIf" | "some" | "someIf"
             | "id" | "name" | "edition" | "price" | "store" | "storeId" | "authors"
         >();
+        expectTypeOf<HasRisk<T["authors"]>>().toEqualTypeOf<true>();
+        expectTypeOf<HasRisk<T["association"]>>().toEqualTypeOf<true>();
+        expectTypeOf<HasRisk<T["join"]>>().toEqualTypeOf<true>();
     });
 
     it("noneEntity", () => {
-        type Keys = Exclude<keyof Table<typeof BOOK, "NONE">, "__type">;
+        type T = Table<typeof BOOK, "NONE">;
+        type Keys = Exclude<keyof T, "__type">;
         expectTypeOf<Keys>().toEqualTypeOf<
             "as" | "is" | "match"| "count" | "fetch" 
             | "every" | "none" | "noneIf" | "some" | "someIf"
@@ -76,3 +85,8 @@ describe("JoinPolicyTest", () => {
         >();
     });
 });
+
+type HasRisk<TFun extends (...args: any) => any> =
+    keyof ReturnType<TFun> extends "$acceptMulti"
+        ? true
+        : false;
