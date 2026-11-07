@@ -25,7 +25,7 @@ export type Table<T extends __ModelLike, TJoinPolicy extends __JoinPolicyType = 
     : T extends BaseModel<infer TMap>
         ? BaseTable<TMap, TJoinPolicy>
     : T extends AnyAssociationModel
-        ? AssociationTable<T>
+        ? AssociationTable<T, TJoinPolicy>
     : never;
 
 export type EntityTable<TModel extends AnyModel, TJoinPolicy extends __JoinPolicyType = "REFERENCE"> = 

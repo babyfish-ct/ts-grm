@@ -154,7 +154,7 @@ export class AssociationEntity {
     }
 
     static of(model: AnyAssociationModel) {
-        return (model as AssociationModelImpl<any, any, any, any, any>).toEntity();
+        return (model as AssociationModelImpl<any, any, any, any>).toEntity();
     }
 }
 

@@ -29,7 +29,7 @@ import {
 } from "@/schema/prop_internal_types";
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { BaseTable, EntityTable, FilterType, JoinType } from "./table";
-import { __AssociationKeys, __MakeAssociationModel, __MakeAssociationTableMembers } from "./association_internal_types";
+import { __AssociationKeys, __MakeAssociationModel, __MakeAssociationTableMembers, __ReferenceKeys } from "./association_internal_types";
 import { AnyAssociationModel } from "./association";
 import { AnyModel } from "@/schema/model";
 import { __CollectionKeys } from "@/index_internal";
@@ -63,6 +63,7 @@ export type __EntityTableMembers<
     __DslMembers<TModel, TMembers, TNullity, TJoinPolicy>
     & __WeakJoinAction<TModel, TJoinPolicy> 
     & __StaticEntityTableMembers<TModel, TMembers, TNullity, TJoinPolicy>
+    & __AssociationAction<TModel, TJoinPolicy>
 >;
 
 export type __DslMembers<
@@ -242,9 +243,8 @@ export type __WeakJoinAction<
     TJoinPolicy extends __JoinPolicyType
 > = 
     TJoinPolicy extends "NONE"
-        ? {}
+        ? object
         : {
-
             join<
                 TTargetModel extends AnyModel,
             >(
@@ -309,7 +309,8 @@ export interface __StaticEntityTableMembers<
     TMembers extends object,
     TNullity extends __NullityType, 
     TJoinPolicy extends __JoinPolicyType
-> extends __AssociationAction<TModel, TJoinPolicy>, __AssociationExistenceAction<TMembers>, __CollectionExistenceAction<TMembers> { 
+> extends __AssociationExistenceAction<TMembers>, __CollectionExistenceAction<TMembers> { 
+    
     __type(): {
         tableLike: true;
         entityTableLike: true;
@@ -336,69 +337,79 @@ export interface __StaticEntityTableMembers<
     ): Predicate | undefined;
 }
 
-export interface __AssociationAction<TModel extends AnyModel, TJoinPolicy extends __JoinPolicyType> {
-    
-    association<
-        TKey extends __AssociationKeys<TModel>
-    >(
-        key: TKey,
-    ): __TableRiskWrapper<
-        __MakeAssociationTableMembers<
-            TModel,
-            TKey,
-            "NONNULL"
-        >,
-        TJoinPolicy
-    >;
+export type __AssociationAction<
+    TModel extends AnyModel, 
+    TJoinPolicy extends __JoinPolicyType
+> =
+    TJoinPolicy extends "NONE"
+        ? object
+        : {
+            
+            association<
+                TKey extends __AssociationKeys<TModel>
+            >(
+                key: TKey,
+            ): __TableRiskWrapper<
+                __MakeAssociationTableMembers<
+                    TModel,
+                    TKey,
+                    "NONNULL",
+                    TJoinPolicy
+                >,
+                TJoinPolicy
+            >;
 
-    association<
-        TKey extends __AssociationKeys<TModel>,
-        TJoinType extends JoinType = "INNER"
-    >(
-        key: TKey,
-        joinType: TJoinType
-    ): __TableRiskWrapper<
-        __MakeAssociationTableMembers<
-            TModel,
-            TKey,
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
-        >,
-        TJoinPolicy
-    >;
+            association<
+                TKey extends __AssociationKeys<TModel>,
+                TJoinType extends JoinType = "INNER"
+            >(
+                key: TKey,
+                joinType: TJoinType
+            ): __TableRiskWrapper<
+                __MakeAssociationTableMembers<
+                    TModel,
+                    TKey,
+                    TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
+                    TJoinPolicy
+                >,
+                TJoinPolicy
+            >;
 
-    association<
-        TKey extends __AssociationKeys<TModel>
-    >(
-        key: TKey,
-        filter: FilterType<TModel, __MakeAssociationModel<TModel, TKey>>
-    ): __TableRiskWrapper<
-        __MakeAssociationTableMembers<
-            TModel,
-            TKey,
-            "NONNULL"
-        >,
-        TJoinPolicy
-    >;
+            association<
+                TKey extends __AssociationKeys<TModel>
+            >(
+                key: TKey,
+                filter: FilterType<TModel, __MakeAssociationModel<TModel, TKey>>
+            ): __TableRiskWrapper<
+                __MakeAssociationTableMembers<
+                    TModel,
+                    TKey,
+                    "NONNULL",
+                    TJoinPolicy
+                >,
+                TJoinPolicy
+            >;
 
-    association<
-        TKey extends __AssociationKeys<TModel>,
-        TJoinType extends JoinType = "INNER"
-    >(
-        key: TKey,
-        options: {
-            readonly joinType?: TJoinType;
-            readonly filter?: FilterType<TModel, __MakeAssociationModel<TModel, TKey>>,
-            readonly ignoreTargetFilters?: boolean
-        }
-    ): __TableRiskWrapper<
-        __MakeAssociationTableMembers<
-            TModel,
-            TKey,
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
-        >,
-        TJoinPolicy
-    >;
-};
+            association<
+                TKey extends __AssociationKeys<TModel>,
+                TJoinType extends JoinType = "INNER"
+            >(
+                key: TKey,
+                options: {
+                    readonly joinType?: TJoinType;
+                    readonly filter?: FilterType<TModel, __MakeAssociationModel<TModel, TKey>>,
+                    readonly ignoreTargetFilters?: boolean
+                }
+            ): __TableRiskWrapper<
+                __MakeAssociationTableMembers<
+                    TModel,
+                    TKey,
+                    TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
+                    TJoinPolicy
+                >,
+                TJoinPolicy
+            >;
+        };
 
 export interface __AssociationExistenceAction<TModelMembers> {
     none<TKey extends __AssociatedKeys<TModelMembers>>(

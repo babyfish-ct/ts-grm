@@ -24,16 +24,14 @@ export interface AssociationModel<
     TSourceModel extends AnyModel,
     TSourceKey extends keyof __AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
-    TTargetKey extends keyof __AllModelMembers<TTargetModel> & string,
-    TJoinPolicy extends __JoinPolicyType
+    TTargetKey extends keyof __AllModelMembers<TTargetModel> & string
 > {
     __type(): {
         readonly associationModel: [
             TSourceModel, 
             TSourceKey, 
             TTargetModel, 
-            TTargetKey,
-            TJoinPolicy
+            TTargetKey
         ] | true;
     };
 
@@ -46,7 +44,7 @@ export interface AssociationModel<
     readonly targetKeyProp: EntityProp;
 }
 
-export type AnyAssociationModel = AssociationModel<AnyModel, any, AnyModel, any, any>;
+export type AnyAssociationModel = AssociationModel<AnyModel, any, AnyModel, any>;
 
 export function associationModel<
     TModel extends AnyModel,
@@ -61,14 +59,14 @@ export function associationModel<
 }
 
 export type AssociationTable<
-    TModel extends AnyAssociationModel 
+    TModel extends AnyAssociationModel,
+    TJoinPolicy extends __JoinPolicyType = "ARBITRARY"
 > = 
     TModel extends AssociationModel<
         infer SourceModel,
         infer SourceKey,
         infer TargetModel,
-        infer TargetKey,
-        infer JoinPolicy
+        infer TargetKey
     >
         ? __AssociationTableMembers<
             SourceModel, 
@@ -76,6 +74,6 @@ export type AssociationTable<
             TargetModel, 
             TargetKey,
             "NONNULL",
-            JoinPolicy
+            TJoinPolicy
         > 
         : never;

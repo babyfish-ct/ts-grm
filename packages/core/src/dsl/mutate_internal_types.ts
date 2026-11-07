@@ -32,8 +32,7 @@ export type __MutatedMembers<TModel extends AnyModel | AnyAssociationModel> =
         infer SourceModel,
         infer SourceKey,
         infer TargetModel,
-        infer TargetKey,
-        any
+        infer TargetKey
     >
         ? {
             readonly [K in `source${Capitalize<SourceKey>}`]: 

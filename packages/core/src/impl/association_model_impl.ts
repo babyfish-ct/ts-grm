@@ -26,16 +26,14 @@ export class AssociationModelImpl<
     TSourceKey extends __OptionalModelKey<TSourceModel>,
     TTargetModel extends AnyModel,
     TTargetKey extends __OptionalModelKey<TTargetModel>,
-    TJoinPolicy extends __JoinPolicyType
-> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey, TJoinPolicy> {
+> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey> {
 
     __type(): {
         readonly associationModel: [
             TSourceModel, 
             TSourceKey, 
             TTargetModel, 
-            TTargetKey,
-            TJoinPolicy
+            TTargetKey
         ] | true;
     } {
         return { associationModel: true };

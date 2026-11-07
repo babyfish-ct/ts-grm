@@ -13,7 +13,7 @@
  */
 
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
-import { __EntityTableMembers, __JoinPolicyType, __MakeExpression } from "./table_internal_types";
+import { __AssociatedKeys, __EntityTableMembers, __JoinPolicyType, __MakeExpression } from "./table_internal_types";
 import { __AssociatedPropContract, __EmbeddedPropContract, __IsMiddleTableAssociation, __NullityType, __ReferencePropContract } from "@/schema/prop_internal_types";
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { AssociationModel } from "./association";
@@ -21,12 +21,15 @@ import { AnyModel } from "@/schema/model";
 import { FilterType } from "./table";
 
 export type __AssociationKeys<TModel extends AnyModel> =
-    __AssociationKeysImpl<__AllModelMembers<TModel>>;
+    __AssociatedKeys<__AllModelMembers<TModel>>;
 
-export type __AssociationKeysImpl<TMembers> =
+export type __ReferenceKeys<TModel extends AnyModel> =
+    __ReferenceKeysImpl<__AllModelMembers<TModel>>;
+
+export type __ReferenceKeysImpl<TMembers> =
     keyof {
         [K in keyof TMembers as
-            TMembers[K] extends __AssociatedPropContract<any, any, any, any, any, any>
+            TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
                 ? K & string
                 : never
         ]: never
@@ -49,10 +52,7 @@ export type __MakeAssociationModel<
                 TModel,
                 __RequiredModelKey<TModel, SourceKey>,
                 TargetModel,
-                __RequiredModelKey<TargetModel, TargetKey>,
-                __AllModelMembers<TModel>[TAssociationKey] extends __ReferencePropContract<any, any, any, any, any, any>
-                    ? "ARBITRARY"
-                    : "REFERENCE"
+                __RequiredModelKey<TargetModel, TargetKey>
             >
             : never
         : never;
@@ -60,7 +60,8 @@ export type __MakeAssociationModel<
 export type __MakeAssociationTableMembers<
     TModel extends AnyModel,
     TAssociationKey extends __AssociationKeys<TModel>,
-    TNullity extends __NullityType
+    TNullity extends __NullityType,
+    TJoinPolicy extends __JoinPolicyType
 > = 
     __IsMiddleTableAssociation<__AllModelMembers<TModel>[TAssociationKey]> extends true
         ? __AllModelMembers<TModel>[TAssociationKey] extends __AssociatedPropContract<
@@ -77,9 +78,7 @@ export type __MakeAssociationTableMembers<
                 TargetModel,
                 __RequiredModelKey<TargetModel, TargetKey>,
                 TNullity,
-                __AllModelMembers<TModel>[TAssociationKey] extends __ReferencePropContract<any, any, any, any, any, any>
-                    ? "ARBITRARY"
-                    : "REFERENCE"
+                TJoinPolicy
             >
             : never
         : never;
@@ -96,31 +95,35 @@ export type __AssociationTableMembers<
     __type(): {
         readonly tableLike: true;
     };
+} & (
+    TJoinPolicy extends "NONE"
+        ? object
+        : {
+            source(
+                filter?: FilterType<
+                    AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
+                    TSourceModel
+                >
+            ): __EntityTableMembers<
+                TSourceModel, 
+                __AllModelMembers<TSourceModel>,
+                TNullity,
+                TJoinPolicy
+            >;
 
-    source(
-        filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TJoinPolicy>, 
-            TSourceModel
-        >
-    ): __EntityTableMembers<
-        TSourceModel, 
-        __AllModelMembers<TSourceModel>,
-        TNullity,
-        TJoinPolicy
-    >;
-
-    target(
-        filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TJoinPolicy>, 
-            TTargetModel
-        >
-    ): __EntityTableMembers<
-        TTargetModel,
-        __AllModelMembers<TTargetModel>,
-        TNullity,
-        TJoinPolicy
-    >;
-} & {
+            target(
+                filter?: FilterType<
+                    AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
+                    TTargetModel
+                >
+            ): __EntityTableMembers<
+                TTargetModel,
+                __AllModelMembers<TTargetModel>,
+                TNullity,
+                TJoinPolicy
+            >;
+        }
+) & {
     readonly [K in `source${Capitalize<TSourceKey>}`]: 
         __AssociationKeyType<__AllModelMembers<TSourceModel>, TSourceKey, TNullity>;
 } & {
