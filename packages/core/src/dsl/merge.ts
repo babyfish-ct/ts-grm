@@ -67,7 +67,7 @@ export interface MutableMergeUnmatched<
     TSourceModel extends AnyModel | AnyAssociationModel | BaseModel<any>,
     TUseValues extends boolean
 > {
-    unatched(
+    unmatched(
         fn?: (ctx: __MergeUnmatchedContext<TModel, TSourceModel, TUseValues>) => void    
     ): Merge<TModel>;
 }

@@ -28,7 +28,7 @@ describe("MergeTest", () => {
                 .update("price", ctx.new.price)
                 .update("storeId", ctx.new.storeId)
             )
-            .unatched(ctx => ctx
+            .unmatched(ctx => ctx
                 .insertAll()
             );
         const ids = await merge.executeAndReturn("id");
@@ -54,7 +54,7 @@ describe("MergeTest", () => {
                 .update("price", ctx.new.price)
                 .update("storeId", ctx.new.storeId)
             )
-            .unatched(ctx => ctx
+            .unmatched(ctx => ctx
                 .insertAll()
             );
         const ids = await merge.executeAndReturn("id");
@@ -85,7 +85,7 @@ describe("MergeTest", () => {
                 .update("price", ctx.new.thePrice.plus(ctx.old.price))
                 .update("storeId", ctx.new.theStoreId)
             )
-            .unatched(ctx => ctx
+            .unmatched(ctx => ctx
                 .insert("name", ctx.new.theName)
                 .insert("edition", ctx.new.theEdition)
                 .insert("price", ctx.new.thePrice)
@@ -114,7 +114,7 @@ describe("MergeTest", () => {
                 ])
             )
             .matched()
-            .unatched(ctx => ctx
+            .unmatched(ctx => ctx
                 .insert("sourceId", ctx.new.a)
                 .insert("targetId", ctx.new.b)
             )
