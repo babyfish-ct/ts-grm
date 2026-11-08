@@ -63,7 +63,10 @@ import {
     MutableUpdate,
     Update,
     Delete,
-    Predicate
+    Predicate,
+    Merge,
+    MutableMerge,
+    MutableInsert
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -231,8 +234,26 @@ export class SqlClientImpl implements SqlClientImplementor {
         return query;
     }
 
+    createInsert<
+        const TModel extends AnyModel | AnyAssociationModel
+    >(
+        model: TModel
+    ): MutableInsert<TModel> {
+        suppressUnused(model);
+        throw new Error("UnsupportedOperationError");
+    }
+
+    createMerge<
+        const TModel extends AnyModel | AnyAssociationModel
+    >(
+        model: TModel
+    ): MutableMerge<TModel> {
+        suppressUnused(model);
+        throw new Error("UnsupportedOperationError");
+    }
+
     createUpdate<
-        const TModel extends AnyModel | AnyAssociationModel,
+        const TModel extends AnyModel | AnyAssociationModel
     >(
         model: TModel,
         fn: (u: MutableUpdate<TModel>, table: Table<TModel, "ARBITRARY">) => void
