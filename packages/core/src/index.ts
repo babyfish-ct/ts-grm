@@ -206,7 +206,12 @@ export type  {
     SaveResult,
     SaveOneWithViewResult,
     SaveManyWithViewResult,
-    MutableMergeCreator,
+    MutableInsert,
+    MutableInsertByValues,
+    MutableInsertByBaseQuery,
+    Insert,
+    MutableMerge,
+    MutableMergeByValues,
     MutableMergeMatcher,
     MutableMergeMatched,
     MutableMergeUnmatched,
@@ -215,4 +220,3 @@ export type  {
     Update,
     Delete
 } from "./dsl";
-

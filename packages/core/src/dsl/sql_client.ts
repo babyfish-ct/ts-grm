@@ -28,7 +28,8 @@ import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult,
 import { Predicate } from "./expression";
 import { MutableUpdate, Update } from "./update";
 import { Delete } from "./delete";
-import { MutableMergeCreator } from "./merge";
+import { MutableMerge } from "./merge";
+import { MutableInsert } from "./insert";
 
 export interface SqlClient {
 
@@ -83,11 +84,17 @@ export interface SqlClient {
         ]
     ): AtomRootQuery<TProjection>;
 
+    createInsert<
+        TModel extends AnyModel | AnyAssociationModel
+    >(
+        model: TModel
+    ): MutableInsert<TModel>;
+
     createMerge<
         TModel extends AnyModel | AnyAssociationModel
     >(
         model: TModel
-    ): MutableMergeCreator<TModel>;
+    ): MutableMerge<TModel>;
 
     createUpdate<
         TModel extends AnyModel | AnyAssociationModel

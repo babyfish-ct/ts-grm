@@ -18,7 +18,7 @@ import { __FlattenMembers } from "@/auxiliary_types";
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
 import { __AssociationKeyType } from "./association_internal_types";
 import { __ReferencePropContract, __ScalarPropContract } from "@/schema/prop_internal_types";
-import { __MakeExpression } from "./table_internal_types";
+import { __MakeExpression, __StaticEntityTableMembers } from "./table_internal_types";
 import { Expression, NumExpression } from "./expression";
 import { __TargetModelOf, __WithNullity } from "@/index_internal";
 import { AtLeastOne } from "./utils";
@@ -116,16 +116,16 @@ export type __MutatedReturn<TExpression, TNullAsUndefined extends boolean> =
 
 export interface __MergeContext<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends AnyModel | AnyAssociationModel | BaseModel<any>
+    TSourceTableLike
 > {
     readonly old: Table<TModel, "NONE">;
-    readonly new: Table<TSourceModel, "NONE">;
+    readonly new: TSourceTableLike;
 }
 
 export interface __MergeMetchedContext<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends AnyModel | AnyAssociationModel | BaseModel<any>
-> extends __MergeContext<TModel, TSourceModel> {
+    TSourceTableLike
+> extends __MergeContext<TModel, TSourceTableLike> {
     
     update<
         TKey extends keyof __MutatedMembers<TModel>
@@ -137,18 +137,18 @@ export interface __MergeMetchedContext<
 
 export type __MergeUnmatchedContext<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends AnyModel | AnyAssociationModel | BaseModel<any>,
+    TSourceTableLike,
     TUseValues extends boolean
 > = 
     TUseValues extends true
-        ? __MergeUnmatchedContextUsingValuesItf<TModel, TSourceModel>
-        : __MergeUnmatchedContextItf<TModel, TSourceModel>;
+        ? __MergeUnmatchedContextUsingValuesItf<TModel, TSourceTableLike>
+        : __MergeUnmatchedContextItf<TModel, TSourceTableLike>;
 
 export interface __MergeUnmatchedContextItf<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends AnyModel | AnyAssociationModel | BaseModel<any>
+    TSourceTableLike
 > {
-    readonly new: Table<TSourceModel, "NONE">;
+    readonly new: TSourceTableLike;
 
     insert<
         TKey extends keyof __MutatedMembers<TModel>
@@ -160,10 +160,30 @@ export interface __MergeUnmatchedContextItf<
 
 export interface __MergeUnmatchedContextUsingValuesItf<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends AnyModel | AnyAssociationModel | BaseModel<any>
-> extends __MergeUnmatchedContextItf<TModel, TSourceModel> {
+    TSourceTableLike
+> extends __MergeUnmatchedContextItf<TModel, TSourceTableLike> {
     
     insertAll(options?: {
         readonly execlude: keyof __MutatedMembers<TModel> | ReadonlyArray<keyof __MutatedMembers<TModel>>;
     }): this;
 }
+
+export interface __InsertConext<
+    TModel extends AnyModel | AnyAssociationModel,
+    TSourceModel extends BaseModel<any>
+> {
+    readonly new: Table<TSourceModel, "NONE">;
+
+    insert<
+        TKey extends keyof __MutatedMembers<TModel>
+    >(
+        key: TKey,
+        value: __MutatedValue<__MutatedMembers<TModel>[TKey]> 
+    ): this;
+}
+
+export type __StaticEntityTableKeys =
+    Exclude<
+        keyof __StaticEntityTableMembers<any, any, any, any>,
+        "__type" | "fetch"
+    >;

@@ -10,36 +10,11 @@ describe("MergeTest", () => {
 
     const sqlClient = createSqlClient();
 
-    it("mergeOneRow", async () => {
-        const merge = sqlClient
-            .createMerge(BOOK)
-            .using(
-                ["name", "edition", "price", "storeId"], 
-                ["GraphQL in Action", 2, 59.9, "2"]
-            )
-            .on(ctx => 
-                dsl.tuple(
-                    ctx.old.name, ctx.old.edition
-                ).eq([
-                    ctx.new.name, ctx.new.edition
-                ])
-            )
-            .matched(ctx => ctx
-                .update("price", ctx.new.price)
-                .update("storeId", ctx.new.storeId)
-            )
-            .unmatched(ctx => ctx
-                .insertAll()
-            );
-        const ids = await merge.executeAndReturn("id");
-        expectTypeOf<typeof ids>().toEqualTypeOf<ReadonlyArray<number>>();
-    });
-
     it("mergeRows", async () => {
         const merge = sqlClient
             .createMerge(BOOK)
-            .using(
-                ["name", "edition", "price", "storeId"], 
+            .using("name", "edition", "price", "storeId")
+            .values( 
                 ["GraphQL in Action", 2, 59.9, "2"],
                 ["Learning GraphQL", 3, 49.9, "1"]
             )
