@@ -17,7 +17,6 @@ import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __InsertConext, __
 import { AnyModel } from "@/schema/model";
 import { AtLeastOne } from "./utils";
 import { BaseModel, BaseQuery, BaseQueryMapOf } from "./base_query";
-import { Importer } from "./importer";
 
 export interface MutableInsert<
     TModel extends AnyModel | AnyAssociationModel
@@ -43,7 +42,7 @@ export interface MutableInsertByValues<
         ...rows: ReadonlyArray<
             __MutatedLiterals<TModel, TKeys>
         >
-    ): Importer<TModel>;
+    ): Insert<TModel>;
 }
 
 export interface MutableInsertByBaseQuery<
@@ -52,5 +51,55 @@ export interface MutableInsertByBaseQuery<
 > {
     do(
         fn: (ctx: __InsertConext<TModel, TSourceModel>) => void
-    ): Importer<TModel>;
+    ): Insert<TModel>;
+}
+
+export interface Insert<
+    TModel extends AnyModel | AnyAssociationModel
+> {
+    execute<
+        TReturnKind extends "AFFECTED_ROW_COUNT" | "NOTHING" = "AFFECTED_ROW_COUNT"
+    >(kind?: TReturnKind): Promise<
+        TReturnKind extends "NOTHING"
+            ? void
+            : InsertResult
+    >;
+
+    returning<
+        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    >(
+        ...keys: TKeys
+    ): ReturnedInsert<TModel, TKeys>;
+}
+
+export interface ReturnedInsert<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+> {
+
+    execute<
+        TNullAsUndefined extends boolean = false
+    >(
+        options?: {
+            readonly nullAsUndefined: TNullAsUndefined
+        }
+    ): Promise<
+        TKeys["length"] extends 1
+            ? InsertResultWithData<
+                __MutatedReturn<__MutatedMembers<TModel>[TKeys[0]], TNullAsUndefined> 
+            >
+            : InsertResultWithData<{
+                -readonly [K in keyof TKeys]: __MutatedReturn<__MutatedMembers<TModel>[TKeys[K]], TNullAsUndefined> 
+            }>
+    >;
+}
+
+export interface InsertResult {
+
+    readonly affectedRowCount: number;
+}
+
+export interface InsertResultWithData<T> extends InsertResult {
+
+    readonly rows: ReadonlyArray<T>;
 }

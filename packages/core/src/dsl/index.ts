@@ -45,9 +45,27 @@ export type {
     SaveOneWithViewResult,
     SaveManyWithViewResult
 } from "./save";
-export type { Importer, ImportedResult, ImportedResultWithMatched, ImportedResultWithData } from "./importer";
-export type { MutableInsert, MutableInsertByValues, MutableInsertByBaseQuery } from "./insert";
-export type { MutableMerge, MutableMergeByValues, MutableMergeMatcher, MutableMergeMatched, MutableMergeUnmatched } from "./merge";
+export type { 
+    MutableInsert, 
+    MutableInsertByValues, 
+    MutableInsertByBaseQuery,
+    Insert,
+    ReturnedInsert,
+    InsertResult,
+    InsertResultWithData 
+} from "./insert";
+export type { 
+    MutableMerge, 
+    MutableMergeByValues, 
+    MutableMergeMatcher, 
+    MutableMergeMatched, 
+    MutableMergeUnmatched,
+    Merge,
+    ReturnedMerge,
+    MergeResult,
+    MergeResultWithMatched,
+    MergeResultWithData
+} from "./merge";
 export type { MutableUpdate, Update } from "./update";
 export type { Delete } from "./delete";
 export type { 

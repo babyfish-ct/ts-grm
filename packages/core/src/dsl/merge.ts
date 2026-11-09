@@ -20,7 +20,6 @@ import { Predicate } from "./expression";
 import { __MakeType } from "./table_internal_types";
 import { AtLeastOne } from "./utils";
 import { Table } from "./table";
-import { Importer } from "./importer";
 
 export interface MutableMerge<
     TModel extends AnyModel | AnyAssociationModel
@@ -88,5 +87,67 @@ export interface MutableMergeUnmatched<
 > {
     unmatched(
         fn?: (ctx: __MergeUnmatchedContext<TModel, TSourceTableLike, TUseValues>) => void    
-    ): Importer<TModel>;
+    ): Merge<TModel>;
+}
+
+export interface Merge<
+    TModel extends AnyModel | AnyAssociationModel
+> {
+    execute<
+        TReturnKind extends "AFFECTED_ROW_COUNT" | "WITH_ROWS" | "NOTHING" = "AFFECTED_ROW_COUNT"
+    >(kind?: TReturnKind): Promise<
+        TReturnKind extends "WITH_ROWS"
+            ? MergeResultWithMatched
+        : TReturnKind extends "NOTHING"
+            ? void
+        : MergeResult
+    >;
+
+    returning<
+        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    >(
+        ...keys: TKeys
+    ): ReturnedMerge<TModel, TKeys>;
+}
+
+export interface ReturnedMerge<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+> {
+
+    execute<
+        TNullAsUndefined extends boolean = false
+    >(
+        options?: {
+            readonly nullAsUndefined: TNullAsUndefined
+        }
+    ): Promise<
+        TKeys["length"] extends 1
+            ? MergeResultWithData<
+                __MutatedReturn<__MutatedMembers<TModel>[TKeys[0]], TNullAsUndefined> 
+            >
+            : MergeResultWithData<{
+                -readonly [K in keyof TKeys]: __MutatedReturn<__MutatedMembers<TModel>[TKeys[K]], TNullAsUndefined> 
+            }>
+    >;
+}
+
+export interface MergeResult {
+
+    readonly affectedRowCount: number;
+}
+
+export interface MergeResultWithMatched extends MergeResult {
+
+    readonly rows: ReadonlyArray<{
+        readonly matched: boolean;
+    }>;
+}
+
+export interface MergeResultWithData<T> extends MergeResult {
+
+    readonly rows: ReadonlyArray<{
+        readonly matched: boolean;
+        readonly data: T;
+    }>;
 }
