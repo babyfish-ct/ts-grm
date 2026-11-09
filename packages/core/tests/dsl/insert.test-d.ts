@@ -93,12 +93,14 @@ describe("InsertTest", () => {
         expectTypeOf<typeof result1>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await insert.execute(true);
+        const result2 = await insert.execute("WITH_ROWS");
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
             readonly rows: ReadonlyArray<{
                 readonly matched: boolean;
             }>
         }>();
+        const result3 = await insert.execute("NOTHING");
+        expectTypeOf<typeof result3>().toEqualTypeOf<void>();
     })
 });

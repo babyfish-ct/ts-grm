@@ -21,11 +21,13 @@ export interface Importer<
     TModel extends AnyModel | AnyAssociationModel
 > {
     execute<
-        TWithMatched extends boolean = false
-    >(withRows?: TWithMatched): Promise<
-        TWithMatched extends true
+        TReturnKind extends "AFFECTED_ROW_COUNT" | "WITH_ROWS" | "NOTHING" = "AFFECTED_ROW_COUNT"
+    >(kind?: TReturnKind): Promise<
+        TReturnKind extends "WITH_ROWS"
             ? ImportedResultWithMatched
-            : ImportedResult
+        : TReturnKind extends "NOTHING"
+            ? void
+        : ImportedResult
     >;
 
     returning<

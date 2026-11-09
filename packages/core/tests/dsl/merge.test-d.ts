@@ -125,12 +125,14 @@ describe("MergeTest", () => {
         expectTypeOf<typeof result1>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await merge.execute(true);
+        const result2 = await merge.execute("WITH_ROWS");
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
             readonly rows: ReadonlyArray<{
                 readonly matched: boolean;
             }>
         }>();
+        const result3 = await merge.execute("NOTHING");
+        expectTypeOf<typeof result3>().toEqualTypeOf<void>();
     });
 });
