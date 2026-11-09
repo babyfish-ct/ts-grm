@@ -19,8 +19,22 @@ describe("InsertTest", () => {
                 ["YugabyteDB Guide", 3, 79.9, "1"],
                 ["CockroachDB Guide", 3, 69.9, "1"]
             );
-        const ids = await insert.executeAndReturn("id");
-        expectTypeOf<typeof ids>().toEqualTypeOf<ReadonlyArray<number>>();
+        const result1 = await insert.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: number;
+            }>
+        }>();
+        const result2 = await insert.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: [number, number];
+            }>
+        }>();
     });
 
     it("insertBaseQuery", async() => {
@@ -42,8 +56,22 @@ describe("InsertTest", () => {
                 .insert("price", ctx.new.thePrice)
                 .insert("storeId", ctx.new.theStoreId)
             );
-        const ids = await insert.executeAndReturn("id");
-        expectTypeOf<typeof ids>().toEqualTypeOf<ReadonlyArray<number>>();
+        const result1 = await insert.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: number;
+            }>
+        }>();
+        const result2 = await insert.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: [number, number];
+            }>
+        }>();
     });
 
     it("insertAssociation", async() => {
@@ -61,7 +89,16 @@ describe("InsertTest", () => {
                 .insert("sourceId", ctx.new.a)
                 .insert("targetId", ctx.new.b)
             );
-        const result = await insert.execute();
-        expectTypeOf<typeof result>().toEqualTypeOf<void>();
+        const result1 = await insert.execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+        }>();
+        const result2 = await insert.execute(true);
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+            }>
+        }>();
     })
 });

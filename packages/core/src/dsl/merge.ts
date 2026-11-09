@@ -20,6 +20,7 @@ import { Predicate } from "./expression";
 import { __MakeType } from "./table_internal_types";
 import { AtLeastOne } from "./utils";
 import { Table } from "./table";
+import { Importer } from "./importer";
 
 export interface MutableMerge<
     TModel extends AnyModel | AnyAssociationModel
@@ -87,25 +88,5 @@ export interface MutableMergeUnmatched<
 > {
     unmatched(
         fn?: (ctx: __MergeUnmatchedContext<TModel, TSourceTableLike, TUseValues>) => void    
-    ): Merge<TModel>;
-}
-
-export interface Merge<
-    TModel extends AnyModel | AnyAssociationModel
-> {
-    execute(): Promise<void>;
-
-    executeAndReturn<
-        TKey extends keyof __MutatedMembers<TModel>,
-        TNullAsUndefined extends boolean = false
-    >(
-        returnedKey: TKey,
-        options?: {
-            readonly nullAsUndefined: TNullAsUndefined
-        }
-    ): Promise<
-        ReadonlyArray<
-            __MutatedReturn<__MutatedMembers<TModel>[TKey], TNullAsUndefined> 
-        >
-    >;
+    ): Importer<TModel>;
 }

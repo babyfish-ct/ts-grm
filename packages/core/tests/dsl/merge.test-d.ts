@@ -32,8 +32,22 @@ describe("MergeTest", () => {
             .unmatched(ctx => ctx
                 .insertAll()
             );
-        const ids = await merge.executeAndReturn("id");
-        expectTypeOf<typeof ids>().toEqualTypeOf<ReadonlyArray<number>>();
+        const result1 = await merge.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: number;
+            }>
+        }>();
+        const result2 = await merge.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: [number, number];
+            }>
+        }>();
     });
 
     it("mergeBaseQuery", async () => {
@@ -66,8 +80,22 @@ describe("MergeTest", () => {
                 .insert("price", ctx.new.thePrice)
                 .insert("storeId", ctx.new.theStoreId)
             );
-        const ids = await merge.executeAndReturn("id");
-        expectTypeOf<typeof ids>().toEqualTypeOf<ReadonlyArray<number>>();
+        const result1 = await merge.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: number;
+            }>
+        }>();
+        const result2 = await merge.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: [number, number];
+            }>
+        }>();
     });
 
     it("mergeAssociation", async() => {
@@ -93,7 +121,16 @@ describe("MergeTest", () => {
                 .insert("sourceId", ctx.new.a)
                 .insert("targetId", ctx.new.b)
             )
-        const result = await merge.execute();
-        expectTypeOf<typeof result>().toEqualTypeOf<void>();
+        const result1 = await merge.execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+        }>();
+        const result2 = await merge.execute(true);
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+            }>
+        }>();
     });
 });

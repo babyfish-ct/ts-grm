@@ -17,6 +17,7 @@ import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __InsertConext, __
 import { AnyModel } from "@/schema/model";
 import { AtLeastOne } from "./utils";
 import { BaseModel, BaseQuery, BaseQueryMapOf } from "./base_query";
+import { Importer } from "./importer";
 
 export interface MutableInsert<
     TModel extends AnyModel | AnyAssociationModel
@@ -42,7 +43,7 @@ export interface MutableInsertByValues<
         ...rows: ReadonlyArray<
             __MutatedLiterals<TModel, TKeys>
         >
-    ): Insert<TModel>;
+    ): Importer<TModel>;
 }
 
 export interface MutableInsertByBaseQuery<
@@ -51,26 +52,5 @@ export interface MutableInsertByBaseQuery<
 > {
     do(
         fn: (ctx: __InsertConext<TModel, TSourceModel>) => void
-    ): Insert<TModel>;
-}
-
-export interface Insert<
-    TModel extends AnyModel | AnyAssociationModel
-> {
-
-    execute(): Promise<void>;
-
-    executeAndReturn<
-        TKey extends keyof __MutatedMembers<TModel>,
-        TNullAsUndefined extends boolean = false
-    >(
-        returnedKey: TKey,
-        options?: {
-            readonly nullAsUndefined: TNullAsUndefined
-        }
-    ): Promise<
-        ReadonlyArray<
-            __MutatedReturn<__MutatedMembers<TModel>[TKey], TNullAsUndefined> 
-        >
-    >;
+    ): Importer<TModel>;
 }
