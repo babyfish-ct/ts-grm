@@ -79,6 +79,15 @@ export type {
     ProjectionContract, 
     AtomQueryOptions 
 } from "./query";
+export type { 
+    InsertContract,
+    InsertBinding, 
+    MergeContract, 
+    SourceRow, 
+    Assignment, 
+    UpdateContract, 
+    DeleteContract 
+} from "./mutation";
 export { defaultAtomQueryOptions } from "./query";
 export type { Visitor } from "./visitor";
 export { AbstractVisitor } from "./visitor";

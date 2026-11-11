@@ -52,7 +52,7 @@ implements TransactionManager {
                 return await this.executeInNewContext(undefined, options.timeout, undefined, fn);
             case "MANDATORY":
                 if (ctx?.isolation == null) {
-                    throw new err.ArgumentError(`There is no existing transaction`);
+                    throw new err.StateError(`There is no existing transaction`);
                 }
                 await this.validateIsolation(ctx.isolation, options.isolation);
                 return await executeInTimeout(options.timeout, fn);
@@ -82,6 +82,14 @@ implements TransactionManager {
         return await this.executeInNewContext(undefined, 0, undefined, fn);
     }
 
+    setRollbackOnly(): void {
+        const ctx = transactionStorage.getStore() as TContext | undefined;
+        if (ctx == null) {
+            throw new err.StateError(`Cannot set rollbackOnly flag because there is no current transaction`);
+        }
+        ctx.setRollbackOnly();
+    }
+
     private async executeInNewContext<R>(
         isolation: Isolation | undefined,
         timeout: number,
@@ -99,7 +107,11 @@ implements TransactionManager {
                     await this.rollback(ctx);
                     throw ex;
                 }
-                await this.commit(ctx);
+                if (ctx.isRollbackOnly) {
+                    await this.rollback(ctx);
+                } else {
+                    await this.commit(ctx);
+                }
                 return result;
             });
         }
@@ -124,7 +136,11 @@ implements TransactionManager {
                     await this.rollback(ctx);
                     throw ex;
                 }
-                await this.commit(ctx);
+                if (ctx.isRollbackOnly) {
+                    await this.rollback(ctx);
+                } else {
+                    await this.commit(ctx);
+                }
             } finally {
                 await this.close(ctx);
             }
@@ -202,6 +218,8 @@ export abstract class TransactionContext<TContext extends TransactionContext<TCo
 
     private static _savepointIdSequence = 0;
 
+    private _isRollbackOnly = false;
+
     constructor(
         readonly isolation: Isolation | undefined, // Undefined means no transaction
         readonly timeout: number,
@@ -218,6 +236,14 @@ export abstract class TransactionContext<TContext extends TransactionContext<TCo
             this._executor = executor = this.createExecutor();
         }
         return executor;
+    }
+
+    get isRollbackOnly(): boolean {
+        return this._isRollbackOnly;
+    }
+
+    setRollbackOnly(): void {
+        this._isRollbackOnly = true;
     }
 
     protected abstract createExecutor(): Executor;

@@ -64,7 +64,6 @@ import {
     Update,
     Delete,
     Predicate,
-    Merge,
     MutableMerge,
     MutableInsert
 } from "@ts-grm/core";
@@ -83,7 +82,8 @@ import { Executor } from "@/transaction/executor";
 import { toExpressionOrders } from "./expression_orders";
 import { NoDataError, TooManyDataError } from "@/error/data_count_error";
 import { Validator } from "./validator";
-import { save } from "./mutation_executor/save";
+import { executeSave } from "./mutation_executor/execute_save";
+import { MutableInsertImpl } from "./mutable_insert_impl";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -239,8 +239,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     >(
         model: TModel
     ): MutableInsert<TModel> {
-        suppressUnused(model);
-        throw new Error("UnsupportedOperationError");
+        return new MutableInsertImpl(this, model);
     }
 
     createMerge<
@@ -476,7 +475,7 @@ export class SqlClientImpl implements SqlClientImplementor {
         readonly row?: any;
         readonly rows?: ReadonlyArray<any>
     }> {
-        return save(this, input, data, options);
+        return executeSave(this, input, data, options);
     }
 }
 

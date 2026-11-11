@@ -5,7 +5,9 @@
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
-  "engines": { "node": ">=18.0.0" },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",

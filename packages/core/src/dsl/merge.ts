@@ -43,6 +43,16 @@ export interface MutableMerge<
         Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">, 
         false
     >;
+
+    using<
+        TQuery extends BaseQuery<any>
+    >(
+        model: BaseModel<BaseQueryMapOf<TQuery>>    
+    ): MutableMergeMatcher<
+        TModel, 
+        Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">, 
+        false
+    >;
 }
 
 export interface MutableMergeByValues<
@@ -66,7 +76,7 @@ export interface MutableMergeMatcher<
     on(
         fn: (
             ctx: __MergeContext<TModel, TSourceTableLike>
-        ) => Predicate | null | undefined
+        ) => Predicate
     ): MutableMergeMatched<TModel, TSourceTableLike, TUseValues>;
 }
 

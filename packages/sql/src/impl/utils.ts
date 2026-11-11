@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AnyModel, spi } from "@ts-grm/core";
+import { AnyAssociationModel, AnyModel, BaseModel, err, spi } from "@ts-grm/core";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 
 export function toTables(
@@ -20,11 +20,54 @@ export function toTables(
 ): ReadonlyArray<spi.AbstractTable> {
     const tables: Array<spi.AbstractTable> = [];
     for (let i = 0; i < args.length - 1; i++) {
-        const model = args[i];
-        const table = model instanceof BaseModelImpl
-            ? spi.createTypedBaseTable(model, undefined)
-            : spi.Entity.of(model as AnyModel).table(undefined);
+        const table = toTable(args[i]);
         tables.push(table);
     }
     return tables;
+}
+
+export function toTable(
+    model: AnyModel | AnyAssociationModel | BaseModel<any>
+) {
+    return model instanceof BaseModelImpl
+        ? spi.createTypedBaseTable(model, undefined)
+        : spi.Entity.of(model as AnyModel).table(undefined);
+}
+
+export function propsOf(
+    model: AnyModel | AnyAssociationModel,
+    keys: ReadonlyArray<string>
+): ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> {
+    if ((model.__type() as any).associationModel) {
+        const associationModel = model as AnyAssociationModel;
+        const associationEntity = spi.AssociationEntity.of(associationModel);
+        return keys.map(key => {
+            const prop = associationEntity.expandedProps.get(key);
+            if (prop == null) {
+                throw new err.ArgumentError(
+                    `There is no property "${
+                        key
+                    }" in the association model ${
+                        associationEntity.toString()
+                    }`
+                );
+            }
+            return prop;
+        });
+    }
+    const entityModel = model as AnyModel;
+    const entity = spi.Entity.of(entityModel);
+    return keys.map(key => {
+        const prop = entity.expandedPropMap.get(key);
+        if (prop == null) {
+            throw new err.ArgumentError(
+                `There is no property "${
+                    key
+                }" in the model ${
+                    entity.toString()
+                }`
+            );
+        }
+        return prop;
+    });
 }

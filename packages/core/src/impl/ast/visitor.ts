@@ -148,7 +148,7 @@ export abstract class AbstractVisitor implements Visitor {
     }
 
     visitUpdate(update: UpdateContract): void {
-        for (const assignment of update.assigments) {
+        for (const assignment of update.assignments) {
             assignment.expr.accept(this);
             assignment.valueExpr.accept(this);
         }

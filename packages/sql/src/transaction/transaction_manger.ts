@@ -26,5 +26,7 @@ export interface TransactionManager {
         fn: () => Promise<R>
     ): Promise<R>;
 
+    setRollbackOnly(): void;
+
     readonly defaultExecutor: Executor;
 }

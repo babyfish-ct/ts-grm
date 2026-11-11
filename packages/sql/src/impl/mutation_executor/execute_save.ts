@@ -16,7 +16,7 @@ import { SqlBuilder } from "@/sql/sql_builder";
 import { SqlClientImplementor } from "@/sql_client";
 import { Input, SaveOptions, SaveResult, spi, TypeOf, View } from "@ts-grm/core";
 
-export async function save<TInput extends Input<any, any, any>>(
+export async function executeSave<TInput extends Input<any, any, any>>(
     sqlClient: SqlClientImplementor,
     input: TInput,
     data: TypeOf<TInput> | ReadonlyArray<TypeOf<TInput>>,

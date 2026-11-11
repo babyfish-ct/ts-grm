@@ -31,7 +31,19 @@ export interface MutableInsert<
         TQuery extends BaseQuery<any>,
     >(
         query: TQuery,
-    ): MutableInsertByBaseQuery<TModel, BaseModel<BaseQueryMapOf<TQuery>>>;
+    ): MutableInsertByBaseQuery<
+        TModel, 
+        BaseModel<BaseQueryMapOf<TQuery>>
+    >;
+
+    using<
+        TQuery extends BaseQuery<any>
+    >(
+        model: BaseModel<BaseQueryMapOf<TQuery>>    
+    ): MutableInsertByBaseQuery<
+        TModel, 
+        BaseModel<BaseQueryMapOf<TQuery>>
+    >;
 }
 
 export interface MutableInsertByValues<
