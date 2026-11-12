@@ -341,7 +341,7 @@ export class Value extends Fragment {
     }
 }
 
-export class Query extends Composite {
+export class Statement extends Composite {
 
     private _source: Source | undefined = undefined;
 

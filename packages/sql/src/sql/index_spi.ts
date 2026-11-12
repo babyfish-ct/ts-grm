@@ -24,7 +24,7 @@ export {
     Column,
     ShadowExpr,
     Value,
-    Query,
+    Statement,
     Source,
     RootQueryWrapper,
     RootOrderByClause,

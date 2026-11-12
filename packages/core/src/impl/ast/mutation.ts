@@ -17,21 +17,28 @@ import { AbstractTable } from "../abstract_table";
 import { AbstractPred } from "./pred";
 import { AnyAssociationModel, BaseModel } from "@/dsl";
 import { EntityProp } from "../entity_prop";
-import { AssociationProp } from "../association_entity";
-import { AnyModel } from "@/schema/model";
+import { AssociationEntity, AssociationProp } from "../association_entity";
+import { AnyModel } from "@/index";
+import { Entity } from "../entity";
 
 export interface InsertContract {
 
+    readonly kind: "BY_VALUES" | "BY_BASE_MODEL";
+
     readonly model: AnyModel | AnyAssociationModel;
+
+    readonly entity: Entity | AssociationEntity;
 
     readonly source: Iterable<SourceRow> | BaseModel<any>;
 
     readonly bindings: ReadonlyArray<InsertBinding> | ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp>;
 
-    readonly retunredProps: ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp> | undefined;
+    readonly returnedProps: ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp> | undefined;
 }
 
 export interface MergeContract {
+
+    readonly kind: "BY_VALUES" | "BY_BASE_MODEL";
 
     readonly table: AbstractTable;
 

@@ -13,23 +13,32 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { AnyAssociationModel, AnyModel, BaseModel, spi, TransactionOptions } from "@ts-grm/core";
+import { spi, TransactionOptions } from "@ts-grm/core";
+import { buildInsertStatement } from "./insert_sql_gen";
 
 export function executeInsert(
     sqlClient: SqlClientImplementor,
-    model: AnyModel | AnyAssociationModel,
-    source: Iterable<spi.SourceRow> | BaseModel<any>,
-    bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
-    returnedProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> | undefined,
-    options: {
-        readonly returnNothing: boolean,
-        readonly nullAsUndefined: boolean
-    }
+    insert: spi.InsertContract,
+    options: InsertOptions
 ): Promise<InsertResult> {
+    const [sql, args] = buildInsertStatement(sqlClient, insert);
+    console.log(sql);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.execute(DEFAULT_TRANSACTION_OPTIONS, async () => {
-        throw new Error();
+        const dataRows = await sqlClient.executor.executeStatement(
+            sql, 
+            args, 
+            { kind: "INSERT" }
+        );
+        return {
+            affectedRowCount: 0
+        };
     });
+}
+
+export interface InsertOptions {
+    readonly returnNothing: boolean,
+    readonly nullAsUndefined: boolean
 }
 
 const DEFAULT_TRANSACTION_OPTIONS: TransactionOptions = {
@@ -39,6 +48,6 @@ const DEFAULT_TRANSACTION_OPTIONS: TransactionOptions = {
 };
 
 interface InsertResult {
-    readonly affectedRowCount: number;
-    readonly rows: ReadonlyArray<any>;
+    readonly affectedRowCount?: number;
+    readonly rows?: ReadonlyArray<any>;
 }

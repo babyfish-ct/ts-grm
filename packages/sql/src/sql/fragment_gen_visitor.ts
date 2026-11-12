@@ -13,7 +13,7 @@
  */
 
 import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
-import { TableAlias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause, RootProjectionCaluse } from "./fragment";
+import { TableAlias, Column, Composite, Statement, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause, RootProjectionCaluse, Separator } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
@@ -24,6 +24,7 @@ import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
+import { is } from "zod/v4/locales/index.js";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -82,7 +83,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     private _visitAtomQuery(query: spi.AtomQueryContract): void {
 
         using _ = this._precedenceStack.with(Precedence.ROOT);
-        using __ = this._compositeStack.with(new Query());
+        using __ = this._compositeStack.with(new Statement());
         
         {
             this._compositeStack.current.add("select ");
@@ -198,6 +199,44 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         for (const qry of query.queries) {
             this._compositeStack.current.separator();
             qry.accept(this);
+        }
+    }
+
+    visitInsert(insert: spi.InsertContract): void {
+        using _1 = this._precedenceStack.with(Precedence.ROOT);
+        using _2 = this._compositeStack.with(new Composite());
+        this._compositeStack.current
+            .add("insert into ")
+            .add(insert.entity.toTableName(this._strategy));
+            {
+        using _3 = this._compositeStack.with(new Scope("VALUES"));
+            for (const binding of insert.bindings) {
+                this._compositeStack.current.separator();
+                let prop: spi.EntityProp | spi.AssociationProp;
+                if (insert.kind === "BY_BASE_MODEL") {
+                    const insertBinding = binding as spi.InsertBinding;
+                    prop = insertBinding.prop;
+                } else {
+                    prop = binding as spi.EntityProp | spi.AssociationProp;
+                }
+                const columnName = (prop.toStorage(this._strategy) as spi.Column).name;
+                this._compositeStack.current.add(columnName);
+            }
+        }
+        if (insert.kind === "BY_BASE_MODEL") {
+
+        } else {
+            let size = insert.bindings.length;
+            this._compositeStack.current.add("\nvalues\n");
+            using _4 = this._compositeStack.with(new Scope("COMMA"));
+            for (const row of insert.source as Iterable<spi.SourceRow>) {
+                this._compositeStack.current.separator();
+                using _5 = this._compositeStack.with(new Scope("VALUES"));
+                for (let i = 0; i < size; i++) {
+                    this._compositeStack.current.separator();
+                    this._compositeStack.current.add("?")
+                }
+            }
         }
     }
 

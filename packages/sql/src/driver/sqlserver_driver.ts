@@ -23,7 +23,7 @@ import { ColumnDef } from "@/impl/schema_def";
 import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS, projectionScope } from "./utils";
-import { Composite, Query, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value, valueOf } from "@/sql/fragment";
+import { Composite, Statement, RootOrderByClause, RootProjectionCaluse, RootQueryWrapper, Scope, Value, valueOf } from "@/sql/fragment";
 import { PaginationStrategy, PaginationTransformer } from "./deriver";
 
 export class SqlServerDriver extends AbstractDriver {
@@ -292,7 +292,7 @@ const unitMap: Record<TimeUnit, string> = {
 };
 
 const paginationTransformer: PaginationTransformer = (original, options) => {
-    const query = original.fragments!.find(f => f instanceof Query) as Query | undefined;
+    const query = original.fragments!.find(f => f instanceof Statement) as Statement | undefined;
     if (query == null) {
         throw new UnsupportedFeatureError(
             `Unable to paginate a set operation query (UNION, UNION ALL, EXCEPT, EXCEPT ALL, ` +

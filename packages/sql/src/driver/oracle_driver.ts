@@ -21,7 +21,7 @@ import { TransactionManager } from "@/transaction/transaction_manger";
 import { OraclePool, OracleTransactionManager } from "@/transaction/oracle_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
-import { Composite, Query, RootProjectionCaluse, RootQueryWrapper, Value } from "@/sql/fragment";
+import { Composite, Statement, RootProjectionCaluse, RootQueryWrapper, Value } from "@/sql/fragment";
 import { projectionScope } from "./utils";
 import { PaginationStrategy, PaginationTransformer } from "./deriver";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
@@ -257,7 +257,7 @@ export class OracleNodeRender extends AbstractNodeRender {
 }
 
 const paginationTransformer: PaginationTransformer = (original, options) => {
-    const query = original.fragments!.find(f => f instanceof Query) as Query | undefined;
+    const query = original.fragments!.find(f => f instanceof Statement) as Statement | undefined;
     if (query == null) {
         throw new UnsupportedFeatureError(
             `Unable to paginate a set operation query (UNION, UNION ALL, EXCEPT, EXCEPT ALL, ` +

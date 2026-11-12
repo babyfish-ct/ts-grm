@@ -29,13 +29,17 @@ import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred
 import { Node } from "./node";
 import { IsPred } from "./is_pred";
 import { ExpressionOrder } from "@/dsl/utils";
-import { DeleteContract, UpdateContract } from "./mutation";
+import { DeleteContract, InsertBinding, InsertContract, MergeContract, UpdateContract } from "./mutation";
 
 export interface Visitor {
 
     visitAtomQuery(query: AtomQueryContract): void;
 
     visitMergedQuery(query: MergedQueryContract): void;
+
+    visitInsert(insert: InsertContract): void;
+
+    visitMerge(merge: MergeContract): void;
 
     visitUpdate(update: UpdateContract): void;
 
@@ -144,6 +148,21 @@ export abstract class AbstractVisitor implements Visitor {
     visitMergedQuery(query: MergedQueryContract): void {
         for (const qry of query.queries) {
             qry.accept(this);
+        }
+    }
+
+    visitInsert(insert: InsertContract): void {
+        if (insert.kind === "BY_BASE_MODEL") {
+            for (const binding of insert.bindings) {
+                const insertBinding = binding as InsertBinding;
+                insertBinding.valueExpr.accept(this);   
+            }
+        }
+    }
+
+    visitMerge(merge: MergeContract): void {
+        if (merge.kind === "BY_BASE_MODEL") {
+            
         }
     }
 

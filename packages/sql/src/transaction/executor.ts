@@ -66,34 +66,39 @@ export type Purpose =
     | LoadRecursiveTreePurpose
     | LoadRecursiveTreeKeyPurpose
     | LoadRecursiveTreeNodePurpose
-    | LoadCalculatorPurpose;
+    | LoadCalculatorPurpose
+    | InsertPurpose;
 
-export type QueryPurpose = {
+export interface QueryPurpose {
     readonly kind: "QUERY"
 };
 
-export type LoadAssociationPurpose = {
-    readonly kind: "LOAD_ASSOCIATION",
-    readonly prop: spi.EntityProp
+export interface LoadAssociationPurpose {
+    readonly kind: "LOAD_ASSOCIATION";
+    readonly prop: spi.EntityProp;
 };
 
-export type LoadRecursiveTreePurpose = {
-    readonly kind: "LOAD_RECURSIVE_TREE",
-    readonly prop: spi.EntityProp
+export interface LoadRecursiveTreePurpose {
+    readonly kind: "LOAD_RECURSIVE_TREE";
+    readonly prop: spi.EntityProp;
 };
 
-export type LoadRecursiveTreeKeyPurpose = {
-    kind: "LOAD_RECURSIVE_TREE_KEY",
-    prop: spi.EntityProp
+export interface LoadRecursiveTreeKeyPurpose {
+    readonly kind: "LOAD_RECURSIVE_TREE_KEY";
+    readonly prop: spi.EntityProp;
 };
 
-export type LoadRecursiveTreeNodePurpose = {
-    readonly kind: "LOAD_RECURSIVE_TREE_NODE",
-    readonly prop: spi.EntityProp
+export interface LoadRecursiveTreeNodePurpose {
+    readonly kind: "LOAD_RECURSIVE_TREE_NODE";
+    readonly prop: spi.EntityProp;
 };
 
-export type LoadCalculatorPurpose = {
-    readonly kind: "LOAD_CALCULATOR",
-    readonly prop: spi.EntityProp,
-    readonly parameter: any
+export interface LoadCalculatorPurpose {
+    readonly kind: "LOAD_CALCULATOR";
+    readonly prop: spi.EntityProp;
+    readonly parameter: any;
 };
+
+export interface InsertPurpose {
+    readonly kind: "INSERT";
+}
