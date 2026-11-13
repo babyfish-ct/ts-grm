@@ -24,6 +24,7 @@ import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
+import { is } from "zod/v4/locales/index.js";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -207,34 +208,50 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         using _1 = this._precedenceStack.with(Precedence.ROOT);
         using _2 = this._compositeStack.with(new Composite());
         if (insert.kind === "BY_BASE_MODEL") {
-            const baseModel = insert.source as spi.BaseModelImplementor<any>;
-            if (baseModel.__isCte) {
+            const realTable = this._toRealTable(insert.sourceTable!);
+            this._fillTableFragments([realTable]);
+            const cteTables: Array<RealTable> = [];
+            Source.collectCteTables([realTable], cteTables);
+            if (cteTables.length !== 0) {
                 this._compositeStack.current.add("with ");
-                if (baseModel.__isRecursive) {
-                    this._compositeStack.current.add("recursive ");
+                using _3 = this._compositeStack.with(new Scope("COMMA"));
+                for (const cteTable of cteTables) {
+                    if (this.sqlClient.driver.isRecursiveKeywordRequired && cteTable.symbol.__baseModel!.__isRecursive) {
+                        this._compositeStack.current.add("\nrecursive ");
+                    }
+                    this._compositeStack.current.add(
+                        cteTable === realTable
+                            ? "__inserted_source"
+                            : cteTable.alias
+                    );
+                    const metadata = cteTable.baseQueryMetadata!;
+                    {
+                        using _4 = this._compositeStack.with(new Scope("VALUES", false));
+                        for (const selection of metadata.selections) {
+                            this._compositeStack.current.separator().add(selection.alias);
+                        }
+                    }
+                    this._compositeStack.current.add(" as ").add(cteTable.cteDefinitionFragment);
                 }
-                this._compositeStack.current.add("__inserted_source")
-                const realTable = this._toRealTable(insert.sourceTable!);
-                this._compositeStack.current
-                    .add(this._tableFragmentCreator.createDefinition(realTable, false))
-                    .add("\n");
             }
         }
         this._compositeStack.current
             .add("insert into ")
             .add(insert.entity.toTableName(this._strategy));
             {
-        using _3 = this._compositeStack.with(new Scope("VALUES"));
+        using _5 = this._compositeStack.with(new Scope("VALUES"));
             for (const binding of insert.bindings) {
                 this._compositeStack.current.separator();
-                let prop: spi.EntityProp | spi.AssociationProp;
+                let prop: spi.EntityProp | spi.AssociationProp | spi.TypeNameProp;
                 if (insert.kind === "BY_BASE_MODEL") {
                     const insertBinding = binding as spi.InsertBinding;
                     prop = insertBinding.prop;
                 } else {
                     prop = binding as spi.EntityProp | spi.AssociationProp;
                 }
-                const columnName = (prop.toStorage(this._strategy) as spi.Column).name;
+                const columnName = prop instanceof spi.TypeNameProp
+                    ? prop.columName
+                    : (prop.toStorage(this._strategy) as spi.Column).name;
                 this._compositeStack.current.add(columnName);
             }
         }
@@ -250,13 +267,16 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         } else {
             let size = insert.bindings.length;
             this._compositeStack.current.add("\nvalues\n");
-            using _4 = this._compositeStack.with(new Scope("COMMA"));
+            using _6 = this._compositeStack.with(new Scope("COMMA"));
+            const explicitDataTypes = insert.bindings.map(binding => 
+                (binding as spi.EntityProp | spi.AssociationProp).explicitDataType 
+            );
             for (const row of insert.source as Iterable<spi.SourceRow>) {
                 this._compositeStack.current.separator();
-                using _5 = this._compositeStack.with(new Scope("VALUES"));
+                using _7 = this._compositeStack.with(new Scope("VALUES", false));
                 for (let i = 0; i < size; i++) {
                     this._compositeStack.current.separator();
-                    this._compositeStack.current.add("?")
+                    this._compositeStack.current.add(new Value(row.get(i), explicitDataTypes[i]));
                 }
             }
         }

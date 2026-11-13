@@ -17,7 +17,18 @@ import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __I64PropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT, UserIdGenerator } from "./model";
 
-export interface __ModelCreator<TAbstract extends boolean> {
+export type __ModelCreator<TModifier extends __ModifierType> = 
+    __ModelCreatorItf<TModifier>
+    & (
+        TModifier extends "NONE"
+            ? {
+                readonly abstract: __ModelCreator<"ABSTRACT">;
+                readonly open: __ModelCreator<"OPEN">;
+            }
+            : object
+    )
+
+export interface __ModelCreatorItf<TModifier extends __ModifierType> {
     
     <
         TName extends string, 
@@ -27,29 +38,27 @@ export interface __ModelCreator<TAbstract extends boolean> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __RootModelContext<TIdKey, TCtor>) => void
+        configurator?: (ctx: __RootModelContext<TIdKey, TCtor, TModifier>) => void
     ): Model<
         TName, 
         TIdKey, 
         TCtor, 
         __Decl<TName, TCtor, never>, 
         never, 
-        TAbstract
+        TModifier
     >;
 
-    readonly abstract: __ModelCreator<true>;
-
     extends<
-        TSuperModel extends AnyModel
+        TSuperModel extends Model<any, any, any, any, any, "OPEN" | "ABSTRACT">
     >(
         superModel: TSuperModel
-    ): __InheritanceModelCreator<TSuperModel, TAbstract>;
+    ): __InheritanceModelCreator<TSuperModel, TModifier>;
 };
 
-export type __InheritanceModelCreator<
+export interface __InheritanceModelCreator<
     TSuperModel extends AnyModel,
-    TAbstract extends boolean
-> = {
+    TModifier extends __ModifierType
+> {
     
     <
         TName extends string, 
@@ -57,14 +66,14 @@ export type __InheritanceModelCreator<
     >(
         name: __OtherString<TName, __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel>) => void
+        configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel, TModifier>) => void
     ): Model<
         TName, 
         __ModelIdKey<TSuperModel>, 
         TCtor, 
         __MakeAllModelMembers<TName, TCtor, TSuperModel>,
         __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
-        TAbstract
+        TModifier
     >;
 };
 
@@ -76,20 +85,22 @@ export type __OtherString<T extends string, X extends string> =
 export interface __ModelContext<
     TIdKey extends string, 
     TCtor extends __Ctor, 
-    TSuperModel extends AnyModel | never
+    TSuperModel extends AnyModel | never,
+    TModifier extends __ModifierType
 > {
     
     __type(): { modelContext: TCtor | true };
 
-    table(options: __TableOptions<TSuperModel>): this;
+    table(options: __TableOptions<TSuperModel, TModifier>): this;
 
     unique(...paths : __UniqueKeys<TIdKey, __CtorMembers<TCtor>>[]): this;
 }
 
 export interface __RootModelContext<
     TIdKey extends string, 
-    TCtor extends __Ctor
-> extends __ModelContext<TIdKey, TCtor, never> {
+    TCtor extends __Ctor,
+    TModifier extends __ModifierType
+> extends __ModelContext<TIdKey, TCtor, never, TModifier> {
 
     __type(): { modelContext: TCtor | true; rootModelContext: true };
 
@@ -283,7 +294,10 @@ export type __CalculatorSourceKeys<
     }[keyof TModelMembers] :
     never;
 
-export type __TableOptions<TSuperModel extends AnyModel | never> = 
+export type __TableOptions<
+    TSuperModel extends AnyModel | never, 
+    TModifier extends __ModifierType
+> = 
     DatabaseIdentifier<string> | {
         readonly name?: typeof TABLE_INHERIT
             | DatabaseIdentifier<string>
@@ -292,11 +306,16 @@ export type __TableOptions<TSuperModel extends AnyModel | never> =
             | typeof DISCRIMINATOR_VALUE_MODEL_NAME
             | string
             | number;
-        readonly discriminator?: string | {
-            readonly name: string;
-            readonly type?: "string" | "number"
-        };
-    };
+    } & (
+        TModifier extends "OPEN" | "ABSTRACT"
+            ? {
+                readonly discriminator?: string | {
+                    readonly name: string;
+                    readonly type?: "string" | "number"
+                }
+            }
+            : object
+    );
 
 export type __IdRemappedTable<TSuperModel extends AnyModel | never> = 
     TSuperModel extends AnyModel
@@ -397,3 +416,5 @@ export type __DataType<TProp> =
     : TProp extends __EmbeddedPropContract<infer Props, any, any>
         ? { readonly [K in keyof Props]: __DataType<Props[K]> }
     : never;
+
+export type __ModifierType = "NONE" | "ABSTRACT" | "OPEN";

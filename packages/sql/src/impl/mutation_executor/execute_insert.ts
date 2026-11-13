@@ -19,19 +19,19 @@ import { buildInsertStatement } from "./insert_sql_gen";
 export function executeInsert(
     sqlClient: SqlClientImplementor,
     insert: spi.InsertContract,
-    options: InsertOptions
+    _options: InsertOptions
 ): Promise<InsertResult> {
     const [sql, args] = buildInsertStatement(sqlClient, insert);
     console.log(sql);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.execute(DEFAULT_TRANSACTION_OPTIONS, async () => {
-        const dataRows = await sqlClient.executor.executeStatement(
+        const affectedRowCount = await sqlClient.executor.executeDML(
             sql, 
             args, 
             { kind: "INSERT" }
         );
         return {
-            affectedRowCount: 0
+            affectedRowCount
         };
     });
 }

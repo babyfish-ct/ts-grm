@@ -45,12 +45,12 @@ export interface MutableMerge<
     >;
 
     using<
-        TQuery extends BaseQuery<any>
+        TSourceModel extends BaseModel<any>
     >(
-        model: BaseModel<BaseQueryMapOf<TQuery>>    
+        model: TSourceModel
     ): MutableMergeMatcher<
         TModel, 
-        Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">, 
+        Table<TSourceModel, "NONE">,
         false
     >;
 }

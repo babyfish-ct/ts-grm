@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { err, Isolation } from "@ts-grm/core";
+import { err, Isolation, suppressUnused } from "@ts-grm/core";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Executor, Purpose } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
@@ -128,10 +128,21 @@ class OracleExecutor implements Executor {
         await this._con.execute(sql);
     }
 
+    async executeDML(
+        sql: string, 
+        args: ReadonlyArray<Value>,
+        purpose: Purpose
+    ): Promise<number> {
+        suppressUnused(sql);
+        suppressUnused(args);
+        suppressUnused(purpose);
+        throw new Error("UnsupportedOperationException");
+    }
+
     async executeStatement(
         sql: string, 
         args: ReadonlyArray<Value>, 
-        _purpose: Purpose
+        _: Purpose
     ): Promise<DataRows> {
         const runtime = await oracelRuntime(); 
         const values = args.map(v => v.value);

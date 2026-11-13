@@ -37,12 +37,12 @@ export interface MutableInsert<
     >;
 
     using<
-        TQuery extends BaseQuery<any>
+        TSourceModel extends BaseModel<any>
     >(
-        model: BaseModel<BaseQueryMapOf<TQuery>>    
+        model: TSourceModel
     ): MutableInsertByBaseModel<
         TModel, 
-        BaseModel<BaseQueryMapOf<TQuery>>
+        TSourceModel
     >;
 }
 

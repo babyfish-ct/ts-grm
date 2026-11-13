@@ -166,7 +166,7 @@ function writeRead(
             writer.code("let dto").newLine(";");
             writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
                 for (const downcastEntity of downcastEntities!) {
-                    if (!downcastEntity.isAbstract) {
+                    if (downcastEntity.modifier !== "ABSTRACT") {
                         writer.code("case '").code(downcastEntity.name).code("':");
                         writer.scope("BLANK", () => {
                             writeDtoDeclaration(downcastEntity, shape, mapper, writer);
@@ -183,7 +183,7 @@ function writeRead(
                 writer.code("let implicit").newLine(";");
                 writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
                     for (const downcastEntity of downcastEntities!) {
-                        if (!downcastEntity.isAbstract) {
+                        if (downcastEntity.modifier !== "ABSTRACT") {
                             writer.code("case '").code(downcastEntity.name).code("':");
                             writer.scope("BLANK", () => {
                                 writieImplicitDeclaration(downcastEntity, implicit, mapper, writer);
@@ -201,7 +201,7 @@ function writeRead(
             if (hasEmbedded) {
                 writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
                     for (const downcastEntity of downcastEntities!) {
-                        if (!downcastEntity.isAbstract) {
+                        if (downcastEntity.modifier !== "ABSTRACT") {
                             writer.code("case '").code(downcastEntity.name).code("':");
                             writer.scope("BLANK", () => {
                                 writeDepthAssignments(downcastEntity, mapper, writer);

@@ -25,13 +25,13 @@ import { __Mutable } from "@/auxiliary_types";
 import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
-import { __IdGenerator, __PropData } from "@/index_internal";
+import { __IdGenerator, __ModifierType, __PropData } from "@/index_internal";
 import { ExplicitDataType } from "./explicit";
 import { Filter } from "./dto_mapping";
 
 export class Entity {
 
-    readonly isAbstract: boolean;
+    readonly modifier: __ModifierType;
 
     readonly superEntity: Entity | undefined;
 
@@ -94,12 +94,24 @@ export class Entity {
         if (!isValidModelName(name)) {
             throw new ModelError(
                 name,
-                dedent`Must follow PascalCase naming convention:
+                dedent `Must follow PascalCase naming convention:
                 "${CAMEL_CASE_REGEX.source}"`
             )
         }
-        this.isAbstract = (model as ModelImpl<any, any, any, any, any, any>).isAbstract;
+        this.modifier = (model as ModelImpl<any, any, any, any, any, any>).modifier;
         const superModel = (model as ModelImpl<any, any, any, any, any, any>).superModel;
+        if (superModel != null) {
+            const superModifier = (superModel as AnyModelImpl).modifier;
+            if (superModifier !== "OPEN" && superModifier !== "ABSTRACT") {
+                throw new ModelError(
+                    name,
+                    dedent `Illegal super model "${
+                        (superModel as AnyModelImpl).name
+                    }", the super model is nether abstract nor open, 
+                    it must be created by "model.abstract" or "model.open"`
+                );
+            }
+        }
         this.superEntity = superModel !== undefined
             ? (superModel as AnyModelImpl).toUnresolvedEntity().resolve(1)
             : undefined;
@@ -575,7 +587,7 @@ export class Entity {
     }
 
     private _createTableSettings(
-        options: __TableOptions<AnyModel | never> | undefined
+        options: __TableOptions<AnyModel | never, any> | undefined
     ): TableSettings {
         if (this.superEntity != null) {
             if (this.superEntity.tableSettings.discriminator == null) {
@@ -619,10 +631,11 @@ export class Entity {
                         : options.name.value != "" ? options.name.value : undefined;
             }
         }
-        if (options.discriminator != null) {
-            const type = typeof options.discriminator === "string"
+        const moreInfoOptions = options as __TableOptions<AnyModel | never, "OPEN" | "ABSTRACT">;
+        if (typeof moreInfoOptions !== "string" && moreInfoOptions.discriminator != null) {
+            const type = typeof moreInfoOptions.discriminator === "string"
                 ? "string"
-                : options.discriminator.type ?? "string";
+                : moreInfoOptions.discriminator.type ?? "string";
             if (this.superEntity != null && type !== this.superEntity.tableSettings.discriminator!.type) {
                 throw new ModelError(
                     this.name,
@@ -632,9 +645,9 @@ export class Entity {
                     "${this.superEntity.tableSettings.discriminator?.type}".`  
                 );
             }
-            let name = typeof options.discriminator === "string"
-                ? options.discriminator
-                : options.discriminator.name;
+            let name = typeof moreInfoOptions.discriminator === "string"
+                ? moreInfoOptions.discriminator
+                : moreInfoOptions.discriminator.name;
             if (name == null || name === "") {
                 if (this.superEntity == null) {
                     throw new ModelError(
@@ -651,7 +664,7 @@ export class Entity {
         let discriminatorValue = typeof options === "string"
             ? null
             : options?.discriminatorValue;
-        if (this.isAbstract) {
+        if (this.modifier === "ABSTRACT") {
             if (discriminatorValue != null) {
                 throw new ModelError(
                     this.name,

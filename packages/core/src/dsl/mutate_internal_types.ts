@@ -12,22 +12,28 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AnyModel } from "@/schema/model";
+import { AnyModel, Model } from "@/schema/model";
 import { AnyAssociationModel, AssociationModel } from "./association";
 import { __FlattenMembers } from "@/auxiliary_types";
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
 import { __AssociationKeyType } from "./association_internal_types";
 import { __ReferencePropContract, __ScalarPropContract } from "@/schema/prop_internal_types";
 import { __MakeExpression, __StaticEntityTableMembers } from "./table_internal_types";
-import { Expression, NumExpression } from "./expression";
+import { Expression, NumExpression, StrExpression } from "./expression";
 import { __TargetModelOf, __WithNullity } from "@/index_internal";
 import { AtLeastOne } from "./utils";
 import { Table } from "./table";
 import { BaseModel } from "./base_query";
 
 export type __MutatedMembers<TModel extends AnyModel | AnyAssociationModel> = 
-    TModel extends AnyModel
-        ? __MutatedMembersImpl<__FlattenMembers<__AllModelMembers<TModel>>>
+    TModel extends Model<any, any, any, any, any, infer Modifier>
+        ? __MutatedMembersImpl<__FlattenMembers<__AllModelMembers<TModel>>> & (
+            Modifier extends "OPEN" | "ABSTRACT"
+                ? {
+                    readonly __typename: StrExpression<string>
+                } 
+                : object
+        )
     : TModel extends AssociationModel<
         infer SourceModel,
         infer SourceKey,

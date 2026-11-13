@@ -37,7 +37,7 @@ export function toTable(
 export function propsOf(
     model: AnyModel | AnyAssociationModel,
     keys: ReadonlyArray<string>
-): ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> {
+): ReadonlyArray<spi.EntityProp | spi.TypeNameProp> | ReadonlyArray<spi.AssociationProp> {
     if ((model.__type() as any).associationModel) {
         const associationModel = model as AnyAssociationModel;
         const associationEntity = spi.AssociationEntity.of(associationModel);
@@ -58,7 +58,9 @@ export function propsOf(
     const entityModel = model as AnyModel;
     const entity = spi.Entity.of(entityModel);
     return keys.map(key => {
-        const prop = entity.expandedPropMap.get(key);
+        const prop = key === "__typename"
+            ? new spi.TypeNameProp(entity, entity.tableSettings.discriminator!.name, undefined) 
+            : entity.expandedPropMap.get(key);
         if (prop == null) {
             throw new err.ArgumentError(
                 `There is no property "${

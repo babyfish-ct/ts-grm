@@ -55,7 +55,7 @@ export class Composite extends Fragment {
         }
     }
 
-    separator() {
+    separator(): this {
         throw new err.StateError(`Cannot invoke "separator", it is not supported by current composite`);
     }
 
@@ -401,7 +401,7 @@ export class Source extends Composite {
         builder: SqlBuilder
     ): void {
         const cteTables: Array<RealTable> = [];
-        Source._collectCteTables(this.rootTables, cteTables);
+        Source.collectCteTables(this.rootTables, cteTables);
         if (cteTables.length === 0) {
             return;
         }
@@ -426,7 +426,7 @@ export class Source extends Composite {
         withScope.into(builder);
     }
 
-    private static _collectCteTables(
+    static collectCteTables(
         tables: ReadonlyArray<RealTable>, 
         outArr: Array<RealTable>
     ): void {
@@ -434,7 +434,7 @@ export class Source extends Composite {
             if (table.cteDefinitionFragment != null) {
                 outArr.push(table);
             }
-            Source._collectCteTables(table.children, outArr);
+            Source.collectCteTables(table.children, outArr);
         }
     }
 

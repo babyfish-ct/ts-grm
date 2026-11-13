@@ -285,13 +285,22 @@ class SqlRecordExecutor extends AbstractExecutorWrapper {
         super(raw);
     }
 
-    executeStatement(
+    override executeStatement(
         sql: string, 
         values: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<DataRows> {
         this.sqlRecord.add(sql, values.map(v => v.value), purpose);
         return super.executeStatement(sql, values, purpose);
+    }
+
+    override executeDML(
+        sql: string, 
+        values: ReadonlyArray<Value>,
+        purpose: Purpose
+    ): Promise<number> {
+        this.sqlRecord.add(sql, values.map(v => v.value), purpose);
+        return super.executeDML(sql, values, purpose);
     }
 }
 
@@ -315,6 +324,8 @@ function purposeString(purpose: Purpose): string {
                     ? `, ${JSON.stringify(purpose.parameter)}`
                     : ""
             })`;
+        case "INSERT":
+            return "insert";
     }
 }
 

@@ -16,7 +16,7 @@ import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Executor, Purpose } from "./executor";
-import { Isolation } from "@ts-grm/core";
+import { Isolation, suppressUnused } from "@ts-grm/core";
 import { AbstractSyncPool } from "./abstract_sync_pool";
 
 // Only import types
@@ -135,10 +135,21 @@ class SqlServerExecutor implements Executor {
         await this._requestable.request().query(sql);
     }
 
+    async executeDML(
+        sql: string, 
+        args: ReadonlyArray<Value>,
+        purpose: Purpose
+    ): Promise<number> {
+        suppressUnused(sql);
+        suppressUnused(args);
+        suppressUnused(purpose);
+        throw new Error("UnsupportedOperationException");
+    }
+
     async executeStatement(
         sql: string, 
         args: ReadonlyArray<Value>, 
-        _purpose: Purpose
+        _: Purpose
     ): Promise<DataRows> {
         const runtime = await mssqlRuntime();
         const request = this._requestable.request();

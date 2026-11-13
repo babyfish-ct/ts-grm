@@ -13,8 +13,8 @@
  */
 
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
-import { Isolation } from "@ts-grm/core";
-import { Executor } from "./executor";
+import { Isolation, suppressUnused } from "@ts-grm/core";
+import { Executor, Purpose } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
 
@@ -85,9 +85,21 @@ class PostgresExecutor implements Executor {
         await this._con.query(sql);
     }
 
+    async executeDML(
+        sql: string, 
+        args: ReadonlyArray<Value>,
+        purpose: Purpose
+    ): Promise<number> {
+        suppressUnused(sql);
+        suppressUnused(args);
+        suppressUnused(purpose);
+        throw new Error("UnsupportedOperationException");
+    }
+
     async executeStatement(
         sql: string, 
-        args: ReadonlyArray<Value>
+        args: ReadonlyArray<Value>,
+        _: Purpose
     ): Promise<DataRows> {
         const values = args.map(v => v.value);
         const result = await this._con.query({

@@ -115,7 +115,7 @@ const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> =
         )
     });
 
-export const BOOK = model("Book", "id", class {
+export const BOOK = model.open("Book", "id", class {
     id = prop.i64()
     name = prop.str(50)
     edition = prop.i32()
@@ -162,7 +162,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
     })
 );
 
-export const ELECTRONIC_BOOK = model.extends(BOOK)(
+export const ELECTRONIC_BOOK = model.open.extends(BOOK)(
     "ElectronicBook", 
     class {
         address = prop.str(50);
@@ -253,7 +253,7 @@ export const ITEM = model.extends(TREE_NODE)(
     }
 );
 
-export const ORDER = model("Order", "id", class {
+export const ORDER = model.open("Order", "id", class {
     id = prop.embedded({
         x: prop.i32(),
         y: prop.embedded({

@@ -14,7 +14,7 @@
 
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { __Ctor, __CtorMembers, __IdGenerator, __ModelContext, __RootModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
+import { __Ctor, __CtorMembers, __IdGenerator, __ModelContext, __ModifierType, __RootModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
 import { ModelContract } from "./model_contract";
 import { AnyModel, Model } from "@/schema/model";
 
@@ -24,14 +24,14 @@ export class ModelImpl<
     TCtor extends __Ctor,
     TAllMembers extends object,
     TSuperNames extends string | never,
-    TAbstract extends boolean
+    TModifier extends __ModifierType
 > implements Model<
     TName,
     TIdKey,
     TCtor,
     TAllMembers,
     TSuperNames,
-    TAbstract
+    TModifier
 >, ModelContract {
 
     readonly identifier: number = allocateModelIdentifier();
@@ -41,7 +41,7 @@ export class ModelImpl<
     private _derivedModels: Set<AnyModelImpl> | undefined;
 
     __type(): {
-        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames, TAbstract] | true
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames, TModifier] | true
     } {
         return { model: true };
     }
@@ -52,7 +52,7 @@ export class ModelImpl<
         readonly ctor: TCtor,
         readonly superModel: AnyModel | undefined,
         readonly options: ModelOptions,
-        readonly isAbstract: TAbstract
+        readonly modifier: TModifier
     ) {
         if (ALL_MODEL_MAP.has(name)) {
             throw new StateError(`Duplicate models with same name: "${name}"`);
@@ -94,7 +94,7 @@ export class ModelImpl<
 export type AnyModelImpl = ModelImpl<any, any, any, any, any, any>;
 
 export type ModelOptions = {
-    readonly tableOptions: __TableOptions<AnyModel | never> | undefined;
+    readonly tableOptions: __TableOptions<AnyModel | never, any> | undefined;
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
     readonly idGenerator: __IdGenerator<any> | undefined;
 };
@@ -102,10 +102,11 @@ export type ModelOptions = {
 export class ModelContextImpl<
     TIdKey extends string, 
     TCtor extends __Ctor, 
-    TSuperModel extends AnyModel | never
-> implements __ModelContext<TIdKey, TCtor, TSuperModel> {
+    TSuperModel extends AnyModel | never,
+    TModifier extends __ModifierType
+> implements __ModelContext<TIdKey, TCtor, TSuperModel, TModifier> {
 
-    protected _tableOptions: __TableOptions<TSuperModel> | undefined = undefined;
+    protected _tableOptions: __TableOptions<TSuperModel, TModifier> | undefined = undefined;
 
     protected readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
 
@@ -115,7 +116,7 @@ export class ModelContextImpl<
         return { modelContext: true };
     }
 
-    table(options: __TableOptions<TSuperModel>): this {
+    table(options: __TableOptions<TSuperModel, TModifier>): this {
         this._tableOptions = options;
         return this;
     }
@@ -150,9 +151,10 @@ export class ModelContextImpl<
 
 export class RootModelContextImpl<
     TIdKey extends string, 
-    TCtor extends __Ctor
-> extends ModelContextImpl<TIdKey, TCtor, never> 
-implements __RootModelContext<TIdKey, TCtor> {
+    TCtor extends __Ctor,
+    TModifier extends __ModifierType
+> extends ModelContextImpl<TIdKey, TCtor, never, TModifier> 
+implements __RootModelContext<TIdKey, TCtor, TModifier> {
 
     private _idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]> | undefined = undefined;
 

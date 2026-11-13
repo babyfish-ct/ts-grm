@@ -14,7 +14,7 @@
 
 import { Isolation, Propagation } from "@ts-grm/core";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
-import { Executor } from "./executor";
+import { Executor, Purpose } from "./executor";
 import { Value } from "@/sql/fragment";
 import { DataRows } from "@/impl/data_row_reader";
 
@@ -105,9 +105,20 @@ class SqliteExecutor implements Executor {
         this._database.exec(sql);
     }
 
+    async executeDML(
+        sql: string, 
+        args: ReadonlyArray<Value>,
+        _: Purpose
+    ): Promise<number> {
+        const stmt = this._database.prepare(sql);
+        const values = args.map(v => v.value instanceof Date ? v.value.toISOString().replace('T', ' ').slice(0, 19) : v.value);
+        return stmt.run(...values).changes;
+    }
+
     async executeStatement(
         sql: string, 
-        args: ReadonlyArray<Value>
+        args: ReadonlyArray<Value>,
+        _: Purpose
     ): Promise<DataRows> {
         const stmt = this._database.prepare(sql);
         stmt.raw(true);

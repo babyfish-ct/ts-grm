@@ -109,7 +109,7 @@ export class ReturnedInsertImpl<
                 returnNothing: false,
                 nullAsUndefined: options?.nullAsUndefined ?? false
             }
-        );
+        ) as any;
     }
 
     accept(visitor: spi.Visitor) {

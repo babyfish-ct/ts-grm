@@ -20,6 +20,7 @@ import { EntityProp } from "../entity_prop";
 import { AssociationEntity, AssociationProp } from "../association_entity";
 import { AnyModel } from "@/index";
 import { Entity } from "../entity";
+import { TypeNameProp } from "../dto";
 
 export interface InsertContract {
 
@@ -31,7 +32,7 @@ export interface InsertContract {
 
     readonly source: Iterable<SourceRow> | BaseModel<any>;
 
-    readonly bindings: ReadonlyArray<InsertBinding> | ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp>;
+    readonly bindings: ReadonlyArray<InsertBinding> | ReadonlyArray<EntityProp | TypeNameProp> | ReadonlyArray<AssociationProp>;
 
     readonly returnedProps: ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp> | undefined;
 
@@ -71,7 +72,7 @@ export interface UpdateContract {
 
 export interface InsertBinding {
 
-    readonly prop: EntityProp | AssociationProp;
+    readonly prop: EntityProp | AssociationProp | TypeNameProp;
 
     readonly valueExpr: AbstractExpr<any>;
 }

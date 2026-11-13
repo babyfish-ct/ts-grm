@@ -48,12 +48,12 @@ export class MutableInsertImpl<
     >;
 
     using<
-        TQuery extends BaseQuery<any>
+        TSourceModel extends BaseModel<any>
     >(
-        model: BaseModel<BaseQueryMapOf<TQuery>>    
+        model: TSourceModel
     ): MutableInsertByBaseModel<
         TModel, 
-        BaseModel<BaseQueryMapOf<TQuery>>
+        TSourceModel
     >;
 
     using(
@@ -183,7 +183,9 @@ class InsertContextImpl<
         this._bindings = undefined;
         const entity = entityOf(this._model);
         if (entity instanceof spi.Entity) {
-            const prop = entity.expandedPropMap.get(key as string);
+            const prop = key === "__typename" 
+                ? new spi.TypeNameProp(entity, entity.tableSettings.discriminator!.name, undefined)
+                : entity.expandedPropMap.get(key as string);
             if (prop == null) {
                 throw new err.ArgumentError(
                     `There is no property "${key.toString()}" in the model "${entity.name}"`

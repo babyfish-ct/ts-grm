@@ -20,6 +20,12 @@ export interface Executor {
 
     execute(sql: string): Promise<void>;
 
+    executeDML(
+        sql: string, 
+        args: ReadonlyArray<Value>,
+        purpose: Purpose
+    ): Promise<number>;
+
     executeStatement(
         sql: string, 
         args: ReadonlyArray<Value>,
@@ -41,6 +47,14 @@ export abstract class AbstractExecutorWrapper implements Executor {
 
     execute(sql: string): Promise<void> {
         return this._raw.execute(sql);
+    }
+
+    executeDML(
+        sql: string, 
+        values: ReadonlyArray<Value>,
+        purpose: Purpose
+    ): Promise<number> {
+        return this._raw.executeDML(sql, values, purpose);
     }
 
     executeStatement(

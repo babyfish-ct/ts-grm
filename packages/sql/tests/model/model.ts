@@ -56,7 +56,7 @@ const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
         fn: data => data.books.map(book => `${book.name}(${book.edition})`)
     });
 
-export const BOOK_STORE = model(
+export const BOOK_STORE = model.open(
     "BookStore", 
     "id", 
     class {
@@ -116,7 +116,7 @@ const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> =
         )
     });
 
-export const BOOK = model("Book", "id", 
+export const BOOK = model.open("Book", "id", 
     class {
         id = prop.i64()
         name = prop.str(50)
@@ -169,7 +169,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
     }
 );
 
-export const ELECTRONIC_BOOK = model.extends(BOOK)(
+export const ELECTRONIC_BOOK = model.open.extends(BOOK)(
     "ElectronicBook", 
     class {
         address = prop.str(50);

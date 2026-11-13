@@ -82,12 +82,12 @@ export type __DerivedType<
                     __ModelSuperNames<TDerivedModel>
                 >
     ) | (
-        TModel extends Model<any, any, any, any, any, infer Abstract>
-            ? Abstract extends false
-                ? TSuper extends { __typename: string; }
+        TModel extends Model<any, any, any, any, any, infer Modifier>
+            ? Modifier extends "ABSTRACT"
+                ? never
+                : TSuper extends { __typename: string; }
                     ? TSuper
                     : { __typename: __ModelName<TModel> } & TSuper
-                : never
         : never 
     );
 
