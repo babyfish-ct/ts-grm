@@ -24,7 +24,6 @@ import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
-import { is } from "zod/v4/locales/index.js";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -43,7 +42,8 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     constructor(
         readonly sqlClient: SqlClientImplementor,
         private readonly _baseQueryMetadata: BaseQueryMetadata | undefined,
-        private readonly _tableMap: ReadonlyMap<spi.AbstractTable, RealTable>
+        private readonly _tableMap: ReadonlyMap<spi.AbstractTable, RealTable>,
+        private readonly isInsertSource: boolean
     ) {
         super();
         this._strategy = sqlClient.strategy;
@@ -67,7 +67,8 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         return new FragmentGenGenVisitor(
             this.sqlClient,
             this._baseQueryMetadata,
-            this._tableMap
+            this._tableMap,
+            false
         );
     }
 
@@ -205,6 +206,20 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     visitInsert(insert: spi.InsertContract): void {
         using _1 = this._precedenceStack.with(Precedence.ROOT);
         using _2 = this._compositeStack.with(new Composite());
+        if (insert.kind === "BY_BASE_MODEL") {
+            const baseModel = insert.source as spi.BaseModelImplementor<any>;
+            if (baseModel.__isCte) {
+                this._compositeStack.current.add("with ");
+                if (baseModel.__isRecursive) {
+                    this._compositeStack.current.add("recursive ");
+                }
+                this._compositeStack.current.add("__inserted_source")
+                const realTable = this._toRealTable(insert.sourceTable!);
+                this._compositeStack.current
+                    .add(this._tableFragmentCreator.createDefinition(realTable, false))
+                    .add("\n");
+            }
+        }
         this._compositeStack.current
             .add("insert into ")
             .add(insert.entity.toTableName(this._strategy));
@@ -224,7 +239,14 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             }
         }
         if (insert.kind === "BY_BASE_MODEL") {
-
+            this._compositeStack.current.add(" ");
+            const baseModel = insert.source as spi.BaseModelImplementor<any>;
+            const realTable = this._toRealTable(insert.sourceTable!);
+            if (baseModel.__isCte) {
+                this._compositeStack.current.add("select * from __inserted_source");
+            } else {
+                this._compositeStack.current.add(this._tableFragmentCreator.createDefinition(realTable, true));
+            }
         } else {
             let size = insert.bindings.length;
             this._compositeStack.current.add("\nvalues\n");
@@ -645,14 +667,14 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                     if (selection.columnName == null) {
                         const expr = projection.args[selection.exportedName] as any as spi.ShadowExprContract;
                         expr.accept(this);
-                        if (!this._baseQueryMetadata!.isCte) {
+                        if (!this.isInsertSource && !this._baseQueryMetadata!.isCte) {
                             this._compositeStack.current.add(" ").add(selection.alias);
                         }
                     } else {
                         const table = projection.args[selection.exportedName] as spi.AbstractEntityTable;
                         const realTable = this._toRealTable(table);
                         this._compositeStack.current.add(new TableAlias(realTable)).add(".").add(selection.columnName);
-                        if (!this._baseQueryMetadata!.isCte) {
+                        if (!this.isInsertSource && !this._baseQueryMetadata!.isCte) {
                             this._compositeStack.current.add(" ").add(selection.alias);
                         }
                     }
@@ -716,7 +738,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     private _fillTableFragments(tables: ReadonlyArray<RealTable>) {
         for (const table of tables) {
             if (table.symbol.__isCte) {
-                table.cteDefinitionFragment = this._tableFragmentCreator.createDefinition(table);
+                table.cteDefinitionFragment = this._tableFragmentCreator.createDefinition(table, false);
             }
             table.fragment = this._tableFragmentCreator.createUsage(table);
             this._fillTableFragments(table.children);

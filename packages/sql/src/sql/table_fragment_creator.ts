@@ -31,12 +31,16 @@ export class TableFragmentCreator {
         this._strategy = _sqlClient.strategy;
     }
 
-    createDefinition(table: RealTable) {
+    createDefinition(table: RealTable, isInsertSource: boolean) {
         const composite = Composite.of(
             table.symbol.__baseModel!.__toQuery(), 
             this._sqlClient,
-            table.baseQueryMetadata
+            table.baseQueryMetadata,
+            isInsertSource
         );
+        if (isInsertSource) {
+            return composite;
+        }
         const wrapper = new Scope("VALUES");
         wrapper.add(composite);
         return wrapper;
@@ -85,7 +89,7 @@ export class TableFragmentCreator {
             if (baseTable.__isCte) {
                 composite.add(new TableAlias(table));
             } else {
-                composite.add(this.createDefinition(table));
+                composite.add(this.createDefinition(table, false));
                 composite.add(" ").add(new TableAlias(table))
             }
         }

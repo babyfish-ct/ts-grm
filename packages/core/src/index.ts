@@ -208,7 +208,7 @@ export type  {
     SaveManyWithViewResult,
     MutableInsert,
     MutableInsertByValues,
-    MutableInsertByBaseQuery,
+    MutableInsertByBaseModel,
     Insert,
     ReturnedInsert,
     InsertResult,

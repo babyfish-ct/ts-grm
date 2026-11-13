@@ -76,13 +76,19 @@ export class Composite extends Fragment {
         return undefined;
     }
 
-    static of(o: any, sqlClient: SqlClient, metadata: BaseQueryMetadata | undefined): Composite {
+    static of(
+        o: any, 
+        sqlClient: SqlClient, 
+        metadata: BaseQueryMetadata | undefined, 
+        isInsertSource: boolean
+    ): Composite {
         const preVisitor = new PreVisitor(sqlClient as SqlClientImplementor);
         (o as spi.Node).accept(preVisitor);
         const visitor = new FragmentGenGenVisitor(
             sqlClient as SqlClientImplementor, 
             metadata, 
-            preVisitor.tableMap
+            preVisitor.tableMap,
+            isInsertSource
         );
         (o as spi.Node).accept(visitor);
         return visitor.toResult();

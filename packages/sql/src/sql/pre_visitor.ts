@@ -88,6 +88,13 @@ export class PreVisitor extends spi.AbstractVisitor {
         }
     }
 
+    visitInsert(insert: spi.InsertContract): void {
+        if (insert.kind === "BY_BASE_MODEL") {
+            this._toRealTable(insert.sourceTable!);
+        }
+        super.visitInsert(insert);
+    }
+
     visitPropExpr(expr: spi.PropExprContract): void {
         if (expr.table.__isPrev) {
             return;

@@ -48,7 +48,7 @@ export type {
 export type { 
     MutableInsert, 
     MutableInsertByValues, 
-    MutableInsertByBaseQuery,
+    MutableInsertByBaseModel,
     Insert,
     ReturnedInsert,
     InsertResult,

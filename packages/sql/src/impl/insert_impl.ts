@@ -12,7 +12,8 @@ export class InsertImpl<
         readonly sqlClient: SqlClientImplementor,
         readonly model: TModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
-        readonly bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>
+        readonly bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
+        readonly sourceTable: spi.AbstractTable | undefined
     ) {}
 
     get kind(): "BY_VALUES" | "BY_BASE_MODEL" {
@@ -22,9 +23,7 @@ export class InsertImpl<
     }
 
     get entity(): spi.Entity | spi.AssociationEntity {
-        return (this.model as any).__type().associationModel != null
-            ? spi.AssociationEntity.of(this.model as AnyAssociationModel)
-            : spi.Entity.of(this.model as AnyModel);
+        return entityOf(this.model);
     }
 
     async execute<
@@ -50,7 +49,7 @@ export class InsertImpl<
         ...keys: TKeys
     ): ReturnedInsert<TModel, TKeys> {
         const props = propsOf(this.model, keys as ReadonlyArray<string>);
-        return new ReturnedInsertImpl(this.sqlClient, this.model, this.source, this.bindings, props);
+        return new ReturnedInsertImpl(this.sqlClient, this.model, this.source, this.bindings, props, this.sourceTable);
     }
 
     get returnedProps(): ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> | undefined {
@@ -72,7 +71,8 @@ export class ReturnedInsertImpl<
         readonly model: TModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
         readonly bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
-        readonly returnedProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>
+        readonly returnedProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
+        readonly sourceTable: spi.AbstractTable | undefined
     ) {}
 
     get kind(): "BY_VALUES" | "BY_BASE_MODEL" {
@@ -115,4 +115,12 @@ export class ReturnedInsertImpl<
     accept(visitor: spi.Visitor) {
         visitor.visitInsert(this);
     }
+}
+
+export function entityOf(
+    model: AnyModel | AnyAssociationModel
+): spi.Entity | spi.AssociationEntity {
+    return (model as any).__type().associationModel != null
+        ? spi.AssociationEntity.of(model as AnyAssociationModel)
+        : spi.Entity.of(model as AnyModel);
 }

@@ -13,14 +13,14 @@ import {
     err, 
     Insert, 
     MutableInsert, 
-    MutableInsertByBaseQuery, 
+    MutableInsertByBaseModel, 
     MutableInsertByValues, 
     spi,
     Table
 } from "@ts-grm/core";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
-import { InsertImpl } from "./insert_impl";
+import { entityOf, InsertImpl } from "./insert_impl";
 import { propsOf } from "./utils";
 
 export class MutableInsertImpl<
@@ -42,7 +42,7 @@ export class MutableInsertImpl<
         TQuery extends BaseQuery<any>,
     >(
         query: TQuery,
-    ): MutableInsertByBaseQuery<
+    ): MutableInsertByBaseModel<
         TModel, 
         BaseModel<BaseQueryMapOf<TQuery>>
     >;
@@ -51,7 +51,7 @@ export class MutableInsertImpl<
         TQuery extends BaseQuery<any>
     >(
         model: BaseModel<BaseQueryMapOf<TQuery>>    
-    ): MutableInsertByBaseQuery<
+    ): MutableInsertByBaseModel<
         TModel, 
         BaseModel<BaseQueryMapOf<TQuery>>
     >;
@@ -65,12 +65,12 @@ export class MutableInsertImpl<
         }
         if (first instanceof BaseModelImpl) {
             const baseModel = first as BaseModel<any>;
-            return new MutableInsertByBaseQueryImpl(this._sqlClient, this._model, baseModel);
+            return new MutableInsertByBaseModelImpl(this._sqlClient, this._model, baseModel);
         }
         const baseQuery = first as BaseQuery<any>;
         const baseModel = (baseQuery as any as spi.BaseQueryImplementor<any>)
             .toModel((baseQuery as any as spi.QueryContract).isRecursive);
-        return new MutableInsertByBaseQueryImpl(this._sqlClient, this._model, baseModel);
+        return new MutableInsertByBaseModelImpl(this._sqlClient, this._model, baseModel);
     }
 }
 
@@ -102,15 +102,16 @@ class MutableInsertByValuesImpl<
             this._sqlClient,
             this._model,
             sourceRows,
-            this._props
+            this._props,
+            undefined
         );
     }
 }
 
-class MutableInsertByBaseQueryImpl<
+class MutableInsertByBaseModelImpl<
     TModel extends AnyModel | AnyAssociationModel,
     TSourceModel extends BaseModel<any>
-> implements MutableInsertByBaseQuery<
+> implements MutableInsertByBaseModel<
     TModel,
     TSourceModel
 > {
@@ -133,7 +134,8 @@ class MutableInsertByBaseQueryImpl<
             this._sqlClient,
             this._model,
             this._sourceMode,
-            ctx.bindings
+            ctx.bindings,
+            this.new as any
         );
     }
 }
@@ -178,22 +180,24 @@ class InsertContextImpl<
         if (this._bindingMap.has(key)) {
             throw new err.ArgumentError(`Duplicated inserted key "${key.toString()}"`);
         }
-        if (this._model instanceof spi.Entity) {
-            const prop = this._model.expandedPropMap.get(key as string);
+        this._bindings = undefined;
+        const entity = entityOf(this._model);
+        if (entity instanceof spi.Entity) {
+            const prop = entity.expandedPropMap.get(key as string);
             if (prop == null) {
                 throw new err.ArgumentError(
-                    `There is no property "${key.toString()}" in the model "${this._model.name}"`
+                    `There is no property "${key.toString()}" in the model "${entity.name}"`
                 );
             }
             const valueExpr = value instanceof spi.AbstractExpr
                 ? value
                 : dsl.literal(value) as spi.AbstractExpr<any>;
             this._bindingMap.set(key, { prop, valueExpr })
-        } else if (this._model instanceof spi.AssociationEntity) {
-            const prop = this._model.expandedProps.get(key as string);
+        } else if (entity instanceof spi.AssociationEntity) {
+            const prop = entity.expandedProps.get(key as string);
             if (prop == null) {
                 throw new err.ArgumentError(
-                    `There is no property "${key.toString()}" in the model "${this._model.toString()}"`
+                    `There is no property "${key.toString()}" in the model "${entity.toString()}"`
                 );
             }
             const valueExpr = value instanceof spi.AbstractExpr

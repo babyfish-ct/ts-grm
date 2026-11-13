@@ -31,7 +31,7 @@ export interface MutableInsert<
         TQuery extends BaseQuery<any>,
     >(
         query: TQuery,
-    ): MutableInsertByBaseQuery<
+    ): MutableInsertByBaseModel<
         TModel, 
         BaseModel<BaseQueryMapOf<TQuery>>
     >;
@@ -40,7 +40,7 @@ export interface MutableInsert<
         TQuery extends BaseQuery<any>
     >(
         model: BaseModel<BaseQueryMapOf<TQuery>>    
-    ): MutableInsertByBaseQuery<
+    ): MutableInsertByBaseModel<
         TModel, 
         BaseModel<BaseQueryMapOf<TQuery>>
     >;
@@ -57,7 +57,7 @@ export interface MutableInsertByValues<
     ): Insert<TModel>;
 }
 
-export interface MutableInsertByBaseQuery<
+export interface MutableInsertByBaseModel<
     TModel extends AnyModel | AnyAssociationModel,
     TSourceModel extends BaseModel<any>
 > {

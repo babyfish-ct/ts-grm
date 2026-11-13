@@ -28,7 +28,7 @@ export function toTables(
 
 export function toTable(
     model: AnyModel | AnyAssociationModel | BaseModel<any>
-) {
+): spi.AbstractEntityTable | spi.TypedBaseTable {
     return model instanceof BaseModelImpl
         ? spi.createTypedBaseTable(model, undefined)
         : spi.Entity.of(model as AnyModel).table(undefined);

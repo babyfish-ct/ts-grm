@@ -34,6 +34,8 @@ export interface InsertContract {
     readonly bindings: ReadonlyArray<InsertBinding> | ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp>;
 
     readonly returnedProps: ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp> | undefined;
+
+    readonly sourceTable: AbstractTable | undefined;
 }
 
 export interface MergeContract {

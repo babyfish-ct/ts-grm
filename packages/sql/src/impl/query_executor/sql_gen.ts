@@ -53,7 +53,7 @@ function buildAst(
         if (query instanceof AtomRootQueryImpl) {
             const countQuery = query.toCount();
             if (countQuery != null) {
-                return Composite.of(countQuery, sqlClient, undefined);
+                return Composite.of(countQuery, sqlClient, undefined, false);
             }
         }
         const composite = new Composite();
@@ -62,7 +62,7 @@ function buildAst(
         composite.add("from ");
         composite.add(
             new Scope("SUB_QUERY").add(
-                Composite.of(query, sqlClient, undefined)
+                Composite.of(query, sqlClient, undefined, false)
             )
         );
         composite.add(" core__");
@@ -73,7 +73,7 @@ function buildAst(
         if (!sqlClient.driver.isUnorderedPaginationAllowed) {
             let hasOrder = qc.kind === "ATOM" && qc.orders.length !== 0;
             if (!hasOrder) {
-                return Composite.of(query, sqlClient, undefined);
+                return Composite.of(query, sqlClient, undefined, false);
             }
         }
         const finalOptions = finalRangeOptions(
@@ -87,7 +87,7 @@ function buildAst(
     if (options != null) {
         return applyPagination(sqlClient, query, options);
     }
-    return Composite.of(query, sqlClient, undefined);
+    return Composite.of(query, sqlClient, undefined, false);
 }
 
 export function explicitDataTypesOf(
@@ -131,7 +131,7 @@ function toPaginationOriginal(
         if ((query as any as spi.AtomQueryContract).orders.length === 0) {
             unorderedPagination(sqlClient, false);
         }
-        return Composite.of(query, sqlClient, undefined);
+        return Composite.of(query, sqlClient, undefined, false);
     }
     unorderedPagination(sqlClient, true);
     const composite = new Composite();
@@ -140,7 +140,7 @@ function toPaginationOriginal(
     composite.add("from ");
     composite.add(
         new Scope("SUB_QUERY").add(
-            Composite.of(query, sqlClient, undefined)
+            Composite.of(query, sqlClient, undefined, false)
         )
     )
     composite.add(" core__");

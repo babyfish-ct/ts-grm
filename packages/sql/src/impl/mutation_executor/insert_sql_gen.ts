@@ -21,7 +21,7 @@ export function buildInsertStatement(
     sqlClient: SqlClientImplementor,
     insert: spi.InsertContract
 ): [string, ReadonlyArray<any>] {
-    const composite = Composite.of(insert, sqlClient, undefined)
+    const composite = Composite.of(insert, sqlClient, undefined, false)
     const builder = SqlBuilder.of(sqlClient);
     composite.into(builder);
     const [sql, argumentMap] = builder.build();

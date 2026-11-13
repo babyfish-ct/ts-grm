@@ -10,7 +10,7 @@ export function sql(q: RootQuery<any>): string {
     const sqlClient = contract.kind === "ATOM"
         ? (q as AtomRootQueryImpl<any>).mutableQuery.sqlClient
         : (q as MergedRootQueryImpl<any>).sqlClient;
-    const composite = Composite.of(q, sqlClient, undefined);
+    const composite = Composite.of(q, sqlClient, undefined, false);
     const builder = SqlBuilder.of(sqlClient);
     composite.into(builder);
     const [sql] = builder.build();
