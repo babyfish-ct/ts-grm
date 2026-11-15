@@ -102,7 +102,8 @@ export class Entity {
         const superModel = (model as ModelImpl<any, any, any, any, any, any>).superModel;
         if (superModel != null) {
             const superModifier = (superModel as AnyModelImpl).modifier;
-            if (superModifier !== "OPEN" && superModifier !== "ABSTRACT") {
+            if (superModifier !== "OPEN" && superModifier !== "ABSTRACT" 
+                && superModifier !== "OPEN_BY_NUM" && superModifier !== "ABSTRACT_BY_NUM") {
                 throw new ModelError(
                     name,
                     dedent `Illegal super model "${
@@ -631,11 +632,11 @@ export class Entity {
                         : options.name.value != "" ? options.name.value : undefined;
             }
         }
-        const moreInfoOptions = options as __TableOptions<AnyModel | never, "OPEN" | "ABSTRACT">;
+        const moreInfoOptions = options as __TableOptions<AnyModel | never, "OPEN">;
         if (typeof moreInfoOptions !== "string" && moreInfoOptions.discriminator != null) {
-            const type = typeof moreInfoOptions.discriminator === "string"
-                ? "string"
-                : moreInfoOptions.discriminator.type ?? "string";
+            const type = this.modifier === "OPEN_BY_NUM" || this.modifier === "ABSTRACT_BY_NUM"
+                ? "number"
+                : "string";
             if (this.superEntity != null && type !== this.superEntity.tableSettings.discriminator!.type) {
                 throw new ModelError(
                     this.name,
@@ -645,9 +646,7 @@ export class Entity {
                     "${this.superEntity.tableSettings.discriminator?.type}".`  
                 );
             }
-            let name = typeof moreInfoOptions.discriminator === "string"
-                ? moreInfoOptions.discriminator
-                : moreInfoOptions.discriminator.name;
+            let name = moreInfoOptions.discriminator;
             if (name == null || name === "") {
                 if (this.superEntity == null) {
                     throw new ModelError(
@@ -663,7 +662,7 @@ export class Entity {
 
         let discriminatorValue = typeof options === "string"
             ? null
-            : options?.discriminatorValue;
+            : moreInfoOptions.discriminatorValue;
         if (this.modifier === "ABSTRACT") {
             if (discriminatorValue != null) {
                 throw new ModelError(

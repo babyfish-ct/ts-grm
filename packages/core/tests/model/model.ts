@@ -1,5 +1,5 @@
 import { dsl } from "@/dsl";
-import { dto } from "@/index";
+import { __TableOptions, dto } from "@/index";
 import { SqlFormula, TsFormula, Calculator } from "@/schema/computed";
 import { DISCRIMINATOR_VALUE_MODEL_NAME, model, TABLE_INHERIT } from "@/schema/model";
 import { prop } from "@/schema/prop";
@@ -253,7 +253,7 @@ export const ITEM = model.extends(TREE_NODE)(
     }
 );
 
-export const ORDER = model.open("Order", "id", class {
+export const ORDER = model.open.discriminatedBy("NUMBER")("Order", "id", class {
     id = prop.embedded({
         x: prop.i32(),
         y: prop.embedded({
@@ -293,10 +293,7 @@ export const ORDER = model.open("Order", "id", class {
     })
 }, ctx => {
     ctx.table({
-        discriminator: {
-            name: "TYPE",
-            type: "number"
-        },
+        discriminator: "TYPE",
         discriminatorValue: 1
     });
 });

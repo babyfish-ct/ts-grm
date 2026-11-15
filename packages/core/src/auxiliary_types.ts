@@ -24,6 +24,9 @@ export type __Prettify<T> =
         }
     : T;
 
+export type __NormalizeOptions<T> = 
+    T extends infer U ? { [K in keyof U]: U[K] } : never;
+
 export type __FlattenMembers<
     TMembers extends object
 > = {

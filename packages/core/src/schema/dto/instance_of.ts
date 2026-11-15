@@ -83,7 +83,7 @@ export type __DerivedType<
                 >
     ) | (
         TModel extends Model<any, any, any, any, any, infer Modifier>
-            ? Modifier extends "ABSTRACT"
+            ? Modifier extends "ABSTRACT" | "ABSTRACT_BY_NUM"
                 ? never
                 : TSuper extends { __typename: string; }
                     ? TSuper

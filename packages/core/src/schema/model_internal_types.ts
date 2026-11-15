@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { __FlattenMembers } from "@/auxiliary_types";
+import { __FlattenMembers, __NormalizeOptions } from "@/auxiliary_types";
 import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __I64PropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT, UserIdGenerator } from "./model";
@@ -25,7 +25,27 @@ export type __ModelCreator<TModifier extends __ModifierType> =
                 readonly abstract: __ModelCreator<"ABSTRACT">;
                 readonly open: __ModelCreator<"OPEN">;
             }
-            : object
+        : TModifier extends "ABSTRACT" | "ABSTRACT_BY_NUM"
+            ? {
+                discriminatedBy<
+                    TBy extends "STRING" | "NUMBER"
+                >(
+                    by: TBy
+                ): __ModelCreator<
+                    TBy extends "NUMBER" ? "ABSTRACT_BY_NUM" : "ABSTRACT"
+                >
+            }
+        : TModifier extends "OPEN" | "OPEN_BY_NUM"
+            ? {
+                discriminatedBy<
+                    TBy extends "STRING" | "NUMBER"
+                >(
+                    by: TBy
+                ): __ModelCreator<
+                    TBy extends "NUMBER" ? "OPEN_BY_NUM" : "OPEN"
+                >
+            }
+        : object
     )
 
 export interface __ModelCreatorItf<TModifier extends __ModifierType> {
@@ -49,7 +69,7 @@ export interface __ModelCreatorItf<TModifier extends __ModifierType> {
     >;
 
     extends<
-        TSuperModel extends Model<any, any, any, any, any, "OPEN" | "ABSTRACT">
+        TSuperModel extends Model<any, any, any, any, any, "OPEN" | "ABSTRACT_BY_NUM" | "OPEN_BY_NUM" | "ABSTRACT">
     >(
         superModel: TSuperModel
     ): __InheritanceModelCreator<TSuperModel, TModifier>;
@@ -298,34 +318,48 @@ export type __TableOptions<
     TSuperModel extends AnyModel | never, 
     TModifier extends __ModifierType
 > = 
-    DatabaseIdentifier<string> | {
-        readonly name?: typeof TABLE_INHERIT
-            | DatabaseIdentifier<string>
-            | __IdRemappedTable<TSuperModel>;
-        readonly discriminatorValue?: 
-            | typeof DISCRIMINATOR_VALUE_MODEL_NAME
-            | string
-            | number;
-    } & (
-        TModifier extends "OPEN" | "ABSTRACT"
-            ? {
-                readonly discriminator?: string | {
-                    readonly name: string;
-                    readonly type?: "string" | "number"
-                }
-            }
-            : object
-    );
+    [TSuperModel] extends [never]
+        ? TModifier extends "NONE"
+            ? DatabaseIdentifier<string>
+            : __ComplexTableOptions<TSuperModel, TModifier>
+        : __ComplexTableOptions<TSuperModel, TModifier>;
+
+export type __ComplexTableOptions<
+    TSuperModel extends AnyModel | never, 
+    TModifier extends __ModifierType
+> = __NormalizeOptions<
+        {
+            readonly name?: typeof TABLE_INHERIT
+                | DatabaseIdentifier<string>
+                | __IdRemappedTable<TSuperModel>;
+        } & (
+            TModifier extends "OPEN_BY_NUM"
+                ? { readonly discriminatorValue: number; }
+            : TModifier extends "OPEN"
+                ? { readonly discriminatorValue: typeof DISCRIMINATOR_VALUE_MODEL_NAME | string; }
+            : [TSuperModel] extends [Model<any, any, any, any, any, infer SuperModifier>]
+                ? SuperModifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
+                    ? { readonly discriminatorValue: number; }
+                : SuperModifier extends "OPEN" | "ABSTRACT"
+                    ? { readonly discriminatorValue: typeof DISCRIMINATOR_VALUE_MODEL_NAME | string; }
+                : {}
+            : {}
+        ) & (
+            TModifier extends "OPEN" | "ABSTRACT" | "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
+                ? { readonly discriminator: string; }
+                : {}
+        )
+    >;
 
 export type __IdRemappedTable<TSuperModel extends AnyModel | never> = 
-    TSuperModel extends AnyModel
-        ? {
+    [TSuperModel] extends [never]
+        ? never
+        : {
             readonly value?: DatabaseIdentifier<string>;
             readonly idMapping?: __AllModelMembers<TSuperModel>[__ModelIdKey<TSuperModel>] extends __EmbeddedPropContract<any, any, infer R>
                 ? { readonly [K in keyof R]: DatabaseIdentifier<string> }
                 : DatabaseIdentifier<string>
-        }
-        : never;
+        };
 
 export type __UniqueKeys<
     TIdKey extends string, 
@@ -417,4 +451,4 @@ export type __DataType<TProp> =
         ? { readonly [K in keyof Props]: __DataType<Props[K]> }
     : never;
 
-export type __ModifierType = "NONE" | "ABSTRACT" | "OPEN";
+export type __ModifierType = "NONE" | "ABSTRACT" | "OPEN" | "ABSTRACT_BY_NUM" | "OPEN_BY_NUM";

@@ -31,7 +31,9 @@ export const model: __ModelCreator<"NONE"> = modelCreator();
 
 function modelCreator(): __ModelCreator<"NONE"> {
 
-    function create<
+    type Creator<
+        TModifier extends __ModifierType
+    > = <
         TName extends string, 
         TIdKey extends keyof __CtorMembers<TCtor> & string,
         TCtor extends __Ctor
@@ -39,68 +41,38 @@ function modelCreator(): __ModelCreator<"NONE"> {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: __RootModelContext<TIdKey, TCtor, "NONE">) => void
-    ): Model<
+        configurator?: (ctx: __RootModelContext<TIdKey, TCtor, TModifier>) => void
+    ) => Model<
         TName, 
         TIdKey, 
         TCtor, 
         __CtorMembers<TCtor>, 
         never, 
-        any
-    > {
-        const ctx = new RootModelContextImpl<TIdKey, TCtor, "NONE">();
-        if (configurator != null) {
-            configurator(ctx);
-        }
-        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions(), "NONE");
-    }
-
-    function absCreate<
-        TName extends string, 
-        TIdKey extends keyof __CtorMembers<TCtor> & string,
-        TCtor extends __Ctor
+        TModifier
+    >;
+    function makeCreator<
+        TModifier extends __ModifierType
     >(
-        name: TName,
-        idKey: TIdKey,
-        ctor: TCtor,
-        configurator?: (ctx: __RootModelContext<TIdKey, TCtor, "ABSTRACT">) => void
-    ): Model<
-        TName, 
-        TIdKey, 
-        TCtor, 
-        __CtorMembers<TCtor>, 
-        never, 
-        any
-    > {
-        const ctx = new RootModelContextImpl<TIdKey, TCtor, "ABSTRACT">();
-        if (configurator != null) {
-            configurator(ctx);
-        }
-        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions(), "ABSTRACT");
-    }
-
-    function opCreate<
-        TName extends string, 
-        TIdKey extends keyof __CtorMembers<TCtor> & string,
-        TCtor extends __Ctor
-    >(
-        name: TName,
-        idKey: TIdKey,
-        ctor: TCtor,
-        configurator?: (ctx: __RootModelContext<TIdKey, TCtor, "OPEN">) => void
-    ): Model<
-        TName, 
-        TIdKey, 
-        TCtor, 
-        __CtorMembers<TCtor>, 
-        never, 
-        any
-    > {
-        const ctx = new RootModelContextImpl<TIdKey, TCtor, "OPEN">();
-        if (configurator != null) {
-            configurator(ctx);
-        }
-        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions(), "OPEN");
+        modifier: TModifier
+    ): Creator<TModifier> {
+        const creator: Creator<TModifier> =
+            <
+                TName extends string, 
+                TIdKey extends keyof __CtorMembers<TCtor> & string,
+                TCtor extends __Ctor
+            >(
+                name: TName,
+                idKey: TIdKey,
+                ctor: TCtor,
+                configurator?: (ctx: __RootModelContext<TIdKey, TCtor, TModifier>) => void
+            ) => {
+                const ctx = new RootModelContextImpl<TIdKey, TCtor, TModifier>();
+                if (configurator != null) {
+                    configurator(ctx);
+                }
+                return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions(), modifier);
+            };
+        return creator;
     }
 
     function ext<
@@ -147,11 +119,28 @@ function modelCreator(): __ModelCreator<"NONE"> {
         }
     }
 
-    create.abstract = absCreate;
-    create.open = opCreate;
-    create.extends = (superModel: AnyModel) => ext(superModel, "NONE");
-    absCreate.extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT");
-    opCreate.extends = (superModel: AnyModel) => ext(superModel, "OPEN");
+    const create = makeCreator("NONE");
+    const absCreate = makeCreator("ABSTRACT");
+    const opCreate = makeCreator("OPEN");
+    const absByNumCreate = makeCreator("ABSTRACT_BY_NUM");
+    const opByNumCreate = makeCreator("OPEN_BY_NUM");
+    const absBy = (by: "STRING" | "NUMBER") => by === "NUMBER" 
+            ? absByNumCreate 
+            : absCreate;
+    const opBy = (by: "STRING" | "NUMBER") => by === "NUMBER" 
+            ? opByNumCreate 
+            : opCreate;
+    (create as any).abstract = absCreate;
+    (create as any).open = opCreate;
+    (absCreate as any).discriminatedBy = absBy;
+    (absByNumCreate as any).discriminatedBy = absBy;
+    (opCreate as any).discriminatedBy = opBy;
+    (opByNumCreate as any).discriminatedBy = opBy;
+    (create as any).extends = (superModel: AnyModel) => ext(superModel, "NONE");
+    (absCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT");
+    (absByNumCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT_BY_NUM");
+    (opCreate as any).extends = (superModel: AnyModel) => ext(superModel, "OPEN");
+    (opByNumCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT_BY_NUM");
     return create as any as __ModelCreator<"NONE">;
 }
 

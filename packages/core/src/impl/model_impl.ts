@@ -94,7 +94,7 @@ export class ModelImpl<
 export type AnyModelImpl = ModelImpl<any, any, any, any, any, any>;
 
 export type ModelOptions = {
-    readonly tableOptions: __TableOptions<AnyModel | never, any> | undefined;
+    readonly tableOptions: __TableOptions<any, any> | undefined;
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
     readonly idGenerator: __IdGenerator<any> | undefined;
 };
@@ -142,7 +142,7 @@ export class ModelContextImpl<
 
     toModelOptions(): ModelOptions {
         return {
-            tableOptions: this._tableOptions,
+            tableOptions: this._tableOptions as __TableOptions<any, any>,
             uniqueConstraints: this._uniqueConstraints,
             idGenerator: undefined
         };
@@ -169,7 +169,7 @@ implements __RootModelContext<TIdKey, TCtor, TModifier> {
 
     toModelOptions(): ModelOptions {
         return {
-            tableOptions: this._tableOptions,
+            tableOptions: this._tableOptions as __TableOptions<any, any>,
             uniqueConstraints: this._uniqueConstraints,
             idGenerator: this._idGenerator
         };

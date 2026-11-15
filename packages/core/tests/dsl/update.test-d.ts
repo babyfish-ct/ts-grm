@@ -21,6 +21,7 @@ describe("UpdateTest", () => {
             readonly name: StrExpression<string>;
             readonly price: NumExpression<number>;
             readonly storeId: NumExpression<string | null>;
+            readonly __discriminator: StrExpression<string>;
         }>();
         sqlClient.createUpdate(BOOK, (u, book) => {
             u.set("name", dsl.literal("2"));

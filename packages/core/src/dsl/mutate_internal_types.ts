@@ -14,7 +14,7 @@
 
 import { AnyModel, Model } from "@/schema/model";
 import { AnyAssociationModel, AssociationModel } from "./association";
-import { __FlattenMembers } from "@/auxiliary_types";
+import { __FlattenMembers, __NormalizeOptions } from "@/auxiliary_types";
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
 import { __AssociationKeyType } from "./association_internal_types";
 import { __ReferencePropContract, __ScalarPropContract } from "@/schema/prop_internal_types";
@@ -27,13 +27,19 @@ import { BaseModel } from "./base_query";
 
 export type __MutatedMembers<TModel extends AnyModel | AnyAssociationModel> = 
     TModel extends Model<any, any, any, any, any, infer Modifier>
-        ? __MutatedMembersImpl<__FlattenMembers<__AllModelMembers<TModel>>> & (
-            Modifier extends "OPEN" | "ABSTRACT"
-                ? {
-                    readonly __typename: StrExpression<string>
-                } 
+        ? __NormalizeOptions<
+            __MutatedMembersImpl<__FlattenMembers<__AllModelMembers<TModel>>> & (
+                Modifier extends "OPEN" | "ABSTRACT"
+                    ? {
+                        readonly "__discriminator": StrExpression<string>
+                    } 
+                : Modifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
+                    ? {
+                        readonly "__discriminator": NumExpression<number>
+                    } 
                 : object
-        )
+            )
+        >
     : TModel extends AssociationModel<
         infer SourceModel,
         infer SourceKey,
