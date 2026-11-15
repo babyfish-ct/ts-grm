@@ -31,7 +31,7 @@ import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { BaseTable, EntityTable, FilterType, JoinType } from "./table";
 import { __AssociationKeys, __MakeAssociationModel, __MakeAssociationTableMembers, __ReferenceKeys } from "./association_internal_types";
 import { AnyAssociationModel } from "./association";
-import { AnyModel } from "@/schema/model";
+import { AnyModel, Model } from "@/schema/model";
 import { __CollectionKeys } from "@/index_internal";
 import { Criteria } from "./criteria";
 
@@ -53,6 +53,20 @@ export type __EntityTableLike = {
 export type __ModelLike = AnyModel | BaseModel<any> | AnyAssociationModel;
 
 export type __JoinPolicyType = "NONE" | "REFERENCE" | "ARBITRARY";
+
+export interface __EntityTableContract<
+    TModel extends AnyModel, 
+    TMembers extends object, 
+    TNullity extends __NullityType, 
+    TJoinPolicy extends __JoinPolicyType
+> {
+
+    __type(): {
+        tableLike: true;
+        entityTableLike: true;
+        entityTable: [TModel, TMembers, TNullity, TJoinPolicy] | true;
+    };
+} 
 
 export type __EntityTableMembers<
     TModel extends AnyModel, 
@@ -96,7 +110,8 @@ export type __DslMembers<
         : TMembers[K] extends __CollectionPropContract<infer TargetModel, any, any, any, any>
             ? __CollectionJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
         : never
-    } & __DslReferenceKeyMembers<TModel, TMembers, TNullity>;
+    } & __DiscriminatorMembers<TModel, TNullity>
+    & __DslReferenceKeyMembers<TModel, TMembers, TNullity>;
 
 export type __MakeExpression<
     TNullity extends __NullityType, 
@@ -142,6 +157,17 @@ export type __DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity
             : never
         : never
 };
+
+export type __DiscriminatorMembers<TModel, TNullity extends __NullityType> = 
+    TModel extends Model<any, any, any, any, any, infer Modifier>
+        ? (
+            Modifier extends "OPEN" | "ABSTRACT"
+                ? { readonly __discriminator: StrExpression<__MakeType<string, TNullity>>; }
+            : Modifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
+                ? { readonly __discriminator: NumExpression<__MakeType<number, TNullity>>; }
+            : {}
+        )
+        : {};
 
 export type __ReferenceJoinAction<
     TParentModel extends AnyModel, 
@@ -319,13 +345,9 @@ export interface __StaticEntityTableMembers<
     TMembers extends object,
     TNullity extends __NullityType, 
     TJoinPolicy extends __JoinPolicyType
-> extends __AssociationExistenceAction<TMembers>, __CollectionExistenceAction<TMembers> { 
-    
-    __type(): {
-        tableLike: true;
-        entityTableLike: true;
-        entityTable: TModel | true;
-    };
+> extends __AssociationExistenceAction<TMembers>, 
+__CollectionExistenceAction<TMembers>, 
+__EntityTableContract<TModel, TMembers, TNullity, TJoinPolicy> { 
 
     fetch<X>(
         view: View<TModel, X>
@@ -502,7 +524,7 @@ export type __MakeTableWithJoinPolicy<TEntityTable, TJoinPolicy extends __JoinPo
         : never;
 
 export type __NullableEntityTableOf<TEntityTable> =
-    TEntityTable extends __EntityTableMembers<infer Model, infer _ extends object, any, infer JoinPolicy extends __JoinPolicyType>
+    TEntityTable extends __EntityTableContract<infer Model, any, any, infer JoinPolicy>
         ? __EntityTableMembers<Model, __AllModelMembers<Model>, "NULLABLE", JoinPolicy>
         : never;
 

@@ -5,7 +5,7 @@ import { TupleSubQuery } from "../../src/dsl/sub_query";
 import { tuple } from "../../src/dsl/tuple";
 import { AUTHOR, BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
 import { expectTypeOf, describe, it } from "vitest";
-import { dto } from "@/index";
+import { __NullableEntityTableOf, dto } from "@/index";
 
 describe("QueryTest", () => {
     

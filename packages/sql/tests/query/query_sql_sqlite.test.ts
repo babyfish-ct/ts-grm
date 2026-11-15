@@ -473,7 +473,7 @@ describe("QuerySqlTest", () => {
             const baseStore = baseBook.join(
                 baseStoreModel, 
                 ctx => ctx.source.rank.eq(ctx.target.rank)
-            );
+            ).$acceptMulti();
             return q.select(
                 baseBook.book.fetch(SIMPLE_BOOK_VIEW),
                 baseStore.store.fetch(SIMPLE_STORE_VIEW)
@@ -561,7 +561,7 @@ describe("QuerySqlTest", () => {
                     joinType: "LEFT",
                     filter: ctx => ctx.source.book.name.length().gt(ctx.target.store.name.length())
                 }
-            );
+            ).$acceptMulti();
             q.where(
                 baseBook.rank.lte(3),
                 baseStore.rank.lte(3)
@@ -686,7 +686,7 @@ describe("QuerySqlTest", () => {
                     ctx.source.id.eq(ctx.target.book.storeId),
                     ctx.target.rank.eq(1)
                 )
-            );
+            ).$acceptMulti();
             return q.select(
                 baseBook.book.fetch(SIMPLE_BOOK_VIEW),
                 store.fetch(SIMPLE_STORE_VIEW)

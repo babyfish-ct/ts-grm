@@ -17,11 +17,19 @@ describe("RuntimeTableTest", () => {
                 constructor(entity, options) {
                     super(entity, options);
                 }
+                ___discriminator = undefined;
                 _id = undefined;
                 _name = undefined;
                 _version = undefined;
                 _books = undefined;
                 _books_LEFT = undefined;
+                get __discriminator() {
+                    let expr = this.___discriminator;
+                    if (expr == null) {
+                        this.___discriminator = expr = $createTableProp(this, ThisClass.____discriminator);
+                    }
+                    return expr;
+                }
                 get id() {
                     let expr = this._id;
                     if (expr == null) {
@@ -82,6 +90,7 @@ describe("RuntimeTableTest", () => {
                         filter
                     });
                 }
+                static ____discriminator = $entity.expandedPropMap.get("__discriminator");
                 static __id = $entity.expandedPropMap.get("id");
                 static __name = $entity.expandedPropMap.get("name");
                 static __version = $entity.expandedPropMap.get("version");
@@ -101,6 +110,7 @@ describe("RuntimeTableTest", () => {
                 constructor(entity, options) {
                     super(entity, options);
                 }
+                ___discriminator = undefined;
                 _id = undefined;
                 _name = undefined;
                 _edition = undefined;
@@ -108,6 +118,13 @@ describe("RuntimeTableTest", () => {
                 _store = undefined;
                 _store_LEFT = undefined;
                 _storeId = undefined;
+                get __discriminator() {
+                    let expr = this.___discriminator;
+                    if (expr == null) {
+                        this.___discriminator = expr = $createTableProp(this, ThisClass.____discriminator);
+                    }
+                    return expr;
+                }
                 get id() {
                     let expr = this._id;
                     if (expr == null) {
@@ -185,6 +202,7 @@ describe("RuntimeTableTest", () => {
                     }
                     return expr;
                 }
+                static ____discriminator = $entity.expandedPropMap.get("__discriminator");
                 static __id = $entity.expandedPropMap.get("id");
                 static __name = $entity.expandedPropMap.get("name");
                 static __edition = $entity.expandedPropMap.get("edition");
@@ -388,10 +406,18 @@ describe("RuntimeTableTest", () => {
                 constructor(entity, options) {
                     super(entity, options);
                 }
+                ___discriminator = undefined;
                 _id = undefined;
                 _name = undefined;
                 _items = undefined;
                 _items_LEFT = undefined;
+                get __discriminator() {
+                    let expr = this.___discriminator;
+                    if (expr == null) {
+                        this.___discriminator = expr = $createTableProp(this, ThisClass.____discriminator);
+                    }
+                    return expr;
+                }
                 id() {
                     const self = this;
                     let embedded = this._id;
@@ -492,6 +518,7 @@ describe("RuntimeTableTest", () => {
                     const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
                     return this.association("comments", {joinType, ignoreTargetFilters}).target(filter);
                 }
+                static ____discriminator = $entity.expandedPropMap.get("__discriminator");
                 static __id_x = $entity.expandedPropMap.get("id.x");
                 static __id_y_a = $entity.expandedPropMap.get("id.y.a");
                 static __id_y_b = $entity.expandedPropMap.get("id.y.b");

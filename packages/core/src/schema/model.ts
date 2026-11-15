@@ -16,7 +16,7 @@ import { ModelContextImpl, ModelImpl, RootModelContextImpl } from "@/impl/model_
 import { 
     __Ctor, 
     __CtorMembers, 
-    __InheritanceModelCreator, 
+    __InheritedModelCreator, 
     __MakeAllModelMembers, 
     __ModelContext, 
     __ModelCreator, 
@@ -27,9 +27,9 @@ import {
     __RootModelContext
 } from "./model_internal_types";
 
-export const model: __ModelCreator<"NONE"> = modelCreator();
+export const model: __ModelCreator = modelCreator();
 
-function modelCreator(): __ModelCreator<"NONE"> {
+function modelCreator(): __ModelCreator {
 
     type Creator<
         TModifier extends __ModifierType
@@ -81,7 +81,7 @@ function modelCreator(): __ModelCreator<"NONE"> {
     >(
         superModel: TSuperModel,
         modifier: __ModifierType
-    ): __InheritanceModelCreator<TSuperModel, any> {
+    ): __InheritedModelCreator<TSuperModel, any> {
         return <
             TName extends string, 
             TCtor extends __Ctor
@@ -141,7 +141,7 @@ function modelCreator(): __ModelCreator<"NONE"> {
     (absByNumCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT_BY_NUM");
     (opCreate as any).extends = (superModel: AnyModel) => ext(superModel, "OPEN");
     (opByNumCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT_BY_NUM");
-    return create as any as __ModelCreator<"NONE">;
+    return create as any as __ModelCreator;
 }
 
 export interface Model<

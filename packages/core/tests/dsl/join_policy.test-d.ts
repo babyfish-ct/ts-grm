@@ -10,7 +10,7 @@ describe("JoinPolicyTest", () => {
         expectTypeOf<Keys>().toEqualTypeOf<
             "as" | "is" | "join" | "association" | "match"| "count" | "fetch" 
             | "every" | "none" | "noneIf" | "some" | "someIf"
-            | "id" | "name" | "edition" | "price" | "store" | "storeId" | "authors"
+            | "__discriminator" | "id" | "name" | "edition" | "price" | "store" | "storeId" | "authors"
         >();
         expectTypeOf<HasRisk<T["authors"]>>().toEqualTypeOf<false>();
         expectTypeOf<HasRisk<T["association"]>>().toEqualTypeOf<false>();
@@ -23,7 +23,7 @@ describe("JoinPolicyTest", () => {
         expectTypeOf<Keys>().toEqualTypeOf<
             "as" | "is" | "join" | "association" | "match"| "count" | "fetch" 
             | "every" | "none" | "noneIf" | "some" | "someIf"
-            | "id" | "name" | "edition" | "price" | "store" | "storeId" | "authors"
+            | "__discriminator" | "id" | "name" | "edition" | "price" | "store" | "storeId" | "authors"
         >();
         expectTypeOf<HasRisk<T["authors"]>>().toEqualTypeOf<true>();
         expectTypeOf<HasRisk<T["association"]>>().toEqualTypeOf<true>();
@@ -36,7 +36,7 @@ describe("JoinPolicyTest", () => {
         expectTypeOf<Keys>().toEqualTypeOf<
             "as" | "is" | "match"| "count" | "fetch" 
             | "every" | "none" | "noneIf" | "some" | "someIf"
-            | "id" | "name" | "edition" | "price" | "storeId"
+            | "__discriminator" | "id" | "name" | "edition" | "price" | "storeId"
         >();
     });
 

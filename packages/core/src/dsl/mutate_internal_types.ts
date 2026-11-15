@@ -30,13 +30,9 @@ export type __MutatedMembers<TModel extends AnyModel | AnyAssociationModel> =
         ? __NormalizeOptions<
             __MutatedMembersImpl<__FlattenMembers<__AllModelMembers<TModel>>> & (
                 Modifier extends "OPEN" | "ABSTRACT"
-                    ? {
-                        readonly "__discriminator": StrExpression<string>
-                    } 
+                    ? { readonly __discriminator: StrExpression<string>; } 
                 : Modifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
-                    ? {
-                        readonly "__discriminator": NumExpression<number>
-                    } 
+                    ? { readonly __discriminator: NumExpression<number>; } 
                 : object
             )
         >

@@ -17,39 +17,8 @@ import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __I64PropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT, UserIdGenerator } from "./model";
 
-export type __ModelCreator<TModifier extends __ModifierType> = 
-    __ModelCreatorItf<TModifier>
-    & (
-        TModifier extends "NONE"
-            ? {
-                readonly abstract: __ModelCreator<"ABSTRACT">;
-                readonly open: __ModelCreator<"OPEN">;
-            }
-        : TModifier extends "ABSTRACT" | "ABSTRACT_BY_NUM"
-            ? {
-                discriminatedBy<
-                    TBy extends "STRING" | "NUMBER"
-                >(
-                    by: TBy
-                ): __ModelCreator<
-                    TBy extends "NUMBER" ? "ABSTRACT_BY_NUM" : "ABSTRACT"
-                >
-            }
-        : TModifier extends "OPEN" | "OPEN_BY_NUM"
-            ? {
-                discriminatedBy<
-                    TBy extends "STRING" | "NUMBER"
-                >(
-                    by: TBy
-                ): __ModelCreator<
-                    TBy extends "NUMBER" ? "OPEN_BY_NUM" : "OPEN"
-                >
-            }
-        : object
-    )
+export interface __SimplestModelCreator<TModifier extends __ModifierType> {
 
-export interface __ModelCreatorItf<TModifier extends __ModifierType> {
-    
     <
         TName extends string, 
         TIdKey extends keyof __CtorMembers<TCtor> & string,
@@ -67,15 +36,63 @@ export interface __ModelCreatorItf<TModifier extends __ModifierType> {
         never, 
         TModifier
     >;
+}
 
+export interface __ModelCreator
+extends __SimplestModelCreator<"NONE">, __ExtendableModelCreator<"NONE"> {
+
+    readonly abstract: __AbstractModelCreator<"ABSTRACT">;
+
+    readonly open: __OpenModelCreator<"OPEN">;
+};
+
+export interface __AbstractModelCreator<
+    TModifier extends "ABSTRACT" | "ABSTRACT_BY_NUM"
+> extends __SimplestModelCreator<TModifier>, __ExtendableModelCreator<TModifier> {
+
+    discriminatedBy<TBy extends "STRING" | "NUMBER">(
+        by: TBy
+    ): __SimplestModelCreator<
+        TBy extends "NUMBER" ? "ABSTRACT_BY_NUM" : "ABSTRACT"
+    >;
+}
+
+export interface __OpenModelCreator<
+    TModifier extends "OPEN" | "OPEN_BY_NUM"
+> extends __SimplestModelCreator<TModifier>, __ExtendableModelCreator<TModifier> {
+
+    discriminatedBy<TBy extends "STRING" | "NUMBER">(
+        by: TBy
+    ): __SimplestModelCreator<
+        TBy extends "NUMBER" ? "OPEN_BY_NUM" : "OPEN"
+    >;
+}
+
+export interface __ExtendableModelCreator<
+    TModifier extends __ModifierType
+>extends __SimplestModelCreator<TModifier> {
+    
     extends<
         TSuperModel extends Model<any, any, any, any, any, "OPEN" | "ABSTRACT_BY_NUM" | "OPEN_BY_NUM" | "ABSTRACT">
     >(
         superModel: TSuperModel
-    ): __InheritanceModelCreator<TSuperModel, TModifier>;
-};
+    ): __InheritedModelCreator<
+        TSuperModel, 
+        TSuperModel extends Model<any, any, any, any, any, infer SuperModifier>
+            ? TModifier extends "ABSTRACT" | "ABSTRACT_BY_NUM"
+                ? SuperModifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
+                    ? "ABSTRACT_BY_NUM"
+                    : "ABSTRACT"
+            : TModifier extends "OPEN" | "OPEN_BY_NUM"
+                ? SuperModifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
+                    ? "OPEN_BY_NUM"
+                    : "OPEN"
+            : TModifier
+        : TModifier
+    >;
+}
 
-export interface __InheritanceModelCreator<
+export interface __InheritedModelCreator<
     TSuperModel extends AnyModel,
     TModifier extends __ModifierType
 > {
@@ -336,17 +353,17 @@ export type __ComplexTableOptions<
             TModifier extends "OPEN_BY_NUM"
                 ? { readonly discriminatorValue: number; }
             : TModifier extends "OPEN"
-                ? { readonly discriminatorValue: typeof DISCRIMINATOR_VALUE_MODEL_NAME | string; }
+                ? { readonly discriminatorValue?: typeof DISCRIMINATOR_VALUE_MODEL_NAME | string; }
             : [TSuperModel] extends [Model<any, any, any, any, any, infer SuperModifier>]
                 ? SuperModifier extends "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
                     ? { readonly discriminatorValue: number; }
                 : SuperModifier extends "OPEN" | "ABSTRACT"
-                    ? { readonly discriminatorValue: typeof DISCRIMINATOR_VALUE_MODEL_NAME | string; }
+                    ? { readonly discriminatorValue?: typeof DISCRIMINATOR_VALUE_MODEL_NAME | string; }
                 : {}
             : {}
         ) & (
             TModifier extends "OPEN" | "ABSTRACT" | "OPEN_BY_NUM" | "ABSTRACT_BY_NUM"
-                ? { readonly discriminator: string; }
+                ? { readonly discriminator?: string; }
                 : {}
         )
     >;

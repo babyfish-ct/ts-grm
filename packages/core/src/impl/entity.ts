@@ -25,9 +25,10 @@ import { __Mutable } from "@/auxiliary_types";
 import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
-import { __IdGenerator, __ModifierType, __PropData } from "@/index_internal";
+import { __EMPTY_PROP_DEFINITION_DATA, __IdGenerator, __ModifierType, __PropData } from "@/index_internal";
 import { ExplicitDataType } from "./explicit";
 import { Filter } from "./dto_mapping";
+import { ScalarType } from "@/schema/scalar";
 
 export class Entity {
 
@@ -317,6 +318,35 @@ export class Entity {
 
     private _createDeclaredProps(): ReadonlyMap<string, EntityProp> {
         const declaredPropMap = new Map<string, EntityProp>();
+        if (this.modifier != "NONE") {
+            let scalarType: ScalarType<any>;
+            if (this.modifier === "ABSTRACT_BY_NUM" || this.modifier === "OPEN_BY_NUM") {
+                scalarType = ScalarType.I32;
+            } else {
+                scalarType = ScalarType.str(() => {
+                    let length = (this.tableSettings.discriminatorValue as string | undefined)?.length ?? 0;
+                    for (const descendant of this.descendants) {
+                        length = Math.max(length, (descendant.tableSettings.discriminatorValue as string | undefined)?.length ?? 0);
+                    }
+                    return length;
+                });
+            }
+            const discriminatorProp = new EntityProp(
+                this, 
+                "__discriminator", 
+                { 
+                    ...__EMPTY_PROP_DEFINITION_DATA, 
+                    scalarType,
+                    scalarBehavior: "EXCLUSIVE",
+                    columnName: this.tableSettings.discriminator!.name
+                }, 
+                undefined
+            );
+            if (this.superEntity != null) {
+                (discriminatorProp as any)._override = true;
+            }
+            declaredPropMap.set(discriminatorProp.name, discriminatorProp);
+        }
         const instance = new this._ctor();
         for (const propName in instance) {
             if (keywords.has(propName)) {

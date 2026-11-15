@@ -36,6 +36,8 @@ export class ModelImpl<
 
     readonly identifier: number = allocateModelIdentifier();
 
+    readonly modifier: __ModifierType;
+
     private _entity: Entity | undefined;
 
     private _derivedModels: Set<AnyModelImpl> | undefined;
@@ -52,8 +54,23 @@ export class ModelImpl<
         readonly ctor: TCtor,
         readonly superModel: AnyModel | undefined,
         readonly options: ModelOptions,
-        readonly modifier: TModifier
+        modifier: TModifier
     ) {
+        if (superModel != null) {
+            const superModifier = (superModel as AnyModelImpl).modifier;
+            this.modifier = 
+                modifier === "ABSTRACT" || modifier === "ABSTRACT_BY_NUM"
+                    ? superModifier === "OPEN_BY_NUM" || superModifier == "ABSTRACT_BY_NUM"
+                        ? "ABSTRACT_BY_NUM"
+                        : "ABSTRACT"
+                : modifier === "OPEN" || modifier === "OPEN_BY_NUM"
+                    ? superModifier === "OPEN_BY_NUM" || superModifier == "ABSTRACT_BY_NUM"
+                        ? "OPEN_BY_NUM"
+                        : "OPEN"
+                : modifier
+        } else {
+            this.modifier = modifier;
+        }
         if (ALL_MODEL_MAP.has(name)) {
             throw new StateError(`Duplicate models with same name: "${name}"`);
         }

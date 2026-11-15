@@ -13,7 +13,7 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { CascadeType, err, spi, ScalarType } from "@ts-grm/core";
+import { CascadeType, err, spi } from "@ts-grm/core";
 import { ColumnDefImpl, ForeignKeyConstraintDef, TableDef, TableDefImpl } from "./schema_def";
 
 export async function createSchema(
@@ -92,24 +92,6 @@ class SchemaCreatorExecutor {
             }
         }
         this._processProp(entity.idProp, tableDefImpl);
-        const discriminator = entity.tableSettings.discriminator;
-        if (discriminator != null) {
-            tableDefImpl.addColumnDef(
-                new ColumnDefImpl(
-                    tableDefImpl,
-                    undefined,
-                    discriminator.name,
-                    undefined,
-                    discriminator.type === "string" 
-                        ? ScalarType.str(
-                            entity.discriminatorValues.map(v => (v as string).length).reduce((a, b) => Math.max(a, b), 0)
-                        ) 
-                        : ScalarType.I32,
-                    false,
-                    undefined
-                )
-            );
-        }
         for (const prop of entity.declaredPropMap.values()) {
             if (prop != entity.idProp && prop.referenceProp == null) {    
                 this._processProp(prop, tableDefImpl);

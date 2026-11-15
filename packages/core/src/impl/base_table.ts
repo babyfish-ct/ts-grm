@@ -100,7 +100,7 @@ export function createTypedBaseTable(
 }
 
 const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
-    get: (target: BaseTableTarget, prop: string | symbol, _: any) => {
+    get: (target: BaseTableTarget, prop: string | symbol, recevier: any) => {
         if (typeof prop === "symbol") {
             return Reflect.get(target, prop);
         }
@@ -134,6 +134,8 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
                     readonly joinType?: JoinType,
                     readonly filter: JoinFilter
                 }) => createJoinedTable(target.self, model, options);
+            case "$acceptMulti":
+                return () => recevier;
             default:
                 return target.__args[prop] ?? Reflect.get(target, prop);
         }

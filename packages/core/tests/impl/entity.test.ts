@@ -22,6 +22,7 @@ describe("EntityTest", () => {
             [...paperBookEntity.allPropMap.keys()].sort()
         ).toEqual(
             [
+                "__discriminator",
                 "area",
                 "id", "name", "edition", "price", "store", "storeId", "authors", "authorCount",
                 "size"
@@ -31,6 +32,7 @@ describe("EntityTest", () => {
             [...paperBookEntity.expandedPropMap.keys()].sort()
         ).toEqual(
             [
+                "__discriminator",
                 "area",
                 "id", "name", "edition", "price", "store", "storeId", "authors", "authorCount", 
                 "size", "size.width", "size.height"

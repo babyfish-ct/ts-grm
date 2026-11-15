@@ -134,10 +134,12 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     __type(): {
         tableLike: true;
+        entityTableLike: true;
         entityTable: true;
     } {
         return {
             tableLike: true,
+            entityTableLike: true,
             entityTable: true
         }
     }

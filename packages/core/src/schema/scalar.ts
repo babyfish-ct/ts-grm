@@ -34,7 +34,7 @@ export class ScalarType<T> {
 
     private constructor(
         readonly kind: ScalarKind,
-        readonly length: number | undefined,
+        private _length: number | (() => number) | undefined,
         readonly precision = 0,
         readonly scale = 0
     ) {}
@@ -61,8 +61,11 @@ export class ScalarType<T> {
 
     static JSONB = new ScalarType<any>("JSONB", undefined);
 
-    static str(length: number): ScalarType<string> {
-        if (length == null || length < 1) {
+    static str(length: number | (() => number)): ScalarType<string> {
+        if (length == null) {
+            throw new ArgumentError("length cannot be null");
+        }
+        if (typeof length === "number" && length < 1) {
             throw new ArgumentError("length cannot be less than 1");
         }
         return new ScalarType<string>("STR", length);
@@ -85,6 +88,24 @@ export class ScalarType<T> {
 
     static image(): ScalarType<Uint8Array> {
         return new ScalarType<Uint8Array>("BINARY", undefined);
+    }
+
+    get length(): number | undefined {
+        let len = this._length;
+        if (len == null) {
+            return undefined;
+        }
+        if (typeof len === "function") {
+            const l = len();
+            if (l == null) {
+                throw new ArgumentError("length cannot be null");
+            }
+            if (l < 1) {
+                throw new ArgumentError("length cannot be less than 1");
+            }
+            this._length = len = l;
+        }
+        return len;
     }
 
     get isNumeric(): boolean {
