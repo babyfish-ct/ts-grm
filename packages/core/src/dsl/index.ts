@@ -47,8 +47,9 @@ export type {
 } from "./save";
 export type { 
     MutableInsert, 
-    MutableInsertByValues, 
-    MutableInsertByBaseModel,
+    MutableInsertSourceContext,
+    MutableInsertSourceQuery,
+    InsertSource,
     Insert,
     ReturnedInsert,
     InsertResult,

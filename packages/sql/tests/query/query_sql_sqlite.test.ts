@@ -1,6 +1,6 @@
 import { BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
 import { describe, expect, it } from "vitest";
-import { dsl, dto } from "@ts-grm/core";
+import { __AllModelMembers, __EmbeddedPropContract, dsl, dto } from "@ts-grm/core";
 import { newSqlRecord } from "../utils";
 import { SIMPLE_BOOK_VIEW, SIMPLE_STORE_VIEW } from "./utils";
 import { useSqliteClientWithData } from "../data_utils";

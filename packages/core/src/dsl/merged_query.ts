@@ -19,7 +19,6 @@ import { AtLeastOne } from "./utils";
 import { getQueryFactory, MergedQueryKind } from "@/impl/ast/query_factory";
 import { StateError } from "@/error/common";
 
-
 export function union<
     TProjection extends RootQueryProjection<any>
 >(

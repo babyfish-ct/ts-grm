@@ -133,6 +133,40 @@ export type __MakeExpression<
         : Expression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
     : never;
 
+export type __MakeAssignableExpression<
+    TNullity extends __NullityType, 
+    TProp
+> =
+    TProp extends __ScalarPropContract<infer R, infer Nullity, any, infer Customized>
+        ? TProp extends __I64PropContract<infer R, any, any>
+            ? __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+                ? NumExpression<__MakeType<R, "NONNULL">>
+                : NumExpression<__MakeType<R, "NONNULL">> | NumExpression<__MakeType<R, "NULLABLE">> 
+        : TProp extends __EnumSetPropContract<infer R, any>
+            ? __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+                ? EnumSetExpression<__MakeType<R, "NONNULL">>
+                : EnumSetExpression<__MakeType<R, "NONNULL">> | EnumSetExpression<__MakeType<R, "NULLABLE">>
+        : Customized extends true
+            ? __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+                ? Expression<__MakeType<R, "NONNULL">>
+                : Expression<__MakeType<R, "NONNULL">> | Expression<__MakeType<R, "NULLABLE">>
+        : R extends Date
+            ? __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+                ? DateExpression<__MakeType<R, "NONNULL">>
+                : DateExpression<__MakeType<R, "NONNULL">> | DateExpression<__MakeType<R, "NULLABLE">>
+        : R extends string
+            ? __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+                ? StrExpression<__MakeType<R, "NONNULL">>
+                : StrExpression<__MakeType<R, "NONNULL">> | StrExpression<__MakeType<R, "NULLABLE">>
+        : R extends number
+            ? __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+                ? NumExpression<__MakeType<R, "NONNULL">>
+                : NumExpression<__MakeType<R, "NONNULL">> | NumExpression<__MakeType<R, "NULLABLE">>
+        : __CombinedNullity<TNullity, Nullity> extends "NONNULL"
+            ? Expression<__MakeType<R, "NONNULL">>
+            : Expression<__MakeType<R, "NONNULL">> | Expression<__MakeType<R, "NULLABLE">>
+    : never;
+
 export type __MakeType<T, TNullity extends __NullityType> =
     TNullity extends "NONNULL"
         ? T

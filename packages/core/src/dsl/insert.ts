@@ -16,54 +16,92 @@ import { AnyAssociationModel } from "./association";
 import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __InsertConext, __MutatedReturn } from "./mutate_internal_types";
 import { AnyModel } from "@/schema/model";
 import { AtLeastOne } from "./utils";
-import { BaseModel, BaseQuery, BaseQueryMapOf } from "./base_query";
+import { AbstractMutableBaseQuery, BaseModel, BaseQueryProjection, BaseQuerySelectMapArgs } from "./base_query";
+import { Table } from "./table";
 
 export interface MutableInsert<
-    TModel extends AnyModel | AnyAssociationModel
-> {
-    using<
-        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
-    >(
-        ...keys: TKeys
-    ): MutableInsertByValues<TModel, TKeys>;
-
-    using<
-        TQuery extends BaseQuery<any>,
-    >(
-        query: TQuery,
-    ): MutableInsertByBaseModel<
-        TModel, 
-        BaseModel<BaseQueryMapOf<TQuery>>
-    >;
-
-    using<
-        TSourceModel extends BaseModel<any>
-    >(
-        model: TSourceModel
-    ): MutableInsertByBaseModel<
-        TModel, 
-        TSourceModel
-    >;
-}
-
-export interface MutableInsertByValues<
     TModel extends AnyModel | AnyAssociationModel,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > {
-    values(
-        ...rows: ReadonlyArray<
-            __MutatedLiterals<TModel, TKeys>
-        >
+    row(
+        ...values: __MutatedLiterals<TModel, TKeys>
+    ): Insert<TModel>;
+    
+    rows(
+        ...rows: ReadonlyArray<__MutatedLiterals<TModel, TKeys>>
+    ): Insert<TModel>;
+
+    using(
+        fn: (
+            ctx: MutableInsertSourceContext<{
+                readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+            } & BaseQuerySelectMapArgs>
+        ) => InsertSource<{
+            readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+        } & BaseQuerySelectMapArgs>
     ): Insert<TModel>;
 }
 
-export interface MutableInsertByBaseModel<
-    TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends BaseModel<any>
+export interface MutableInsertSourceContext<TSelectionMap extends BaseQuerySelectMapArgs> {
+
+    source<
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>
+    >(
+        ...args: [
+            ...models: TModels,
+            fn: (
+                q: MutableInsertSourceQuery<TSelectionMap>,
+                ...tables: {
+                    [K in keyof TModels]: Table<TModels[K]>
+                } extends infer T ? T extends any[] ? T : never : never
+            ) => BaseQueryProjection<TSelectionMap>
+        ]
+    ): InsertSource<TSelectionMap>;
+
+    union(
+        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap>; 
+
+    unionAll(
+        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap>; 
+
+    except(
+        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap>; 
+
+    exceptAll(
+        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap>; 
+
+    intersect(
+        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap>; 
+
+    intersectAll(
+        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap>; 
+}
+
+export interface MutableInsertSourceQuery<
+    TSelectionMap extends BaseQuerySelectMapArgs
+> extends AbstractMutableBaseQuery {
+
+    select(
+        selectionMap: TSelectionMap
+    ): BaseQueryProjection<TSelectionMap>;
+
+    selectDistinct(
+        selectionMap: TSelectionMap
+    ): BaseQueryProjection<TSelectionMap>;
+}
+
+export interface InsertSource<
+    TSelectionMap extends BaseQuerySelectMapArgs
 > {
-    do(
-        fn: (ctx: __InsertConext<TModel, TSourceModel>) => void
-    ): Insert<TModel>;
+    __type(): { 
+        insertSource: BaseQueryProjection<TSelectionMap> | true;
+    };
 }
 
 export interface Insert<

@@ -57,9 +57,11 @@ export function baseQuery<
     return getQueryFactory().createAtomBaseQuery(...args);
 }
 
-export interface MutableBaseQuery {
+export interface AbstractMutableBaseQuery {
 
-    __type(): { mutableBaseQuery: true };
+    __type(): { 
+        readonly abstractMutableBaseQuery: true;
+    };
 
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
@@ -76,6 +78,14 @@ export interface MutableBaseQuery {
     having(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
     ): this;
+}
+
+export interface MutableBaseQuery extends AbstractMutableBaseQuery {
+
+    __type(): { 
+        readonly abstractMutableBaseQuery: true;
+        readonly mutableBaseQuery: true;
+    };
 
     select<
         const TSelectionMap extends BaseQuerySelectMapArgs
@@ -94,8 +104,9 @@ export interface RecursiveMutableBaseQuery<TProjection>
 extends MutableBaseQuery {
     
     __type(): { 
-        mutableBaseQuery: true 
-        recursiveBaseQuery: TProjection | true
+        readonly abstractMutableBaseQuery: true;
+        readonly mutableBaseQuery: true 
+        readonly recursiveBaseQuery: TProjection | true
     };
 
     readonly prev: BaseTable<BaseQueryMapOf<TProjection>>;

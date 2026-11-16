@@ -23,7 +23,7 @@ import { Page } from "./page";
 import { Input, TypeOf, View } from "@/schema/dto/api";
 import { __ModelOf } from "@/schema/dto/internal_types";
 import { ModelOrder } from "@/schema/order";
-import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions } from "@/index_internal";
+import { __AffectRowsResult, __AssociatedSaveModeOptions, __DissociationOptions, __MutatedMembers } from "@/index_internal";
 import { SaveManyWithViewResult, SaveOneWithViewResult, SaveOptions, SaveResult, SaveWithViewOptions } from "./save";
 import { Predicate } from "./expression";
 import { MutableUpdate, Update } from "./update";
@@ -85,10 +85,12 @@ export interface SqlClient {
     ): AtomRootQuery<TProjection>;
 
     createInsert<
-        TModel extends AnyModel | AnyAssociationModel
+        TModel extends AnyModel | AnyAssociationModel,
+        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
     >(
-        model: TModel
-    ): MutableInsert<TModel>;
+        model: TModel,
+        ...keys: TKeys
+    ): MutableInsert<TModel, TKeys>;
 
     createMerge<
         TModel extends AnyModel | AnyAssociationModel
