@@ -60,7 +60,11 @@ export interface MutableMergeByValues<
     TSourceTableLike,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > {
-    values(
+    row(
+        ...values: __MutatedLiterals<TModel, TKeys>
+    ): MutableMergeMatcher<TModel, TSourceTableLike, true>;
+
+    rows(
         ...rows: ReadonlyArray<
             __MutatedLiterals<TModel, TKeys>
         >
@@ -77,20 +81,20 @@ export interface MutableMergeMatcher<
         fn: (
             ctx: __MergeContext<TModel, TSourceTableLike>
         ) => Predicate
-    ): MutableMergeMatched<TModel, TSourceTableLike, TUseValues>;
+    ): MutableMergeMatchable<TModel, TSourceTableLike, TUseValues>;
 }
 
-export interface MutableMergeMatched<
+export interface MutableMergeMatchable<
     TModel extends AnyModel | AnyAssociationModel,
     TSourceTableLike,
     TUseValues extends boolean
 > {
     matched(
         fn?: (ctx: __MergeMetchedContext<TModel, TSourceTableLike>) => void
-    ): MutableMergeUnmatched<TModel, TSourceTableLike, TUseValues>;
+    ): MutableMergeUnmatchable<TModel, TSourceTableLike, TUseValues>;
 }
 
-export interface MutableMergeUnmatched<
+export interface MutableMergeUnmatchable<
     TModel extends AnyModel | AnyAssociationModel,
     TSourceTableLike,
     TUseValues extends boolean
@@ -104,9 +108,9 @@ export interface Merge<
     TModel extends AnyModel | AnyAssociationModel
 > {
     execute<
-        TReturnKind extends "AFFECTED_ROW_COUNT" | "WITH_ROWS" | "NOTHING" = "AFFECTED_ROW_COUNT"
+        TReturnKind extends "AFFECTED_ROW_COUNT" | "WITH_MATCHED" | "NOTHING" = "AFFECTED_ROW_COUNT"
     >(kind?: TReturnKind): Promise<
-        TReturnKind extends "WITH_ROWS"
+        TReturnKind extends "WITH_MATCHED"
             ? MergeResultWithMatched
         : TReturnKind extends "NOTHING"
             ? void

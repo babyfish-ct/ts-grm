@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { Driver, PaginationStrategy } from "./deriver";
+import { Driver, MergeStrategy, PaginationStrategy } from "./deriver";
 import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
@@ -55,6 +55,10 @@ export abstract class AbstractDriver implements Driver {
 
     get paginationStrategy(): PaginationStrategy {
         return "CLASSIC_LIMIT_OFFSET";
+    }
+
+    get mergeStrategy(): MergeStrategy {
+        return "MERGE";
     }
 
     quoteIdentifier(value: string): string {

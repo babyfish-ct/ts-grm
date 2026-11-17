@@ -24,6 +24,7 @@ import { AbstractDriver } from "./abstract_drivier";
 
 // Only import types
 import type { Database } from "better-sqlite3";
+import { MergeStrategy } from "./deriver";
 
 export class SqliteDriver extends AbstractDriver {
 
@@ -67,6 +68,10 @@ export class SqliteDriver extends AbstractDriver {
 
     override get requiresInlineConstraints(): boolean {
         return true;
+    }
+
+    get mergeStrategy(): MergeStrategy {
+        return "INSERT_ON_CONFLICT";
     }
 
     protected override createTransactionManager(): TransactionManager {

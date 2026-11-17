@@ -14,7 +14,7 @@ describe("MergeTest", () => {
         const merge = sqlClient
             .createMerge(BOOK)
             .using("name", "edition", "price", "storeId")
-            .values( 
+            .rows( 
                 ["GraphQL in Action", 2, 59.9, "2"],
                 ["Learning GraphQL", 3, 49.9, "1"]
             )
@@ -125,7 +125,7 @@ describe("MergeTest", () => {
         expectTypeOf<typeof result1>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await merge.execute("WITH_ROWS");
+        const result2 = await merge.execute("WITH_MATCHED");
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
             readonly rows: ReadonlyArray<{

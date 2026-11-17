@@ -25,6 +25,7 @@ import { Scope, Value, valueOf } from "@/sql/fragment";
 
 // Only import types
 import type { Pool } from "pg";
+import { MergeStrategy } from "./deriver";
 
 export class PostgresDriver extends AbstractDriver {
 
@@ -40,6 +41,10 @@ export class PostgresDriver extends AbstractDriver {
 
     override get nameParameterPrefix(): string | undefined {
         return "$";
+    }
+
+    override get mergeStrategy(): MergeStrategy {
+        return "INSERT_ON_CONFLICT";
     }
 
     override typeName(columnDef: ColumnDef): string {

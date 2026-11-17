@@ -34,6 +34,8 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly paginationStrategy: PaginationStrategy;
 
+    readonly mergeStrategy: MergeStrategy;
+
     typeName(columnDef: ColumnDef): string;
 
     requiresInlineConstraints: boolean;
@@ -53,3 +55,6 @@ export type PaginationTransformer = (
     composite: Composite, 
     options: FetchRangeOptions
 ) => Composite;
+
+export type MergeStrategy =
+    "MERGE" | "INSERT_ON_CONFLICT" | "MERGE_OR_INSERT_ON_CONFLICT" | "INSERT_ON_DUPLICATE_KEY" | "UNSUPPORTED";
