@@ -13,7 +13,7 @@
  */
 
 import { AnyAssociationModel } from "./association";
-import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __InsertConext, __MutatedReturn } from "./mutate_internal_types";
+import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn } from "./mutate_internal_types";
 import { AnyModel } from "@/schema/model";
 import { AtLeastOne } from "./utils";
 import { AbstractMutableBaseQuery, BaseModel, BaseQueryProjection, BaseQuerySelectMapArgs } from "./base_query";
@@ -32,6 +32,17 @@ export interface MutableInsert<
     ): Insert<TModel>;
 
     using(
+        fn: (
+            ctx: MutableInsertSourceContext<{
+                readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+            } & BaseQuerySelectMapArgs>
+        ) => InsertSource<{
+            readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+        } & BaseQuerySelectMapArgs>
+    ): Insert<TModel>;
+
+    using(
+        kind: "DERIVED" | "CTE",
         fn: (
             ctx: MutableInsertSourceContext<{
                 readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
@@ -59,27 +70,27 @@ export interface MutableInsertSourceContext<TSelectionMap extends BaseQuerySelec
     ): InsertSource<TSelectionMap>;
 
     union(
-        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
     ): InsertSource<TSelectionMap>; 
 
     unionAll(
-        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
     ): InsertSource<TSelectionMap>; 
 
     except(
-        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
     ): InsertSource<TSelectionMap>; 
 
     exceptAll(
-        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
     ): InsertSource<TSelectionMap>; 
 
     intersect(
-        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
     ): InsertSource<TSelectionMap>; 
 
     intersectAll(
-        ...source: AtLeastOne<InsertSource<TSelectionMap>>
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
     ): InsertSource<TSelectionMap>; 
 }
 

@@ -238,8 +238,8 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         this._compositeStack.current
             .add("insert into ")
             .add(insert.entity.toTableName(this._strategy));
-            {
-        using _5 = this._compositeStack.with(new Scope("VALUES"));
+        {
+            using _5 = this._compositeStack.with(new Scope("VALUES"));
             for (const binding of insert.bindings) {
                 this._compositeStack.current.separator();
                 let prop: spi.EntityProp | spi.AssociationProp | spi.TypeNameProp;

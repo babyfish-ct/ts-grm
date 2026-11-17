@@ -155,7 +155,7 @@ export abstract class AbstractVisitor implements Visitor {
         if (insert.kind === "BY_BASE_MODEL") {
             for (const binding of insert.bindings) {
                 const insertBinding = binding as InsertBinding;
-                insertBinding.valueExpr.accept(this);   
+                insertBinding.valueExpr.accept(this);
             }
         }
     }

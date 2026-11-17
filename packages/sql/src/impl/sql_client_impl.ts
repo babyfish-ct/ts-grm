@@ -65,7 +65,8 @@ import {
     Delete,
     Predicate,
     MutableMerge,
-    MutableInsert
+    MutableInsert,
+    __MutatedMembers
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -235,11 +236,13 @@ export class SqlClientImpl implements SqlClientImplementor {
     }
 
     createInsert<
-        const TModel extends AnyModel | AnyAssociationModel
+        TModel extends AnyModel | AnyAssociationModel,
+        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
     >(
-        model: TModel
-    ): MutableInsert<TModel> {
-        return new MutableInsertImpl(this, model);
+        model: TModel,
+        ...keys: TKeys
+    ): MutableInsert<TModel, TKeys> {
+        return new MutableInsertImpl(this, model, keys);
     }
 
     createMerge<

@@ -14,7 +14,8 @@ export class InsertImpl<
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
         readonly bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
         readonly sourceTable: spi.AbstractTable | undefined
-    ) {}
+    ) {
+    }
 
     get kind(): "BY_VALUES" | "BY_BASE_MODEL" {
         return this.source instanceof BaseModelImpl

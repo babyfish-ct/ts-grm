@@ -22,7 +22,6 @@ export function executeInsert(
     _options: InsertOptions
 ): Promise<InsertResult> {
     const [sql, args] = buildInsertStatement(sqlClient, insert);
-    console.log(sql);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.execute(DEFAULT_TRANSACTION_OPTIONS, async () => {
         const affectedRowCount = await sqlClient.executor.executeDML(

@@ -79,12 +79,20 @@ describe("InsertTest", () => {
         const insert = sqlClient
             .createInsert(dsl.associationModel(BOOK, "authors"), "sourceId", "targetId")
             .using(ctx =>
-                ctx.source(LEARNING_LINK, (q, link) => {
-                    return q.select({
-                        sourceId: link.studentId,
-                        targetId: link.courseId
-                    });
-                })
+                ctx.unionAll(
+                    ctx.source(LEARNING_LINK, (q, link) => {
+                        return q.select({
+                            sourceId: link.studentId,
+                            targetId: link.courseId
+                        });
+                    }),
+                    ctx.source(LEARNING_LINK, (q, link) => {
+                        return q.select({
+                            sourceId: link.studentId,
+                            targetId: link.courseId
+                        });
+                    })
+                )
             );
         const result1 = await insert.execute();
         expectTypeOf<typeof result1>().toEqualTypeOf<{

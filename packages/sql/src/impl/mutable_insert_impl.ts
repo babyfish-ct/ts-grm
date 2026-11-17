@@ -1,5 +1,4 @@
 import { 
-    __InsertConext,
     __MutatedLiterals,
     __MutatedMembers, 
     __MutatedValue, 
@@ -7,98 +6,47 @@ import {
     AnyModel, 
     AtLeastOne, 
     BaseModel, 
-    BaseQuery, 
-    BaseQueryMapOf, 
+    BaseQueryProjection, 
+    BaseQuerySelectMapArgs, 
     dsl, 
-    err, 
     Insert, 
+    InsertSource, 
     MutableInsert, 
-    MutableInsertByBaseModel, 
-    MutableInsertByValues, 
+    MutableInsertSourceContext, 
+    MutableInsertSourceQuery, 
     spi,
     Table
 } from "@ts-grm/core";
-import { BaseModelImpl } from "./abstract_base_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
-import { entityOf, InsertImpl } from "./insert_impl";
+import { InsertImpl } from "./insert_impl";
 import { propsOf } from "./utils";
 
 export class MutableInsertImpl<
-    TModel extends AnyModel | AnyAssociationModel
-> implements MutableInsert<TModel> {
-
-    constructor(
-        private readonly _sqlClient: SqlClientImplementor,
-        private readonly _model: AnyModel | AnyAssociationModel
-    ) {}
-    
-    using<
-        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
-    >(
-        ...keys: TKeys
-    ): MutableInsertByValues<TModel, TKeys>;
-
-    using<
-        TQuery extends BaseQuery<any>,
-    >(
-        query: TQuery,
-    ): MutableInsertByBaseModel<
-        TModel, 
-        BaseModel<BaseQueryMapOf<TQuery>>
-    >;
-
-    using<
-        TSourceModel extends BaseModel<any>
-    >(
-        model: TSourceModel
-    ): MutableInsertByBaseModel<
-        TModel, 
-        TSourceModel
-    >;
-
-    using(
-        ...args: ReadonlyArray<any>
-    ): any {
-        const first = args[0];
-        if (typeof first === "string") {
-            return new MutableInsertByValuesImpl(this._sqlClient, this._model, args as any);
-        }
-        if (first instanceof BaseModelImpl) {
-            const baseModel = first as BaseModel<any>;
-            return new MutableInsertByBaseModelImpl(this._sqlClient, this._model, baseModel);
-        }
-        const baseQuery = first as BaseQuery<any>;
-        const baseModel = (baseQuery as any as spi.BaseQueryImplementor<any>)
-            .toModel((baseQuery as any as spi.QueryContract).isRecursive);
-        return new MutableInsertByBaseModelImpl(this._sqlClient, this._model, baseModel);
-    }
-}
-
-class MutableInsertByValuesImpl<
     TModel extends AnyModel | AnyAssociationModel,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
-> implements MutableInsertByValues<
-    TModel,
-    TKeys
-> {
-    
+> implements MutableInsert<TModel, TKeys> {
+
     private readonly _props: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>;
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
         private readonly _model: TModel,
-        keys: TKeys
+        private readonly _keys: TKeys
     ) {
-        this._props = propsOf(_model, keys as ReadonlyArray<string>);
+        this._props = propsOf(_model, _keys as ReadonlyArray<string>);
     }
-
-    values(
-        ...rows: ReadonlyArray<
-            __MutatedLiterals<TModel, TKeys>
-        >
+    
+    row(
+        ...values: __MutatedLiterals<TModel, TKeys>
+    ): Insert<TModel> {
+        return this.rows(values);
+    }
+    
+    rows(
+        ...rows: ReadonlyArray<__MutatedLiterals<TModel, TKeys>>
     ): Insert<TModel> {
         const sourceRows = rows.map(row => new SourceRowImpl(row));
-        return new InsertImpl(
+        return new InsertImpl<TModel>(
             this._sqlClient,
             this._model,
             sourceRows,
@@ -106,36 +54,65 @@ class MutableInsertByValuesImpl<
             undefined
         );
     }
-}
 
-class MutableInsertByBaseModelImpl<
-    TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends BaseModel<any>
-> implements MutableInsertByBaseModel<
-    TModel,
-    TSourceModel
-> {
-    readonly new: Table<TSourceModel, "NONE">;
+    using(
+        fn: (
+            ctx: MutableInsertSourceContext<{
+                readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+            } & BaseQuerySelectMapArgs>
+        ) => InsertSource<{
+            readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+        } & BaseQuerySelectMapArgs>
+    ): Insert<TModel>;
 
-    constructor(
-        private readonly _sqlClient: SqlClientImplementor,
-        private readonly _model: TModel,
-        private readonly _sourceMode: TSourceModel
-    ) {
-        this.new = spi.createTypedBaseTable(this._sourceMode as any, undefined) as any;
+    using(
+        kind: "DERIVED" | "CTE",
+        fn: (
+            ctx: MutableInsertSourceContext<{
+                readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+            } & BaseQuerySelectMapArgs>
+        ) => InsertSource<{
+            readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+        } & BaseQuerySelectMapArgs>
+    ): Insert<TModel>;
+
+    using(
+        ...args: ReadonlyArray<any>
+    ): Insert<TModel> {
+        if (typeof args[0] === "string") {
+            return this._using(args[0] as "DERIVED" | "CTE", args[1]);
+        }
+        return this._using("DERIVED", args[0]);
     }
 
-    do(
-        fn: (ctx: __InsertConext<TModel, TSourceModel>) => void
+    private _using(
+        kind: "DERIVED" | "CTE",
+        fn: (
+            ctx: MutableInsertSourceContext<{
+                readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+            } & BaseQuerySelectMapArgs>
+        ) => InsertSource<{
+            readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
+        } & BaseQuerySelectMapArgs>
     ): Insert<TModel> {
-        const ctx = new InsertContextImpl(this._model, this.new);
-        fn(ctx);
-        return new InsertImpl(
+        const source = fn(new MutableInsertSourceContextImpl());
+        const baseModel = (source as any as spi.BaseQueryImplementor<any>).toModel(kind === "CTE");
+        const sourceTable = spi.createTypedBaseTable(baseModel, undefined);
+        const bindings: Array<spi.InsertBinding> = [];
+        const size = this._keys.length;
+        for (let i = 0; i < size; i++) {
+            const valueExpr = (sourceTable as any)[this._keys[i] as string];
+            bindings.push({
+                prop: this._props[i]!,
+                valueExpr
+            });
+        }
+        return new InsertImpl<TModel>(
             this._sqlClient,
             this._model,
-            this._sourceMode,
-            ctx.bindings,
-            this.new as any
+            baseModel,
+            bindings,
+            sourceTable
         );
     }
 }
@@ -151,71 +128,61 @@ class SourceRowImpl implements spi.SourceRow {
     }
 }
 
-class InsertContextImpl<
-    TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends BaseModel<any>
-> implements __InsertConext<
-    TModel,
-    TSourceModel
+class MutableInsertSourceContextImpl<
+    TSelectionMap extends BaseQuerySelectMapArgs
+> implements MutableInsertSourceContext<
+    TSelectionMap
 > {
-    private readonly _bindingMap = new Map<keyof __MutatedMembers<TModel>, spi.InsertBinding>();
-
-    private _bindings: ReadonlyArray<spi.InsertBinding> | undefined = undefined;
-
-    readonly new: Table<TSourceModel, "NONE">;
-
-    constructor(
-        private readonly _model: TModel,
-        newTable: Table<TSourceModel, "NONE">
-    ) {
-        this.new = newTable;
-    }
-
-    insert<
-        TKey extends keyof __MutatedMembers<TModel>
+    source<
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>
     >(
-        key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey]> 
-    ): this {
-        if (this._bindingMap.has(key)) {
-            throw new err.ArgumentError(`Duplicated inserted key "${key.toString()}"`);
-        }
-        this._bindings = undefined;
-        const entity = entityOf(this._model);
-        if (entity instanceof spi.Entity) {
-            const prop = key === "__typename" 
-                ? new spi.TypeNameProp(entity, entity.tableSettings.discriminator!.name, undefined)
-                : entity.expandedPropMap.get(key as string);
-            if (prop == null) {
-                throw new err.ArgumentError(
-                    `There is no property "${key.toString()}" in the model "${entity.name}"`
-                );
-            }
-            const valueExpr = value instanceof spi.AbstractExpr
-                ? value
-                : dsl.literal(value) as spi.AbstractExpr<any>;
-            this._bindingMap.set(key, { prop, valueExpr })
-        } else if (entity instanceof spi.AssociationEntity) {
-            const prop = entity.expandedProps.get(key as string);
-            if (prop == null) {
-                throw new err.ArgumentError(
-                    `There is no property "${key.toString()}" in the model "${entity.toString()}"`
-                );
-            }
-            const valueExpr = value instanceof spi.AbstractExpr
-                ? value
-                : dsl.literal(value) as spi.AbstractExpr<any>;
-            this._bindingMap.set(key, { prop, valueExpr });
-        }
-        return this;
+        ...args: [
+            ...models: TModels,
+            fn: (
+                q: MutableInsertSourceQuery<TSelectionMap>,
+                ...tables: {
+                    [K in keyof TModels]: Table<TModels[K]>
+                } extends infer T ? T extends any[] ? T : never : never
+            ) => BaseQueryProjection<TSelectionMap>
+        ]
+    ): InsertSource<TSelectionMap> {
+        return dsl.baseQuery(...args) as any as InsertSource<TSelectionMap>;
     }
 
-    get bindings(): ReadonlyArray<spi.InsertBinding> {
-        let bindings = this._bindings;
-        if (bindings == null) {
-            this._bindings = bindings = Array.from(this._bindingMap.values());
-        }
-        return bindings;
+    union(
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap> {
+        return dsl.union(...sources as AtLeastOne<any>) as any;
+    }
+
+    unionAll(
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap> {
+        return dsl.unionAll(...sources as AtLeastOne<any>) as any;
+    }
+
+    except(
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap> {
+        return dsl.except(...sources as AtLeastOne<any>) as any;
+    }
+
+    exceptAll(
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap> {
+        return dsl.exceptAll(...sources as AtLeastOne<any>) as any;
+    } 
+
+    intersect(
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap> {
+        return dsl.intersect(...sources as AtLeastOne<any>) as any;
+    }
+
+    intersectAll(
+        ...sources: AtLeastOne<InsertSource<TSelectionMap>>
+    ): InsertSource<TSelectionMap> {
+        return dsl.intersectAll(...sources as AtLeastOne<any>) as any;
     }
 }
 

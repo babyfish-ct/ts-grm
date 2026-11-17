@@ -16,7 +16,9 @@ import {
     spi,
     AtomBaseQuery, 
     BaseQueryMapOf, 
-    ExpressionOrder, 
+    ExpressionOrder,
+    InsertSource,
+    BaseQueryProjection, 
 } from "@ts-grm/core";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 import { MapBaseQueryProjection } from "./query_projection";
@@ -27,6 +29,7 @@ export class AtomBaseQueryImpl<TProjection>
 extends AbstractBaseQueryImpl<TProjection>
 implements 
     AtomBaseQuery<TProjection>, 
+    InsertSource<BaseQueryMapOf<TProjection>>,
     spi.BaseQueryImplementor<TProjection>, 
     spi.AtomQueryContract {
 
@@ -45,8 +48,9 @@ implements
     __type(): { 
         baseQuery: TProjection | true; 
         atomBaseQuery: TProjection | true;
+        insertSource: BaseQueryProjection<BaseQueryMapOf<TProjection>> | true
     } {
-        return { baseQuery: true, atomBaseQuery: true };
+        return { baseQuery: true, atomBaseQuery: true, insertSource: true };
     }
 
     distinct(): AtomBaseQuery<TProjection> {

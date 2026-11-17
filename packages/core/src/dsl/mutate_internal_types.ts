@@ -23,7 +23,6 @@ import { Expression, NumExpression, StrExpression } from "./expression";
 import { __CombinedNullity, __EmbeddedPropContract, __NullityType, __TargetModelOf, __WithNullity } from "@/index_internal";
 import { AtLeastOne } from "./utils";
 import { Table } from "./table";
-import { BaseModel } from "./base_query";
 
 export type __MutatedMembers<
     TModel extends AnyModel | AnyAssociationModel,
@@ -229,20 +228,6 @@ export interface __MergeUnmatchedContextUsingValuesItf<
     insertAll(options?: {
         readonly execlude: keyof __MutatedMembers<TModel> | ReadonlyArray<keyof __MutatedMembers<TModel>>;
     }): this;
-}
-
-export interface __InsertConext<
-    TModel extends AnyModel | AnyAssociationModel,
-    TSourceModel extends BaseModel<any>
-> {
-    readonly new: Table<TSourceModel, "NONE">;
-
-    insert<
-        TKey extends keyof __MutatedMembers<TModel>
-    >(
-        key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey]> 
-    ): this;
 }
 
 export type __StaticEntityTableKeys =
