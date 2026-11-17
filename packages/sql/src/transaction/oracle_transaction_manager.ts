@@ -128,7 +128,7 @@ class OracleExecutor implements Executor {
         await this._con.execute(sql);
     }
 
-    async executeDML(
+    async executeUpdate(
         sql: string, 
         args: ReadonlyArray<Value>,
         purpose: Purpose
@@ -139,7 +139,7 @@ class OracleExecutor implements Executor {
         throw new Error("UnsupportedOperationException");
     }
 
-    async executeStatement(
+    async executeQuery(
         sql: string, 
         args: ReadonlyArray<Value>, 
         _: Purpose
@@ -154,7 +154,7 @@ class OracleExecutor implements Executor {
         return result.rows as DataRows;
     }
 
-    async executeStatements(
+    async executeQueries(
         _sql: string, 
         _binds: ReadonlyArray<ReadonlyArray<Value>>, 
         _purpose: Purpose

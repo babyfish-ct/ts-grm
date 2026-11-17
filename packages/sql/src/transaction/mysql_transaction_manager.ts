@@ -92,7 +92,7 @@ class MySqlExecutor implements Executor {
         });
     }
 
-    async executeDML(
+    async executeUpdate(
         sql: string, 
         args: ReadonlyArray<Value>,
         purpose: Purpose
@@ -103,7 +103,7 @@ class MySqlExecutor implements Executor {
         throw new Error("UnsupportedOperationException");
     }
 
-    async executeStatement(
+    async executeQuery(
         sql: string, 
         args: ReadonlyArray<Value>, 
         _: Purpose
@@ -117,7 +117,7 @@ class MySqlExecutor implements Executor {
         return result as DataRows;
     }
 
-    executeStatements(
+    executeQueries(
         _sql: string, 
         _binds: ReadonlyArray<ReadonlyArray<Value>>, 
         _purpose: Purpose

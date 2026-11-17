@@ -20,19 +20,19 @@ export interface Executor {
 
     execute(sql: string): Promise<void>;
 
-    executeDML(
+    executeUpdate(
         sql: string, 
         args: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<number>;
 
-    executeStatement(
+    executeQuery(
         sql: string, 
         args: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<DataRows>;
 
-    executeStatements(
+    executeQueries(
         sql: string,
         binds: ReadonlyArray<ReadonlyArray<Value>>,
         purpose: Purpose
@@ -49,28 +49,28 @@ export abstract class AbstractExecutorWrapper implements Executor {
         return this._raw.execute(sql);
     }
 
-    executeDML(
+    executeUpdate(
         sql: string, 
         values: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<number> {
-        return this._raw.executeDML(sql, values, purpose);
+        return this._raw.executeUpdate(sql, values, purpose);
     }
 
-    executeStatement(
+    executeQuery(
         sql: string, 
         values: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<DataRows> {
-        return this._raw.executeStatement(sql, values, purpose);
+        return this._raw.executeQuery(sql, values, purpose);
     }
 
-    executeStatements(
+    executeQueries(
         sql: string,
         binds: ReadonlyArray<ReadonlyArray<Value>>,
         purpose: Purpose
     ): Promise<ReadonlyArray<DataRows>> {
-        return this._raw.executeStatements(sql, binds, purpose);
+        return this._raw.executeQueries(sql, binds, purpose);
     }
 }
 

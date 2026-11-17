@@ -421,7 +421,7 @@ class AssociationResolver {
                 ? this._createRecursiveQuery(dependencies, view)
                 : this._createQuery(dependencies, view);
             const [sql, args] = buildStatement(this._sqlClient, query, undefined);
-            const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
+            const dataRows = await this._sqlClient.executor.executeQuery(sql, args, {
                 kind: isRecursive 
                     ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_KEY" : "LOAD_RECURSIVE_TREE")
                     : "LOAD_ASSOCIATION",
@@ -533,7 +533,7 @@ class AssociationResolver {
             return q.select(...selections);
         });
         const [sql, args] = buildStatement(this._sqlClient, query, undefined);
-        const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
+        const dataRows = await this._sqlClient.executor.executeQuery(sql, args, {
             kind: "LOAD_ASSOCIATION",
             prop: this._unresolvedField.prop as spi.EntityProp
         });
@@ -742,7 +742,7 @@ class AssociationResolver {
             return q.select(...selections);
         });
         const [sql, args] = buildStatement(this._sqlClient, query, undefined);
-        const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
+        const dataRows = await this._sqlClient.executor.executeQuery(sql, args, {
             kind: "LOAD_RECURSIVE_TREE_NODE",
             prop: this._unresolvedField.prop as spi.EntityProp
         });

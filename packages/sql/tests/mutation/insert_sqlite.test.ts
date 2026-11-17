@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 import { AUTHOR, BOOK, LEARNING_LINK, ORDER, ORDER_ITEM } from "../model/model";
@@ -12,17 +12,17 @@ describe("InsertSqliteTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("insertEntity", async() => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .rows(
                     ["PaperBook", "Cockroach DB Guide", 1, 67.9, "2"],
                     ["PaperBook", "TiDB Guide", 1, 67.9, "2"]
                 )
+                .returning("id")
                 .execute();
         });
-
         sqlRecord.assert({
             sql: `
                 insert into BOOK(
@@ -35,6 +35,8 @@ describe("InsertSqliteTest", () => {
                 values
                     (?, ?, ?, ?, ?),
                     (?, ?, ?, ?, ?)
+                returning
+                    ID
             `,
             args: [
                 "PaperBook", "Cockroach DB Guide", 1, 67.9, "2", 
@@ -42,12 +44,16 @@ describe("InsertSqliteTest", () => {
             ],
             purpose: "insert"
         });
+        expect(result).toEqual({ 
+            affectedRowCount: 2, 
+            rows: [ 13, 14 ] 
+        });
     });
 
     it("insertEntityByBaseModel", async() => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .using(ctx => 
                     ctx.source(BOOK, (q, book) => {
@@ -61,6 +67,7 @@ describe("InsertSqliteTest", () => {
                         });
                     })
                 )
+                .returning("id", "name", "edition")
                 .execute();
         });
         sqlRecord.assert({
@@ -80,16 +87,29 @@ describe("InsertSqliteTest", () => {
                 from BOOK tb_1_
                 where 
                     tb_1_.EDITION = ?
+                returning
+                    ID,
+                    NAME,
+                    EDITION
             `,
             args: ["PaperBook", 1, 3],
             purpose: "insert"
         });
+        expect(result).toEqual({
+            affectedRowCount: 4,
+            rows: [
+                [ 13, 'Learning GraphQL', 4 ],
+                [ 14, 'Effective TypeScript', 4 ],
+                [ 15, 'YugabyteDB: The Definitive Guide', 4 ],
+                [ 16, 'GraphQL in Action', 4 ]
+            ]
+        });
     });
 
     it("insertEntityByCteModelWithExportedTable", async() => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .using("CTE", ctx => 
                     ctx.source(BOOK, (q, book) => {
@@ -103,6 +123,7 @@ describe("InsertSqliteTest", () => {
                         });
                     })
                 )
+                .returning("id", "name", "edition")
                 .execute();
         });
         sqlRecord.assert({
@@ -126,16 +147,29 @@ describe("InsertSqliteTest", () => {
                     PRICE,
                     STORE_ID
                 ) select * from __inserted_source
+                returning
+                    ID,
+                    NAME,
+                    EDITION
             `,
             args: ["PaperBook", 1, 3],
             purpose: "insert"
         });
+        expect(result).toEqual({
+            affectedRowCount: 4,
+            rows: [
+                [ 13, 'Learning GraphQL', 4 ],
+                [ 14, 'Effective TypeScript', 4 ],
+                [ 15, 'YugabyteDB: The Definitive Guide', 4 ],
+                [ 16, 'GraphQL in Action', 4 ]
+            ]
+        });
     });
 
     it("insertAssociation", async () => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(
                     dsl.associationModel(AUTHOR, "books"),
                     "sourceId",
@@ -156,12 +190,13 @@ describe("InsertSqliteTest", () => {
             args: [4, 5],
             purpose: "insert"
         });
+        expect(result).toEqual({ affectedRowCount: 1 });
     });
 
     it("insertAssociationByBaseModel", async () => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(
                     dsl.associationModel(BOOK, "authors"),
                     "sourceId",
@@ -176,6 +211,7 @@ describe("InsertSqliteTest", () => {
                         });
                     })
                 )
+                .returning("sourceId", "targetId")
                 .execute();
         });
         sqlRecord.assert({
@@ -189,18 +225,26 @@ describe("InsertSqliteTest", () => {
                 from LEARNING_LINK tb_1_
                 where 
                     tb_1_.COURSE_ID = ?
+                returning
+                    book_id,
+                    author_id
             `,
             args: [4],
             purpose: "insert"
         });
+        expect(result).toEqual({ 
+            affectedRowCount: 2, 
+            rows: [ [ 2, 4 ], [ 4, 4 ] ] 
+        });
     });
 
     it("insertEmbeddedReferenceKey", async() => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(ORDER_ITEM, "productName", "orderId.x", "orderId.y.a", "orderId.y.b")
                 .row("MacBook", 2, 1, 2)
+                .returning("id")
                 .execute();
         });
         sqlRecord.assert({
@@ -213,16 +257,22 @@ describe("InsertSqliteTest", () => {
                 )
                 values
                     (?, ?, ?, ?)
+                returning
+                    ID
             `,
             args: ["MacBook", 2, 1, 2],
             purpose: "insert"
         });
+        expect(result).toEqual({ 
+            affectedRowCount: 1, 
+            rows: [ 9 ] 
+        });
     });
 
     it("insertEmbeddedAssociation", async() => {
-        await sqlClient.execute("REQUIRED", async () => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
             (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
-            await sqlClient
+            return await sqlClient
                 .createInsert(
                     dsl.associationModel(ORDER, "tags"),
                     "sourceId.x",
@@ -249,5 +299,6 @@ describe("InsertSqliteTest", () => {
             args: [2, 1, 2, 2, 3],
             purpose: "insert"
         });
+        expect(result).toEqual({ affectedRowCount: 1 });
     });
 });

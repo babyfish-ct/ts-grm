@@ -285,22 +285,22 @@ class SqlRecordExecutor extends AbstractExecutorWrapper {
         super(raw);
     }
 
-    override executeStatement(
+    override executeQuery(
         sql: string, 
         values: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<DataRows> {
         this.sqlRecord.add(sql, values.map(v => v.value), purpose);
-        return super.executeStatement(sql, values, purpose);
+        return super.executeQuery(sql, values, purpose);
     }
 
-    override executeDML(
+    override executeUpdate(
         sql: string, 
         values: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<number> {
         this.sqlRecord.add(sql, values.map(v => v.value), purpose);
-        return super.executeDML(sql, values, purpose);
+        return super.executeUpdate(sql, values, purpose);
     }
 }
 

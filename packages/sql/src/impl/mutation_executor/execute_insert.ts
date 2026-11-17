@@ -15,20 +15,24 @@
 import { SqlClientImplementor } from "@/sql_client";
 import { spi, TransactionOptions } from "@ts-grm/core";
 import { buildInsertStatement } from "./insert_sql_gen";
+import { processMutationRows } from "./process_mutation_rows";
 
 export function executeInsert(
     sqlClient: SqlClientImplementor,
     insert: spi.InsertContract,
-    _options: InsertOptions
+    options: InsertOptions
 ): Promise<InsertResult> {
     const [sql, args] = buildInsertStatement(sqlClient, insert);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.execute(DEFAULT_TRANSACTION_OPTIONS, async () => {
-        const affectedRowCount = await sqlClient.executor.executeDML(
-            sql, 
-            args, 
-            { kind: "INSERT" }
-        );
+        if (insert.returnedProps != null) {
+            const rows = await sqlClient.executor.executeQuery(sql, args, { kind: "INSERT"});
+            return {
+                affectedRowCount: rows.length,
+                rows: processMutationRows(rows, options.nullAsUndefined)
+            };
+        }
+        const affectedRowCount = await sqlClient.executor.executeUpdate(sql, args, { kind: "INSERT" });
         return {
             affectedRowCount
         };

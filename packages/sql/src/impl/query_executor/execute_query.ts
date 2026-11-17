@@ -47,7 +47,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
     const [sql, args] = buildStatement(sqlClient, query, options);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.executeReadonly(async () => {
-        const dataRows = await sqlClient.executor.executeStatement(
+        const dataRows = await sqlClient.executor.executeQuery(
             sql, 
             args, 
             explicitPurposeStorage.getStore() ?? { kind: "QUERY" }

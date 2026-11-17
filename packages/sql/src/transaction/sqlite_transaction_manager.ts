@@ -105,7 +105,7 @@ class SqliteExecutor implements Executor {
         this._database.exec(sql);
     }
 
-    async executeDML(
+    async executeUpdate(
         sql: string, 
         args: ReadonlyArray<Value>,
         _: Purpose
@@ -115,7 +115,7 @@ class SqliteExecutor implements Executor {
         return stmt.run(...values).changes;
     }
 
-    async executeStatement(
+    async executeQuery(
         sql: string, 
         args: ReadonlyArray<Value>,
         _: Purpose
@@ -126,7 +126,7 @@ class SqliteExecutor implements Executor {
         return stmt.all(values) as DataRows;
     }
 
-    async executeStatements(
+    async executeQueries(
         sql: string, 
         binds: ReadonlyArray<ReadonlyArray<Value>>
     ): Promise<ReadonlyArray<DataRows>> {

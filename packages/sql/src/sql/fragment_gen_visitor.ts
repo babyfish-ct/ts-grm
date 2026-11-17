@@ -24,7 +24,6 @@ import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
-import { is } from "zod/v4/locales/index.js";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -278,6 +277,14 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                     this._compositeStack.current.separator();
                     this._compositeStack.current.add(new Value(row.get(i), explicitDataTypes[i]));
                 }
+            }
+        }
+        if (insert.returnedProps != null) {
+            this._compositeStack.current.add("\nreturning");
+            using _8 = this._compositeStack.with(new Scope("COMMA"));
+            for (const returnedProp of insert.returnedProps) {
+                this._compositeStack.current.separator();
+                this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
             }
         }
     }

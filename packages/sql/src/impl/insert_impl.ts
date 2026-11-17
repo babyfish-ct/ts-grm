@@ -1,5 +1,5 @@
 import { SqlClientImplementor } from "@/sql_client";
-import { __MutatedMembers, __MutatedReturn, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, Insert, InsertResult, InsertResultWithData, ReturnedInsert, spi } from "@ts-grm/core";
+import { __MutatedMembers, __MutatedReturn, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, err, Insert, InsertResult, InsertResultWithData, ReturnedInsert, spi } from "@ts-grm/core";
 import { executeInsert } from "./mutation_executor/execute_insert";
 import { propsOf } from "./utils";
 import { BaseModelImpl } from "./abstract_base_query_impl";
@@ -49,6 +49,9 @@ export class InsertImpl<
     >(
         ...keys: TKeys
     ): ReturnedInsert<TModel, TKeys> {
+        if (keys.length < 1) {
+            throw new err.ArgumentError(`The function "returning" must accept at least one key`);
+        }
         const props = propsOf(this.model, keys as ReadonlyArray<string>);
         return new ReturnedInsertImpl(this.sqlClient, this.model, this.source, this.bindings, props, this.sourceTable);
     }

@@ -135,7 +135,7 @@ class SqlServerExecutor implements Executor {
         await this._requestable.request().query(sql);
     }
 
-    async executeDML(
+    async executeUpdate(
         sql: string, 
         args: ReadonlyArray<Value>,
         purpose: Purpose
@@ -146,7 +146,7 @@ class SqlServerExecutor implements Executor {
         throw new Error("UnsupportedOperationException");
     }
 
-    async executeStatement(
+    async executeQuery(
         sql: string, 
         args: ReadonlyArray<Value>, 
         _: Purpose
@@ -175,7 +175,7 @@ class SqlServerExecutor implements Executor {
         return result.recordset;
     }
 
-    executeStatements(
+    executeQueries(
         _sql: string, 
         _binds: ReadonlyArray<ReadonlyArray<Value>>, 
         _purpose: Purpose
