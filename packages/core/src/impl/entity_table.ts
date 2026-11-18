@@ -65,6 +65,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     private _inverseAssociationMap: Map<string, AbstractAssociationTable> | undefined = undefined;
 
+    private _mergeSourceKeys: ReadonlyArray<string> | undefined = undefined;
+
     constructor(
         readonly __entity: Entity,
         options: JoinOperation | ShadowAnchor | AbstractEntityTable | undefined
@@ -724,6 +726,21 @@ export abstract class AbstractEntityTable implements AbstractTable {
             return undefined;
         }
         return new IsPred(this, entity, false, entity.tableEntity) as Predicate;
+    }
+
+    get __mergeSourceKeys(): ReadonlyArray<string> | undefined {
+        return this._mergeSourceKeys;
+    }
+
+    createMergeSource(
+        keys: ReadonlyArray<string>
+    ): AbstractEntityTable {
+        if (this.__joinOperation != null) {
+            throw new StateError(`Only root table support specified`);
+        }
+        const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
+        cloned._mergeSourceKeys = keys;
+        return cloned;
     }
 }
 

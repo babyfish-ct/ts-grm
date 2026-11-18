@@ -111,6 +111,11 @@ export type {
     FilterType,
     FilterContextType
 } from "./table";
+export type {
+    MergeSourceTable,
+    MergeSourceEntityTable,
+    MergeSourceAssociationTable
+} from "./merge_source_table";
 export type { 
     Predicate,
     LikeMode, 

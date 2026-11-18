@@ -73,7 +73,7 @@ import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
 import { AtomBaseQueryImpl } from "./atom_base_query_impl";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
-import { toTables } from "./utils";
+import { toTable, toTables } from "./utils";
 import { MergedBaseQueryImpl, MergedDtSubQueryImpl, MergedExprSubQueryImpl, MergedNumSubQueryImpl, MergedRootQueryImpl, MergedStrSubQueryImpl, MergedTupleSubQueryImpl } from "./merged_query";
 import { MutableSubQueryImpl } from "./mutable_sub_query_impl";
 import { AtomDtSubQueryImpl, AtomNumSubQueryImpl, AtomStrSubQueryImpl, AtomExprSubQueryImpl, AtomTupleSubQueryImpl } from "./atom_sub_query_impl";
@@ -85,6 +85,7 @@ import { NoDataError, TooManyDataError } from "@/error/data_count_error";
 import { Validator } from "./validator";
 import { executeSave } from "./mutation_executor/execute_save";
 import { MutableInsertImpl } from "./mutable_insert_impl";
+import { MutableMergeImpl } from "./mutable_merge_impl";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -250,8 +251,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     >(
         model: TModel
     ): MutableMerge<TModel> {
-        suppressUnused(model);
-        throw new Error("UnsupportedOperationError");
+        return new MutableMergeImpl(this, model);
     }
 
     createUpdate<

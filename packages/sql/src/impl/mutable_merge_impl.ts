@@ -13,16 +13,22 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { __MergeContext, __MergeMetchedContext, __MergeUnmatchedContext, __MutatedLiterals, __MutatedMembers, __StaticEntityTableKeys, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, err, Merge, MutableMerge, MutableMergeByValues, MutableMergeMatcher, MutableMergeMatchable, MutableMergeUnmatchable, Predicate, Table } from "@ts-grm/core";
+import { __MergeContext, __MergeMetchedContext, __MergeUnmatchedContext, __MutatedLiterals, __MutatedMembers, __StaticEntityTableKeys, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, err, Merge, MutableMerge, MutableMergeByValues, MutableMergeMatcher, MutableMergeMatchable, MutableMergeUnmatchable, Predicate, Table, spi } from "@ts-grm/core";
 import { MergeImpl } from "./merge_impl";
+import { toTable } from "./utils";
 
 export class MutableMergeImpl<
     TModel extends AnyModel | AnyAssociationModel
 > implements MutableMerge<TModel> {
 
+    private readonly _table: any;
+
     constructor(
-        private readonly _sqlClient: SqlClientImplementor
-    ) {}
+        private readonly _sqlClient: SqlClientImplementor,
+        private readonly _model: AnyModel | AnyAssociationModel
+    ) {
+        this._table = toTable(_model);
+    }
 
     using<
         const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
@@ -57,7 +63,11 @@ export class MutableMergeImpl<
     using(
         ...args: ReadonlyArray<string>
     ): any {
+        if (typeof args[0] === "string") {
+            return new MutableMergeByValuesImpl(
 
+            );
+        }
     }
 }
 
@@ -72,7 +82,10 @@ class MutableMergeByValuesImpl<
 > {
 
     constructor(
-        private readonly _sqlClient: SqlClientImplementor
+        private readonly _sqlClient: SqlClientImplementor,
+        private readonly _table: any,
+        private readonly _keys: ReadonlyArray<string>,
+        private readonly 
     ) {}
 
     row(

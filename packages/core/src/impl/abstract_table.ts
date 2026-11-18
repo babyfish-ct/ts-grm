@@ -50,12 +50,18 @@ export interface AbstractTable {
 
     readonly __prototype: AbstractTable;
 
+    readonly __mergeSourceKeys: ReadonlyArray<string> | undefined;
+
     join(
         model: __ModelLike,
         options: JoinFilter | {
             readonly joinType?: JoinType,
             readonly filter: JoinFilter
         }
+    ): AbstractTable;
+
+    createMergeSource(
+        keys: ReadonlyArray<string>
     ): AbstractTable;
 }
 

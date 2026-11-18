@@ -25,12 +25,15 @@ import { createTableProp } from "./ast/prop_expr";
 import { makeErr } from "@/error/util";
 import { __ModelLike } from "@/dsl/table_internal_types";
 import { JoinType } from "@/dsl/table";
+import { StateError } from "@/error/common";
 
 export class AbstractAssociationTable implements AbstractTable {
 
     private _source: AbstractEntityTable | undefined = undefined;
 
     private _target: AbstractEntityTable | undefined = undefined;
+
+    private _mergeSourceKeys: ReadonlyArray<string> | undefined = undefined;
 
     constructor(
         readonly __associationEntity: AssociationEntity,
@@ -85,6 +88,10 @@ export class AbstractAssociationTable implements AbstractTable {
 
     get __prototype(): AbstractTable {
         return this;
+    }
+
+    get __mergeSourceKeys(): ReadonlyArray<string> | undefined {
+        return this._mergeSourceKeys;
     }
 
     source(
@@ -185,6 +192,17 @@ export class AbstractAssociationTable implements AbstractTable {
         }
     ): AbstractTable {
         return createJoinedTable(this, model, options);
+    }
+
+    createMergeSource(
+        keys: ReadonlyArray<string>
+    ): AbstractAssociationTable {
+        if (this.__joinOperation != null) {
+            throw new StateError(`Only root table support specified`);
+        }
+        const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractAssociationTable;
+        cloned._mergeSourceKeys = keys;
+        return cloned;
     }
 }
 
