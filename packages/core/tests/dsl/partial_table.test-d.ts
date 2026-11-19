@@ -1,13 +1,13 @@
-import { MergeSourceTable } from "@/dsl/merge_source_table";
+import { PartialTable } from "@/dsl/partial_table";
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR, BOOK, ORDER, ORDER_ITEM } from "../model/model";
 import { dsl, NumExpression, StrExpression } from "@/dsl";
 
-describe("MergeSourceTableTest", () => {
+describe("PartialTableTest", () => {
 
     it("partialEmbeeded", () => {
         
-        type PartialAuthorType = MergeSourceTable<typeof AUTHOR, "id" | "name.firstName">;
+        type PartialAuthorType = PartialTable<typeof AUTHOR, "id" | "name.firstName">;
         expectTypeOf<Exclude<keyof PartialAuthorType, "__type">>().toEqualTypeOf<
             "id" | "name"
         >();
@@ -19,7 +19,7 @@ describe("MergeSourceTableTest", () => {
     });
 
     it("partialWithReferenceKey", () => {
-        type PartialBookType = MergeSourceTable<typeof BOOK, "__discriminator" | "storeId">;
+        type PartialBookType = PartialTable<typeof BOOK, "__discriminator" | "storeId">;
         expectTypeOf<Exclude<keyof PartialBookType, "__type">>().toEqualTypeOf<
             "__discriminator" | "storeId"
         >();
@@ -29,7 +29,7 @@ describe("MergeSourceTableTest", () => {
 
     it("partialWithEmbeddedReferenceKey", () => {
         
-        type PartialOrderItemType = MergeSourceTable<typeof ORDER_ITEM, "orderId.y.a">;
+        type PartialOrderItemType = PartialTable<typeof ORDER_ITEM, "orderId.y.a">;
         expectTypeOf<Exclude<keyof PartialOrderItemType, "__type">>().toEqualTypeOf<
             "orderId"
         >();
@@ -44,7 +44,7 @@ describe("MergeSourceTableTest", () => {
 
     it("assocation", () => {
         const model = dsl.associationModel(BOOK, "authors");
-        type PartialAssocationType = MergeSourceTable<typeof model, "sourceId">;
+        type PartialAssocationType = PartialTable<typeof model, "sourceId">;
         expectTypeOf<Exclude<keyof PartialAssocationType, "__type">>().toEqualTypeOf<
             "sourceId"
         >();
@@ -53,7 +53,7 @@ describe("MergeSourceTableTest", () => {
 
     it("embeddedAssocation", () => {
         const model = dsl.associationModel(ORDER, "tags");
-        type PartialAssocationType = MergeSourceTable<typeof model, "sourceId.y.b" | "targetId.high">;
+        type PartialAssocationType = PartialTable<typeof model, "sourceId.y.b" | "targetId.high">;
         expectTypeOf<Exclude<keyof PartialAssocationType, "__type">>().toEqualTypeOf<
             "sourceId" | "targetId"
         >();
@@ -68,7 +68,7 @@ describe("MergeSourceTableTest", () => {
 
     it("withoutEmbeddedReferenceKey", () => {
         
-        type PartialOrderItemType = MergeSourceTable<typeof ORDER_ITEM, "id">;
+        type PartialOrderItemType = PartialTable<typeof ORDER_ITEM, "id">;
         expectTypeOf<Exclude<keyof PartialOrderItemType, "__type">>().toEqualTypeOf<"id">();
         expectTypeOf<PartialOrderItemType["id"]>().toEqualTypeOf<NumExpression<number>>();
     });

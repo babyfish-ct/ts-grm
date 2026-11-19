@@ -10,35 +10,6 @@ describe("MergeTest", () => {
 
     const sqlClient = createSqlClient();
 
-    it("mergeRowByConflict", async () => {
-        const merge = sqlClient
-            .createMerge(BOOK)
-            .using("__discriminator", "name", "edition", "price", "storeId")
-            .row("PaperBook", "GraphQL in Action", 2, 59.9, "2")
-            .onConflict("name", "edition")
-            .doUpdate(ctx => ctx
-                .update("__discriminator", ctx.new.__discriminator)
-                .update("price", ctx.new.price)
-                .update("storeId", ctx.new.storeId)
-            );
-        const result1 = await merge.returning("id").execute();
-        expectTypeOf<typeof result1>().toEqualTypeOf<{
-            readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-                readonly data: number;
-            }>
-        }>();
-        const result2 = await merge.returning("id", "edition").execute();
-        expectTypeOf<typeof result2>().toEqualTypeOf<{
-            readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-                readonly data: [number, number];
-            }>
-        }>();
-    });
-
     it("mergeRowsByCondition", async () => {
         const merge = sqlClient
             .createMerge(BOOK)

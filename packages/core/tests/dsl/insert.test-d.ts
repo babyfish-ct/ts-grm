@@ -145,4 +145,42 @@ describe("InsertTest", () => {
         const result2 = await insert.execute("NOTHING");
         expectTypeOf<typeof result2>().toEqualTypeOf<void>();
     });
+
+    it("insertOnConflictDoNothing", async() => {
+        const insert = sqlClient
+            .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
+            .row("PaperBook", "GraphQL in Action", 4, 69.9, "2")
+            .onConflict("name", "edition")
+            .doNothing();
+        const result1 = await insert.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<number>
+        }>();
+        const result2 = await insert.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<[number, number]>
+        }>();
+    });
+
+    it("insertOnConflictDoUpdate", async() => {
+        const insert = sqlClient
+            .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
+            .row("PaperBook", "GraphQL in Action", 4, 69.9, "2")
+            .onConflict("name")
+            .doUpdate(ctx => ctx
+                .update("edition", ctx.old.edition.plus(ctx.new.edition))
+            );
+        const result1 = await insert.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<number>
+        }>();
+        const result2 = await insert.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<[number, number]>
+        }>();
+    });
 });

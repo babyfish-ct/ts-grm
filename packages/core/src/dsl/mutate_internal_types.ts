@@ -22,7 +22,7 @@ import { __MakeAssignableExpression, __MakeExpression, __StaticEntityTableMember
 import { Expression, NumExpression, StrExpression } from "./expression";
 import { __CombinedNullity, __EmbeddedPropContract, __NullityType, __TargetModelOf, __WithNullity } from "@/index_internal";
 import { AtLeastOne } from "./utils";
-import { MergeSourceTable } from "./merge_source_table";
+import { PartialTable } from "./partial_table";
 import { Table } from "./table";
 
 export type __MutatedMembers<
@@ -177,22 +177,13 @@ export type __MutatedReturn<TExpression, TNullAsUndefined extends boolean> =
         : R
     : never;
 
-export interface __MergeContext<
-    TTargetTableLike extends __TableLike,
-    TSourceTableLike extends __TableLike
-> {
-    readonly old: TTargetTableLike;
-    readonly new: TSourceTableLike;
-}
-
 export interface __MergeMatchedContext<
     TModel extends AnyModel | AnyAssociationModel,
     TSourceTableLike extends __TableLike
-> extends __MergeContext<
-    Table<TModel, "NONE">, 
-    TSourceTableLike
 > {
     
+    readonly old: Table<TModel, "NONE">;
+    readonly new: TSourceTableLike;
     update<
         TKey extends keyof __MutatedMembers<TModel>
     >(
@@ -201,26 +192,11 @@ export interface __MergeMatchedContext<
     ): this;
 }
 
-export interface __MergeByValuesMatchedContext<
-    TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends string & keyof __MutatedMembers<TModel>
-> extends __MergeContext<
-    MergeSourceTable<TModel, TKeys>, 
-    MergeSourceTable<TModel, TKeys>
-> {
-    update<
-        TKey extends TKeys
-    >(
-        key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey & keyof __MutatedMembers<TModel>]>
-    ): this;
-}
-
 export interface __MergeByValuesUnmatchedContext<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends string & keyof __MutatedMembers<TModel>
+    TKeys extends keyof __MutatedMembers<TModel>
 > {
-    readonly new: MergeSourceTable<TModel, TKeys>;
+    readonly new: PartialTable<TModel, TKeys>;
 
     insert<
         TKey extends TKeys
@@ -241,5 +217,19 @@ export interface __MergeByBaseModelUnmatchedContext<
     >(
         key: TKey,
         value: __MutatedValue<__MutatedMembers<TModel>[TKey]> 
+    ): this;
+}
+
+export interface __PartialUpdateContext<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends keyof __MutatedMembers<TModel>
+> {
+    readonly old: PartialTable<TModel, TKeys>;
+    readonly new: PartialTable<TModel, TKeys>;
+    update<
+        TKey extends TKeys
+    >(
+        key: TKey,
+        value: __MutatedValue<__MutatedMembers<TModel>[TKey]>
     ): this;
 }

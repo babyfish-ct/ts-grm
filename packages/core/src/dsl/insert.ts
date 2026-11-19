@@ -13,11 +13,12 @@
  */
 
 import { AnyAssociationModel } from "./association";
-import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn } from "./mutate_internal_types";
+import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn, __PartialUpdateContext } from "./mutate_internal_types";
 import { AnyModel } from "@/schema/model";
 import { AtLeastOne } from "./utils";
 import { AbstractMutableBaseQuery, BaseModel, BaseQueryProjection, BaseQuerySelectMapArgs } from "./base_query";
 import { Table } from "./table";
+import { __TableLike } from "./table_internal_types";
 
 export interface MutableInsert<
     TModel extends AnyModel | AnyAssociationModel,
@@ -25,11 +26,11 @@ export interface MutableInsert<
 > {
     row(
         ...values: __MutatedLiterals<TModel, TKeys>
-    ): Insert<TModel>;
+    ): OnConflictInsert<TModel, TKeys>;
     
     rows(
         ...rows: ReadonlyArray<__MutatedLiterals<TModel, TKeys>>
-    ): Insert<TModel>;
+    ): OnConflictInsert<TModel, TKeys>;
 
     using(
         fn: (
@@ -39,7 +40,7 @@ export interface MutableInsert<
         ) => InsertSource<{
             readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
         } & BaseQuerySelectMapArgs>
-    ): Insert<TModel>;
+    ): OnConflictInsert<TModel, TKeys>;
 
     using(
         kind: "DERIVED" | "CTE",
@@ -50,7 +51,7 @@ export interface MutableInsert<
         ) => InsertSource<{
             readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
         } & BaseQuerySelectMapArgs>
-    ): Insert<TModel>;
+    ): OnConflictInsert<TModel, TKeys>;
 }
 
 export interface MutableInsertSourceContext<TSelectionMap extends BaseQuerySelectMapArgs> {
@@ -116,8 +117,14 @@ export interface InsertSource<
 }
 
 export interface Insert<
-    TModel extends AnyModel | AnyAssociationModel
+    TModel extends AnyModel | AnyAssociationModel,
 > {
+    returning<
+        const TReturnedKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    >(
+        ...keys: TReturnedKeys
+    ): ReturnedInsert<TModel, TReturnedKeys>;
+
     execute<
         TReturnKind extends "AFFECTED_ROW_COUNT" | "NOTHING" = "AFFECTED_ROW_COUNT"
     >(kind?: TReturnKind): Promise<
@@ -125,12 +132,33 @@ export interface Insert<
             ? void
             : InsertResult
     >;
+}
 
-    returning<
-        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+export interface OnConflictInsert<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
+> extends Insert<TModel> {
+
+    onConflict<
+        TConflictKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
     >(
-        ...keys: TKeys
-    ): ReturnedInsert<TModel, TKeys>;
+        ...conflictKeys: TConflictKeys
+    ): OnConflictUpdate<
+        TModel,
+        Exclude<TKeys[number], TConflictKeys[number]>
+    >;
+}
+
+export interface OnConflictUpdate<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends keyof __MutatedMembers<TModel>
+> extends Insert<TModel> {
+
+    doNothing(): Insert<TModel>;
+
+    doUpdate(
+        fn: (ctx: __PartialUpdateContext<TModel, TKeys>) => void
+    ): Insert<TModel>;
 }
 
 export interface ReturnedInsert<

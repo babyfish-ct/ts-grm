@@ -51,6 +51,8 @@ export type {
     MutableInsertSourceQuery,
     InsertSource,
     Insert,
+    OnConflictInsert,
+    OnConflictUpdate,
     ReturnedInsert,
     InsertResult,
     InsertResultWithData 
@@ -61,7 +63,6 @@ export type {
     MutableMergeByValuesMatcher,
     MutableMergeByBaseModelMatcher, 
     MutableMergeByValuesMatchable,
-    MutableMergeByConflictMatchable,
     MutableMergeByBaseModelMatchable,
     MutableMergeByValuesUnmatchable, 
     MutableMergeByBaseModelUnmatchable,
@@ -116,10 +117,10 @@ export type {
     FilterContextType
 } from "./table";
 export type {
-    MergeSourceTable,
-    MergeSourceEntityTable,
-    MergeSourceAssociationTable
-} from "./merge_source_table";
+    PartialTable,
+    PartialEntityTable,
+    PartialAssociationTable
+} from "./partial_table";
 export type { 
     Predicate,
     LikeMode, 

@@ -14,34 +14,34 @@
 
 import { AnyModel } from "@/schema/model";
 import { __ModelLike } from "./table_internal_types";
-import { __MergeSourceDslMembers, __MergeSourceReferenceKeyExpr, __MergeSourceReferenceKeyName } from "./merge_source_table_internal_types";
+import { __PartialDslMembers, __PartialReferenceKeyExpr, __PartialReferenceKeyName } from "./partial_table_internal_types";
 import { __AllModelMembers } from "@/schema/model_internal_types";
 import { AnyAssociationModel, AssociationModel } from "./association";
 import { __MutatedMembers } from "./mutate_internal_types";
 
-export type MergeSourceTable<
+export type PartialTable<
     TModel extends AnyModel | AnyAssociationModel, 
-    TKeys extends string & keyof __MutatedMembers<TModel>
+    TKeys extends keyof __MutatedMembers<TModel>
 > =
     TModel extends AnyModel
-        ? MergeSourceEntityTable<TModel, TKeys>
+        ? PartialEntityTable<TModel, TKeys>
     : TModel extends AnyAssociationModel
-        ? MergeSourceAssociationTable<TModel, TKeys>
+        ? PartialAssociationTable<TModel, TKeys>
     : never;
 
-export type MergeSourceEntityTable<
+export type PartialEntityTable<
     TModel extends AnyModel, 
-    TKeys extends string & keyof __MutatedMembers<TModel>
+    TKeys extends keyof __MutatedMembers<TModel>
 > = 
     {
         __type(): {
             readonly tableLike: true;
         };
-    } & __MergeSourceDslMembers<TModel, __AllModelMembers<TModel>, "NONNULL", TKeys>;
+    } & __PartialDslMembers<TModel, __AllModelMembers<TModel>, "NONNULL", TKeys>;
 
-export type MergeSourceAssociationTable<
+export type PartialAssociationTable<
     TModel extends AnyAssociationModel,
-    TKeys extends string & keyof __MutatedMembers<TModel>
+    TKeys extends keyof __MutatedMembers<TModel>
 > = 
     TModel extends AssociationModel<infer SourceModel, infer SourceKey, infer TargetModel, infer TargetKey>
         ? {
@@ -51,12 +51,12 @@ export type MergeSourceAssociationTable<
         } & {
             [
                 K in SourceKey as
-                    __MergeSourceReferenceKeyName<"source", SourceModel, K, TKeys>
-            ]: __MergeSourceReferenceKeyExpr<"source", "NONNULL", SourceModel, K, TKeys>
+                    __PartialReferenceKeyName<"source", SourceModel, K, TKeys & string>
+            ]: __PartialReferenceKeyExpr<"source", "NONNULL", SourceModel, K, TKeys & string>
         } & {
             [
                 K in TargetKey as
-                    __MergeSourceReferenceKeyName<"target", TargetModel, K, TKeys>
-            ]: __MergeSourceReferenceKeyExpr<"target", "NONNULL", TargetModel, K, TKeys>
+                    __PartialReferenceKeyName<"target", TargetModel, K, TKeys & string>
+            ]: __PartialReferenceKeyExpr<"target", "NONNULL", TargetModel, K, TKeys & string>
         }
         : never;

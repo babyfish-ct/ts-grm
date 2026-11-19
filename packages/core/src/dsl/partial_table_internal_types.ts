@@ -18,13 +18,13 @@ import { __JoinPolicyType, __MakeExpression, __MakeType, __ReferenceJoinAction }
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
 import { NumExpression, StrExpression } from "./expression";
-import { __ReferenceKeyName } from "@/index_internal";
+import { __MutatedMembers, __ReferenceKeyName } from "@/index_internal";
 
-export type __MergeSourceDslMembers<
+export type __PartialDslMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
     TNullity extends __NullityType,
-    TKeys extends string
+    TKeys extends keyof __MutatedMembers<TModel>
 > = 
     {
         [K in keyof TMembers as
@@ -33,24 +33,24 @@ export type __MergeSourceDslMembers<
                     ? K 
                     : never
             : TMembers[K] extends __EmbeddedPropContract<any, any, any> 
-                ? [__SubKeys<TKeys, K & string>] extends [never]
+                ? [__SubKeys<TKeys & string, K & string>] extends [never]
                     ? never
                     : K
             : never
         ]: TMembers[K] extends __ScalarPropContract<any, any, any, any>
             ? __MakeExpression<TNullity, TMembers[K]>
         : TMembers[K] extends __EmbeddedPropContract<infer R, infer Nullity, any>
-            ? () => __MergeSourceDslMembers<
+            ? () => __PartialDslMembers<
                 TModel, 
                 R, 
                 __CombinedNullity<TNullity, Nullity>, 
-                __SubKeys<TKeys, K & string>
+                __SubKeys<TKeys & string, K & string>
             >
         : never
-    } & __MergeSourceDiscriminatorMembers<TModel, TNullity, TKeys>
-    & __MergeSourceDslReferenceKeyMembers<TNullity, TMembers, TKeys>;
+    } & __PartialDiscriminatorMembers<TModel, TNullity, TKeys & string>
+    & __PartialDslReferenceKeyMembers<TNullity, TMembers, TKeys & string>;
 
-export type __MergeSourceDiscriminatorMembers<
+export type __PartialDiscriminatorMembers<
     TModel, 
     TNullity extends __NullityType,
     TKeys extends string
@@ -67,7 +67,7 @@ export type __MergeSourceDiscriminatorMembers<
             : {}
         : {};
 
-export type __MergeSourceDslReferenceKeyMembers<
+export type __PartialDslReferenceKeyMembers<
     TNullity extends __NullityType,
     TMembers,
     TKeys extends string
@@ -75,14 +75,14 @@ export type __MergeSourceDslReferenceKeyMembers<
     [
         K in keyof TMembers & string as
             TMembers[K] extends __ReferencePropContract<infer TargetModel, any, "COLUMNS", never, any, infer Key extends string>
-                ? __MergeSourceReferenceKeyName<K, TargetModel, __RequiredModelKey<TargetModel, Key>, TKeys>
+                ? __PartialReferenceKeyName<K, TargetModel, __RequiredModelKey<TargetModel, Key>, TKeys>
                 : never
     ]: TMembers[K] extends __ReferencePropContract<infer TargetModel, infer Nullity, "COLUMNS", never, any, infer Key>
-        ? __MergeSourceReferenceKeyExpr<K, __CombinedNullity<TNullity, Nullity>, TargetModel, __RequiredModelKey<TargetModel, Key>, TKeys>
+        ? __PartialReferenceKeyExpr<K, __CombinedNullity<TNullity, Nullity>, TargetModel, __RequiredModelKey<TargetModel, Key>, TKeys>
         : never
 };
 
-export type __MergeSourceReferenceKeyName<
+export type __PartialReferenceKeyName<
     TAssociationKey extends string,
     TTargetModel extends AnyModel,
     TTargetKey extends string,
@@ -96,7 +96,7 @@ export type __MergeSourceReferenceKeyName<
             ? `${TAssociationKey}${Capitalize<TTargetKey>}`
             : never;
 
-export type __MergeSourceReferenceKeyExpr<
+export type __PartialReferenceKeyExpr<
     TAssociationKey extends string,
     TAssociationNullity extends __NullityType,
     TTargetModel extends AnyModel,
@@ -104,7 +104,7 @@ export type __MergeSourceReferenceKeyExpr<
     TKeys extends string
 > =
     __AllModelMembers<TTargetModel>[TTargetKey] extends __EmbeddedPropContract<infer R, infer Nullity, any>
-        ? () => __MergeSourceDslMembers<
+        ? () => __PartialDslMembers<
                 TTargetModel, 
                 R, 
                 __CombinedNullity<TAssociationNullity, Nullity>, 
