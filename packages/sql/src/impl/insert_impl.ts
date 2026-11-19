@@ -13,7 +13,7 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { __MutatedMembers, __MutatedReturn, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, err, Insert, InsertResult, InsertResultWithData, ReturnedInsert, spi } from "@ts-grm/core";
+import { __MutatedMembers, __MutatedReturn, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, err, Insert, InsertResult, InsertResultWithData, OnConflictInsert, OnConflictUpdate, ReturnedInsert, spi } from "@ts-grm/core";
 import { executeInsert } from "./mutation_executor/execute_insert";
 import { propsOf } from "./utils";
 import { BaseModelImpl } from "./abstract_base_query_impl";
@@ -26,7 +26,7 @@ export class InsertImpl<
         readonly sqlClient: SqlClientImplementor,
         readonly model: TModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
-        readonly bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
+        readonly bindings: ReadonlyArray<spi.Binding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
         readonly sourceTable: spi.AbstractTable | undefined
     ) {
     }
@@ -74,8 +74,29 @@ export class InsertImpl<
         return undefined;
     }
 
+    get conflict(): undefined {
+        return undefined;
+    }
+
     accept(visitor: spi.Visitor) {
         visitor.visitInsert(this);
+    }
+}
+
+export class OnConflictInsertImpl<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+> extends InsertImpl<TModel> implements OnConflictInsert<TModel, TKeys> {
+    
+    onConflict<
+        TConflictKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    >(
+        ...conflictKeys: TConflictKeys
+    ): OnConflictUpdate<
+        TModel,
+        Exclude<TKeys[number], TConflictKeys[number]>
+    > {
+        throw new Error();
     }
 }
 
@@ -88,7 +109,7 @@ export class ReturnedInsertImpl<
         readonly sqlClient: SqlClientImplementor,
         readonly model: TModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
-        readonly bindings: ReadonlyArray<spi.InsertBinding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
+        readonly bindings: ReadonlyArray<spi.Binding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
         readonly returnedProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
         readonly sourceTable: spi.AbstractTable | undefined
     ) {}
@@ -128,6 +149,10 @@ export class ReturnedInsertImpl<
                 nullAsUndefined: options?.nullAsUndefined ?? false
             }
         ) as any;
+    }
+
+    get conflict(): undefined {
+        return undefined;
     }
 
     accept(visitor: spi.Visitor) {

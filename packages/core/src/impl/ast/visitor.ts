@@ -29,7 +29,7 @@ import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred
 import { Node } from "./node";
 import { IsPred } from "./is_pred";
 import { ExpressionOrder } from "@/dsl/utils";
-import { DeleteContract, InsertBinding, InsertContract, MergeContract, UpdateContract } from "./mutation";
+import { Assignment, Binding, DeleteContract, InsertContract, MergeContract, UpdateContract } from "./mutation";
 
 export interface Visitor {
 
@@ -154,8 +154,7 @@ export abstract class AbstractVisitor implements Visitor {
     visitInsert(insert: InsertContract): void {
         if (insert.kind === "BY_BASE_MODEL") {
             for (const binding of insert.bindings) {
-                const insertBinding = binding as InsertBinding;
-                insertBinding.valueExpr.accept(this);
+                (binding as Binding).valueExpr.accept(this);
             }
         }
     }

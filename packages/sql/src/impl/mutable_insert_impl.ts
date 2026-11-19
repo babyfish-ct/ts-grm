@@ -29,11 +29,12 @@ import {
     MutableInsert, 
     MutableInsertSourceContext, 
     MutableInsertSourceQuery, 
+    OnConflictInsert, 
     spi,
     Table
 } from "@ts-grm/core";
 import { SqlClientImplementor } from "@/sql_client";
-import { InsertImpl } from "./insert_impl";
+import { InsertImpl, OnConflictInsertImpl } from "./insert_impl";
 import { propsOf } from "./utils";
 
 export class MutableInsertImpl<
@@ -53,20 +54,20 @@ export class MutableInsertImpl<
     
     row(
         ...values: __MutatedLiterals<TModel, TKeys>
-    ): Insert<TModel> {
+    ): OnConflictInsert<TModel, TKeys> {
         return this.rows(values);
     }
     
     rows(
         ...rows: ReadonlyArray<__MutatedLiterals<TModel, TKeys>>
-    ): Insert<TModel> {
+    ): OnConflictInsert<TModel, TKeys> {
         if (rows.length === 0) {
             throw new err.ArgumentError(
                 `The "rows.length" cannot be 0`
             );
         }
         const sourceRows = rows.map(row => new SourceRowImpl(row));
-        return new InsertImpl<TModel>(
+        return new OnConflictInsertImpl<TModel, TKeys>(
             this._sqlClient,
             this._model,
             sourceRows,
@@ -83,7 +84,7 @@ export class MutableInsertImpl<
         ) => InsertSource<{
             readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
         } & BaseQuerySelectMapArgs>
-    ): Insert<TModel>;
+    ): OnConflictInsert<TModel, TKeys>;
 
     using(
         kind: "DERIVED" | "CTE",
@@ -94,7 +95,7 @@ export class MutableInsertImpl<
         ) => InsertSource<{
             readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
         } & BaseQuerySelectMapArgs>
-    ): Insert<TModel>;
+    ): OnConflictInsert<TModel, TKeys>;
 
     using(
         ...args: ReadonlyArray<any>
@@ -114,11 +115,11 @@ export class MutableInsertImpl<
         ) => InsertSource<{
             readonly [K in TKeys[number]]: __MutatedMembers<TModel, true>[K & keyof __MutatedMembers<TModel, true>]
         } & BaseQuerySelectMapArgs>
-    ): Insert<TModel> {
+    ): OnConflictInsert<TModel, TKeys> {
         const source = fn(new MutableInsertSourceContextImpl());
         const baseModel = (source as any as spi.BaseQueryImplementor<any>).toModel(kind === "CTE");
         const sourceTable = spi.createTypedBaseTable(baseModel, undefined);
-        const bindings: Array<spi.InsertBinding> = [];
+        const bindings: Array<spi.Binding> = [];
         const size = this._keys.length;
         for (let i = 0; i < size; i++) {
             const valueExpr = (sourceTable as any)[this._keys[i] as string];
@@ -127,7 +128,7 @@ export class MutableInsertImpl<
                 valueExpr
             });
         }
-        return new InsertImpl<TModel>(
+        return new OnConflictInsertImpl<TModel, TKeys>(
             this._sqlClient,
             this._model,
             baseModel,

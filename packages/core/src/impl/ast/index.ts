@@ -81,9 +81,9 @@ export type {
 } from "./query";
 export type { 
     InsertContract,
-    InsertBinding, 
     MergeContract, 
     SourceRow, 
+    Binding,
     Assignment, 
     UpdateContract, 
     DeleteContract 

@@ -241,16 +241,13 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             using _5 = this._compositeStack.with(new Scope("VALUES"));
             for (const binding of insert.bindings) {
                 this._compositeStack.current.separator();
-                let prop: spi.EntityProp | spi.AssociationProp | spi.TypeNameProp;
+                let prop: spi.EntityProp | spi.AssociationProp;
                 if (insert.kind === "BY_BASE_MODEL") {
-                    const insertBinding = binding as spi.InsertBinding;
-                    prop = insertBinding.prop;
+                    prop = (binding as spi.Binding).prop;
                 } else {
                     prop = binding as spi.EntityProp | spi.AssociationProp;
                 }
-                const columnName = prop instanceof spi.TypeNameProp
-                    ? prop.columName
-                    : (prop.toStorage(this._strategy) as spi.Column).name;
+                const columnName = (prop.toStorage(this._strategy) as spi.Column).name;
                 this._compositeStack.current.add(columnName);
             }
         }
