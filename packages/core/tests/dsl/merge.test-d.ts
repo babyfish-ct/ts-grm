@@ -10,27 +10,16 @@ describe("MergeTest", () => {
 
     const sqlClient = createSqlClient();
 
-    it("mergeRows", async () => {
+    it("mergeRowByConflict", async () => {
         const merge = sqlClient
             .createMerge(BOOK)
-            .using("name", "edition", "price", "storeId")
-            .rows( 
-                ["GraphQL in Action", 2, 59.9, "2"],
-                ["Learning GraphQL", 3, 49.9, "1"]
-            )
-            .on(ctx => 
-                dsl.tuple(
-                    ctx.old.name, ctx.old.edition
-                ).eq([
-                    ctx.new.name, ctx.new.edition
-                ])
-            )
-            .matched(ctx => ctx
+            .using("__discriminator", "name", "edition", "price", "storeId")
+            .row("PaperBook", "GraphQL in Action", 2, 59.9, "2")
+            .onConflict("name", "edition")
+            .doUpdate(ctx => ctx
+                .update("__discriminator", ctx.new.__discriminator)
                 .update("price", ctx.new.price)
                 .update("storeId", ctx.new.storeId)
-            )
-            .unmatched(ctx => ctx
-                .insertAll()
             );
         const result1 = await merge.returning("id").execute();
         expectTypeOf<typeof result1>().toEqualTypeOf<{
@@ -50,7 +39,50 @@ describe("MergeTest", () => {
         }>();
     });
 
-    it("mergeBaseQuery", async () => {
+    it("mergeRowsByCondition", async () => {
+        const merge = sqlClient
+            .createMerge(BOOK)
+            .using("__discriminator", "name", "edition", "price", "storeId")
+            .rows( 
+                ["PaperBook", "GraphQL in Action", 2, 59.9, "2"],
+                ["PaperBook", "Learning GraphQL", 4, 49.9, "1"]
+            )
+            .on(ctx => 
+                dsl.tuple(
+                    ctx.old.name, ctx.old.edition
+                ).eq([
+                    ctx.new.name, ctx.new.edition
+                ])
+            )
+            .matched(ctx => ctx
+                .update("price", ctx.new.price)
+                .update("storeId", ctx.new.storeId)
+            )
+            .unmatched(ctx => ctx
+                .insert("name", ctx.new.name)
+                .insert("edition", ctx.new.edition)
+                .insert("price", ctx.new.price)
+                .insert("storeId", ctx.new.storeId)
+            );
+        const result1 = await merge.returning("id").execute();
+        expectTypeOf<typeof result1>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: number;
+            }>
+        }>();
+        const result2 = await merge.returning("id", "edition").execute();
+        expectTypeOf<typeof result2>().toEqualTypeOf<{
+            readonly affectedRowCount: number;
+            readonly rows: ReadonlyArray<{
+                readonly matched: boolean;
+                readonly data: [number, number];
+            }>
+        }>();
+    });
+
+    it("mergeByBaseQuery", async () => {
         const merge = sqlClient
             .createMerge(BOOK)
             .using(

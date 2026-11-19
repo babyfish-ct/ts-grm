@@ -14,10 +14,10 @@
 
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
-import { __MergeContext, __MergeMetchedContext, __MergeUnmatchedContext, __MutatedLiterals, __MutatedMembers, __MutatedReturn, __MutatedValue, __StaticEntityTableKeys } from "./mutate_internal_types";
+import { __MergeByValuesMatchedContext, __MergeContext, __MergeMatchedContext, __MergeByBaseModelUnmatchedContext, __MutatedLiterals, __MutatedMembers, __MutatedReturn, __MutatedValue, __MergeByValuesUnmatchedContext } from "./mutate_internal_types";
 import { BaseModel, BaseQuery, BaseQueryMapOf } from "./base_query";
 import { Predicate } from "./expression";
-import { __MakeType } from "./table_internal_types";
+import { __MakeType, __TableLike } from "./table_internal_types";
 import { AtLeastOne } from "./utils";
 import { Table } from "./table";
 
@@ -29,8 +29,7 @@ export interface MutableMerge<
     >(
         ...keys: TKeys
     ): MutableMergeByValues<
-        TModel, 
-        Pick<Table<TModel, "NONE">, (TKeys[number] | __StaticEntityTableKeys) & keyof Table<TModel, "NONE">>, 
+        TModel,  
         TKeys
     >;
 
@@ -38,69 +37,118 @@ export interface MutableMerge<
         TQuery extends BaseQuery<any>
     >(
         query: TQuery    
-    ): MutableMergeMatcher<
+    ): MutableMergeByBaseModelMatcher<
         TModel, 
-        Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">, 
-        false
+        Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">
     >;
 
     using<
         TSourceModel extends BaseModel<any>
     >(
         model: TSourceModel
-    ): MutableMergeMatcher<
+    ): MutableMergeByBaseModelMatcher<
         TModel, 
-        Table<TSourceModel, "NONE">,
-        false
+        Table<TSourceModel, "NONE">
     >;
 }
 
 export interface MutableMergeByValues<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > {
     row(
         ...values: __MutatedLiterals<TModel, TKeys>
-    ): MutableMergeMatcher<TModel, TSourceTableLike, true>;
+    ): MutableMergeByValuesMatcher<TModel, TKeys>;
 
     rows(
         ...rows: ReadonlyArray<
             __MutatedLiterals<TModel, TKeys>
         >
-    ): MutableMergeMatcher<TModel, TSourceTableLike, true>;
+    ): MutableMergeByValuesMatcher<TModel, TKeys>;
 }
 
-export interface MutableMergeMatcher<
+export interface MutableMergeByValuesMatcher<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
-    TUseValues extends boolean
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > {
-
     on(
         fn: (
-            ctx: __MergeContext<TModel, TSourceTableLike>
+            ctx: __MergeByValuesMatchedContext<
+                TModel, 
+                TKeys[number] & string & keyof __MutatedMembers<TModel>
+            >
         ) => Predicate
-    ): MutableMergeMatchable<TModel, TSourceTableLike, TUseValues>;
+    ): MutableMergeByValuesMatchable<
+        TModel, 
+        TKeys[number] & string
+    >;
+
+    onConflict<
+        TConflictKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    >(
+        ...conflictKeys: TConflictKeys
+    ): MutableMergeByConflictMatchable<
+        TModel, 
+        Exclude<TKeys[number], TConflictKeys[number]> & keyof __MutatedMembers<TModel> & string
+    >;
 }
 
-export interface MutableMergeMatchable<
+export interface MutableMergeByBaseModelMatcher<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
-    TUseValues extends boolean
+    TSourceTableLike extends __TableLike
+> {
+    on(
+        fn: (
+            ctx: __MergeContext<Table<TModel, "NONE">, TSourceTableLike>
+        ) => Predicate
+    ): MutableMergeByBaseModelMatchable<TModel, TSourceTableLike>;
+}
+
+export interface MutableMergeByValuesMatchable<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends keyof __MutatedMembers<TModel> & string
 > {
     matched(
-        fn?: (ctx: __MergeMetchedContext<TModel, TSourceTableLike>) => void
-    ): MutableMergeUnmatchable<TModel, TSourceTableLike, TUseValues>;
+        fn?: (ctx: __MergeByValuesMatchedContext<TModel, TKeys>) => void
+    ): MutableMergeByValuesUnmatchable<TModel, TKeys>;
 }
 
-export interface MutableMergeUnmatchable<
+export interface MutableMergeByConflictMatchable<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
-    TUseValues extends boolean
+    TKeys extends keyof __MutatedMembers<TModel> & string
+> {
+    doUpdate(
+        fn?: (ctx: __MergeByValuesMatchedContext<TModel, TKeys>) => void
+    ): Merge<TModel>;
+}
+
+export interface MutableMergeByBaseModelMatchable<
+    TModel extends AnyModel | AnyAssociationModel,
+    TSourceTableLike extends __TableLike
+> {
+    matched(
+        fn?: (ctx: __MergeMatchedContext<
+            TModel, 
+            TSourceTableLike
+        >) => void
+    ): MutableMergeByBaseModelUnmatchable<TModel, TSourceTableLike>;
+}
+
+export interface MutableMergeByValuesUnmatchable<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends keyof __MutatedMembers<TModel> & string
 > {
     unmatched(
-        fn?: (ctx: __MergeUnmatchedContext<TModel, TSourceTableLike, TUseValues>) => void    
+        fn?: (ctx: __MergeByValuesUnmatchedContext<TModel, TKeys>) => void    
+    ): Merge<TModel>;
+}
+
+export interface MutableMergeByBaseModelUnmatchable<
+    TModel extends AnyModel | AnyAssociationModel,
+    TSourceTableLike extends __TableLike
+> {
+    unmatched(
+        fn?: (ctx: __MergeByBaseModelUnmatchedContext<TModel, TSourceTableLike>) => void    
     ): Merge<TModel>;
 }
 

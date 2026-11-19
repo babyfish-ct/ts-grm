@@ -13,8 +13,29 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { __MergeContext, __MergeMetchedContext, __MergeUnmatchedContext, __MutatedLiterals, __MutatedMembers, __StaticEntityTableKeys, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, err, Merge, MutableMerge, MutableMergeByValues, MutableMergeMatcher, MutableMergeMatchable, MutableMergeUnmatchable, Predicate, Table, spi } from "@ts-grm/core";
-import { MergeImpl } from "./merge_impl";
+import { 
+    __MergeContext, 
+    __MergeMetchedContext, 
+    __MergeUnmatchedContext, 
+    __MutatedLiterals, 
+    __MutatedMembers, 
+    __StaticEntityTableKeys, 
+    AnyAssociationModel, 
+    AnyModel, 
+    AtLeastOne, 
+    BaseModel, 
+    BaseQuery, 
+    BaseQueryMapOf, 
+    err, 
+    Merge, 
+    MutableMerge, 
+    MutableMergeByValues, 
+    MutableMergeMatcher, 
+    MutableMergeMatchable, 
+    MutableMergeUnmatchable, 
+    Predicate, 
+    Table
+} from "@ts-grm/core";
 import { toTable } from "./utils";
 
 export class MutableMergeImpl<
