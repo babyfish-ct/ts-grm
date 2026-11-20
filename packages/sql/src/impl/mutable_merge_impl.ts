@@ -86,7 +86,6 @@ export class MutableMergeImpl<
     ): any {
         if (typeof args[0] === "string") {
             return new MutableMergeByValuesImpl(
-
             );
         }
     }

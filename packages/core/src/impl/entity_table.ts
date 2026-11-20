@@ -18,7 +18,7 @@ import { EntityProp } from "./entity_prop";
 import { not, Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
 import { makeErr } from "@/error/util";
-import { AbstractTable, createJoinedTable } from "./abstract_table";
+import { AbstractTable, createJoinedTable, LockedInfo } from "./abstract_table";
 import { ShadowAnchor } from "./shadow_anchor";
 import { FetchedView } from "@/dsl/root_query";
 import { FetchedViewImpl } from "./fetched_view_impl";
@@ -65,7 +65,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     private _inverseAssociationMap: Map<string, AbstractAssociationTable> | undefined = undefined;
 
-    private _mergeSourceKeys: ReadonlyArray<string> | undefined = undefined;
+    private _lockedInfo: LockedInfo | undefined = undefined;
 
     constructor(
         readonly __entity: Entity,
@@ -728,18 +728,22 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return new IsPred(this, entity, false, entity.tableEntity) as Predicate;
     }
 
-    get __mergeSourceKeys(): ReadonlyArray<string> | undefined {
-        return this._mergeSourceKeys;
+    get __lockedInfo(): LockedInfo | undefined {
+        return this._lockedInfo;
     }
 
-    createMergeSource(
-        keys: ReadonlyArray<string>
+    __lock(
+        alias: string,
+        partialKeys: ReadonlyArray<string> | undefined
     ): AbstractEntityTable {
         if (this.__joinOperation != null) {
-            throw new StateError(`Only root table support specified`);
+            throw new StateError(`Only root table can be locked`);
+        }
+        if (this._sharedData.shadow != null) {
+            throw new StateError(`Shadow table cannot be locked`);
         }
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
-        cloned._mergeSourceKeys = keys;
+        cloned._lockedInfo = { alias, partialKeys };
         return cloned;
     }
 }

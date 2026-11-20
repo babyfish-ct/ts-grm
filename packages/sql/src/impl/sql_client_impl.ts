@@ -73,7 +73,7 @@ import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
 import { AtomBaseQueryImpl } from "./atom_base_query_impl";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
-import { toTable, toTables } from "./utils";
+import { toTables } from "./utils";
 import { MergedBaseQueryImpl, MergedDtSubQueryImpl, MergedExprSubQueryImpl, MergedNumSubQueryImpl, MergedRootQueryImpl, MergedStrSubQueryImpl, MergedTupleSubQueryImpl } from "./merged_query";
 import { MutableSubQueryImpl } from "./mutable_sub_query_impl";
 import { AtomDtSubQueryImpl, AtomNumSubQueryImpl, AtomStrSubQueryImpl, AtomExprSubQueryImpl, AtomTupleSubQueryImpl } from "./atom_sub_query_impl";

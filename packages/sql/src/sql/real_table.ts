@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AnyModel, dsl, EntityTable, err, JoinType, Predicate, spi } from "@ts-grm/core";
+import { dsl, err, JoinType, Predicate, spi } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
 import { BaseQueryMetadata } from "./base_query_metadata";
@@ -83,6 +83,10 @@ export class RealTable {
             this._joinProp = undefined;
             this._castToEntity = undefined;
             this._filters = undefined;
+        }
+        const locakedInfo = symbol.__lockedInfo;
+        if (locakedInfo != null) {
+            this._alias = locakedInfo.alias;
         }
     }
 
@@ -308,12 +312,12 @@ export class RealTable {
 
     private _sqlFromulaExpr(prop: spi.FetchProp): spi.AbstractExpr<any> | undefined {
         if (prop instanceof spi.SqlFormulaProp) {
-            return prop.formula.fn(this.symbol as any as EntityTable<AnyModel>) as spi.AbstractExpr<any>;
+            return prop.formula.fn(this.symbol as any) as spi.AbstractExpr<any>;
         }
         if (prop.isEntityProp) {
             const fn = prop.sqlFormulaFn;
             if (fn != null) {
-                return prop.sqlFormulaFn!(this.symbol as any as EntityTable<AnyModel>) as spi.AbstractExpr<any>;
+                return prop.sqlFormulaFn!(this.symbol as any) as spi.AbstractExpr<any>;
             }
         }
         return undefined;

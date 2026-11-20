@@ -37,10 +37,14 @@ export interface InsertContract {
 
     readonly sourceTable: AbstractTable | undefined;
 
-    readonly conflict: {
-        readonly props: ReadonlyArray<EntityProp | AssociationProp>;
-        readonly bindings: ReadonlyArray<Binding>;
-    } | undefined;
+    readonly conflict: InsertConflict | undefined;
+}
+
+export interface InsertConflict {
+    readonly props: ReadonlyArray<EntityProp | AssociationProp>;
+    readonly bindings: ReadonlyArray<Binding> | undefined;
+    readonly targetTable: AbstractTable | undefined;
+    readonly sourceTable: AbstractTable | undefined;
 }
 
 export interface MergeContract {

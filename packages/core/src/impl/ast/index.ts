@@ -81,6 +81,7 @@ export type {
 } from "./query";
 export type { 
     InsertContract,
+    InsertConflict,
     MergeContract, 
     SourceRow, 
     Binding,

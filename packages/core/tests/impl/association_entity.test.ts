@@ -9,7 +9,7 @@ describe("AssociationEntityTest", () => {
     it("associationEntity", () => {
         const entity = Entity.of(BOOK).association("authors");
         expect(entity).toBe(Entity.of(BOOK).association("authors"));
-        expect(Array.from(entity.expandedProps.keys())).toEqual([
+        expect(Array.from(entity.expandedPropMap.keys())).toEqual([
             "source", "target", "sourceId", "targetId"
         ]);
         
@@ -68,7 +68,7 @@ describe("AssociationEntityTest", () => {
     it("inverseAssociationEntity", () => {
         const entity = Entity.of(AUTHOR).association("books");
         expect(entity).toBe(Entity.of(AUTHOR).association("books"));
-        expect(Array.from(entity.expandedProps.keys())).toEqual([
+        expect(Array.from(entity.expandedPropMap.keys())).toEqual([
             "source", "target", "sourceId", "targetId"
         ]);
         
@@ -127,7 +127,7 @@ describe("AssociationEntityTest", () => {
     it("multiColumnsAssociationEntity", () => {
         const entity = Entity.of(ORDER).association("tags");
         expect(entity).toBe(Entity.of(ORDER).association("tags"));
-        expect(Array.from(entity.expandedProps.keys())).toEqual([
+        expect(Array.from(entity.expandedPropMap.keys())).toEqual([
             "source", "target", 
             "sourceId", "sourceId.x", "sourceId.y", "sourceId.y.a", "sourceId.y.b",   
             "targetId", "targetId.low", "targetId.high"
@@ -258,7 +258,7 @@ describe("AssociationEntityTest", () => {
     it("inverseMultiColumnsAssociationEntity", () => {
         const entity = Entity.of(TAG).association("orders");
         expect(entity).toBe(Entity.of(TAG).association("orders"));
-        expect(Array.from(entity.expandedProps.keys())).toEqual([
+        expect(Array.from(entity.expandedPropMap.keys())).toEqual([
             "source", "target", 
             "sourceId", "sourceId.low", "sourceId.high",
             "targetId", "targetId.x", "targetId.y", "targetId.y.a", "targetId.y.b"  
@@ -399,7 +399,7 @@ describe("AssociationEntityTest", () => {
                 "comments"
             )
         );
-        expect(Array.from(entity.expandedProps.keys())).toEqual([
+        expect(Array.from(entity.expandedPropMap.keys())).toEqual([
             "source", "target",
             "sourceId",
             "targetId", "targetId.x", "targetId.y", "targetId.y.a", "targetId.y.b"  

@@ -36,7 +36,7 @@ export class AssociationEntity {
 
     readonly targetKeyProp: AssociationProp;
 
-    readonly expandedProps: ReadonlyMap<string, AssociationProp>;
+    readonly expandedPropMap: ReadonlyMap<string, AssociationProp>;
 
     private _tableCtor: AssociationTableCtor | undefined = undefined;
 
@@ -119,11 +119,11 @@ export class AssociationEntity {
         this.targetProp = targetProp;
         this.sourceKeyProp = sourceKeyProp;
         this.targetKeyProp = targetKeyProp;
-        this.expandedProps = propMap;
+        this.expandedPropMap = propMap;
     }
 
     prop(name: string): AssociationProp {
-        return this.expandedProps.get(name) ?? 
+        return this.expandedPropMap.get(name) ?? 
             makeErr(`There is no property "${name}" in the model "${this.toString()}"`);
     }
 
@@ -189,6 +189,8 @@ export interface AssociationProp {
     readonly span: number;
 
     readonly storageType: StorageType;
+
+    readonly path: string;
 
     sub(subPath: string): AssociationProp;
 

@@ -19,6 +19,7 @@ import { AtLeastOne } from "./utils";
 import { AbstractMutableBaseQuery, BaseModel, BaseQueryProjection, BaseQuerySelectMapArgs } from "./base_query";
 import { Table } from "./table";
 import { __TableLike } from "./table_internal_types";
+import { __TargetModelOf } from "@/index_internal";
 
 export interface MutableInsert<
     TModel extends AnyModel | AnyAssociationModel,
@@ -134,7 +135,15 @@ export interface Insert<
     >;
 }
 
-export interface OnConflictInsert<
+export type OnConflictInsert<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
+> = 
+    TModel extends AnyAssociationModel
+        ? OnConflictAssociationInsert<TModel, TKeys>
+        : OnConflictEntityInsert<TModel, TKeys>;
+
+export interface OnConflictEntityInsert<
     TModel extends AnyModel | AnyAssociationModel,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
 > extends Insert<TModel> {
@@ -143,22 +152,44 @@ export interface OnConflictInsert<
         TConflictKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
     >(
         ...conflictKeys: TConflictKeys
-    ): OnConflictUpdate<
+    ): OnConflictEntityUpdate<
         TModel,
         Exclude<TKeys[number], TConflictKeys[number]>
     >;
 }
 
-export interface OnConflictUpdate<
+export interface OnConflictAssociationInsert<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends keyof __MutatedMembers<TModel>
+    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
 > extends Insert<TModel> {
 
+    onConflictAll(): OnConflictAssociationUpdate<TModel>;
+
+    onConflict<
+        TConflictKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    >(
+        ...conflictKeys: TConflictKeys
+    ): OnConflictEntityUpdate<
+        TModel,
+        Exclude<TKeys[number], TConflictKeys[number]>
+    >;
+}
+
+export interface OnConflictEntityUpdate<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends keyof __MutatedMembers<TModel>
+> {
     doNothing(): Insert<TModel>;
 
     doUpdate(
         fn: (ctx: __PartialUpdateContext<TModel, TKeys>) => void
     ): Insert<TModel>;
+}
+
+export interface OnConflictAssociationUpdate<
+    TModel extends AnyModel | AnyAssociationModel
+> {
+    doNothing(): Insert<TModel>;
 }
 
 export interface ReturnedInsert<

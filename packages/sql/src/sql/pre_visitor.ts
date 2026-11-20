@@ -92,6 +92,15 @@ export class PreVisitor extends spi.AbstractVisitor {
         if (insert.kind === "BY_BASE_MODEL") {
             this._toRealTable(insert.sourceTable!);
         }
+        const conflict = insert.conflict;
+        if (conflict != null) {
+            if (conflict.targetTable != null) {
+                this._toRealTable(conflict.targetTable);
+            }
+            if (conflict.sourceTable != null) {
+                this._toRealTable(conflict.sourceTable);
+            }
+        }
         super.visitInsert(insert);
     }
 

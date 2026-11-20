@@ -78,7 +78,8 @@ describe("InsertSqliteTest", () => {
                     EDITION,
                     PRICE,
                     STORE_ID
-                ) select 
+                )
+                select 
                     ?,
                     tb_1_.NAME,
                     tb_1_.EDITION + ?,
@@ -146,7 +147,8 @@ describe("InsertSqliteTest", () => {
                     EDITION,
                     PRICE,
                     STORE_ID
-                ) select * from __inserted_source
+                )
+                select * from __inserted_source
                 returning
                     ID,
                     NAME,
@@ -219,7 +221,8 @@ describe("InsertSqliteTest", () => {
                 insert into book_author_mapping(
                     book_id,
                     author_id
-                ) select 
+                )
+                select 
                     tb_1_.STUDENT_ID,
                     tb_1_.COURSE_ID
                 from LEARNING_LINK tb_1_
@@ -300,5 +303,44 @@ describe("InsertSqliteTest", () => {
             purpose: "insert"
         });
         expect(result).toEqual({ affectedRowCount: 1 });
+    });
+
+    it("insertEntityOnConflictDoUpdate", async() => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
+            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+            return await sqlClient
+                .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
+                .rows(
+                    ["PaperBook", "GraphQL in Action", 3, 69.9, "2"],
+                    ["PaperBook", "Cockroach DB", 4, 69.9, "2"]
+                )
+                .onConflict("name", "edition")
+                .doUpdate(ctx => ctx
+                    .update("price",ctx.old.price.plus(ctx.new.price))
+                    .update("storeId", ctx.new.storeId)
+                )
+                .returning("id")
+                .execute();
+        });
+        sqlRecord.log();
+        console.log(JSON.stringify(result));
+    });
+
+    it("insertEntityOnConflictDoNothing", async() => {
+        const result = await sqlClient.execute("REQUIRED", async () => {
+            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+            return await sqlClient
+                .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
+                .rows(
+                    ["PaperBook", "GraphQL in Action", 3, 69.9, "2"],
+                    ["PaperBook", "Cockroach DB", 4, 69.9, "2"]
+                )
+                .onConflict("name", "edition")
+                .doNothing()
+                .returning("id")
+                .execute();
+        });
+        sqlRecord.log();
+        console.log(JSON.stringify(result));
     });
 });

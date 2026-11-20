@@ -293,7 +293,11 @@ export class Column extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
-        builder.sql(this.table.alias).sql(".").sql(this._alias);
+        const alias = this.table.alias;
+        if (alias !== "") {
+            builder.sql(alias).sql(".");
+        }
+        builder.sql(this._alias);
     }
 }
 

@@ -34,7 +34,7 @@ import {
     Table
 } from "@ts-grm/core";
 import { SqlClientImplementor } from "@/sql_client";
-import { InsertImpl, OnConflictInsertImpl } from "./insert_impl";
+import { OnConflictInsertImpl } from "./insert_impl";
 import { propsOf } from "./utils";
 
 export class MutableInsertImpl<

@@ -52,7 +52,10 @@ export type {
     InsertSource,
     Insert,
     OnConflictInsert,
-    OnConflictUpdate,
+    OnConflictEntityInsert,
+    OnConflictAssociationInsert,
+    OnConflictEntityUpdate,
+    OnConflictAssociationUpdate,
     ReturnedInsert,
     InsertResult,
     InsertResultWithData 

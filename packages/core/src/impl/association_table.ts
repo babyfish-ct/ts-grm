@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AbstractTable, createJoinedTable } from "./abstract_table";
+import { AbstractTable, createJoinedTable, LockedInfo } from "./abstract_table";
 import { Entity } from "./entity";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AbstractEntityTable, JoinFilter, JoinOperation } from "./entity_table";
@@ -33,7 +33,7 @@ export class AbstractAssociationTable implements AbstractTable {
 
     private _target: AbstractEntityTable | undefined = undefined;
 
-    private _mergeSourceKeys: ReadonlyArray<string> | undefined = undefined;
+    private _lockedInfo: LockedInfo | undefined = undefined;
 
     constructor(
         readonly __associationEntity: AssociationEntity,
@@ -90,8 +90,8 @@ export class AbstractAssociationTable implements AbstractTable {
         return this;
     }
 
-    get __mergeSourceKeys(): ReadonlyArray<string> | undefined {
-        return this._mergeSourceKeys;
+    get __lockedInfo(): LockedInfo | undefined {
+        return this._lockedInfo;
     }
 
     source(
@@ -194,14 +194,15 @@ export class AbstractAssociationTable implements AbstractTable {
         return createJoinedTable(this, model, options);
     }
 
-    createMergeSource(
-        keys: ReadonlyArray<string>
+    __lock(
+        alias: string,
+        partialKeys: ReadonlyArray<string> | undefined
     ): AbstractAssociationTable {
         if (this.__joinOperation != null) {
-            throw new StateError(`Only root table support specified`);
+            throw new StateError(`Only root table can be locked`);
         }
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractAssociationTable;
-        cloned._mergeSourceKeys = keys;
+        cloned._lockedInfo = { alias, partialKeys };
         return cloned;
     }
 }

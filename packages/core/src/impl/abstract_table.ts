@@ -50,7 +50,7 @@ export interface AbstractTable {
 
     readonly __prototype: AbstractTable;
 
-    readonly __mergeSourceKeys: ReadonlyArray<string> | undefined;
+    readonly __lockedInfo: LockedInfo | undefined;
 
     join(
         model: __ModelLike,
@@ -60,10 +60,16 @@ export interface AbstractTable {
         }
     ): AbstractTable;
 
-    createMergeSource(
-        keys: ReadonlyArray<string>
+    __lock(
+        alias: string,
+        partialKeys: ReadonlyArray<string> | undefined
     ): AbstractTable;
 }
+
+export interface LockedInfo {
+    readonly alias: string;
+    readonly partialKeys: ReadonlyArray<string> | undefined;
+};
 
 export function createJoinedTable(
     parent: AbstractTable,

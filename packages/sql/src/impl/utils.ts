@@ -42,7 +42,7 @@ export function propsOf(
         const associationModel = model as AnyAssociationModel;
         const associationEntity = spi.AssociationEntity.of(associationModel);
         return keys.map(key => {
-            const prop = associationEntity.expandedProps.get(key);
+            const prop = associationEntity.expandedPropMap.get(key);
             if (prop == null) {
                 throw new err.ArgumentError(
                     `There is no property "${

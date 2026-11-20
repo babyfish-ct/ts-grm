@@ -252,7 +252,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             }
         }
         if (insert.kind === "BY_BASE_MODEL") {
-            this._compositeStack.current.add(" ");
+            this._compositeStack.current.add("\n");
             const baseModel = insert.source as spi.BaseModelImplementor<any>;
             const realTable = this._toRealTable(insert.sourceTable!);
             if (baseModel.__isCte) {
@@ -276,9 +276,34 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 }
             }
         }
+        if (insert.conflict != null) {
+            this._compositeStack.current.add(" on conflict");
+            {
+                using _8 = this._compositeStack.with(new Scope("VALUES"));
+                for (const prop of insert.conflict.props) {
+                    this._compositeStack.current.separator();
+                    const columnName = (prop.toStorage(this._strategy) as spi.Column).name;
+                    this._compositeStack.current.add(columnName);
+                }
+            }
+            const bindings = insert.conflict.bindings;
+            if (bindings == null || bindings.length === 0) {
+                this._compositeStack.current.add(" do nothing");
+            } else {
+                this._compositeStack.current.add(" do update set ");
+                using _9 = this._compositeStack.with(new Scope("COMMA"));
+                for (const binding of bindings) {
+                    this._compositeStack.current
+                        .separator()
+                        .add((binding.prop.toStorage(this._strategy) as spi.Column).name)
+                        .add(" = ");
+                    binding.valueExpr.accept(this);
+                }
+            }
+        }
         if (insert.returnedProps != null) {
             this._compositeStack.current.add("\nreturning");
-            using _8 = this._compositeStack.with(new Scope("COMMA"));
+            using _10 = this._compositeStack.with(new Scope("COMMA"));
             for (const returnedProp of insert.returnedProps) {
                 this._compositeStack.current.separator();
                 this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
