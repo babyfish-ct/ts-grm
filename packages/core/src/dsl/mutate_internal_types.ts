@@ -22,7 +22,6 @@ import { __MakeAssignableExpression, __MakeExpression, __StaticEntityTableMember
 import { Expression, NumExpression, StrExpression } from "./expression";
 import { __CombinedNullity, __EmbeddedPropContract, __NullityType, __TargetModelOf, __WithNullity } from "@/index_internal";
 import { AtLeastOne, INSERTED_FLAG } from "./utils";
-import { PartialTable } from "./partial_table";
 import { Table } from "./table";
 
 export type __MutatedMembers<
@@ -188,6 +187,14 @@ export type __MutatedReturn<
             : R
         : never;
 
+export interface __MergeConditionContext<
+    TModel extends AnyModel | AnyAssociationModel,
+    TSourceTableLike extends __TableLike
+> {
+    readonly old: Table<TModel, "NONE">;
+    readonly new: TSourceTableLike;
+}
+
 export interface __MergeMatchedContext<
     TModel extends AnyModel | AnyAssociationModel,
     TSourceTableLike extends __TableLike
@@ -203,44 +210,15 @@ export interface __MergeMatchedContext<
     ): this;
 }
 
-export interface __MergeByValuesUnmatchedContext<
+export interface __MergeUnmatchedContext<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends keyof __MutatedMembers<TModel>
-> {
-    readonly new: PartialTable<TModel, TKeys>;
-
-    insert<
-        TKey extends TKeys
-    >(
-        key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey]> 
-    ): this;
-}
-
-export interface __MergeByBaseModelUnmatchedContext<
-    TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike
+    TSourceTableLike extends __TableLike
 > {
     readonly new: TSourceTableLike;
-
     insert<
         TKey extends keyof __MutatedMembers<TModel>
     >(
         key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey]> 
-    ): this;
-}
-
-export interface __PartialUpdateContext<
-    TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends keyof __MutatedMembers<TModel>
-> {
-    readonly old: PartialTable<TModel, TKeys>;
-    readonly new: PartialTable<TModel, TKeys>;
-    update<
-        TKey extends TKeys
-    >(
-        key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey]>
+        value: __MutatedValue<__MutatedMembers<TModel>[TKey & keyof __MutatedMembers<TModel>]>
     ): this;
 }

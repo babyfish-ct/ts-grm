@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-export type { Driver, PaginationStrategy, MergeStrategy } from "./deriver";
+export type { Driver, PaginationStrategy, UpsertStrategy } from "./deriver";
 export { AbstractDriver } from "./abstract_drivier";
 export { SqliteDriver } from "./sqlite_driver";
 export { PostgresDriver } from "./postgres_driver";

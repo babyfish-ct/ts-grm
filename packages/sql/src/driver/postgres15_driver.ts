@@ -14,15 +14,10 @@
 
 import { Pool } from "pg";
 import { PostgresDriver } from "./postgres_driver";
-import { MergeStrategy } from "./deriver";
 
 export class Postgres15Driver extends PostgresDriver {
 
     constructor(pool: Pool) {
         super(pool);
-    }
-
-    override get mergeStrategy(): MergeStrategy {
-        return "MERGE_OR_INSERT_ON_CONFLICT";
     }
 }

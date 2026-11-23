@@ -62,12 +62,9 @@ export type {
 export type { 
     MutableMerge, 
     MutableMergeByValues, 
-    MutableMergeByValuesMatcher,
-    MutableMergeByBaseModelMatcher, 
-    MutableMergeByValuesMatchable,
-    MutableMergeByBaseModelMatchable,
-    MutableMergeByValuesUnmatchable, 
-    MutableMergeByBaseModelUnmatchable,
+    MutableMergeMatcher,
+    MutableMergeMatchable,
+    MutableMergeUnmatchable,
     Merge,
     ReturnedMerge
 } from "./merge";

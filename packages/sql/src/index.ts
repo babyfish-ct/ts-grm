@@ -16,7 +16,7 @@ export { newSqlClient } from "./sql_client";
 export { sqlerr } from "./error";
 export type { SqlClientOptions, Filter, AnyFilter } from "./cfg";
 export { FilterManager } from "./cfg";
-export type { Driver, PaginationStrategy, MergeStrategy } from "./driver";
+export type { Driver, PaginationStrategy, UpsertStrategy } from "./driver";
 export { 
     AbstractDriver,
     SqliteDriver, 

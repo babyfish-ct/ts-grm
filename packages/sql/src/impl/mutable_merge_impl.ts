@@ -14,12 +14,13 @@
 
 import { SqlClientImplementor } from "@/sql_client";
 import { 
-    __MergeContext, 
-    __MergeMetchedContext, 
-    __MergeUnmatchedContext, 
+    __MergeConditionContext,
+    __MergeMatchedContext,
+    __MergeUnmatchedContext,
     __MutatedLiterals, 
     __MutatedMembers, 
-    __StaticEntityTableKeys, 
+    __MutatedValue, 
+    __TableLike, 
     AnyAssociationModel, 
     AnyModel, 
     AtLeastOne, 
@@ -30,25 +31,24 @@ import {
     Merge, 
     MutableMerge, 
     MutableMergeByValues, 
-    MutableMergeMatcher, 
     MutableMergeMatchable, 
+    MutableMergeMatcher, 
     MutableMergeUnmatchable, 
+    PartialTable, 
     Predicate, 
+    spi, 
     Table
 } from "@ts-grm/core";
-import { toTable } from "./utils";
+import { SourceRowImpl, toTable } from "./utils";
 
 export class MutableMergeImpl<
     TModel extends AnyModel | AnyAssociationModel
 > implements MutableMerge<TModel> {
 
-    private readonly _table: any;
-
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
         private readonly _model: AnyModel | AnyAssociationModel
     ) {
-        this._table = toTable(_model);
     }
 
     using<
@@ -56,8 +56,7 @@ export class MutableMergeImpl<
     >(
         ...keys: TKeys
     ): MutableMergeByValues<
-        TModel, 
-        Pick<Table<TModel, "NONE">, (TKeys[number] | __StaticEntityTableKeys) & keyof Table<TModel, "NONE">>, 
+        TModel,  
         TKeys
     >;
 
@@ -67,8 +66,7 @@ export class MutableMergeImpl<
         query: TQuery    
     ): MutableMergeMatcher<
         TModel, 
-        Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">, 
-        false
+        Table<BaseModel<BaseQueryMapOf<TQuery>>, "NONE">
     >;
 
     using<
@@ -77,8 +75,7 @@ export class MutableMergeImpl<
         model: TSourceModel
     ): MutableMergeMatcher<
         TModel, 
-        Table<TSourceModel, "NONE">,
-        false
+        Table<TSourceModel, "NONE">
     >;
 
     using(
@@ -86,31 +83,32 @@ export class MutableMergeImpl<
     ): any {
         if (typeof args[0] === "string") {
             return new MutableMergeByValuesImpl(
+                this._sqlClient,
+                this._model,
+                args
             );
         }
+        throw new Error();
     }
 }
 
 class MutableMergeByValuesImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > implements MutableMergeByValues<
     TModel,
-    TSourceTableLike,
     TKeys
 > {
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
-        private readonly _table: any,
-        private readonly _keys: ReadonlyArray<string>,
-        private readonly 
+        private readonly _model: AnyModel | AnyAssociationModel,
+        private readonly _keys: ReadonlyArray<string>
     ) {}
 
     row(
         ...values: __MutatedLiterals<TModel, TKeys>
-    ): MutableMergeMatcher<TModel, TSourceTableLike, true> {
+    ): MutableMergeMatcher<TModel, PartialTable<TModel, TKeys[number]>> {
         return this.rows(values);
     }
 
@@ -118,66 +116,92 @@ class MutableMergeByValuesImpl<
         ...rows: ReadonlyArray<
             __MutatedLiterals<TModel, TKeys>
         >
-    ): MutableMergeMatcher<TModel, TSourceTableLike, true> {
+    ): MutableMergeMatcher<TModel, PartialTable<TModel, TKeys[number]>> {
         if (rows.length === 0) {
             throw new err.ArgumentError(`The "rows.length" cannot be null`);
         }
-        return new MutableMergeMatcherImpl(this._sqlClient);
+        const sourceRows = rows.map(row => new SourceRowImpl(row));
+        return new MutableMergeMatcherImpl(this._sqlClient, this._model, this._keys, sourceRows);
     }
 }
 
 class MutableMergeMatcherImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
-    TUseValues extends boolean
+    TSourceTableLike extends __TableLike
 > implements MutableMergeMatcher<
     TModel,
-    TSourceTableLike,
-    TUseValues
+    TSourceTableLike                                                                       
 > {
 
     constructor(
-        private readonly _sqlClient: SqlClientImplementor
+        private readonly _sqlClient: SqlClientImplementor,
+        private readonly _model: AnyModel | AnyAssociationModel,
+        private readonly _keys: ReadonlyArray<string>,
+        private readonly _sourceRows: Iterable<spi.SourceRow>
     ) {}
 
     on(
         fn: (
-            ctx: __MergeContext<TModel, TSourceTableLike>
+            ctx: __MergeConditionContext<
+                TModel, 
+                TSourceTableLike
+            >
         ) => Predicate
-    ): MutableMergeMatchable<TModel, TSourceTableLike, TUseValues> {
-        return new MutableMergeMatchableImpl(this._sqlClient);
+    ): MutableMergeMatchable<
+        TModel, 
+        TSourceTableLike
+    > {
+        return new MutableMergeMatchableImpl(
+            this._sqlClient,
+            this._model,
+            this._keys,
+            this._sourceRows,
+            fn
+        );
     }
 }
 
 class MutableMergeMatchableImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
-    TUseValues extends boolean
+    TSourceTableLike extends __TableLike
 > implements MutableMergeMatchable<
     TModel,
-    TSourceTableLike,
-    TUseValues
+    TSourceTableLike
 > {
 
+    private readonly _mergedTable: spi.AbstractTable;
+
+    private readonly _sourceTable: spi.AbstractTable;
+
     constructor(
-        private readonly _sqlClient: SqlClientImplementor
-    ) {}
+        private readonly _sqlClient: SqlClientImplementor,
+        private readonly _model: AnyModel | AnyAssociationModel,
+        private readonly _keys: ReadonlyArray<string>,
+        private readonly _sourceRows: Iterable<spi.SourceRow>,
+        fn: (
+            ctx: __MergeMatchedContext<
+                TModel, 
+                TSourceTableLike
+            >
+        ) => Predicate
+    ) {
+        this._mergedTable = toTable(this._model);
+        this._sourceTable = toTable(this._model).__lock("__merged_src", this._keys);
+    }
 
     matched(
-        fn?: (ctx: __MergeMetchedContext<TModel, TSourceTableLike>) => void
-    ): MutableMergeUnmatchable<TModel, TSourceTableLike, TUseValues> {
+        fn?: (ctx: __MergeMatchedContext<TModel, TSourceTableLike>) => void
+    ): MutableMergeUnmatchable<TModel, TSourceTableLike> {
         return new MutableMergeUnmatchableImpl(this._sqlClient);
     }
 }
 
 class MutableMergeUnmatchableImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TSourceTableLike,
-    TUseValues extends boolean
+    TSourceTableLike extends __TableLike
 > implements MutableMergeUnmatchable<
-    TModel,
-    TSourceTableLike,
-    TUseValues
+    TModel, 
+    TSourceTableLike
 > {
 
     constructor(
@@ -185,7 +209,7 @@ class MutableMergeUnmatchableImpl<
     ) {}
 
     unmatched(
-        fn?: (ctx: __MergeUnmatchedContext<TModel, TSourceTableLike, TUseValues>) => void    
+        fn?: (ctx: __MergeUnmatchedContext<TModel, TSourceTableLike>) => void    
     ): Merge<TModel> {
         throw new Error();
     }

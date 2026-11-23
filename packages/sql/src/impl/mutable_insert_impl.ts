@@ -35,7 +35,7 @@ import {
 } from "@ts-grm/core";
 import { SqlClientImplementor } from "@/sql_client";
 import { OnConflictInsertImpl } from "./insert_impl";
-import { propsOf } from "./utils";
+import { propsOf, SourceRowImpl } from "./utils";
 
 export class MutableInsertImpl<
     TModel extends AnyModel | AnyAssociationModel,
@@ -73,7 +73,7 @@ export class MutableInsertImpl<
             sourceRows,
             this._props,
             undefined
-        );
+        ) as any;
     }
 
     using(
@@ -134,18 +134,7 @@ export class MutableInsertImpl<
             baseModel,
             bindings,
             sourceTable
-        );
-    }
-}
-
-class SourceRowImpl implements spi.SourceRow {
-
-    constructor(
-        private readonly _data: ReadonlyArray<any>
-    ) {}
-
-    get(col: number): any {
-        return this._data[col];
+        ) as any;
     }
 }
 

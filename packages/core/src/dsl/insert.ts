@@ -13,7 +13,7 @@
  */
 
 import { AnyAssociationModel } from "./association";
-import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn, __PartialUpdateContext, __MutatedReturnKey } from "./mutate_internal_types";
+import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn, __MutatedReturnKey } from "./mutate_internal_types";
 import { AnyModel } from "@/schema/model";
 import { AtLeastOne, ImportResult, ImportResultWithData } from "./utils";
 import { AbstractMutableBaseQuery, BaseModel, BaseQueryProjection, BaseQuerySelectMapArgs } from "./base_query";
@@ -136,10 +136,12 @@ export type OnConflictInsert<
 > = 
     TModel extends AnyAssociationModel
         ? OnConflictAssociationInsert<TModel>
-        : OnConflictEntityInsert<TModel, TKeys>;
+    : TModel extends AnyModel
+        ? OnConflictEntityInsert<TModel, TKeys>
+    : never;
 
 export interface OnConflictEntityInsert<
-    TModel extends AnyModel | AnyAssociationModel,
+    TModel extends AnyModel,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
 > extends Insert<TModel> {
 
@@ -155,7 +157,7 @@ export interface OnConflictEntityInsert<
 }
 
 export interface OnConflictAssociationInsert<
-    TModel extends AnyModel | AnyAssociationModel
+    TModel extends AnyAssociationModel
 > extends Insert<TModel> {
 
     onConflictAll(): OnConflictAssociationUpdate<TModel>;

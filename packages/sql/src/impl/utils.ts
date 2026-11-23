@@ -28,7 +28,7 @@ export function toTables(
 
 export function toTable(
     model: AnyModel | AnyAssociationModel | BaseModel<any>
-): spi.AbstractEntityTable | spi.TypedBaseTable {
+): spi.AbstractEntityTable | spi.AbstractAssociationTable | spi.TypedBaseTable {
     return model instanceof BaseModelImpl
         ? spi.createTypedBaseTable(model, undefined)
         : spi.Entity.of(model as AnyModel).table(undefined);
@@ -70,4 +70,15 @@ export function propsOf(
         }
         return prop;
     });
+}
+
+export class SourceRowImpl implements spi.SourceRow {
+
+    constructor(
+        private readonly _data: ReadonlyArray<any>
+    ) {}
+
+    get(col: number): any {
+        return this._data[col];
+    }
 }

@@ -25,7 +25,7 @@ import { Scope, Value, valueOf } from "@/sql/fragment";
 
 // Only import types
 import type { Pool } from "pg";
-import { MergeStrategy } from "./deriver";
+import { UpsertStrategy } from "./deriver";
 
 export class PostgresDriver extends AbstractDriver {
 
@@ -43,8 +43,13 @@ export class PostgresDriver extends AbstractDriver {
         return "$";
     }
 
-    override get mergeStrategy(): MergeStrategy {
-        return "INSERT_ON_CONFLICT";
+    override get upsertStrategy(): UpsertStrategy {
+        return {
+            mergable: false,
+            insertConflict: true,
+            insertConflictAliasRequired: true,
+            insertFlagRender: ctx => ctx.text("xmax = 0")
+        };
     }
 
     override typeName(columnDef: ColumnDef): string {

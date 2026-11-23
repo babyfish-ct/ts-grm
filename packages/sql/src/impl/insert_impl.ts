@@ -128,7 +128,7 @@ export class OnConflictInsertImpl<
     TModel extends AnyModel | AnyAssociationModel,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > extends InsertImpl<TModel> 
-implements OnConflictEntityInsert<TModel, TKeys>, OnConflictAssociationInsert<TModel> {
+implements OnConflictEntityInsert<any, any>, OnConflictAssociationInsert<any> {
 
     constructor(
         readonly sqlClient: SqlClientImplementor,
