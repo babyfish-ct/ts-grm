@@ -44,3 +44,15 @@ export type IsNull<T> =
     : undefined extends T
         ? true
     : false;
+
+export const INSERTED_FLAG = Symbol("<insertedFlag>");
+
+export interface ImportResult {
+
+    readonly affectedRowCount: number;
+}
+
+export interface ImportResultWithData<T> extends ImportResult {
+
+    readonly rows: ReadonlyArray<T>;
+}

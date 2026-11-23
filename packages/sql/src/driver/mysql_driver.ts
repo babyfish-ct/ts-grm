@@ -26,6 +26,7 @@ import { TransactionManager } from "@/transaction/transaction_manger";
 
 // Only import types
 import type { Pool } from "mysql2/promise";
+import { UpsertStrategy } from "./deriver";
 
 export class MySqlDriver extends AbstractDriver {
     
@@ -86,6 +87,15 @@ export class MySqlDriver extends AbstractDriver {
 
     protected override createNodeRender(): NodeRender {
         return new MySqlNodeRender(this);
+    }
+
+    get upsertStrategy(): UpsertStrategy {
+        return {
+            mergable: false,
+            insertConflict: true,
+            insertFlagRender: undefined,
+            insertConflictAliasRequired: false
+        };
     }
 }
 

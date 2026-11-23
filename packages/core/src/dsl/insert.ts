@@ -13,13 +13,14 @@
  */
 
 import { AnyAssociationModel } from "./association";
-import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn, __PartialUpdateContext } from "./mutate_internal_types";
+import { __MutatedValue, __MutatedMembers, __MutatedLiterals, __MutatedReturn, __PartialUpdateContext, __MutatedReturnKey } from "./mutate_internal_types";
 import { AnyModel } from "@/schema/model";
-import { AtLeastOne } from "./utils";
+import { AtLeastOne, ImportResult, ImportResultWithData } from "./utils";
 import { AbstractMutableBaseQuery, BaseModel, BaseQueryProjection, BaseQuerySelectMapArgs } from "./base_query";
 import { Table } from "./table";
 import { __TableLike } from "./table_internal_types";
 import { __TargetModelOf } from "@/index_internal";
+import { PartialTable } from "./partial_table";
 
 export interface MutableInsert<
     TModel extends AnyModel | AnyAssociationModel,
@@ -121,18 +122,12 @@ export interface Insert<
     TModel extends AnyModel | AnyAssociationModel,
 > {
     returning<
-        const TReturnedKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+        const TReturnedKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
     >(
         ...keys: TReturnedKeys
     ): ReturnedInsert<TModel, TReturnedKeys>;
 
-    execute<
-        TReturnKind extends "AFFECTED_ROW_COUNT" | "NOTHING" = "AFFECTED_ROW_COUNT"
-    >(kind?: TReturnKind): Promise<
-        TReturnKind extends "NOTHING"
-            ? void
-            : InsertResult
-    >;
+    execute(): Promise<ImportResult>;
 }
 
 export type OnConflictInsert<
@@ -140,7 +135,7 @@ export type OnConflictInsert<
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
 > = 
     TModel extends AnyAssociationModel
-        ? OnConflictAssociationInsert<TModel, TKeys>
+        ? OnConflictAssociationInsert<TModel>
         : OnConflictEntityInsert<TModel, TKeys>;
 
 export interface OnConflictEntityInsert<
@@ -154,13 +149,13 @@ export interface OnConflictEntityInsert<
         ...conflictKeys: TConflictKeys
     ): OnConflictEntityUpdate<
         TModel,
+        TKeys[number],
         Exclude<TKeys[number], TConflictKeys[number]>
     >;
 }
 
 export interface OnConflictAssociationInsert<
-    TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>,
+    TModel extends AnyModel | AnyAssociationModel
 > extends Insert<TModel> {
 
     onConflictAll(): OnConflictAssociationUpdate<TModel>;
@@ -169,21 +164,36 @@ export interface OnConflictAssociationInsert<
         TConflictKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
     >(
         ...conflictKeys: TConflictKeys
-    ): OnConflictEntityUpdate<
-        TModel,
-        Exclude<TKeys[number], TConflictKeys[number]>
+    ): OnConflictAssociationUpdate<
+        TModel
     >;
 }
 
 export interface OnConflictEntityUpdate<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends keyof __MutatedMembers<TModel>
+    TKeys extends keyof __MutatedMembers<TModel>,
+    TUpdatableKeys extends keyof __MutatedMembers<TModel>
 > {
     doNothing(): Insert<TModel>;
 
     doUpdate(
-        fn: (ctx: __PartialUpdateContext<TModel, TKeys>) => void
+        fn: (ctx: OnConflictEntityUpdateContext<TModel, TKeys, TUpdatableKeys>) => void
     ): Insert<TModel>;
+}
+
+export interface OnConflictEntityUpdateContext<
+    TModel extends AnyModel | AnyAssociationModel,
+    TKeys extends keyof __MutatedMembers<TModel>,
+    TUpdatableKeys extends keyof __MutatedMembers<TModel>
+> {
+    readonly old: PartialTable<TModel, TKeys>;
+    readonly new: PartialTable<TModel, TKeys>;
+    update<
+        TUpdatableKey extends TUpdatableKeys
+    >(
+        key: TUpdatableKey,
+        value: __MutatedValue<__MutatedMembers<TModel>[TUpdatableKey]>
+    ): this;
 }
 
 export interface OnConflictAssociationUpdate<
@@ -194,7 +204,7 @@ export interface OnConflictAssociationUpdate<
 
 export interface ReturnedInsert<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    TKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
 > {
 
     execute<
@@ -205,21 +215,12 @@ export interface ReturnedInsert<
         }
     ): Promise<
         TKeys["length"] extends 1
-            ? InsertResultWithData<
-                __MutatedReturn<__MutatedMembers<TModel>[TKeys[0]], TNullAsUndefined> 
+            ? ImportResultWithData<
+                __MutatedReturn<TModel, TKeys[0], TNullAsUndefined> 
             >
-            : InsertResultWithData<{
-                -readonly [K in keyof TKeys]: __MutatedReturn<__MutatedMembers<TModel>[TKeys[K]], TNullAsUndefined> 
+            : ImportResultWithData<{
+                -readonly [K in keyof TKeys]: __MutatedReturn<TModel, TKeys[K], TNullAsUndefined> 
             }>
     >;
 }
 
-export interface InsertResult {
-
-    readonly affectedRowCount: number;
-}
-
-export interface InsertResultWithData<T> extends InsertResult {
-
-    readonly rows: ReadonlyArray<T>;
-}

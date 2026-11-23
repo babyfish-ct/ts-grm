@@ -14,11 +14,11 @@
 
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
-import { __MergeMatchedContext, __MergeByBaseModelUnmatchedContext, __MutatedLiterals, __MutatedMembers, __MutatedReturn, __MutatedValue, __MergeByValuesUnmatchedContext, __PartialUpdateContext } from "./mutate_internal_types";
+import { __MergeMatchedContext, __MergeByBaseModelUnmatchedContext, __MutatedLiterals, __MutatedMembers, __MutatedReturn, __MutatedValue, __MergeByValuesUnmatchedContext, __PartialUpdateContext, __MutatedReturnKey } from "./mutate_internal_types";
 import { BaseModel, BaseQuery, BaseQueryMapOf } from "./base_query";
 import { Predicate } from "./expression";
 import { __MakeType, __TableLike } from "./table_internal_types";
-import { AtLeastOne } from "./utils";
+import { AtLeastOne, ImportResult, ImportResultWithData } from "./utils";
 import { Table } from "./table";
 
 export interface MutableMerge<
@@ -137,18 +137,10 @@ export interface MutableMergeByBaseModelUnmatchable<
 export interface Merge<
     TModel extends AnyModel | AnyAssociationModel
 > {
-    execute<
-        TReturnKind extends "AFFECTED_ROW_COUNT" | "WITH_MATCHED" | "NOTHING" = "AFFECTED_ROW_COUNT"
-    >(kind?: TReturnKind): Promise<
-        TReturnKind extends "WITH_MATCHED"
-            ? MergeResultWithMatched
-        : TReturnKind extends "NOTHING"
-            ? void
-        : MergeResult
-    >;
+    execute(): Promise<ImportResult>;
 
     returning<
-        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+        const TKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
     >(
         ...keys: TKeys
     ): ReturnedMerge<TModel, TKeys>;
@@ -156,7 +148,7 @@ export interface Merge<
 
 export interface ReturnedMerge<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    TKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
 > {
 
     execute<
@@ -167,31 +159,11 @@ export interface ReturnedMerge<
         }
     ): Promise<
         TKeys["length"] extends 1
-            ? MergeResultWithData<
-                __MutatedReturn<__MutatedMembers<TModel>[TKeys[0]], TNullAsUndefined> 
+            ? ImportResultWithData<
+                __MutatedReturn<TModel, TKeys[0], TNullAsUndefined> 
             >
-            : MergeResultWithData<{
-                -readonly [K in keyof TKeys]: __MutatedReturn<__MutatedMembers<TModel>[TKeys[K]], TNullAsUndefined> 
+            : ImportResultWithData<{
+                -readonly [K in keyof TKeys]: __MutatedReturn<TModel, TKeys[K], TNullAsUndefined> 
             }>
     >;
-}
-
-export interface MergeResult {
-
-    readonly affectedRowCount: number;
-}
-
-export interface MergeResultWithMatched extends MergeResult {
-
-    readonly rows: ReadonlyArray<{
-        readonly matched: boolean;
-    }>;
-}
-
-export interface MergeResultWithData<T> extends MergeResult {
-
-    readonly rows: ReadonlyArray<{
-        readonly matched: boolean;
-        readonly data: T;
-    }>;
 }

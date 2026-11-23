@@ -23,19 +23,22 @@ import {
     BaseModel, 
     err, 
     Insert, 
-    InsertResult, 
-    InsertResultWithData, 
+    ImportResult, 
+    ImportResultWithData, 
     OnConflictAssociationInsert, 
     OnConflictEntityInsert,  
     OnConflictEntityUpdate,
     OnConflictAssociationUpdate, 
     ReturnedInsert, 
-    spi 
+    spi, 
+    INSERTED_FLAG,
+    __MutatedReturnKey
 } from "@ts-grm/core";
 import { executeInsert } from "./mutation_executor/execute_insert";
 import { propsOf } from "./utils";
 import { BaseModelImpl } from "./abstract_base_query_impl";
-import { PartialUpdateContextImpl } from "./partial_update_context_impl";
+import { OnConflictUpdateContextImpl } from "./on_conflict_update_context_impl";
+import { OnConflictEntityUpdateContext } from "@ts-grm/core";
 
 export class InsertImpl<
     TModel extends AnyModel | AnyAssociationModel
@@ -75,19 +78,19 @@ export class InsertImpl<
         if (kind === "NOTHING") {
             return;
         }
-        return result as InsertResult;
+        return result as ImportResult;
     }
 
     returning<
-        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+        const TReturnedKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
     >(
-        ...keys: TKeys
-    ): ReturnedInsert<TModel, TKeys> {
+        ...keys: TReturnedKeys
+    ): ReturnedInsert<TModel, TReturnedKeys> {
         if (keys.length < 1) {
             throw new err.ArgumentError(`The function "returning" must accept at least one key`);
         }
         const props = propsOf(this.model, keys as ReadonlyArray<string>);
-        return new ReturnedInsertImpl(
+        return new ReturnedInsertImpl<TModel, TReturnedKeys>(
             this.sqlClient, 
             this.model, 
             this.source, 
@@ -98,7 +101,7 @@ export class InsertImpl<
         );
     }
 
-    get returnedProps(): ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> | undefined {
+    get returnedProps(): ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG> | undefined {
         return undefined;
     }
 
@@ -125,7 +128,7 @@ export class OnConflictInsertImpl<
     TModel extends AnyModel | AnyAssociationModel,
     TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
 > extends InsertImpl<TModel> 
-implements OnConflictEntityInsert<TModel, TKeys>, OnConflictAssociationInsert<TModel, TKeys> {
+implements OnConflictEntityInsert<TModel, TKeys>, OnConflictAssociationInsert<TModel> {
 
     constructor(
         readonly sqlClient: SqlClientImplementor,
@@ -189,6 +192,7 @@ implements OnConflictEntityInsert<TModel, TKeys>, OnConflictAssociationInsert<TM
         }
         return new OnConflictUpdateImpl<
             TModel,
+            TKeys[number],
             Exclude<TKeys[number], TConflictKeys[number]>
         >(this, conflictKeys.map(ck => entity.expandedPropMap.get(ck as string)!) as any, keys);
     }
@@ -204,6 +208,7 @@ implements OnConflictEntityInsert<TModel, TKeys>, OnConflictAssociationInsert<TM
         ];
         return new OnConflictUpdateImpl<
             TModel,
+            never,
             never
         >(this, props, new Set());
     }
@@ -211,8 +216,9 @@ implements OnConflictEntityInsert<TModel, TKeys>, OnConflictAssociationInsert<TM
 
 class OnConflictUpdateImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends keyof __MutatedMembers<TModel>
-> implements OnConflictEntityUpdate<TModel, TKeys>, OnConflictAssociationUpdate<TModel> {
+    TKeys extends keyof __MutatedMembers<TModel>,
+    TUpdatableKeys extends keyof __MutatedMembers<TModel>
+> implements OnConflictEntityUpdate<TModel, TKeys, TUpdatableKeys>, OnConflictAssociationUpdate<TModel> {
 
     constructor(
         private readonly _insertImpl: OnConflictInsertImpl<TModel, AtLeastOne<TKeys>>,
@@ -238,11 +244,11 @@ class OnConflictUpdateImpl<
     }
 
     doUpdate(
-        fn: (ctx: __PartialUpdateContext<TModel, TKeys>) => void
+        fn: (ctx: OnConflictEntityUpdateContext<TModel, TKeys, TUpdatableKeys>) => void
     ): Insert<TModel> {
         const targetTable = this._insertImpl.entity.table(undefined).__lock("", Array.from(this._keys));
         const sourceTable = this._insertImpl.entity.table(undefined).__lock("excluded", Array.from(this._keys));
-        const ctx = new PartialUpdateContextImpl<TModel, TKeys>(
+        const ctx = new OnConflictUpdateContextImpl<TModel, TKeys, TUpdatableKeys>(
             this._insertImpl.entity,
             targetTable,
             sourceTable
@@ -267,7 +273,7 @@ class OnConflictUpdateImpl<
 
 class ReturnedInsertImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    TKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
 > implements ReturnedInsert<TModel, TKeys>, spi.InsertContract, spi.Node {
 
     constructor(
@@ -275,7 +281,7 @@ class ReturnedInsertImpl<
         readonly model: TModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
         readonly bindings: ReadonlyArray<spi.Binding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
-        readonly returnedProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
+        readonly returnedProps: ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG>,
         readonly sourceTable: spi.AbstractTable | undefined,
         readonly conflict: spi.InsertConflict | undefined
     ) {}
@@ -300,11 +306,11 @@ class ReturnedInsertImpl<
         }
     ): Promise<
         TKeys["length"] extends 1
-            ? InsertResultWithData<
-                __MutatedReturn<__MutatedMembers<TModel>[TKeys[0]], TNullAsUndefined> 
+            ? ImportResultWithData<
+                __MutatedReturn<TModel, TKeys[0], TNullAsUndefined> 
             >
-            : InsertResultWithData<{
-                -readonly [K in keyof TKeys]: __MutatedReturn<__MutatedMembers<TModel>[TKeys[K]], TNullAsUndefined> 
+            : ImportResultWithData<{
+                -readonly [K in keyof TKeys]: __MutatedReturn<TModel, TKeys[K], TNullAsUndefined> 
             }>
     > {
         return executeInsert(

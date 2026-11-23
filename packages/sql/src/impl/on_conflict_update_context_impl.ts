@@ -12,12 +12,13 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { __MutatedMembers, __MutatedValue, __PartialUpdateContext, AnyAssociationModel, AnyModel, dsl, err, PartialTable, spi } from "@ts-grm/core";
+import { __MutatedMembers, __MutatedValue, __PartialUpdateContext, AnyAssociationModel, AnyModel, dsl, err, OnConflictEntityUpdateContext, PartialTable, spi } from "@ts-grm/core";
 
-export class PartialUpdateContextImpl<
+export class OnConflictUpdateContextImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends keyof __MutatedMembers<TModel>
-> implements __PartialUpdateContext<TModel, TKeys> {
+    TKeys extends keyof __MutatedMembers<TModel>,
+    TUpdatableKeys extends keyof __MutatedMembers<TModel>
+> implements OnConflictEntityUpdateContext<TModel, TKeys, TUpdatableKeys> {
 
     readonly old: PartialTable<TModel, TKeys>;
 
@@ -35,10 +36,10 @@ export class PartialUpdateContextImpl<
     }
 
     update<
-        TKey extends TKeys
+        TUpdatableKey extends TUpdatableKeys
     >(
-        key: TKey,
-        value: __MutatedValue<__MutatedMembers<TModel>[TKey]>
+        key: TUpdatableKey,
+        value: __MutatedValue<__MutatedMembers<TModel>[TUpdatableKey]>
     ): this {
         const prop = this._entity.expandedPropMap.get(key as string);
         if (prop == null) {

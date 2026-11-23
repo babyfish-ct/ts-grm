@@ -24,7 +24,7 @@ import { AbstractDriver } from "./abstract_drivier";
 
 // Only import types
 import type { Database } from "better-sqlite3";
-import { MergeStrategy } from "./deriver";
+import { UpsertStrategy } from "./deriver";
 
 export class SqliteDriver extends AbstractDriver {
 
@@ -70,8 +70,13 @@ export class SqliteDriver extends AbstractDriver {
         return true;
     }
 
-    get mergeStrategy(): MergeStrategy {
-        return "INSERT_ON_CONFLICT";
+    get upsertStrategy(): UpsertStrategy {
+        return {
+            mergable: false,
+            insertConflict: true,
+            insertFlagRender: undefined,
+            insertConflictAliasRequired: false
+        };
     }
 
     protected override createTransactionManager(): TransactionManager {

@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR, BOOK, LEARNING_LINK } from "../model/model";
-import { dsl, SqlClient } from "@/dsl";
+import { dsl, INSERTED_FLAG, SqlClient } from "@/dsl";
 
 describe("MergeTest", () => {
 
@@ -38,18 +38,12 @@ describe("MergeTest", () => {
         const result1 = await merge.returning("id").execute();
         expectTypeOf<typeof result1>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-                readonly data: number;
-            }>
+            readonly rows: ReadonlyArray<number>
         }>();
-        const result2 = await merge.returning("id", "edition").execute();
+        const result2 = await merge.returning("id", INSERTED_FLAG).execute();
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-                readonly data: [number, number];
-            }>
+            readonly rows: ReadonlyArray<[number, boolean]>
         }>();
     });
 
@@ -86,18 +80,12 @@ describe("MergeTest", () => {
         const result1 = await merge.returning("id").execute();
         expectTypeOf<typeof result1>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-                readonly data: number;
-            }>
+            readonly rows: ReadonlyArray<number>;
         }>();
-        const result2 = await merge.returning("id", "edition").execute();
+        const result2 = await merge.returning("id", INSERTED_FLAG).execute();
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-                readonly data: [number, number];
-            }>
+            readonly rows: ReadonlyArray<[number, boolean]>;
         }>();
     });
 
@@ -128,14 +116,10 @@ describe("MergeTest", () => {
         expectTypeOf<typeof result1>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await merge.execute("WITH_MATCHED");
+        const result2 = await merge.returning(INSERTED_FLAG).execute();
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<{
-                readonly matched: boolean;
-            }>
+            readonly rows: ReadonlyArray<boolean>;
         }>();
-        const result3 = await merge.execute("NOTHING");
-        expectTypeOf<typeof result3>().toEqualTypeOf<void>();
     });
 });

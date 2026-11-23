@@ -13,7 +13,7 @@
  */
 
 import { ColumnDef } from "@/impl/schema_def";
-import { NodeRender } from "./node_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { FetchRangeOptions, spi } from "@ts-grm/core";
 import { Composite } from "@/sql/fragment";
@@ -34,7 +34,7 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly paginationStrategy: PaginationStrategy;
 
-    readonly mergeStrategy: MergeStrategy;
+    readonly upsertStrategy: UpsertStrategy | undefined;
 
     typeName(columnDef: ColumnDef): string;
 
@@ -56,5 +56,11 @@ export type PaginationTransformer = (
     options: FetchRangeOptions
 ) => Composite;
 
-export type MergeStrategy =
-    "MERGE" | "INSERT_ON_CONFLICT" | "MERGE_OR_INSERT_ON_CONFLICT" | "INSERT_ON_DUPLICATE_KEY" | "UNSUPPORTED";
+export interface UpsertStrategy {
+    readonly mergable: boolean;
+    readonly insertConflict: boolean;
+    readonly insertFlagRender: InsertFlagRender | undefined;
+    readonly insertConflictAliasRequired: boolean;
+}
+
+export type InsertFlagRender = (ctx: NodeRenderContext) => void;

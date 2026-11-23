@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { Driver, MergeStrategy, PaginationStrategy } from "./deriver";
+import { Driver, PaginationStrategy, UpsertStrategy } from "./deriver";
 import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
@@ -57,8 +57,13 @@ export abstract class AbstractDriver implements Driver {
         return "CLASSIC_LIMIT_OFFSET";
     }
 
-    get mergeStrategy(): MergeStrategy {
-        return "MERGE";
+    get upsertStrategy(): UpsertStrategy {
+        return {
+            mergable: true,
+            insertConflict: false,
+            insertFlagRender: undefined,
+            insertConflictAliasRequired: false
+        };
     }
 
     quoteIdentifier(value: string): string {

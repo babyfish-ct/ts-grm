@@ -13,7 +13,20 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { __MutatedMembers, __MutatedReturn, AnyAssociationModel, AnyModel, AtLeastOne, BaseModel, Merge, MergeResult, MergeResultWithData, MergeResultWithMatched, ReturnedMerge, spi } from "@ts-grm/core";
+import { 
+    __MutatedMembers, 
+    __MutatedReturn, 
+    __MutatedReturnKey, 
+    AnyAssociationModel, 
+    AnyModel, 
+    AtLeastOne, 
+    BaseModel, 
+    ImportResult, 
+    ImportResultWithData, 
+    Merge, 
+    ReturnedMerge, 
+    spi 
+} from "@ts-grm/core";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 
 export class MergeImpl<
@@ -37,20 +50,12 @@ export class MergeImpl<
             : "BY_VALUES";
     }
 
-    execute<
-        TReturnKind extends "AFFECTED_ROW_COUNT" | "WITH_MATCHED" | "NOTHING" = "AFFECTED_ROW_COUNT"
-    >(kind?: TReturnKind): Promise<
-        TReturnKind extends "WITH_MATCHED"
-            ? MergeResultWithMatched
-        : TReturnKind extends "NOTHING"
-            ? void
-        : MergeResult
-    > {
+    execute(): Promise<ImportResult> {
         throw new Error("");
     }
 
     returning<
-        const TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+        const TKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
     >(
         ...keys: TKeys
     ): ReturnedMerge<TModel, TKeys> {
@@ -60,7 +65,7 @@ export class MergeImpl<
 
 class ReturnedMergeImpl<
     TModel extends AnyModel | AnyAssociationModel,
-    TKeys extends AtLeastOne<keyof __MutatedMembers<TModel>>
+    TKeys extends AtLeastOne<__MutatedReturnKey<TModel>>
 > implements ReturnedMerge<
     TModel,
     TKeys
@@ -78,11 +83,11 @@ class ReturnedMergeImpl<
         }
     ): Promise<
         TKeys["length"] extends 1
-            ? MergeResultWithData<
-                __MutatedReturn<__MutatedMembers<TModel>[TKeys[0]], TNullAsUndefined> 
+            ? ImportResultWithData<
+                __MutatedReturn<TModel, TKeys[0], TNullAsUndefined> 
             >
-            : MergeResultWithData<{
-                -readonly [K in keyof TKeys]: __MutatedReturn<__MutatedMembers<TModel>[TKeys[K]], TNullAsUndefined> 
+            : ImportResultWithData<{
+                -readonly [K in keyof TKeys]: __MutatedReturn<TModel, TKeys[K], TNullAsUndefined> 
             }>
     > {
         throw new Error("");

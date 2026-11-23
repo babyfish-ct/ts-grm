@@ -20,7 +20,7 @@ import { native } from "./native";
 import { baseQuery, cteModel, derivedModel } from "./base_query";
 import { associationModel } from "./association";
 import { tuple } from "./tuple";
-export { ExpressionOrder } from "./utils";
+export { ExpressionOrder, INSERTED_FLAG } from "./utils";
 export type { 
     SqlClient, 
     Propagation, 
@@ -31,7 +31,7 @@ export type {
     FindRangeOptions,
     FindPageOptions
 } from "./sql_client";
-export type { AtLeastOne, AtLeastTwo } from "./utils";
+export type { AtLeastOne, AtLeastTwo, ImportResult, ImportResultWithData } from "./utils";
 export type { Criteria } from "./criteria";
 export { criteria } from "./criteria";
 export type { ExprTuple, ExprTupleMatchable } from "./tuple";
@@ -56,9 +56,8 @@ export type {
     OnConflictAssociationInsert,
     OnConflictEntityUpdate,
     OnConflictAssociationUpdate,
-    ReturnedInsert,
-    InsertResult,
-    InsertResultWithData 
+    OnConflictEntityUpdateContext,
+    ReturnedInsert
 } from "./insert";
 export type { 
     MutableMerge, 
@@ -70,10 +69,7 @@ export type {
     MutableMergeByValuesUnmatchable, 
     MutableMergeByBaseModelUnmatchable,
     Merge,
-    ReturnedMerge,
-    MergeResult,
-    MergeResultWithMatched,
-    MergeResultWithData
+    ReturnedMerge
 } from "./merge";
 export type { MutableUpdate, Update } from "./update";
 export type { Delete } from "./delete";

@@ -21,7 +21,7 @@ import { __ReferencePropContract, __ScalarPropContract } from "@/schema/prop_int
 import { __MakeAssignableExpression, __MakeExpression, __StaticEntityTableMembers, __TableLike } from "./table_internal_types";
 import { Expression, NumExpression, StrExpression } from "./expression";
 import { __CombinedNullity, __EmbeddedPropContract, __NullityType, __TargetModelOf, __WithNullity } from "@/index_internal";
-import { AtLeastOne } from "./utils";
+import { AtLeastOne, INSERTED_FLAG } from "./utils";
 import { PartialTable } from "./partial_table";
 import { Table } from "./table";
 
@@ -160,22 +160,33 @@ export type __MutatedLiteral<TExpression> =
         : R
     : never;
 
-export type __MutatedReturn<TExpression, TNullAsUndefined extends boolean> =
-    TExpression extends Expression<infer R>
-        ? null extends R
-            ? __WithNullity<
-                NonNullable<R>, 
-                "NULLABLE", 
-                TNullAsUndefined extends true ? "NULL_VIEW" : "UNDEFINED_VIEW"
-            >
-        : undefined extends R
-            ? __WithNullity<
-                NonNullable<R>, 
-                "NULLABLE", 
-                TNullAsUndefined extends true ? "NULL_VIEW" : "UNDEFINED_VIEW"
-            >
-        : R
-    : never;
+export type __MutatedReturnKey<
+    TModel extends AnyModel | AnyAssociationModel
+> =
+    keyof __MutatedMembers<TModel> | typeof INSERTED_FLAG;
+
+export type __MutatedReturn<
+    TModel extends AnyModel | AnyAssociationModel, 
+    TKey extends __MutatedReturnKey<TModel>,
+    TNullAsUndefined extends boolean
+> =
+    TKey extends typeof INSERTED_FLAG
+        ? boolean
+        : __MutatedMembers<TModel>[Exclude<TKey, typeof INSERTED_FLAG>] extends Expression<infer R>
+            ? null extends R
+                ? __WithNullity<
+                    NonNullable<R>, 
+                    "NULLABLE", 
+                    TNullAsUndefined extends true ? "NULL_VIEW" : "UNDEFINED_VIEW"
+                >
+            : undefined extends R
+                ? __WithNullity<
+                    NonNullable<R>, 
+                    "NULLABLE", 
+                    TNullAsUndefined extends true ? "NULL_VIEW" : "UNDEFINED_VIEW"
+                >
+            : R
+        : never;
 
 export interface __MergeMatchedContext<
     TModel extends AnyModel | AnyAssociationModel,

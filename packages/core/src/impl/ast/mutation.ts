@@ -15,7 +15,7 @@
 import { AbstractExpr } from "./expr";
 import { AbstractTable } from "../abstract_table";
 import { AbstractPred } from "./pred";
-import { AnyAssociationModel, BaseModel } from "@/dsl";
+import { AnyAssociationModel, BaseModel, INSERTED_FLAG } from "@/dsl";
 import { EntityProp } from "../entity_prop";
 import { AssociationEntity, AssociationProp } from "../association_entity";
 import { AnyModel } from "@/index";
@@ -33,7 +33,7 @@ export interface InsertContract {
 
     readonly bindings: ReadonlyArray<Binding> | ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp>;
 
-    readonly returnedProps: ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp> | undefined;
+    readonly returnedProps: ReadonlyArray<EntityProp | AssociationProp | typeof INSERTED_FLAG> | undefined;
 
     readonly sourceTable: AbstractTable | undefined;
 

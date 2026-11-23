@@ -1,7 +1,7 @@
 import { SqlClient } from "@/dsl/sql_client";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, LEARNING_LINK, ORDER, ORDER_ITEM, PAPER_BOOK } from "../model/model";
-import { dsl } from "@/dsl";
+import { dsl, INSERTED_FLAG } from "@/dsl";
 import { __FlattenMembers } from "@/auxiliary_types";
 import { __AllModelMembers, __MutatedReferenceKeyMembers } from "@/index";
 
@@ -94,37 +94,31 @@ describe("InsertTest", () => {
                     })
                 )
             );
-        const result1 = await insert.execute();
-        expectTypeOf<typeof result1>().toEqualTypeOf<{
+        const result = await insert.execute();
+        expectTypeOf<typeof result>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await insert.execute("NOTHING");
-        expectTypeOf<typeof result2>().toEqualTypeOf<void>();
     });
 
     it("insertEmbeddedScalar", async () => {
         const insert = sqlClient
             .createInsert(PAPER_BOOK, "name", "edition", "price", "size.width", "size.height")
             .row("YugabyteDB", 3, 59.9, 120, 80);
-        const result1 = await insert.returning("id", "size.width", "size.height").execute();
-        expectTypeOf<typeof result1>().toEqualTypeOf<{
+        const result = await insert.returning("id", "size.width", "size.height").execute();
+        expectTypeOf<typeof result>().toEqualTypeOf<{
             readonly affectedRowCount: number;
             readonly rows: ReadonlyArray<[number, number, number]>;
         }>();
-        const result2 = await insert.execute("NOTHING");
-        expectTypeOf<typeof result2>().toEqualTypeOf<void>();
     });
 
     it("insertEmbeddedReferenceKey", async() => {
         const insert = sqlClient
             .createInsert(ORDER_ITEM, "id", "orderId.x", "orderId.y.a", "orderId.y.b")
             .row(1, 1, 1, 1);
-        const result1 = await insert.execute();
-        expectTypeOf<typeof result1>().toEqualTypeOf<{
+        const result = await insert.execute();
+        expectTypeOf<typeof result>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await insert.execute("NOTHING");
-        expectTypeOf<typeof result2>().toEqualTypeOf<void>();
     });
 
     it("insertEmbeddedAssociation", async () => {
@@ -138,12 +132,10 @@ describe("InsertTest", () => {
                 "targetId.high"
             )
             .row(1, 1, 1, 1, 1);
-        const result1 = await insert.execute();
-        expectTypeOf<typeof result1>().toEqualTypeOf<{
+        const result = await insert.execute();
+        expectTypeOf<typeof result>().toEqualTypeOf<{
             readonly affectedRowCount: number;
         }>();
-        const result2 = await insert.execute("NOTHING");
-        expectTypeOf<typeof result2>().toEqualTypeOf<void>();
     });
 
     it("insertOnConflictDoNothing", async() => {
@@ -157,10 +149,10 @@ describe("InsertTest", () => {
             readonly affectedRowCount: number;
             readonly rows: ReadonlyArray<number>
         }>();
-        const result2 = await insert.returning("id", "edition").execute();
+        const result2 = await insert.returning("id", INSERTED_FLAG).execute();
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<[number, number]>
+            readonly rows: ReadonlyArray<[number, boolean]>
         }>();
     });
 
@@ -177,10 +169,10 @@ describe("InsertTest", () => {
             readonly affectedRowCount: number;
             readonly rows: ReadonlyArray<number>
         }>();
-        const result2 = await insert.returning("id", "edition").execute();
+        const result2 = await insert.returning("id", INSERTED_FLAG).execute();
         expectTypeOf<typeof result2>().toEqualTypeOf<{
             readonly affectedRowCount: number;
-            readonly rows: ReadonlyArray<[number, number]>
+            readonly rows: ReadonlyArray<[number, boolean]>
         }>();
     });
 });

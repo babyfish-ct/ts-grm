@@ -97,7 +97,7 @@ export * as spi from "./spi";
 export * from "./index_internal";
 
 export { suppressUnused } from "./auxiliary_types";
-export { ExpressionOrder } from "./dsl";
+export { ExpressionOrder, INSERTED_FLAG } from "./dsl";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
     Model,
@@ -219,9 +219,10 @@ export type  {
     OnConflictAssociationInsert,
     OnConflictEntityUpdate,
     OnConflictAssociationUpdate,
+    OnConflictEntityUpdateContext,
     ReturnedInsert,
-    InsertResult,
-    InsertResultWithData,
+    ImportResult,
+    ImportResultWithData,
     MutableMerge, 
     MutableMergeByValues, 
     MutableMergeByValuesMatcher,
@@ -232,9 +233,6 @@ export type  {
     MutableMergeByBaseModelUnmatchable,
     Merge,
     ReturnedMerge,
-    MergeResult,
-    MergeResultWithMatched,
-    MergeResultWithData,
     MutableUpdate,
     Update,
     Delete

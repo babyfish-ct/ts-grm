@@ -91,6 +91,12 @@ export interface NodeRender {
         expr: spi.DtDiffExpr,
         ctx: NodeRenderContext
     ): void;
+
+    renderSourceRows(
+        rows: Iterable<spi.SourceRow>,
+        types: ReadonlyArray<spi.ExplicitDataType>,
+        ctx: NodeRenderContext
+    ): void;
 }
 
 export interface NodeRenderContext {

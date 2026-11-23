@@ -24,6 +24,7 @@ import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
+import { INSERTED_FLAG } from "@ts-grm/core";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -261,20 +262,12 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 this._compositeStack.current.add(this._tableFragmentCreator.createDefinition(realTable, true));
             }
         } else {
-            let size = insert.bindings.length;
             this._compositeStack.current.add("\nvalues\n");
             using _6 = this._compositeStack.with(new Scope("COMMA"));
             const explicitDataTypes = insert.bindings.map(binding => 
                 (binding as spi.EntityProp | spi.AssociationProp).explicitDataType 
             );
-            for (const row of insert.source as Iterable<spi.SourceRow>) {
-                this._compositeStack.current.separator();
-                using _7 = this._compositeStack.with(new Scope("VALUES", false));
-                for (let i = 0; i < size; i++) {
-                    this._compositeStack.current.separator();
-                    this._compositeStack.current.add(new Value(row.get(i), explicitDataTypes[i]));
-                }
-            }
+            this._nodeRender.renderSourceRows(insert.source as Iterable<spi.SourceRow>, explicitDataTypes, this._nodeRenderContext);
         }
         if (insert.conflict != null) {
             this._compositeStack.current.add(" on conflict");
@@ -306,7 +299,11 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             using _10 = this._compositeStack.with(new Scope("COMMA"));
             for (const returnedProp of insert.returnedProps) {
                 this._compositeStack.current.separator();
-                this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
+                if (returnedProp === INSERTED_FLAG) {
+
+                } else {
+                    this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
+                }
             }
         }
     }

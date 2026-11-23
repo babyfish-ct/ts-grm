@@ -267,6 +267,21 @@ export abstract class AbstractNodeRender implements NodeRender {
         throw new Error("Unsupported Operation Exception");
     }
 
+    renderSourceRows(
+        rows: Iterable<spi.SourceRow>,
+        types: ReadonlyArray<spi.ExplicitDataType>,
+        ctx: NodeRenderContext
+    ): void {
+        for (const row of rows) {
+            ctx.separator();
+            using _ = ctx.withComposite(new Scope("VALUES", false));
+            for (let i = 0; i < types.length; i++) {
+                ctx.separator();
+                ctx.render(new Value(row.get(i), types[i]));
+            }
+        }
+    }
+
     renderDtDiffExpr(
         _expr: spi.DtDiffExpr,
         _ctx: NodeRenderContext
