@@ -155,10 +155,10 @@ class SqlServerExecutor implements Executor {
         const request = this._requestable.request();
         request.arrayRowMode = true;
         for (let i = 0; i < args.length; i++) {
-            if (args[i]!.explicitType == null) {
+            if (args[i]!.type == null) {
                 request.input(`p${i + 1}`, args[i]!.value);
             } else {
-                switch (args[i]!.explicitType?.kind) {
+                switch (args[i]!.type?.kind) {
                     case "I32":
                         request.input(`p${i + 1}`, runtime.int, args[i]!.value);
                         break;

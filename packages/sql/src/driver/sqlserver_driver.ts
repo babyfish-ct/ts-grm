@@ -19,7 +19,6 @@ import { Precedence } from "@/sql/precedence";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 import { AbstractDriver } from "./abstract_drivier";
 import { TransactionManager } from "@/transaction/transaction_manger";
-import { ColumnDef } from "@/impl/schema_def";
 import { SqlServerPool, SqlServerTransactionManager } from "@/transaction/sqlserver_transaction_manager";
 import { MetadataError } from "@/error/metadata_error";
 import { KEYWORDS, projectionScope } from "./utils";
@@ -61,10 +60,10 @@ export class SqlServerDriver extends AbstractDriver {
         return value;
     }
 
-    override typeName(columnDef: ColumnDef): string {
-        switch (columnDef.type.kind) {
+    override typeName(scalarType: ScalarType<any>): string {
+        switch (scalarType.kind) {
             case "STR":
-                return `nvarchar(${columnDef.length})`;
+                return `nvarchar(${scalarType.length})`;
             case "TEXT":
                 return "text";
             case "BOOL":
@@ -82,7 +81,7 @@ export class SqlServerDriver extends AbstractDriver {
             case "F64":
                 return "float";
             case "NUM":
-                return `decimal(${columnDef.precision}, ${columnDef.scale})`;
+                return `decimal(${scalarType.precision}, ${scalarType.scale})`;
             case "DATETIME":
                 return "datetime2";
             case "BINARY":
@@ -92,7 +91,7 @@ export class SqlServerDriver extends AbstractDriver {
             case "JSONB":
                 return "varbinary(max)";
             default:
-                throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
+                throw new MetadataError(`Unsupported scalar type: ${scalarType.kind}`);
         }
     }
 

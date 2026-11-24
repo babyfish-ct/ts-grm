@@ -12,13 +12,12 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { prop, ScalarType, spi, TimeUnit } from "@ts-grm/core";
+import { ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { PostgresTransactionManager } from "@/transaction/postgres_transaction_manager";
-import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
 import { Scope, Value, valueOf } from "@/sql/fragment";
@@ -44,6 +43,10 @@ export class PostgresDriver extends AbstractDriver {
         return "$";
     }
 
+    override get parameterTypeSuffix(): ((scalarType: ScalarType<any>) => string) | undefined {
+        return scalarType => this.typeName(scalarType);
+    }
+
     override get upsertStrategy(): UpsertStrategy {
         return {
             mergable: false,
@@ -57,10 +60,10 @@ export class PostgresDriver extends AbstractDriver {
         return true;
     }
 
-    override typeName(columnDef: ColumnDef): string {
-        const tn = typeName(columnDef.type) 
+    override typeName(scalarType: ScalarType<any>): string {
+        const tn = typeName(scalarType) 
         if (tn == null) {
-            throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
+            throw new MetadataError(`Unsuported scalar type: ${scalarType.kind}`);
         }
         return tn;
     }

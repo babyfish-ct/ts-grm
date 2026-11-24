@@ -25,7 +25,6 @@ import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
 import { INSERTED_FLAG } from "@ts-grm/core";
-import { createExpect } from "vitest";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -322,11 +321,13 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             this._compositeStack.current.add("\nusing");
             {
                 using _ = this._compositeStack.with(new Scope("VALUES"));
-                this._compositeStack.current.add("\nvalues\n");
+                if (!this.sqlClient.driver.sourceRowsAsQuery) {
+                    this._compositeStack.current.add("\nvalues\n");
+                }
                 this._nodeRender.renderSourceRows(merge.source as Iterable<spi.SourceRow>, merge.valueProps!, this.sqlClient, this._nodeRenderContext);
             }
             this._compositeStack.current.add(" __merged_source");
-            {
+            if (!this.sqlClient.driver.sourceRowsAsQuery) {
                 using _ = this._compositeStack.with(new Scope("VALUES"));
                 for (const prop of merge.valueProps!) {
                     this._compositeStack.current.separator();

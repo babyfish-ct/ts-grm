@@ -318,7 +318,7 @@ function appendTo(
     writer
         .code(columnDef.name)
         .code(" ")
-        .code(driver.typeName(columnDef))
+        .code(driver.typeName(columnDef.type))
         .code(columnDef.nullable ? " null" : " not null");
 }
 

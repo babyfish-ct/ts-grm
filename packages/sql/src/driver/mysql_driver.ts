@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { spi, TimeUnit } from "@ts-grm/core";
+import { ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -47,10 +47,10 @@ export class MySqlDriver extends AbstractDriver {
         return value;
     }
 
-    override typeName(columnDef: ColumnDef): string {
-        switch (columnDef.type.kind) {
+    override typeName(scalarType: ScalarType<any>): string {
+        switch (scalarType.kind) {
             case "STR":
-                return `varchar(${columnDef.length!})`;
+                return `varchar(${scalarType.length!})`;
             case "TEXT":
                 return "text";
             case "BOOL":
@@ -68,7 +68,7 @@ export class MySqlDriver extends AbstractDriver {
             case "F64":
                 return "double";
             case "NUM":
-                return `decimal(${columnDef.precision}, ${columnDef.scale})`;
+                return `decimal(${scalarType.precision}, ${scalarType.scale})`;
             case "DATETIME":
                 return "datetime(3)";
             case "BINARY":
@@ -77,7 +77,7 @@ export class MySqlDriver extends AbstractDriver {
             case "JSONB":
                 return "json";
             default:
-                throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
+                throw new MetadataError(`Unsupported scalar type: ${scalarType.kind}`);
         }
     }
 

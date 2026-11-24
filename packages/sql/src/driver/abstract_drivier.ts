@@ -13,11 +13,10 @@
  */
 
 import { Driver, PaginationStrategy, UpsertStrategy } from "./deriver";
-import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { KEYWORDS } from "./utils";
-import { spi } from "@ts-grm/core";
+import { ScalarType, spi } from "@ts-grm/core";
 
 export abstract class AbstractDriver implements Driver {
     
@@ -27,7 +26,7 @@ export abstract class AbstractDriver implements Driver {
 
     abstract name: string;
 
-    abstract typeName(columnDef: ColumnDef): string;
+    abstract typeName(scalarType: ScalarType<any>): string;
 
     get transactionManager(): TransactionManager {
         let tm = this._transactionManager;
@@ -38,6 +37,10 @@ export abstract class AbstractDriver implements Driver {
     }
 
     get nameParameterPrefix(): string | undefined {
+        return undefined;
+    }
+
+    get parameterTypeSuffix(): ((scalarType: ScalarType<any>) => string) | undefined {
         return undefined;
     }
 

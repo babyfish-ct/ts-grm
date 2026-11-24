@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { spi, SqlClient } from "@ts-grm/core";
+import { ScalarType, spi, SqlClient } from "@ts-grm/core";
 import { Value } from "./fragment";
 import { SqlClientImplementor } from "@/sql_client";
 import { SqlLoggerParameterType } from "@/cfg/sql_client_options";
@@ -41,7 +41,8 @@ export class SqlBuilder {
         readonly sqlClient: SqlClientImplementor,
         private _pretty: boolean,
         readonly parameter: SqlLoggerParameterType,
-        readonly nameParameterPrefix: string | undefined
+        readonly nameParameterPrefix: string | undefined,
+        readonly parameterTypeSuffix: ((scalarType: ScalarType<any>) => string) | undefined
     ) {
         this.strategy = sqlClient.strategy;
     }
@@ -52,7 +53,8 @@ export class SqlBuilder {
             implementor,
             implementor.options.sqlLogger.pretty,
             implementor.options.sqlLogger.parameter,
-            implementor.driver.nameParameterPrefix
+            implementor.driver.nameParameterPrefix,
+            implementor.driver.parameterTypeSuffix
         )
     }
 
@@ -127,6 +129,13 @@ export class SqlBuilder {
             str = "?";
         }
         this._sql(str);
+        if (this.parameterTypeSuffix != null && value.type != null) {
+            this._sql("::");
+            this._sql(this.parameterTypeSuffix(value.type));
+            if (value.isArray) {
+                this.sql("[]");
+            }
+        }
         return this;
     }
 

@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { err, spi, TimeUnit } from "@ts-grm/core";
+import { err, ScalarKind, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
@@ -38,8 +38,8 @@ export class SqliteDriver extends AbstractDriver {
         return "sqlite";
     }
 
-    override typeName(columnDef: ColumnDef): string {
-        switch (columnDef.type.kind) {
+    override typeName(scalarType: ScalarType<any>): string {
+        switch (scalarType.kind) {
             case "STR":
             case "TEXT":
                 return "text";
@@ -62,7 +62,7 @@ export class SqliteDriver extends AbstractDriver {
             case "JSONB":
                 return "blob";
             default:
-                throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
+                throw new MetadataError(`Unsuported scalar type: ${scalarType.kind}`);
         }
     }
 

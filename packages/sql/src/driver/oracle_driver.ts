@@ -12,14 +12,13 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { spi } from "@ts-grm/core";
+import { ScalarType, spi } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { AbstractDriver } from "./abstract_drivier";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { OraclePool, OracleTransactionManager } from "@/transaction/oracle_transaction_manager";
-import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { Composite, Statement, RootProjectionCaluse, RootQueryWrapper, Value } from "@/sql/fragment";
 import { projectionScope } from "./utils";
@@ -50,10 +49,10 @@ export class OracleDriver extends AbstractDriver {
         return false;
     }
 
-    override typeName(columnDef: ColumnDef): string {
-        switch (columnDef.type.kind) {
+    override typeName(scalarType: ScalarType<any>): string {
+        switch (scalarType.kind) {
             case "STR":
-                const len = columnDef.length!;
+                const len = scalarType.length!;
                 if (len > 4000) {
                     return "clob";
                 }
@@ -75,7 +74,7 @@ export class OracleDriver extends AbstractDriver {
             case "F64":
                 return "binary_double";
             case "NUM":
-                return `number(${columnDef.precision}, ${columnDef.scale})`;
+                return `number(${scalarType.precision}, ${scalarType.scale})`;
             case "DATETIME":
                 return "timestamp";
             case "BINARY":
@@ -85,7 +84,7 @@ export class OracleDriver extends AbstractDriver {
             case "JSONB":
                 return "json";
             default:
-                throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
+                throw new MetadataError(`Unsupported scalar type: ${scalarType.kind}`);
         }
     }
 

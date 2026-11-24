@@ -12,10 +12,9 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
-import { FetchRangeOptions, spi } from "@ts-grm/core";
+import { FetchRangeOptions, ScalarType, spi } from "@ts-grm/core";
 import { Composite } from "@/sql/fragment";
 
 export interface Driver extends spi.DatabaseKeywordStrategy {
@@ -28,6 +27,8 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly nameParameterPrefix: string | undefined;
 
+    readonly parameterTypeSuffix: ((scalarType: ScalarType<any>) => string) | undefined;
+
     readonly isRecursiveKeywordRequired: boolean;
 
     readonly isUnorderedPaginationAllowed: boolean;
@@ -38,7 +39,7 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly sourceRowsAsQuery: boolean;
 
-    typeName(columnDef: ColumnDef): string;
+    typeName(scalarType: ScalarType<any>): string;
 
     requiresInlineConstraints: boolean;
 

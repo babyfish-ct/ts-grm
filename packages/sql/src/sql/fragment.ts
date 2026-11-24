@@ -322,7 +322,7 @@ export class Value extends Fragment {
 
     readonly constant: boolean;
 
-    readonly explicitType?: ScalarType<any> | undefined;
+    readonly type?: ScalarType<any> | undefined;
 
     readonly isArray: boolean;
 
@@ -341,11 +341,11 @@ export class Value extends Fragment {
                 ? `'${value.replace("'", "''")}'`
                 : value.toString();
             this.constant = true;
-            this.explicitType = undefined;
+            this.type = undefined;
         } else {
             this.value = value;
             this.constant = false;
-            this.explicitType = extra;
+            this.type = extra;
         }
         this.isArray = isArray ?? false;
     }
