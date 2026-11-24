@@ -85,7 +85,6 @@ export type {
     MergeContract, 
     SourceRow, 
     Binding,
-    Assignment, 
     UpdateContract, 
     DeleteContract 
 } from "./mutation";

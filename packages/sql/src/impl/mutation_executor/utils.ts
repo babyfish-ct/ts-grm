@@ -1,3 +1,4 @@
+import { TransactionOptions } from "@ts-grm/core";
 import { DataRow, DataRows } from "../data_row_reader";
 
 export function processMutationRows(
@@ -33,4 +34,15 @@ function processMutationRow(
             arr[i] = nullValue;
         }
     }
+}
+
+export const DEFAULT_TRANSACTION_OPTIONS: TransactionOptions = {
+    propagation: "MANDATORY",
+    isolation: "READ_COMMITTED",
+    timeout: 0
+};
+
+export interface ImportResult {
+    readonly affectedRowCount?: number;
+    readonly rows?: ReadonlyArray<any>;
 }

@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { __MutatedMembers, __MutatedValue, __PartialUpdateContext, AnyAssociationModel, AnyModel, dsl, err, OnConflictEntityUpdateContext, PartialTable, spi } from "@ts-grm/core";
+import { __MutatedMembers, __MutatedValue, AnyAssociationModel, AnyModel, dsl, err, OnConflictEntityUpdateContext, PartialTable, spi } from "@ts-grm/core";
 
 export class OnConflictUpdateContextImpl<
     TModel extends AnyModel | AnyAssociationModel,

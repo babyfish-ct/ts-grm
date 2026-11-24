@@ -13,15 +13,18 @@
  */
 
 import { SqlClientImplementor } from "@/sql_client";
-import { spi, TransactionOptions } from "@ts-grm/core";
-import { buildInsertStatement } from "./insert_sql_gen";
-import { processMutationRows } from "./process_mutation_rows";
+import { spi } from "@ts-grm/core";
+import { DEFAULT_TRANSACTION_OPTIONS, ImportResult, processMutationRows } from "./utils";
+import { Composite } from "@/sql/fragment";
+import { SqlBuilder } from "@/sql/sql_builder";
 
 export function executeInsert(
     sqlClient: SqlClientImplementor,
     insert: spi.InsertContract,
-    options: InsertOptions
-): Promise<InsertResult> {
+    options: {
+        readonly nullAsUndefined: boolean;
+    }
+): Promise<ImportResult> {
     const [sql, args] = buildInsertStatement(sqlClient, insert);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.execute(DEFAULT_TRANSACTION_OPTIONS, async () => {
@@ -39,18 +42,14 @@ export function executeInsert(
     });
 }
 
-export interface InsertOptions {
-    readonly returnNothing: boolean,
-    readonly nullAsUndefined: boolean
-}
-
-const DEFAULT_TRANSACTION_OPTIONS: TransactionOptions = {
-    propagation: "MANDATORY",
-    isolation: "READ_COMMITTED",
-    timeout: 0
-};
-
-interface InsertResult {
-    readonly affectedRowCount?: number;
-    readonly rows?: ReadonlyArray<any>;
+function buildInsertStatement(
+    sqlClient: SqlClientImplementor,
+    insert: spi.InsertContract
+): [string, ReadonlyArray<any>] {
+    const composite = Composite.of(insert, sqlClient, undefined, false)
+    const builder = SqlBuilder.of(sqlClient);
+    composite.into(builder);
+    const [sql, argumentMap] = builder.build();
+    const args = Array.from(argumentMap.values());
+    return [sql, args];
 }

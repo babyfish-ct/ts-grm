@@ -324,10 +324,13 @@ export class Value extends Fragment {
 
     readonly explicitType?: ScalarType<any> | undefined;
 
+    readonly isArray: boolean;
+
     constructor(
         value: any,
         readonly originalValue?: any,
-        extra?: ScalarType<any> | "CONSTANT"    
+        extra?: ScalarType<any> | "CONSTANT",
+        isArray?: boolean
     ) {
         super();
         if (extra === "CONSTANT") {
@@ -344,6 +347,7 @@ export class Value extends Fragment {
             this.constant = false;
             this.explicitType = extra;
         }
+        this.isArray = isArray ?? false;
     }
 
     into(builder: SqlBuilder): void {

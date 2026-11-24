@@ -104,6 +104,14 @@ export class PreVisitor extends spi.AbstractVisitor {
         super.visitInsert(insert);
     }
 
+    visitMerge(merge: spi.MergeContract): void {
+        this._toRealTable(merge.table);
+        if (merge.kind === "BY_VALUES") {
+            this._toRealTable(merge.sourceTable);
+        }
+        super.visitMerge(merge);
+    }
+
     visitPropExpr(expr: spi.PropExprContract): void {
         if (expr.table.__isPrev) {
             return;

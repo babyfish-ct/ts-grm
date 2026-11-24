@@ -36,6 +36,8 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly upsertStrategy: UpsertStrategy | undefined;
 
+    readonly sourceRowsAsQuery: boolean;
+
     typeName(columnDef: ColumnDef): string;
 
     requiresInlineConstraints: boolean;

@@ -81,7 +81,8 @@ export type Purpose =
     | LoadRecursiveTreeKeyPurpose
     | LoadRecursiveTreeNodePurpose
     | LoadCalculatorPurpose
-    | InsertPurpose;
+    | InsertPurpose
+    | MergePurpose;
 
 export interface QueryPurpose {
     readonly kind: "QUERY"
@@ -115,4 +116,8 @@ export interface LoadCalculatorPurpose {
 
 export interface InsertPurpose {
     readonly kind: "INSERT";
+}
+
+export interface MergePurpose {
+    readonly kind: "MERGE";
 }

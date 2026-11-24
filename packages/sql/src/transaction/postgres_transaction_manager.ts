@@ -13,7 +13,7 @@
  */
 
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
-import { Isolation, suppressUnused } from "@ts-grm/core";
+import { Isolation } from "@ts-grm/core";
 import { Executor, Purpose } from "./executor";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
@@ -88,12 +88,15 @@ class PostgresExecutor implements Executor {
     async executeUpdate(
         sql: string, 
         args: ReadonlyArray<Value>,
-        purpose: Purpose
+        _: Purpose
     ): Promise<number> {
-        suppressUnused(sql);
-        suppressUnused(args);
-        suppressUnused(purpose);
-        throw new Error("UnsupportedOperationException");
+        const values = args.map(v => v.value);
+        const result = await this._con.query({
+            text: sql, 
+            values: values,
+            rowMode: 'array'
+        });
+        return result.rowCount ?? 0;
     }
 
     async executeQuery(

@@ -21,28 +21,38 @@ import {
     AnyModel, 
     AtLeastOne, 
     BaseModel, 
+    err, 
     ImportResult, 
     ImportResultWithData, 
     Merge, 
     ReturnedMerge, 
-    spi 
+    spi
 } from "@ts-grm/core";
 import { BaseModelImpl } from "./abstract_base_query_impl";
+import { executeMerge } from "./mutation_executor/execute_merge";
 
 export class MergeImpl<
     TModel extends AnyModel | AnyAssociationModel
 > implements Merge<
     TModel
->, spi.MergeContract {
+>, spi.MergeContract, spi.Node {
 
     constructor(
-        private readonly _sqlClient: SqlClientImplementor,
-        readonly table: spi.AbstractTable,
+        readonly sqlClient: SqlClientImplementor,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
+        readonly valueProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> | undefined,
+        readonly table: spi.AbstractTable,
+        readonly sourceTable: spi.AbstractTable,
         readonly condition: spi.AbstractPred,
-        readonly matchedAssignments: ReadonlyArray<spi.Assignment>,
-        readonly unmatchedAssignments: ReadonlyArray<spi.Assignment>,
-    ) {}
+        readonly matchedBindings: ReadonlyArray<spi.Binding> | undefined,
+        readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined
+    ) {
+        if (matchedBindings == null || unmatchedBindings == null) {
+            throw new err.ArgumentError(
+                `Illegal merge statement, neither matched behavior not unmatched behavior is specified`
+            );
+        }
+    }
 
     get kind(): "BY_VALUES" | "BY_BASE_MODEL" {
         return this.source instanceof BaseModelImpl
@@ -50,8 +60,19 @@ export class MergeImpl<
             : "BY_VALUES";
     }
 
-    execute(): Promise<ImportResult> {
-        throw new Error("");
+    async execute(
+        options?: {
+            readonly nullAsUndefined?: boolean
+        }
+    ): Promise<any> {
+        const result = await executeMerge(
+            this.sqlClient,
+            this,
+            {
+                nullAsUndefined: options?.nullAsUndefined ?? false
+            }
+        );
+        return result as ImportResult;
     }
 
     returning<
@@ -59,7 +80,20 @@ export class MergeImpl<
     >(
         ...keys: TKeys
     ): ReturnedMerge<TModel, TKeys> {
-        return new ReturnedMergeImpl(this._sqlClient, keys);
+        return new ReturnedMergeImpl(
+            this.sqlClient,
+            this.source,
+            this.valueProps,
+            this.table,
+            this.sourceTable,
+            this.condition,
+            this.matchedBindings,
+            this.unmatchedBindings
+        );
+    }
+
+    accept(visitor: spi.Visitor) {
+        visitor.visitMerge(this);
     }
 }
 
@@ -69,13 +103,26 @@ class ReturnedMergeImpl<
 > implements ReturnedMerge<
     TModel,
     TKeys
-> {
+>, spi.MergeContract, spi.Node {
+
     constructor(
-        private readonly _sqlClient: SqlClientImplementor,
-        private readonly _keys: TKeys
+        readonly sqlClient: SqlClientImplementor,
+        readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
+        readonly valueProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> | undefined,
+        readonly table: spi.AbstractTable,
+        readonly sourceTable: spi.AbstractTable,
+        readonly condition: spi.AbstractPred,
+        readonly matchedBindings: ReadonlyArray<spi.Binding> | undefined,
+        readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined
     ) {}
 
-    execute<
+    get kind(): "BY_VALUES" | "BY_BASE_MODEL" {
+        return this.source instanceof BaseModelImpl
+            ? "BY_BASE_MODEL"
+            : "BY_VALUES";
+    }
+
+    async execute<
         TNullAsUndefined extends boolean = false
     >(
         options?: {
@@ -90,6 +137,17 @@ class ReturnedMergeImpl<
                 -readonly [K in keyof TKeys]: __MutatedReturn<TModel, TKeys[K], TNullAsUndefined> 
             }>
     > {
-        throw new Error("");
+        const result = await executeMerge(
+            this.sqlClient,
+            this,
+            {
+                nullAsUndefined: options?.nullAsUndefined ?? false
+            }
+        );
+        return result as any;
+    }
+
+    accept(visitor: spi.Visitor) {
+        visitor.visitMerge(this);
     }
 }

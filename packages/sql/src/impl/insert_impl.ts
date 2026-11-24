@@ -16,7 +16,6 @@ import { SqlClientImplementor } from "@/sql_client";
 import { 
     __MutatedMembers, 
     __MutatedReturn, 
-    __PartialUpdateContext, 
     AnyAssociationModel, 
     AnyModel, 
     AtLeastOne, 
@@ -64,20 +63,18 @@ export class InsertImpl<
         return entityOf(this.model);
     }
 
-    async execute<
-        TReturnKind extends "AFFECTED_ROW_COUNT" | "NOTHING" = "AFFECTED_ROW_COUNT"
-    >(kind?: TReturnKind): Promise<any> {
+    async execute(
+        options?: {
+            readonly nullAsUndefined?: boolean
+        }
+    ): Promise<any> {
         const result = await executeInsert(
             this.sqlClient,
             this,
             {
-                returnNothing: kind === "NOTHING",
-                nullAsUndefined: false
+                nullAsUndefined: options?.nullAsUndefined ?? false
             }
         );
-        if (kind === "NOTHING") {
-            return;
-        }
         return result as ImportResult;
     }
 
@@ -317,7 +314,6 @@ class ReturnedInsertImpl<
             this.sqlClient,
             this,
             {
-                returnNothing: false,
                 nullAsUndefined: options?.nullAsUndefined ?? false
             }
         ) as any;

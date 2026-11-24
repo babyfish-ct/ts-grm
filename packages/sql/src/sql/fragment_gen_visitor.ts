@@ -25,6 +25,7 @@ import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
 import { INSERTED_FLAG } from "@ts-grm/core";
+import { createExpect } from "vitest";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -263,11 +264,8 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             }
         } else {
             this._compositeStack.current.add("\nvalues\n");
-            using _6 = this._compositeStack.with(new Scope("COMMA"));
-            const explicitDataTypes = insert.bindings.map(binding => 
-                (binding as spi.EntityProp | spi.AssociationProp).explicitDataType 
-            );
-            this._nodeRender.renderSourceRows(insert.source as Iterable<spi.SourceRow>, explicitDataTypes, this._nodeRenderContext);
+            const props = insert.bindings as ReadonlyArray<spi.EntityProp | spi.AssociationProp>;
+            this._nodeRender.renderSourceRows(insert.source as Iterable<spi.SourceRow>, props, this.sqlClient, this._nodeRenderContext);
         }
         if (insert.conflict != null) {
             this._compositeStack.current.add(" on conflict");
@@ -304,6 +302,76 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 } else {
                     this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
                 }
+            }
+        }
+    }
+
+    visitMerge(merge: spi.MergeContract): void {
+
+        using _ = this._precedenceStack.with(Precedence.ROOT);
+        using __ = this._compositeStack.with(new Statement());
+        
+        {
+            this._compositeStack.current.add("merge into ");
+            const table = this._toRealTable(merge.table);
+            this._fillTableFragments([table]);
+            using _ = this._compositeStack.with(new Source([table], undefined));
+        }
+        
+        if (merge.kind === "BY_VALUES") {
+            this._compositeStack.current.add("\nusing");
+            {
+                using _ = this._compositeStack.with(new Scope("VALUES"));
+                this._compositeStack.current.add("\nvalues\n");
+                this._nodeRender.renderSourceRows(merge.source as Iterable<spi.SourceRow>, merge.valueProps!, this.sqlClient, this._nodeRenderContext);
+            }
+            this._compositeStack.current.add(" __merged_source");
+            {
+                using _ = this._compositeStack.with(new Scope("VALUES"));
+                for (const prop of merge.valueProps!) {
+                    this._compositeStack.current.separator();
+                    const column = prop.toStorage(this._strategy) as spi.Column;
+                    this._compositeStack.current.add(column.name);
+                }
+            }
+        }
+
+        {
+            this._compositeStack.current.add("\non ");
+            using _ = this._compositeStack.with(new Scope("INDENT"));
+            merge.condition.accept(this);
+        }
+
+        if (merge.matchedBindings != null) {
+            this._compositeStack.current.add("\nwhen matched then");
+            using _ = this._compositeStack.with(new Scope("INDENT"));
+            this._compositeStack.current.add("update set");
+            using __ = this._compositeStack.with(new Scope("COMMA"));
+            for (const binding of merge.matchedBindings) {
+                this._compositeStack.current.separator();
+                const column = binding.prop.toStorage(this._strategy) as spi.Column;
+                this._compositeStack.current.add(column.name).add(" = ");
+                binding.valueExpr.accept(this);
+            }
+        }
+
+        if (merge.unmatchedBindings != null) {
+            this._compositeStack.current.add("\nwhen not matched then");
+            using _ = this._compositeStack.with(new Scope("INDENT"));
+            this._compositeStack.current.add("insert");
+            {
+                using __ = this._compositeStack.with(new Scope("VALUES"));
+                for (const binding of merge.unmatchedBindings) {
+                    this._compositeStack.current.separator();
+                    const column = binding.prop.toStorage(this._strategy) as spi.Column;
+                    this._compositeStack.current.add(column.name);
+                }
+            }
+            this._compositeStack.current.add(" values");
+            using __ = this._compositeStack.with(new Scope("VALUES"));
+            for (const binding of merge.unmatchedBindings) {
+                this._compositeStack.current.separator();
+                binding.valueExpr.accept(this);
             }
         }
     }

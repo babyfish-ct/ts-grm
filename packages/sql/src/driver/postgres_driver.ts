@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { ScalarType, spi, TimeUnit } from "@ts-grm/core";
+import { prop, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -26,6 +26,7 @@ import { Scope, Value, valueOf } from "@/sql/fragment";
 // Only import types
 import type { Pool } from "pg";
 import { UpsertStrategy } from "./deriver";
+import { SqlClientImplementor } from "@/sql_client";
 
 export class PostgresDriver extends AbstractDriver {
 
@@ -50,6 +51,10 @@ export class PostgresDriver extends AbstractDriver {
             insertConflictAliasRequired: true,
             insertFlagRender: ctx => ctx.text("xmax = 0")
         };
+    }
+
+    override get sourceRowsAsQuery(): boolean {
+        return true;
     }
 
     override typeName(columnDef: ColumnDef): string {
@@ -281,6 +286,29 @@ export class PostgresNodeRender extends AbstractNodeRender {
         ctx.text(" - ");
         ctx.render(expr.valueExpr);
         ctx.text(")");
+    }
+
+    renderSourceRows(
+        rows: Iterable<spi.SourceRow>,
+        props: ReadonlyArray<spi.EntityProp | spi.AssociationProp>,
+        sqlClient: SqlClientImplementor,
+        ctx: NodeRenderContext
+    ): void {
+        const strategy = sqlClient.strategy;
+        ctx.text("select");
+        using _ = ctx.withComposite(new Scope("COMMA"));
+        for (let i = 0; i < props.length; i++) {
+            ctx.separator();
+            const columnValues: Array<any> = [];
+            for (const row of rows) {
+                columnValues.push(row.get(i));
+            }
+            ctx.text("unnest(");
+            ctx.render(new Value(columnValues, undefined, props[i]!.scalarType, true));
+            ctx.text(") ");
+            const column = props[i]!.toStorage(strategy) as spi.Column;
+            ctx.text(column.name);
+        }
     }
 }
 

@@ -165,15 +165,21 @@ export abstract class AbstractVisitor implements Visitor {
     }
 
     visitMerge(merge: MergeContract): void {
-        if (merge.kind === "BY_BASE_MODEL") {
-            
+        if (merge.matchedBindings != null) {
+            for (const binding of merge.matchedBindings) {
+                (binding as Binding).valueExpr.accept(this);
+            }
+        }
+        if (merge.unmatchedBindings != null) {
+            for (const binding of merge.unmatchedBindings) {
+                (binding as Binding).valueExpr.accept(this);
+            }
         }
     }
 
     visitUpdate(update: UpdateContract): void {
-        for (const assignment of update.assignments) {
-            assignment.expr.accept(this);
-            assignment.valueExpr.accept(this);
+        for (const binding of update.bindings) {
+            binding.valueExpr.accept(this);
         }
         update.wherePred?.accept(this);
     }

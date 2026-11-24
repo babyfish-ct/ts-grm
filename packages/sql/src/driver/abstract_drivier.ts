@@ -83,4 +83,8 @@ export abstract class AbstractDriver implements Driver {
     protected abstract createNodeRender(): NodeRender;
 
     protected abstract createTransactionManager(): TransactionManager;
+
+    get sourceRowsAsQuery(): boolean {
+        return false;
+    }
 }

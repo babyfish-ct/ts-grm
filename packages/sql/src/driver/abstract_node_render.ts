@@ -17,6 +17,7 @@ import { NodeRender, NodeRenderContext } from "./node_render";
 import { Scope, Value } from "@/sql/fragment";
 import { err, ScalarProvider, spi } from "@ts-grm/core";
 import { Driver } from "./deriver";
+import { SqlClientImplementor } from "@/sql_client";
 
 export abstract class AbstractNodeRender implements NodeRender {
 
@@ -269,15 +270,17 @@ export abstract class AbstractNodeRender implements NodeRender {
 
     renderSourceRows(
         rows: Iterable<spi.SourceRow>,
-        types: ReadonlyArray<spi.ExplicitDataType>,
+        props: ReadonlyArray<spi.EntityProp | spi.AssociationProp>,
+        _: SqlClientImplementor,
         ctx: NodeRenderContext
     ): void {
+        using __ = ctx.withComposite(new Scope("COMMA"));
         for (const row of rows) {
             ctx.separator();
             using _ = ctx.withComposite(new Scope("VALUES", false));
-            for (let i = 0; i < types.length; i++) {
+            for (let i = 0; i < props.length; i++) {
                 ctx.separator();
-                ctx.render(new Value(row.get(i), types[i]));
+                ctx.render(new Value(row.get(i), props[i]!.explicitDataType));
             }
         }
     }

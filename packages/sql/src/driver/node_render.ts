@@ -13,6 +13,7 @@
  */
 
 import { Composite, Value } from "@/sql/fragment";
+import { SqlClientImplementor } from "@/sql_client";
 import { spi } from "@ts-grm/core";
 
 export interface NodeRender {
@@ -94,7 +95,8 @@ export interface NodeRender {
 
     renderSourceRows(
         rows: Iterable<spi.SourceRow>,
-        types: ReadonlyArray<spi.ExplicitDataType>,
+        props: ReadonlyArray<spi.EntityProp | spi.AssociationProp>,
+        sqlClient: SqlClientImplementor,
         ctx: NodeRenderContext
     ): void;
 }

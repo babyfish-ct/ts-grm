@@ -18,7 +18,7 @@ import { AbstractPred } from "./pred";
 import { AnyAssociationModel, BaseModel, INSERTED_FLAG } from "@/dsl";
 import { EntityProp } from "../entity_prop";
 import { AssociationEntity, AssociationProp } from "../association_entity";
-import { AnyModel } from "@/index";
+import { AnyModel, spi } from "@/index";
 import { Entity } from "../entity";
 
 export interface InsertContract {
@@ -53,13 +53,17 @@ export interface MergeContract {
 
     readonly table: AbstractTable;
 
+    readonly sourceTable: AbstractTable;
+
     readonly source: Iterable<SourceRow> | BaseModel<any>;
+
+    readonly valueProps: ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp> | undefined;
 
     readonly condition: AbstractPred;
 
-    readonly matchedAssignments: ReadonlyArray<Assignment>;
+    readonly matchedBindings: ReadonlyArray<spi.Binding> | undefined;
 
-    readonly unmatchedAssignments: ReadonlyArray<Assignment>;
+    readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined;
 }
 
 export interface SourceRow {
@@ -71,7 +75,7 @@ export interface UpdateContract {
 
     readonly table: AbstractTable;
 
-    readonly assignments: ReadonlyArray<Assignment>;
+    readonly bindings: ReadonlyArray<Binding>;
 
     readonly tables: ReadonlyArray<AbstractTable>;
 
@@ -81,13 +85,6 @@ export interface UpdateContract {
 export interface Binding {
     
     readonly prop: EntityProp | AssociationProp;
-
-    readonly valueExpr: AbstractExpr<any>;
-}
-
-export interface Assignment {
-
-    readonly expr: AbstractExpr<any>;
 
     readonly valueExpr: AbstractExpr<any>;
 }
