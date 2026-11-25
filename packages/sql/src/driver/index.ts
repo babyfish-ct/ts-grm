@@ -16,7 +16,7 @@ export type { Driver, PaginationStrategy, UpsertStrategy } from "./deriver";
 export { AbstractDriver } from "./abstract_drivier";
 export { SqliteDriver } from "./sqlite_driver";
 export { PostgresDriver } from "./postgres_driver";
-export { Postgres15Driver } from "./postgres15_driver";
+export { Postgres17Driver } from "./postgres17_driver";
 export { MySqlDriver } from "./mysql_driver";
 export { OracleDriver } from "./oracle_driver";
 export { Oracle12Drivier } from "./oracle12_driver";

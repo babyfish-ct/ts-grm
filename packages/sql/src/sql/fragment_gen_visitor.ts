@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
+import { AnyModel, BaseModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
 import { TableAlias, Column, Composite, Statement, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause, RootProjectionCaluse, Separator } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
@@ -25,6 +25,7 @@ import { addTypeMatch } from "./utils";
 import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 import { createRenderTools } from "./render_tools";
 import { INSERTED_FLAG } from "@ts-grm/core";
+import { fakeUpdatedProp } from "@/impl/mutation_executor/utils";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -262,12 +263,11 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 this._compositeStack.current.add(this._tableFragmentCreator.createDefinition(realTable, true));
             }
         } else {
-            this._compositeStack.current.add("\nvalues\n");
             const props = insert.bindings as ReadonlyArray<spi.EntityProp | spi.AssociationProp>;
             this._nodeRender.renderSourceRows(insert.source as Iterable<spi.SourceRow>, props, this.sqlClient, this._nodeRenderContext);
         }
         if (insert.conflict != null) {
-            this._compositeStack.current.add(" on conflict");
+            this._compositeStack.current.add("\non conflict");
             {
                 using _8 = this._compositeStack.with(new Scope("VALUES"));
                 for (const prop of insert.conflict.props) {
@@ -278,9 +278,21 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             }
             const bindings = insert.conflict.bindings;
             if (bindings == null || bindings.length === 0) {
-                this._compositeStack.current.add(" do nothing");
+                if (insert.returnedProps == null) {
+                    this._compositeStack.current.add(" do nothing");
+                } else {
+                    const prop = fakeUpdatedProp(insert.conflict.props);
+                    this._compositeStack.current
+                        .add(" do update set /* fake update */ ")
+                        .add((prop.toStorage(this._strategy) as spi.Column).name)
+                        .add(" = ");
+                    const expr = insert.conflict.sourceTable instanceof spi.AbstractEntityTable
+                        ? (insert.conflict.sourceTable.__expression(prop as spi.EntityProp))
+                        : (insert.conflict.sourceTable as spi.AbstractAssociationTable).__expression(prop as spi.AssociationProp);
+                    (expr as any as spi.Node).accept(this);
+                }
             } else {
-                this._compositeStack.current.add(" do update set ");
+                this._compositeStack.current.add(" do update set");
                 using _9 = this._compositeStack.with(new Scope("COMMA"));
                 for (const binding of bindings) {
                     this._compositeStack.current
@@ -297,7 +309,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             for (const returnedProp of insert.returnedProps) {
                 this._compositeStack.current.separator();
                 if (returnedProp === INSERTED_FLAG) {
-
+                    (this.sqlClient.driver.upsertStrategy.insertConflict as any).insertFlagRender!(this._nodeRenderContext);
                 } else {
                     this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
                 }
@@ -310,20 +322,18 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         using __ = this._compositeStack.with(new Statement());
         
+        const table = this._toRealTable(merge.table);
+        const sourceTable = this._toRealTable(merge.sourceTable);
         {
             this._compositeStack.current.add("merge into ");
-            const table = this._toRealTable(merge.table);
-            this._fillTableFragments([table]);
+            this._fillTableFragments([table, sourceTable]);
             using _ = this._compositeStack.with(new Source([table], undefined));
         }
         
+        this._compositeStack.current.add("\nusing");
         if (merge.kind === "BY_VALUES") {
-            this._compositeStack.current.add("\nusing");
             {
                 using _ = this._compositeStack.with(new Scope("VALUES"));
-                if (!this.sqlClient.driver.sourceRowsAsQuery) {
-                    this._compositeStack.current.add("\nvalues\n");
-                }
                 this._nodeRender.renderSourceRows(merge.source as Iterable<spi.SourceRow>, merge.valueProps!, this.sqlClient, this._nodeRenderContext);
             }
             this._compositeStack.current.add(" __merged_source");
@@ -335,6 +345,8 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                     this._compositeStack.current.add(column.name);
                 }
             }
+        } else {
+            using _ = this._compositeStack.with(new Source([sourceTable], undefined));
         }
 
         {
@@ -373,6 +385,19 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             for (const binding of merge.unmatchedBindings) {
                 this._compositeStack.current.separator();
                 binding.valueExpr.accept(this);
+            }
+        }
+
+        if (merge.returnedProps != null) {
+            this._compositeStack.current.add("\nreturning");
+            using _10 = this._compositeStack.with(new Scope("COMMA"));
+            for (const returnedProp of merge.returnedProps) {
+                this._compositeStack.current.separator();
+                if (returnedProp === INSERTED_FLAG) {
+                    (this.sqlClient.driver.upsertStrategy.mergeInto as any).insertFlagRender!(this._nodeRenderContext);
+                } else {
+                    this._compositeStack.current.add((returnedProp.toStorage(this._strategy) as spi.Column).name);
+                }
             }
         }
     }

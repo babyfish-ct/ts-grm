@@ -21,7 +21,7 @@ export {
     AbstractDriver,
     SqliteDriver, 
     PostgresDriver, 
-    Postgres15Driver,
+    Postgres17Driver,
     MySqlDriver, 
     OracleDriver, 
     Oracle12Drivier, 

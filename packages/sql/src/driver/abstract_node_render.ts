@@ -274,6 +274,7 @@ export abstract class AbstractNodeRender implements NodeRender {
         _: SqlClientImplementor,
         ctx: NodeRenderContext
     ): void {
+        ctx.text("\nvalues\n");
         using __ = ctx.withComposite(new Scope("COMMA"));
         for (const row of rows) {
             ctx.separator();

@@ -14,10 +14,23 @@
 
 import { Pool } from "pg";
 import { PostgresDriver } from "./postgres_driver";
+import { UpsertStrategy } from "./deriver";
 
-export class Postgres15Driver extends PostgresDriver {
+export class Postgres17Driver extends PostgresDriver {
 
     constructor(pool: Pool) {
         super(pool);
+    }
+
+    get upsertStrategy(): UpsertStrategy {
+        return {
+            mergeInto: {
+                insertFlagRender: ctx => ctx.text("merge_action() = 'INSERT'")
+            },
+            insertConflict: {
+                sourceAliasRequired: true,
+                insertFlagRender: ctx => ctx.text("xmax = 0")
+            },
+        };
     }
 }

@@ -13,7 +13,7 @@
  */
 
 import { ModelError, PropError } from "@/error/metadata_error";
-import { DISCRIMINATOR_VALUE_MODEL_NAME, AnyModel, TABLE_INHERIT } from "@/schema/model";
+import { DISCRIMINATOR_VALUE_MODEL_NAME, AnyModel, TABLE_INHERIT, UserIdGenerator } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { AnyModelImpl, ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
@@ -36,7 +36,7 @@ export class Entity {
 
     readonly superEntity: Entity | undefined;
 
-    readonly idGenerator: __IdGenerator<any> | undefined;
+    readonly idGeneratorSettings: IdGeneratorSettings | undefined;
 
     private _phase = 0;
 
@@ -117,8 +117,26 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? (superModel as AnyModelImpl).toUnresolvedEntity().resolve(1)
             : undefined;
-        this.idGenerator = this.superEntity != null
-            ? this.superEntity.idGenerator
+        this.idGeneratorSettings = 
+            this._options.idGenerator == null
+                ? undefined
+            : this._options.idGenerator === "IDENTITY"
+                ? {
+                    kind: "IDENTITY",
+                    startWith: 1,
+                    incrementBy: 1
+                }
+            : typeof this._options.idGenerator === "function"
+                ? {
+                    kind: "USER",
+                    generator: this._options.idGenerator
+                }
+            : this._options.idGenerator.kind === "IDENTITY"
+                ? {
+                    kind: "IDENTITY",
+                    startWith: this._options.idGenerator.startWith ?? 1,
+                    incrementBy: this._options.idGenerator.incrmentBy ?? 1
+                }
             : this._options.idGenerator;
         this.tableSettings = this._createTableSettings(_options.tableOptions);
         this.identity = ++Entity._nextIdentity;
@@ -788,7 +806,7 @@ export class Entity {
     }
 }
 
-export type TableSettings = {
+export interface TableSettings {
     readonly superSettings: TableSettings | undefined;
     readonly explicitName: string | undefined;
     readonly sharedTable: boolean;
@@ -798,6 +816,21 @@ export type TableSettings = {
     } | undefined;
     readonly discriminatorValue: string | number | undefined;
 };
+
+export type IdGeneratorSettings = 
+    IdentitySettings | {
+        readonly kind: "SEQUENCE";
+        readonly sequenceName: string;
+    } | {
+        readonly kind: "USER";
+        readonly generator: UserIdGenerator<any>;
+    };
+
+export interface IdentitySettings {
+    readonly kind: "IDENTITY";
+    readonly startWith: number;
+    readonly incrementBy: number;
+}
 
 const PASCAL_CASE_REGEX = /^[A-Z][A-Za-z\d]*$/;
 function isValidModelName(name: string): boolean {

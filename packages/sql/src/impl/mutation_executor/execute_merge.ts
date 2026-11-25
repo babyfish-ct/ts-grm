@@ -26,16 +26,16 @@ export function executeMerge(
     }
 ): Promise<ImportResult> {
     const [sql, args] = buildMergeStatement(sqlClient, merge);
-    console.log(sql);
+    console.log(sql)
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.execute(DEFAULT_TRANSACTION_OPTIONS, async () => {
-        // if (insert.returnedProps != null) {
-        //     const rows = await sqlClient.executor.executeQuery(sql, args, { kind: "INSERT"});
-        //     return {
-        //         affectedRowCount: rows.length,
-        //         rows: processMutationRows(rows, options.nullAsUndefined)
-        //     };
-        // }
+        if (merge.returnedProps != null) {
+            const rows = await sqlClient.executor.executeQuery(sql, args, { kind: "MERGE"});
+            return {
+                affectedRowCount: rows.length,
+                rows: processMutationRows(rows, options.nullAsUndefined)
+            };
+        }
         const affectedRowCount = await sqlClient.executor.executeUpdate(sql, args, { kind: "MERGE" });
         return {
             affectedRowCount

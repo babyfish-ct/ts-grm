@@ -33,11 +33,11 @@ export interface InsertContract {
 
     readonly bindings: ReadonlyArray<Binding> | ReadonlyArray<EntityProp> | ReadonlyArray<AssociationProp>;
 
-    readonly returnedProps: ReadonlyArray<EntityProp | AssociationProp | typeof INSERTED_FLAG> | undefined;
-
     readonly sourceTable: AbstractTable | undefined;
 
     readonly conflict: InsertConflict | undefined;
+
+    readonly returnedProps: ReadonlyArray<EntityProp | AssociationProp | typeof INSERTED_FLAG> | undefined;
 }
 
 export interface InsertConflict {
@@ -64,6 +64,8 @@ export interface MergeContract {
     readonly matchedBindings: ReadonlyArray<spi.Binding> | undefined;
 
     readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined;
+
+    readonly returnedProps: ReadonlyArray<EntityProp | AssociationProp | typeof INSERTED_FLAG> | undefined;
 }
 
 export interface SourceRow {

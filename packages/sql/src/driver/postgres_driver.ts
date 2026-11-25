@@ -49,10 +49,11 @@ export class PostgresDriver extends AbstractDriver {
 
     override get upsertStrategy(): UpsertStrategy {
         return {
-            mergable: false,
-            insertConflict: true,
-            insertConflictAliasRequired: true,
-            insertFlagRender: ctx => ctx.text("xmax = 0")
+            mergeInto: false,
+            insertConflict: {
+                sourceAliasRequired: true,
+                insertFlagRender: ctx => ctx.text("xmax = 0")
+            },
         };
     }
 

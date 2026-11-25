@@ -89,9 +89,6 @@ export class PreVisitor extends spi.AbstractVisitor {
     }
 
     visitInsert(insert: spi.InsertContract): void {
-        if (insert.kind === "BY_BASE_MODEL") {
-            this._toRealTable(insert.sourceTable!);
-        }
         const conflict = insert.conflict;
         if (conflict != null) {
             if (conflict.targetTable != null) {
@@ -106,9 +103,7 @@ export class PreVisitor extends spi.AbstractVisitor {
 
     visitMerge(merge: spi.MergeContract): void {
         this._toRealTable(merge.table);
-        if (merge.kind === "BY_VALUES") {
-            this._toRealTable(merge.sourceTable);
-        }
+        this._toRealTable(merge.sourceTable);
         super.visitMerge(merge);
     }
 

@@ -178,6 +178,7 @@ describe("ScalarProviderTest", () => {
                     ["Alex", "MALE"]
                 )
             );
+            q.orderBy(author.id.asc());
             return q.select(
                 author.fetch(
                     dto.view(AUTHOR, c => [c.$allScalars])
@@ -198,6 +199,8 @@ describe("ScalarProviderTest", () => {
                             (?, ?),
                             (?, ?)
                         )
+                    order by 
+                        tb_1_.ID asc
                 `,
                 args: ['Eve', 'F', 'Alex', 'M'],
                 purpose: "query"

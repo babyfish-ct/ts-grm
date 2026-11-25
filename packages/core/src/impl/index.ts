@@ -13,7 +13,7 @@
  */
 
 export { Entity } from "./entity";
-export type { TableSettings } from "./entity";
+export type { TableSettings, IdGeneratorSettings, IdentitySettings } from "./entity";
 export { EntityProp } from "./entity_prop";
 export { toEntityPropOrders } from "./entity_prop_order";
 export { AssociationEntity } from "./association_entity";

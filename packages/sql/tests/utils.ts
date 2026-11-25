@@ -1,4 +1,3 @@
-import { PostgresDriver } from "@/driver/postgres_driver";
 import { SqliteDriver } from "@/driver/sqlite_driver";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
@@ -10,7 +9,7 @@ import { Pool as PgPool } from "pg";
 import { createPool as createMySqlPool } from "mysql2/promise";
 import { afterAll, afterEach, expect } from "vitest";
 import { MySqlDriver } from "@/driver/mysql_driver";
-import { OracleDriver, SqlServerDriver } from "@/driver";
+import { OracleDriver, Postgres17Driver, SqlServerDriver } from "@/driver";
 import { OraclePool } from "@/transaction/oracle_transaction_manager";
 import { Driver } from "@/driver/deriver";
 import { SqlServerPool } from "@/transaction/sqlserver_transaction_manager";
@@ -60,7 +59,7 @@ export function usePostgresClient(
         idleTimeoutMillis: 0,
         connectionTimeoutMillis: 2000,
     });
-    return useClientImpl(new PostgresDriver(pool), sqlRecord)
+    return useClientImpl(new Postgres17Driver(pool), sqlRecord)
 }
 
 export function useMySqlClient(
@@ -326,6 +325,8 @@ function purposeString(purpose: Purpose): string {
             })`;
         case "INSERT":
             return "insert";
+        case "MERGE":
+            return "merge";
     }
 }
 

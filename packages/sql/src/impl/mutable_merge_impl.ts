@@ -327,6 +327,7 @@ class MutableMergeUnmatchableImpl<
         }
         return new MergeImpl<TModel>(
             this._sqlClient,
+            this._model,
             this._source,
             this._valueProps,
             this._mergedTable as any,

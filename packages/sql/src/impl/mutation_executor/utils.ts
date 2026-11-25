@@ -1,4 +1,4 @@
-import { TransactionOptions } from "@ts-grm/core";
+import { spi, TransactionOptions } from "@ts-grm/core";
 import { DataRow, DataRows } from "../data_row_reader";
 
 export function processMutationRows(
@@ -45,4 +45,20 @@ export const DEFAULT_TRANSACTION_OPTIONS: TransactionOptions = {
 export interface ImportResult {
     readonly affectedRowCount?: number;
     readonly rows?: ReadonlyArray<any>;
+}
+
+export function fakeUpdatedProp(
+    conflictProps: ReadonlyArray<spi.EntityProp | spi.AssociationProp>
+): spi.EntityProp | spi.AssociationProp {
+    let result: { prop: spi.EntityProp | spi.AssociationProp, len: number} | undefined = undefined;
+    for (const conflictProp of conflictProps) {
+        if (conflictProp.scalarType?.isNumeric) {
+            return conflictProp;
+        }
+        const len = conflictProp.scalarType!.length;
+        if (len != null && (result == null || result.len > len)) {
+            result = { prop: conflictProp, len };
+        }
+    }
+    return result?.prop ?? conflictProps[0]!;
 }

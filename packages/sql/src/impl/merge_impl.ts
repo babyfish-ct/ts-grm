@@ -24,12 +24,14 @@ import {
     err, 
     ImportResult, 
     ImportResultWithData, 
+    INSERTED_FLAG, 
     Merge, 
     ReturnedMerge, 
     spi
 } from "@ts-grm/core";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 import { executeMerge } from "./mutation_executor/execute_merge";
+import { returnedPropsOf } from "./utils";
 
 export class MergeImpl<
     TModel extends AnyModel | AnyAssociationModel
@@ -39,6 +41,7 @@ export class MergeImpl<
 
     constructor(
         readonly sqlClient: SqlClientImplementor,
+        readonly model: AnyModel | AnyAssociationModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
         readonly valueProps: ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp> | undefined,
         readonly table: spi.AbstractTable,
@@ -47,7 +50,7 @@ export class MergeImpl<
         readonly matchedBindings: ReadonlyArray<spi.Binding> | undefined,
         readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined
     ) {
-        if (matchedBindings == null || unmatchedBindings == null) {
+        if (matchedBindings == null && unmatchedBindings == null) {
             throw new err.ArgumentError(
                 `Illegal merge statement, neither matched behavior not unmatched behavior is specified`
             );
@@ -80,6 +83,10 @@ export class MergeImpl<
     >(
         ...keys: TKeys
     ): ReturnedMerge<TModel, TKeys> {
+        if (keys.length < 1) {
+            throw new err.ArgumentError(`The function "returning" must accept at least one key`);
+        }
+        const returnedProps = returnedPropsOf(this.model, keys as ReadonlyArray<string | typeof INSERTED_FLAG>);
         return new ReturnedMergeImpl(
             this.sqlClient,
             this.source,
@@ -88,8 +95,13 @@ export class MergeImpl<
             this.sourceTable,
             this.condition,
             this.matchedBindings,
-            this.unmatchedBindings
+            this.unmatchedBindings,
+            returnedProps
         );
+    }
+
+    get returnedProps(): ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG> | undefined {
+        return undefined;
     }
 
     accept(visitor: spi.Visitor) {
@@ -113,7 +125,8 @@ class ReturnedMergeImpl<
         readonly sourceTable: spi.AbstractTable,
         readonly condition: spi.AbstractPred,
         readonly matchedBindings: ReadonlyArray<spi.Binding> | undefined,
-        readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined
+        readonly unmatchedBindings: ReadonlyArray<spi.Binding> | undefined,
+        readonly returnedProps: ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG> | undefined
     ) {}
 
     get kind(): "BY_VALUES" | "BY_BASE_MODEL" {

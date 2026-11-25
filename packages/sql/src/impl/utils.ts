@@ -12,7 +12,7 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AnyAssociationModel, AnyModel, BaseModel, err, spi } from "@ts-grm/core";
+import { AnyAssociationModel, AnyModel, BaseModel, err, INSERTED_FLAG, spi } from "@ts-grm/core";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 
 export function toTables(
@@ -58,6 +58,50 @@ export function propsOf(
     const entityModel = model as AnyModel;
     const entity = spi.Entity.of(entityModel);
     return keys.map(key => {
+        const prop = entity.expandedPropMap.get(key);
+        if (prop == null) {
+            throw new err.ArgumentError(
+                `There is no property "${
+                    key
+                }" in the model ${
+                    entity.toString()
+                }`
+            );
+        }
+        return prop;
+    });
+}
+
+export function returnedPropsOf(
+    model: AnyModel | AnyAssociationModel,
+    keys: ReadonlyArray<string | typeof INSERTED_FLAG>
+): ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG> {
+    if ((model.__type() as any).associationModel) {
+        const associationModel = model as AnyAssociationModel;
+        const associationEntity = spi.AssociationEntity.of(associationModel);
+        return keys.map(key => {
+            if (key === INSERTED_FLAG) {
+                return key;
+            }
+            const prop = associationEntity.expandedPropMap.get(key);
+            if (prop == null) {
+                throw new err.ArgumentError(
+                    `There is no property "${
+                        key
+                    }" in the association model ${
+                        associationEntity.toString()
+                    }`
+                );
+            }
+            return prop;
+        });
+    }
+    const entityModel = model as AnyModel;
+    const entity = spi.Entity.of(entityModel);
+    return keys.map(key => {
+        if (key === INSERTED_FLAG) {
+            return key;
+        }
         const prop = entity.expandedPropMap.get(key);
         if (prop == null) {
             throw new err.ArgumentError(

@@ -19,7 +19,6 @@ import { Precedence } from "@/sql/precedence";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
 import { AbstractDriver } from "./abstract_drivier";
 import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager";
-import { ColumnDef } from "@/impl/schema_def";
 import { KEYWORDS } from "./utils";
 import { MetadataError } from "@/error/metadata_error";
 import { TransactionManager } from "@/transaction/transaction_manger";
@@ -91,10 +90,8 @@ export class MySqlDriver extends AbstractDriver {
 
     get upsertStrategy(): UpsertStrategy {
         return {
-            mergable: false,
-            insertConflict: true,
-            insertFlagRender: undefined,
-            insertConflictAliasRequired: false
+            mergeInto: false,
+            insertConflict: true
         };
     }
 }

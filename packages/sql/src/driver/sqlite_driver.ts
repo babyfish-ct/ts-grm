@@ -12,9 +12,8 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { err, ScalarKind, ScalarType, spi, TimeUnit } from "@ts-grm/core";
+import { err, ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { NodeRender, NodeRenderContext } from "./node_render";
-import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
 import { AbstractNodeRender } from "./abstract_node_render";
@@ -29,7 +28,7 @@ import { UpsertStrategy } from "./deriver";
 export class SqliteDriver extends AbstractDriver {
 
     constructor(
-        protected readonly database: Database
+        readonly database: Database
     ) {
         super();
     }
@@ -70,13 +69,15 @@ export class SqliteDriver extends AbstractDriver {
         return true;
     }
 
-    get upsertStrategy(): UpsertStrategy {
+    override get upsertStrategy(): UpsertStrategy {
         return {
-            mergable: false,
-            insertConflict: true,
-            insertFlagRender: undefined,
-            insertConflictAliasRequired: false
+            mergeInto: false,
+            insertConflict: true
         };
+    }
+
+    identityPrimaryKeySuffix(_: spi.IdentitySettings): string {
+        return "primary key autoincrement not null";
     }
 
     protected override createTransactionManager(): TransactionManager {

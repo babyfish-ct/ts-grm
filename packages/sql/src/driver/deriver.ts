@@ -35,13 +35,15 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly paginationStrategy: PaginationStrategy;
 
-    readonly upsertStrategy: UpsertStrategy | undefined;
+    readonly upsertStrategy: UpsertStrategy;
 
     readonly sourceRowsAsQuery: boolean;
 
+    readonly requiresInlineConstraints: boolean;
+
     typeName(scalarType: ScalarType<any>): string;
 
-    requiresInlineConstraints: boolean;
+    identityPrimaryKeySuffix(settings: spi.IdentitySettings): string;
 
     writeTableDeletion(
         tableName: string, 
@@ -60,10 +62,13 @@ export type PaginationTransformer = (
 ) => Composite;
 
 export interface UpsertStrategy {
-    readonly mergable: boolean;
-    readonly insertConflict: boolean;
-    readonly insertFlagRender: InsertFlagRender | undefined;
-    readonly insertConflictAliasRequired: boolean;
+    readonly mergeInto: boolean | {
+        readonly insertFlagRender: InsertFlagRender | undefined;
+    };
+    readonly insertConflict: boolean | {
+        readonly sourceAliasRequired: boolean;
+        readonly insertFlagRender: InsertFlagRender | undefined;
+    };
 }
 
 export type InsertFlagRender = (ctx: NodeRenderContext) => void;

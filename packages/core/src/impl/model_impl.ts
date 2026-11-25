@@ -184,7 +184,7 @@ implements __RootModelContext<TIdKey, TCtor, TModifier> {
         return this;
     }
 
-    toModelOptions(): ModelOptions {
+    override toModelOptions(): ModelOptions {
         return {
             tableOptions: this._tableOptions as __TableOptions<any, any>,
             uniqueConstraints: this._uniqueConstraints,

@@ -453,13 +453,26 @@ export type __IdGenerator<
 > = 
     TIdMember extends __I64PropContract<infer Value, any, "NORMAL">
         ? "IDENTITY"
-        | { readonly sequenceName: string; }
+        | __IdentityGenerator
+        | __SequenceGenerator
         | UserIdGenerator<Value>
     : TIdMember extends __ScalarPropContract<number, any, "NORMAL", any>
         ? "IDENTITY"
-        | { readonly sequenceName: string; }
+        | __IdentityGenerator
+        | __SequenceGenerator
         | UserIdGenerator<number>
     : UserIdGenerator<__DataType<TIdMember>>;
+
+export interface __IdentityGenerator {
+    readonly kind: "IDENTITY"
+    readonly startWith?: number;
+    readonly incrmentBy?: number;
+}
+
+export interface __SequenceGenerator {
+    readonly kind: "SEQUENCE";
+    readonly sequenceName: string;
+}
 
 export type __DataType<TProp> = 
     TProp extends __ScalarPropContract<infer Value, any, any, any>

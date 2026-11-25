@@ -1,12 +1,31 @@
 import { SqlClient } from "@ts-grm/core";
 import { SqlRecord, useMySqlClient, useOracle12Client, useOracleClient, usePostgresClient, useSqliteClient, useSqlServer2012Client, useSqlServerClient } from "./utils";
-import { beforeAll } from "vitest";
+import { beforeAll, beforeEach } from "vitest";
 import { INITIAL_SQL } from "./data";
 import { SqlClientImplementor } from "@/sql_client";
+import { SqliteDriver } from "@/driver";
 
 export function useSqliteClientWithData(sqlRecord: SqlRecord): SqlClient {
     const sqlClient = useSqliteClient(true, sqlRecord);
     initializeDatabase(sqlClient);
+    beforeEach(async () => {
+        const implementor = (sqlClient as SqlClientImplementor);
+        const entities = await implementor.options.entityManager!.entities();
+        for (const entity of entities) {
+            const settings = entity.idGeneratorSettings;
+            if (settings?.kind === "IDENTITY") {
+                const sql = 
+                    `update sqlite_sequence set seq = ${
+                        settings.startWith
+                    } - 1 where name = '${
+                        entity.toTableName(implementor.strategy)
+                    }'`;
+                await sqlClient.execute(async() => {
+                    (sqlClient.driver as SqliteDriver).database.exec(sql);
+                });
+            }
+        }
+    });
     return sqlClient;
 }
 

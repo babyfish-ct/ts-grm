@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 import { AUTHOR, BOOK, LEARNING_LINK, ORDER, ORDER_ITEM } from "../model/model";
-import { SqlClientImplementor } from "@/sql_client";
 import { dsl } from "@ts-grm/core";
+import { setRollbackOnly } from "./utils";
 
 describe("InsertSqliteTest", () => {
 
@@ -12,8 +12,8 @@ describe("InsertSqliteTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("insertEntity", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .rows(
@@ -46,13 +46,13 @@ describe("InsertSqliteTest", () => {
         });
         expect(result).toEqual({ 
             affectedRowCount: 2, 
-            rows: [ 13, 14 ] 
+            rows: [ 101, 102 ] 
         });
     });
 
     it("insertEntityByBaseModel", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .using(ctx => 
@@ -99,17 +99,17 @@ describe("InsertSqliteTest", () => {
         expect(result).toEqual({
             affectedRowCount: 4,
             rows: [
-                [ 13, 'Learning GraphQL', 4 ],
-                [ 14, 'Effective TypeScript', 4 ],
-                [ 15, 'YugabyteDB: The Definitive Guide', 4 ],
-                [ 16, 'GraphQL in Action', 4 ]
+                [ 101, 'Learning GraphQL', 4 ],
+                [ 102, 'Effective TypeScript', 4 ],
+                [ 103, 'YugabyteDB: The Definitive Guide', 4 ],
+                [ 104, 'GraphQL in Action', 4 ]
             ]
         });
     });
 
     it("insertEntityByCteModelWithExportedTable", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .using("CTE", ctx => 
@@ -160,17 +160,17 @@ describe("InsertSqliteTest", () => {
         expect(result).toEqual({
             affectedRowCount: 4,
             rows: [
-                [ 13, 'Learning GraphQL', 4 ],
-                [ 14, 'Effective TypeScript', 4 ],
-                [ 15, 'YugabyteDB: The Definitive Guide', 4 ],
-                [ 16, 'GraphQL in Action', 4 ]
+                [ 101, 'Learning GraphQL', 4 ],
+                [ 102, 'Effective TypeScript', 4 ],
+                [ 103, 'YugabyteDB: The Definitive Guide', 4 ],
+                [ 104, 'GraphQL in Action', 4 ]
             ]
         });
     });
 
     it("insertAssociation", async () => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(
                     dsl.associationModel(AUTHOR, "books"),
@@ -196,8 +196,8 @@ describe("InsertSqliteTest", () => {
     });
 
     it("insertAssociationByBaseModel", async () => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(
                     dsl.associationModel(BOOK, "authors"),
@@ -242,8 +242,8 @@ describe("InsertSqliteTest", () => {
     });
 
     it("insertEmbeddedReferenceKey", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(ORDER_ITEM, "productName", "orderId.x", "orderId.y.a", "orderId.y.b")
                 .row("MacBook", 2, 1, 2)
@@ -268,13 +268,13 @@ describe("InsertSqliteTest", () => {
         });
         expect(result).toEqual({ 
             affectedRowCount: 1, 
-            rows: [ 9 ] 
+            rows: [ 101 ] 
         });
     });
 
     it("insertEmbeddedAssociation", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(
                     dsl.associationModel(ORDER, "tags"),
@@ -306,8 +306,8 @@ describe("InsertSqliteTest", () => {
     });
 
     it("insertEntityOnConflictDoUpdate", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .rows(
@@ -322,13 +322,81 @@ describe("InsertSqliteTest", () => {
                 .returning("id")
                 .execute();
         });
-        sqlRecord.log();
-        console.log(JSON.stringify(result));
+        sqlRecord.assert({
+            sql: `
+                insert into BOOK(
+                    TYPE,
+                    NAME,
+                    EDITION,
+                    PRICE,
+                    STORE_ID
+                )
+                values
+                    (?, ?, ?, ?, ?),
+                    (?, ?, ?, ?, ?)
+                on conflict(
+                    NAME,
+                    EDITION
+                ) do update set
+                    PRICE = PRICE + excluded.PRICE,
+                    STORE_ID = excluded.STORE_ID
+                returning
+                    ID
+            `,
+            args: [
+                'PaperBook', 'GraphQL in Action', 3, 69.9, '2',
+                'PaperBook', 'Cockroach DB', 4, 69.9, '2'
+            ],
+            purpose: "insert"
+        });
+        expect(result).toEqual({
+            "affectedRowCount":2,
+            "rows":[12,102]
+        });
     });
 
     it("insertEntityOnConflictDoNothing", async() => {
-        const result = await sqlClient.execute("REQUIRED", async () => {
-            (sqlClient as SqlClientImplementor).driver.transactionManager.setRollbackOnly();
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
+            return await sqlClient
+                .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
+                .rows(
+                    ["PaperBook", "GraphQL in Action", 3, 69.9, "2"],
+                    ["PaperBook", "Cockroach DB", 4, 69.9, "2"]
+                )
+                .onConflict("name", "edition")
+                .doNothing()
+                .execute();
+        });
+        sqlRecord.assert({
+            sql: `
+                insert into BOOK(
+                    TYPE,
+                    NAME,
+                    EDITION,
+                    PRICE,
+                    STORE_ID
+                )
+                values
+                    (?, ?, ?, ?, ?),
+                    (?, ?, ?, ?, ?)
+                on conflict(
+                    NAME,
+                    EDITION
+                ) do nothing
+            `,
+            args: [
+                'PaperBook', 'GraphQL in Action', 3, 69.9, '2',
+                'PaperBook', 'Cockroach DB', 4, 69.9, '2'
+            ],
+            purpose: "insert"
+        });
+        expect(result).toEqual({"affectedRowCount":1});
+    });
+
+    it("insertEntityOnConflictDoByFakeUpdating", async() => {
+        const result = await sqlClient.execute(async () => {
+            setRollbackOnly(sqlClient);
             return await sqlClient
                 .createInsert(BOOK, "__discriminator", "name", "edition", "price", "storeId")
                 .rows(
@@ -340,7 +408,55 @@ describe("InsertSqliteTest", () => {
                 .returning("id")
                 .execute();
         });
+        sqlRecord.assert({
+            sql: `
+                insert into BOOK(
+                    TYPE,
+                    NAME,
+                    EDITION,
+                    PRICE,
+                    STORE_ID
+                )
+                values
+                    (?, ?, ?, ?, ?),
+                    (?, ?, ?, ?, ?)
+                on conflict(
+                    NAME,
+                    EDITION
+                ) do update set /* fake update */ EDITION = excluded.EDITION
+                returning
+                    ID
+            `,
+            args: [
+                'PaperBook', 'GraphQL in Action', 3, 69.9, '2',
+                'PaperBook', 'Cockroach DB', 4, 69.9, '2'
+            ],
+            purpose: "insert"
+        });
+        expect(result).toEqual({ 
+            affectedRowCount: 2, 
+            rows: [ 12, 102 ] 
+        });
+    });
+
+    it("insertAssociationOnConflictDoNothing", async () => {
+        const result = await sqlClient.execute(async() => {
+            setRollbackOnly(sqlClient);
+            return await sqlClient
+                .createInsert(dsl.associationModel(BOOK, "authors"), "sourceId", "targetId")
+                .using(ctx => 
+                    ctx.source(LEARNING_LINK, (q, link) => {
+                        return q.select({
+                            sourceId: link.studentId,
+                            targetId: link.courseId
+                        })
+                    })
+                )
+                .onConflictAll()
+                .doNothing()
+                .returning("sourceId", "targetId")
+                .execute();
+        });
         sqlRecord.log();
-        console.log(JSON.stringify(result));
     });
 });

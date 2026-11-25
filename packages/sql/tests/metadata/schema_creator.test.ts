@@ -176,6 +176,10 @@ describe("SchemaCreatorTest", () => {
                     {
                         "kind": "PRIMARY_KEY",
                         "columns": ["ID"]
+                    },
+                    {
+                        "kind": "UNIQUE",
+                        "columns": ["FIRST_NAME", "LAST_NAME"]
                     }
                 ]
             },
@@ -917,7 +921,7 @@ describe("SchemaCreatorTest", () => {
         expectCode(sql, `
             -- Entity table for "BookStore"
             create table BOOK_STORE(
-                ID integer not null, 
+                ID integer primary key autoincrement not null, 
                 TYPE text not null, 
                 NAME text not null, 
                 VERSION integer not null, 
@@ -938,34 +942,28 @@ describe("SchemaCreatorTest", () => {
                 -- The implicit nullity in the derived table is non-null
                 URL text null, 
 
-                constraint BOOK_STORE_constraint_1
-                    primary key(ID), 
-
                 -- Implicit check constraint for polymorphism
-                constraint BOOK_STORE_constraint_2
+                constraint BOOK_STORE_constraint_1
                     check(TYPE in('BookStore', 'PhysicalBookStore', 'OnlineBookStore'))
             );
 
             -- Entity table for "Book"
             create table BOOK(
-                ID integer not null, 
+                ID integer primary key autoincrement not null, 
                 TYPE text not null, 
                 NAME text not null, 
                 EDITION integer not null, 
                 PRICE real not null, 
                 STORE_ID integer null, 
 
-                constraint BOOK_constraint_1
-                    primary key(ID), 
-
                 -- Implicit check constraint for polymorphism
-                constraint BOOK_constraint_2
+                constraint BOOK_constraint_1
                     check(TYPE in('Book', 'PaperBook', 'ElectronicBook', 'PdfElectronicBook')), 
 
-                constraint BOOK_constraint_3
+                constraint BOOK_constraint_2
                     unique(NAME, EDITION), 
 
-                constraint BOOK_constraint_4
+                constraint BOOK_constraint_3
                     foreign key(STORE_ID)
                         references BOOK_STORE(ID)
                             on delete cascade
@@ -973,13 +971,13 @@ describe("SchemaCreatorTest", () => {
 
             -- Entity table for "Author"
             create table AUTHOR(
-                ID integer not null, 
+                ID integer primary key autoincrement not null, 
                 FIRST_NAME text not null, 
                 LAST_NAME text not null, 
                 GENDER text not null, 
 
                 constraint AUTHOR_constraint_1
-                    primary key(ID)
+                    unique(FIRST_NAME, LAST_NAME)
             );
 
             -- Middle table for "Book.authors"
@@ -1053,22 +1051,19 @@ describe("SchemaCreatorTest", () => {
 
             -- Entity table for "TreeNode"
             create table TREE_NODE(
-                ID integer not null, 
+                ID integer primary key autoincrement not null, 
                 TYPE text not null, 
                 NAME text not null, 
                 PARENT_NODE_ID integer null, 
 
-                constraint TREE_NODE_constraint_1
-                    primary key(ID), 
-
                 -- Implicit check constraint for polymorphism
-                constraint TREE_NODE_constraint_2
+                constraint TREE_NODE_constraint_1
                     check(TYPE in('Category', 'Item')), 
 
-                constraint TREE_NODE_constraint_3
+                constraint TREE_NODE_constraint_2
                     unique(PARENT_NODE_ID, NAME), 
 
-                constraint TREE_NODE_constraint_4
+                constraint TREE_NODE_constraint_3
                     foreign key(PARENT_NODE_ID)
                         references TREE_NODE(ID)
             );
@@ -1199,16 +1194,13 @@ describe("SchemaCreatorTest", () => {
 
             -- Entity table for "OrderItem"
             create table ORDER_ITEM(
-                ID integer not null, 
+                ID integer primary key autoincrement not null, 
                 PRODUCT_NAME text not null, 
                 order_x integer not null, 
                 order_y_a integer not null, 
                 order_y_b integer not null, 
 
                 constraint ORDER_ITEM_constraint_1
-                    primary key(ID), 
-
-                constraint ORDER_ITEM_constraint_2
                     foreign key(order_x, order_y_a, order_y_b)
                         references "ORDER"(X, A, B)
                             on delete cascade

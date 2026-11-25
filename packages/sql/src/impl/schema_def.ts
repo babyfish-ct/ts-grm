@@ -177,13 +177,19 @@ export class TableDefImpl implements TableDef {
             .code("\"")
             .newLine();
         }
+        const autoIncrementConstraint = this.entity?.idGeneratorSettings?.kind === "IDENTITY" 
+            ? this._simpleConstraints.find(c => c.kind === "PRIMARY_KEY")
+            : undefined;
         writer.code("create table ").code(this.name).scope({kind: "PARENTHESES", multiline: true}, () => {
             for (const columnDef of this.columns) {
-                appendTo(columnDef, driver, writer);
+                appendTo(columnDef, driver, autoIncrementConstraint, writer);
             }
             if (inline) {
                 let index = 0;
                 for (const constraint of this._simpleConstraints) {
+                    if (constraint === autoIncrementConstraint) {
+                        continue;
+                    }
                     writer.separator().newLine();
                     writer.code(constraintCreationSql(constraint, ++index, this, true));
                 }
@@ -197,6 +203,9 @@ export class TableDefImpl implements TableDef {
         if (!inline) {
             let index = 0;
             for (const constraint of this._simpleConstraints) {
+                if (constraint === autoIncrementConstraint) {
+                    continue;
+                }
                 arr.push(constraintCreationSql(constraint, ++index, this, false));
             }
             for (const constraint of this._foreignKeyConstraints) {
@@ -299,6 +308,7 @@ export class ColumnDefImpl implements ColumnDef {
 function appendTo(
     columnDef: ColumnDef, 
     driver: Driver,
+    autoIncrementConstraint: ConstraintDef | undefined,
     writer: spi.CodeWriter
 ) {
     writer.separator();
@@ -315,11 +325,20 @@ function appendTo(
             writer.code("\n-- The implicit nullity in the derived table is non-null\n")
         }
     }
-    writer
-        .code(columnDef.name)
-        .code(" ")
-        .code(driver.typeName(columnDef.type))
-        .code(columnDef.nullable ? " null" : " not null");
+    if (autoIncrementConstraint?.kind === "PRIMARY_KEY" && autoIncrementConstraint.columns[0]!.name === columnDef.name) {
+        writer
+            .code(columnDef.name)
+            .code(" ")
+            .code(driver.typeName(columnDef.type))
+            .code(" ")
+            .code(driver.identityPrimaryKeySuffix(columnDef.declaringTable.entity!.idGeneratorSettings as spi.IdentitySettings));
+    } else {
+        writer
+            .code(columnDef.name)
+            .code(" ")
+            .code(driver.typeName(columnDef.type))
+            .code(columnDef.nullable ? " null" : " not null");
+    }
 }
 
 function constraintCreationSql(

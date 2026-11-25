@@ -74,6 +74,10 @@ export const BOOK_STORE = model.open(
             discriminator: "TYPE",
             discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
         });
+        ctx.id({
+            kind: "IDENTITY",
+            startWith: 101
+        });
     }
 );
 
@@ -139,6 +143,10 @@ export const BOOK = model.open("Book", "id",
         ctx.table({
             discriminator: "TYPE",
             discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
+        });
+        ctx.id({
+            kind: "IDENTITY",
+            startWith: 101
         });
     }
 );
@@ -221,7 +229,14 @@ export const AUTHOR = model("Author", "id", class {
         "MALE": "M", 
         "FEMALE": "F"
     })
-});
+}, ctx =>
+    ctx
+        .unique("name.firstName", "name.lastName")
+        .id({
+            kind: "IDENTITY",
+            startWith: 101
+        }) 
+);
 
 export const TREE_NODE = model.abstract(
     "TreeNode", 
@@ -236,7 +251,11 @@ export const TREE_NODE = model.abstract(
         ctx.unique("parentNode", "name");
         ctx.table({
             discriminator: "TYPE"
-        })
+        });
+        ctx.id({
+            kind: "IDENTITY",
+            startWith: 101
+        });
     }
 );
 
@@ -327,7 +346,10 @@ export const ORDER_ITEM = model("OrderItem", "id", class {
         ],
         cascade: "DELETE"
     })
-});
+}, ctx => ctx.id({
+    kind: "IDENTITY",
+    startWith: 101
+}));
 
 export const TAG = model("Tag", "id", class {
     id = prop.embedded({

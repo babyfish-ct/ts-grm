@@ -30,6 +30,7 @@ import { Node } from "./node";
 import { IsPred } from "./is_pred";
 import { ExpressionOrder } from "@/dsl/utils";
 import { Binding, DeleteContract, InsertContract, MergeContract, UpdateContract } from "./mutation";
+import { spi } from "@/index";
 
 export interface Visitor {
 

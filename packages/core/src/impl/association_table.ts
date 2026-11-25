@@ -25,7 +25,8 @@ import { createTableProp } from "./ast/prop_expr";
 import { makeErr } from "@/error/util";
 import { __ModelLike } from "@/dsl/table_internal_types";
 import { JoinType } from "@/dsl/table";
-import { StateError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
+import { Expression } from "@/dsl";
 
 export class AbstractAssociationTable implements AbstractTable {
 
@@ -204,6 +205,28 @@ export class AbstractAssociationTable implements AbstractTable {
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractAssociationTable;
         cloned._lockedInfo = { alias, partialKeys };
         return cloned;
+    }
+
+    __expression(prop: AssociationProp): Expression<any> {
+        if (prop.props != null) {
+            throw new ArgumentError(`The property "${prop.toString()}" is not scalar property`);
+        }
+        return AbstractAssociationTable._expression(this, prop, true);
+    }
+
+    private static _expression(
+        parent: any, 
+        prop: AssociationProp, 
+        isTail: boolean
+    ): any {
+        const parentProp = prop.parentProp;
+        if (parentProp != null) {
+            parent = AbstractAssociationTable._expression(parent, parentProp, false);
+        }
+        if (isTail) {
+            return parent[prop.name];
+        }
+        return parent[prop.name]();
     }
 }
 

@@ -34,7 +34,7 @@ import {
     __MutatedReturnKey
 } from "@ts-grm/core";
 import { executeInsert } from "./mutation_executor/execute_insert";
-import { propsOf } from "./utils";
+import { propsOf, returnedPropsOf } from "./utils";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 import { OnConflictUpdateContextImpl } from "./on_conflict_update_context_impl";
 import { OnConflictEntityUpdateContext } from "@ts-grm/core";
@@ -86,15 +86,15 @@ export class InsertImpl<
         if (keys.length < 1) {
             throw new err.ArgumentError(`The function "returning" must accept at least one key`);
         }
-        const props = propsOf(this.model, keys as ReadonlyArray<string>);
+        const returnedProps = returnedPropsOf(this.model, keys as ReadonlyArray<string | typeof INSERTED_FLAG>);
         return new ReturnedInsertImpl<TModel, TReturnedKeys>(
             this.sqlClient, 
             this.model, 
             this.source, 
             this.bindings, 
-            props, 
             this.sourceTable, 
-            this.conflict
+            this.conflict,
+            returnedProps
         );
     }
 
@@ -228,7 +228,7 @@ class OnConflictUpdateImpl<
             props: this._conflictProps,
             bindings: undefined,
             targetTable: undefined,
-            sourceTable: undefined
+            sourceTable: this._insertImpl.entity.table(undefined).__lock("excluded", Array.from(this._keys))
         };
         return new InsertImpl<TModel>(
             this._insertImpl.sqlClient, 
@@ -278,9 +278,9 @@ class ReturnedInsertImpl<
         readonly model: TModel,
         readonly source: Iterable<spi.SourceRow> | BaseModel<any>,
         readonly bindings: ReadonlyArray<spi.Binding> | ReadonlyArray<spi.EntityProp> | ReadonlyArray<spi.AssociationProp>,
-        readonly returnedProps: ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG>,
         readonly sourceTable: spi.AbstractTable | undefined,
-        readonly conflict: spi.InsertConflict | undefined
+        readonly conflict: spi.InsertConflict | undefined,
+        readonly returnedProps: ReadonlyArray<spi.EntityProp | spi.AssociationProp | typeof INSERTED_FLAG>,
     ) {}
 
     get kind(): "BY_VALUES" | "BY_BASE_MODEL" {
