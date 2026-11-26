@@ -357,23 +357,24 @@ export class Value extends Fragment {
 
 export class Statement extends Composite {
 
-    private _source: Source | undefined = undefined;
+    private _sources: Array<Source> = [];
 
     add(fragment: Fragment): this {
         if (fragment instanceof Source) {
-            this._source = fragment;
+            this._sources.push(fragment);
         }
         super.add(fragment);
         return this;
     }
 
     into(builder: SqlBuilder): void {
-        const source = this._source!;
-        const tables = new Set<RealTable>();
-        for (const rootTable of source.rootTables) {
-            rootTable.collectTables(builder, tables);
+        for (const source of this._sources) {
+            const tables = new Set<RealTable>();
+            for (const rootTable of source.rootTables) {
+                rootTable.collectTables(builder, tables);
+            }
+            source.cteHeadInto(builder);
         }
-        source.cteHeadInto(builder);
         super.into(builder);
     }
 }

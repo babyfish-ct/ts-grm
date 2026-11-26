@@ -26,6 +26,7 @@ import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor
 import { createRenderTools } from "./render_tools";
 import { INSERTED_FLAG } from "@ts-grm/core";
 import { fakeUpdatedProp } from "@/impl/mutation_executor/utils";
+import { insertedSourceBaseQuery, usingInsertedSourceBaseQuery } from "@/impl/inserted_source";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -148,6 +149,11 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             this._compositeStack.current.add("\nwhere ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             wherePred?.accept(this);
+        } else if (query.projection.kind === "BASE") {
+            const sourceQuery = insertedSourceBaseQuery();
+            if (sourceQuery === query) {
+                this._compositeStack.current.add("\nwhere 1 = 1");
+            }
         }
 
         const groupByExprs = query.groupByExprs;
@@ -206,6 +212,21 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 
     visitInsert(insert: spi.InsertContract): void {
+        if (insert.kind === "BY_BASE_MODEL" && insert.conflict != null) {
+            const insertConflict = this.sqlClient.driver.upsertStrategy.insertConflict;
+            if (typeof insertConflict === "object" && insertConflict.insertSourceConditionRequired) {
+                const baseModel = insert.source as spi.BaseModelImplementor<any>;
+                usingInsertedSourceBaseQuery(baseModel.__toQuery() as any as spi.AtomQueryContract, () => {
+                    this._visitInsert(insert);
+                });
+                return;
+                
+            }
+        }
+        this._visitInsert(insert);
+    }
+
+    private _visitInsert(insert: spi.InsertContract): void {
         using _1 = this._precedenceStack.with(Precedence.ROOT);
         using _2 = this._compositeStack.with(new Composite());
         if (insert.kind === "BY_BASE_MODEL") {

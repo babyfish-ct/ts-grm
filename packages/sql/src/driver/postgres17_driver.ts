@@ -29,7 +29,8 @@ export class Postgres17Driver extends PostgresDriver {
             },
             insertConflict: {
                 sourceAliasRequired: true,
-                insertFlagRender: ctx => ctx.text("xmax = 0")
+                insertFlagRender: ctx => ctx.text("xmax = 0"),
+                insertSourceConditionRequired: false
             },
         };
     }

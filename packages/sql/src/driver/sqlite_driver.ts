@@ -72,7 +72,11 @@ export class SqliteDriver extends AbstractDriver {
     override get upsertStrategy(): UpsertStrategy {
         return {
             mergeInto: false,
-            insertConflict: true
+            insertConflict: {
+                sourceAliasRequired: false,
+                insertFlagRender: undefined,
+                insertSourceConditionRequired: true
+            }
         };
     }
 

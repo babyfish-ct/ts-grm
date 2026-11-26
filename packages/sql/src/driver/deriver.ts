@@ -68,6 +68,7 @@ export interface UpsertStrategy {
     readonly insertConflict: boolean | {
         readonly sourceAliasRequired: boolean;
         readonly insertFlagRender: InsertFlagRender | undefined;
+        readonly insertSourceConditionRequired: boolean;
     };
 }
 

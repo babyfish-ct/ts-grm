@@ -52,7 +52,8 @@ export class PostgresDriver extends AbstractDriver {
             mergeInto: false,
             insertConflict: {
                 sourceAliasRequired: true,
-                insertFlagRender: ctx => ctx.text("xmax = 0")
+                insertFlagRender: ctx => ctx.text("xmax = 0"),
+                insertSourceConditionRequired: false
             },
         };
     }
