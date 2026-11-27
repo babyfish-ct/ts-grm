@@ -184,7 +184,7 @@ export class MergedRootQueryImpl<
 
 export class MergedBaseQueryImpl<TProjection>
 extends AbstractBaseQueryImpl<TProjection>
-implements BaseQuery<TProjection>, spi.MergedQueryContract {
+implements BaseQuery<TProjection>, spi.MergedQueryContract, spi.BaseQueryContract {
 
     __type(): { baseQuery: TProjection | true; } {
         return { baseQuery: true };
@@ -235,6 +235,15 @@ implements spi.MergedQueryContract {
 
     get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
+    }
+
+    contains(query: spi.QueryContract): boolean {
+        for (const q of this.queries) {
+            if ((q as any as spi.BaseQueryContract).contains(query)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     accept(visitor: spi.Visitor): void {

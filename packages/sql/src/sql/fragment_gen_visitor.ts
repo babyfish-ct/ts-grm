@@ -151,7 +151,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
             wherePred?.accept(this);
         } else if (query.projection.kind === "BASE") {
             const sourceQuery = insertedSourceBaseQuery();
-            if (sourceQuery === query) {
+            if (sourceQuery != null && (sourceQuery as any as spi.BaseQueryContract).contains(query)) {
                 this._compositeStack.current.add("\nwhere 1 = 1");
             }
         }
@@ -220,7 +220,6 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                     this._visitInsert(insert);
                 });
                 return;
-                
             }
         }
         this._visitInsert(insert);

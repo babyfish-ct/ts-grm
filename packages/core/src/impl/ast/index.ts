@@ -76,6 +76,7 @@ export type {
     QueryContract, 
     AtomQueryContract, 
     MergedQueryContract, 
+    BaseQueryContract,
     ProjectionContract, 
     AtomQueryOptions 
 } from "./query";

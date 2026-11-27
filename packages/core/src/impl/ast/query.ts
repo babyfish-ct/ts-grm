@@ -21,6 +21,7 @@ import { AbstractExpr } from "./expr";
 import { AbstractTable } from "../abstract_table";
 import { MergedQueryKind } from "./query_factory";
 import { Node } from "./node";
+import { spi } from "@/index";
 
 export type QueryContract = AtomQueryContract | MergedQueryContract;
 
@@ -97,3 +98,7 @@ export const defaultAtomQueryOptions: AtomQueryOptions = {
     limit: -1,
     offset: 0
 };
+
+export interface BaseQueryContract {
+    contains(query: spi.QueryContract): boolean;
+}

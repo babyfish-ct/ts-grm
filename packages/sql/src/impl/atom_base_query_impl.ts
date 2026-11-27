@@ -31,7 +31,8 @@ implements
     AtomBaseQuery<TProjection>, 
     InsertSource<BaseQueryMapOf<TProjection>>,
     spi.BaseQueryImplementor<TProjection>, 
-    spi.AtomQueryContract {
+    spi.AtomQueryContract,
+    spi.BaseQueryContract {
 
     readonly options: spi.AtomQueryOptions;
 
@@ -118,6 +119,10 @@ implements
 
     get isRecursive(): boolean {
         return this.mutableQuery instanceof RecursiveMutableBaseQueryImpl;
+    }
+
+    contains(query: spi.QueryContract): boolean {
+        return this === query;
     }
 
     accept(visitor: spi.Visitor): void {
