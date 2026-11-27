@@ -100,5 +100,5 @@ export const defaultAtomQueryOptions: AtomQueryOptions = {
 };
 
 export interface BaseQueryContract {
-    contains(query: spi.QueryContract): boolean;
+    contains(query: spi.AtomQueryContract): boolean;
 }

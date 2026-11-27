@@ -121,7 +121,7 @@ implements
         return this.mutableQuery instanceof RecursiveMutableBaseQueryImpl;
     }
 
-    contains(query: spi.QueryContract): boolean {
+    contains(query: spi.AtomQueryContract): boolean {
         return this === query;
     }
 

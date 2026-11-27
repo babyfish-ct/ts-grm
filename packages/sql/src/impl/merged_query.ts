@@ -237,7 +237,7 @@ implements spi.MergedQueryContract {
         return this.queries[0]!.projection;
     }
 
-    contains(query: spi.QueryContract): boolean {
+    contains(query: spi.AtomQueryContract): boolean {
         for (const q of this.queries) {
             if ((q as any as spi.BaseQueryContract).contains(query)) {
                 return true;
