@@ -13,7 +13,7 @@
  */
 
 import { ModelError, PropError } from "@/error/metadata_error";
-import { DISCRIMINATOR_VALUE_MODEL_NAME, AnyModel, TABLE_INHERIT, UserIdGenerator } from "@/schema/model";
+import { DISCRIMINATOR_VALUE_MODEL_NAME, AnyModel, UserIdGenerator } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { AnyModelImpl, ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
@@ -29,6 +29,7 @@ import { __EMPTY_PROP_DEFINITION_DATA, __IdGenerator, __ModifierType, __PropData
 import { ExplicitDataType } from "./explicit";
 import { Filter } from "./dto_mapping";
 import { ScalarType } from "@/schema/scalar";
+import { openSync } from "fs";
 
 export class Entity {
 
@@ -138,7 +139,7 @@ export class Entity {
                     incrementBy: this._options.idGenerator.incrmentBy ?? 1
                 }
             : this._options.idGenerator;
-        this.tableSettings = this._createTableSettings(_options.tableOptions);
+        this.tableSettings = this._createTableSettings(_options);
         this.identity = ++Entity._nextIdentity;
         this.tableEntity = this.tableSettings.sharedTable
             ? this.superEntity!.tableEntity
@@ -396,7 +397,7 @@ export class Entity {
         }
         this._collectReferenceKeyProps(declaredPropMap);
         if (this.superEntity != null) {
-            const tableOptions = this._options.tableOptions;
+            const tableOptions = this._options.tableOptions as __TableOptions<any, any, "INDIVIDUAL_TABLE">;
             const idMapping = !this.tableSettings.sharedTable 
             && typeof tableOptions === "object"
             && typeof tableOptions.name === "object"
@@ -636,8 +637,9 @@ export class Entity {
     }
 
     private _createTableSettings(
-        options: __TableOptions<AnyModel | never, any> | undefined
+        options: ModelOptions
     ): TableSettings {
+        const tableOptions = options.tableOptions;
         if (this.superEntity != null) {
             if (this.superEntity.tableSettings.discriminator == null) {
                 throw new ModelError(
@@ -646,7 +648,7 @@ export class Entity {
                     because there is a derived model "${this.name}"`  
                 );
             }
-            if (typeof options !== "object") {
+            if (typeof tableOptions !== "object") {
                 throw new ModelError(
                     this.name,
                     dedent `the table options must be specified as object
@@ -662,25 +664,26 @@ export class Entity {
             discriminatorValue: undefined,
             discriminator: undefined
         };
-        if (options == null) {
+        if (tableOptions == null) {
             return settings;
         }
-        if (typeof options === "string") {
-            settings.explicitName = options != "" ? options : undefined;
+        if (typeof tableOptions === "string") {
+            settings.explicitName = tableOptions != "" ? tableOptions : undefined;
             return settings;
         }
 
-        if (options.name != null) {
-            if (options.name === TABLE_INHERIT) {
-                settings.sharedTable = true;
-            } else {
+        if (options.sharedTable) {
+            settings.sharedTable = true;
+        } else if (tableOptions != null) {
+            const tops = tableOptions as __TableOptions<any, any, "INDIVIDUAL_TABLE">;
+            if (tops.name != null) {
                 settings.explicitName = 
-                    typeof options.name === "string"
-                        ? options.name != "" ? options.name : undefined
-                        : options.name.value != "" ? options.name.value : undefined;
+                    typeof tops.name === "string"
+                        ? tops.name != "" ? tops.name : undefined
+                        : tops.name!.value != "" ? tops.name!.value : undefined;
             }
         }
-        const moreInfoOptions = options as __TableOptions<AnyModel | never, "OPEN">;
+        const moreInfoOptions = tableOptions as __TableOptions<AnyModel | never, "OPEN", any>;
         if (typeof moreInfoOptions !== "string" && moreInfoOptions.discriminator != null) {
             const type = this.modifier === "OPEN_BY_NUM" || this.modifier === "ABSTRACT_BY_NUM"
                 ? "number"
@@ -708,7 +711,7 @@ export class Entity {
             settings.discriminator = { name, type };
         }
 
-        let discriminatorValue = typeof options === "string"
+        let discriminatorValue = typeof tableOptions === "string"
             ? null
             : moreInfoOptions.discriminatorValue;
         if (this.modifier === "ABSTRACT") {

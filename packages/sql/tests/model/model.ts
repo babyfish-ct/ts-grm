@@ -1,4 +1,5 @@
-import { dsl, DISCRIMINATOR_VALUE_MODEL_NAME, model, Calculator, prop, TABLE_INHERIT, TsFormula, SqlFormula, dto } from "@ts-grm/core";
+import { dsl, DISCRIMINATOR_VALUE_MODEL_NAME, model, Calculator, prop, TsFormula, SqlFormula, dto } from "@ts-grm/core";
+import { createExpect } from "vitest";
 import { z } from "zod";
 
 const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
@@ -81,7 +82,7 @@ export const BOOK_STORE = model.open(
     }
 );
 
-export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
+export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE, "SHARED_TABLE")(
     "PhysicalBookStore", 
     class {
         city = prop.str(50)
@@ -89,18 +90,16 @@ export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
         tags = prop.enumSet("READING_ROOM", "AIR_CONDITION", "BEVERAGE_SALES")
     },
     ctx => ctx.table({
-        name: TABLE_INHERIT,
         discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
-export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
+export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE, "SHARED_TABLE")(
     "OnlineBookStore", 
     class {
         url = prop.str(50)
     },
     ctx => ctx.table({
-        name: TABLE_INHERIT,
         discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );

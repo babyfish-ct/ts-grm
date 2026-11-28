@@ -104,7 +104,7 @@ export type {
     AnyModel,
     UserIdGenerator
 } from "./schema/model";
-export { TABLE_INHERIT, DISCRIMINATOR_VALUE_MODEL_NAME } from "./schema/model";
+export { DISCRIMINATOR_VALUE_MODEL_NAME } from "./schema/model";
 export type { 
     TsFormulaFn,
     SqlFormulaFn,

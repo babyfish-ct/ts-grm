@@ -12,8 +12,8 @@
  * @author 陈涛 (Chen Tao)
  */
 
-import { AnyModel, BaseModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
-import { TableAlias, Column, Composite, Statement, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause, RootProjectionCaluse, Separator } from "./fragment";
+import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, RootQuerySelection, ScalarProvider, spi } from "@ts-grm/core";
+import { TableAlias, Column, Composite, Statement, Scope, ShadowExpr, Source, Value, valueOf, RootColumnSuffix, RootOrderByClause, RootProjectionCaluse } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";

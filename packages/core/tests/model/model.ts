@@ -1,7 +1,7 @@
 import { dsl } from "@/dsl";
 import { __TableOptions, dto } from "@/index";
 import { SqlFormula, TsFormula, Calculator } from "@/schema/computed";
-import { DISCRIMINATOR_VALUE_MODEL_NAME, model, TABLE_INHERIT } from "@/schema/model";
+import { DISCRIMINATOR_VALUE_MODEL_NAME, model } from "@/schema/model";
 import { prop } from "@/schema/prop";
 import { z } from "zod"; 
 
@@ -79,7 +79,7 @@ export const BOOK_STORE = model.abstract("BookStore", "id", class {
     });
 });
 
-export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
+export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE, "SHARED_TABLE")(
     "PhysicalBookStore", 
     class {
         city = prop.str(50)
@@ -87,18 +87,16 @@ export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
         tags = prop.enumSet("READING_ROOM", "AIR_CONDITION", "BEVERAGE_SALES")
     },
     ctx => ctx.table({
-        name: TABLE_INHERIT,
         discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );
 
-export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
+export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE, "SHARED_TABLE")(
     "OnlineBookStore", 
     class {
         url = prop.str(50)
     },
     ctx => ctx.table({
-        name: TABLE_INHERIT,
         discriminatorValue: DISCRIMINATOR_VALUE_MODEL_NAME
     })
 );

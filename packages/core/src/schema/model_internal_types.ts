@@ -15,7 +15,7 @@
 import { __FlattenMembers, __NormalizeOptions } from "@/auxiliary_types";
 import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __I64PropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
-import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, TABLE_INHERIT, UserIdGenerator } from "./model";
+import { AnyModel, DISCRIMINATOR_VALUE_MODEL_NAME, Model, UserIdGenerator } from "./model";
 
 export interface __SimplestModelCreator<TModifier extends __ModifierType> {
 
@@ -73,9 +73,11 @@ export interface __ExtendableModelCreator<
 >extends __SimplestModelCreator<TModifier> {
     
     extends<
-        TSuperModel extends Model<any, any, any, any, any, "OPEN" | "ABSTRACT_BY_NUM" | "OPEN_BY_NUM" | "ABSTRACT">
+        TSuperModel extends Model<any, any, any, any, any, "OPEN" | "ABSTRACT_BY_NUM" | "OPEN_BY_NUM" | "ABSTRACT">,
+        TInheritanceType extends __InheritanceType = "INDIVIDUAL_TABLE"
     >(
-        superModel: TSuperModel
+        superModel: TSuperModel,
+        ineritanceType?: TInheritanceType
     ): __InheritedModelCreator<
         TSuperModel, 
         TSuperModel extends Model<any, any, any, any, any, infer SuperModifier>
@@ -88,13 +90,15 @@ export interface __ExtendableModelCreator<
                     ? "OPEN_BY_NUM"
                     : "OPEN"
             : TModifier
-        : TModifier
+        : TModifier,
+        TInheritanceType
     >;
 }
 
 export interface __InheritedModelCreator<
     TSuperModel extends AnyModel,
-    TModifier extends __ModifierType
+    TModifier extends __ModifierType,
+    TInheritanceType extends __InheritanceType
 > {
     
     <
@@ -103,7 +107,7 @@ export interface __InheritedModelCreator<
     >(
         name: __OtherString<TName, __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
-        configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel, TModifier>) => void
+        configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel, TModifier, TInheritanceType>) => void
     ): Model<
         TName, 
         __ModelIdKey<TSuperModel>, 
@@ -123,12 +127,13 @@ export interface __ModelContext<
     TIdKey extends string, 
     TCtor extends __Ctor, 
     TSuperModel extends AnyModel | never,
-    TModifier extends __ModifierType
+    TModifier extends __ModifierType,
+    TInheritanceType extends __InheritanceType
 > {
     
     __type(): { modelContext: TCtor | true };
 
-    table(options: __TableOptions<TSuperModel, TModifier>): this;
+    table(options: __TableOptions<TSuperModel, TModifier, TInheritanceType>): this;
 
     unique(...paths : __UniqueKeys<TIdKey, __CtorMembers<TCtor>>[]): this;
 }
@@ -137,7 +142,7 @@ export interface __RootModelContext<
     TIdKey extends string, 
     TCtor extends __Ctor,
     TModifier extends __ModifierType
-> extends __ModelContext<TIdKey, TCtor, never, TModifier> {
+> extends __ModelContext<TIdKey, TCtor, never, TModifier, "INDIVIDUAL_TABLE"> {
 
     __type(): { modelContext: TCtor | true; rootModelContext: true };
 
@@ -333,23 +338,32 @@ export type __CalculatorSourceKeys<
 
 export type __TableOptions<
     TSuperModel extends AnyModel | never, 
-    TModifier extends __ModifierType
+    TModifier extends __ModifierType,
+    TInheritanceType extends __InheritanceType
 > = 
     [TSuperModel] extends [never]
         ? TModifier extends "NONE"
             ? DatabaseIdentifier<string>
-            : __ComplexTableOptions<TSuperModel, TModifier>
-        : __ComplexTableOptions<TSuperModel, TModifier>;
+            : __ComplexTableOptions<TSuperModel, TModifier, TInheritanceType>
+        : __ComplexTableOptions<TSuperModel, TModifier, TInheritanceType>;
 
 export type __ComplexTableOptions<
     TSuperModel extends AnyModel | never, 
-    TModifier extends __ModifierType
+    TModifier extends __ModifierType,
+    TInheritanceType extends __InheritanceType
 > = __NormalizeOptions<
-        {
-            readonly name?: typeof TABLE_INHERIT
-                | DatabaseIdentifier<string>
-                | __IdRemappedTable<TSuperModel>;
-        } & (
+        (
+            TInheritanceType extends "SHARED_TABLE" 
+                ? {}
+                : [TSuperModel] extends [never]
+                    ? {
+                        readonly name?: DatabaseIdentifier<string>
+                    }
+                    : {
+                        readonly name?: DatabaseIdentifier<string>
+                            | __IdRemappedTable<TSuperModel>;
+                    }
+        ) & (
             TModifier extends "OPEN_BY_NUM"
                 ? { readonly discriminatorValue: number; }
             : TModifier extends "OPEN"
@@ -482,3 +496,5 @@ export type __DataType<TProp> =
     : never;
 
 export type __ModifierType = "NONE" | "ABSTRACT" | "OPEN" | "ABSTRACT_BY_NUM" | "OPEN_BY_NUM";
+
+export type __InheritanceType = "INDIVIDUAL_TABLE" | "SHARED_TABLE";

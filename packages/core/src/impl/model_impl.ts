@@ -14,7 +14,7 @@
 
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { __Ctor, __CtorMembers, __IdGenerator, __ModelContext, __ModifierType, __RootModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
+import { __Ctor, __CtorMembers, __IdGenerator, __InheritanceType, __ModelContext, __ModifierType, __RootModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
 import { ModelContract } from "./model_contract";
 import { AnyModel, Model } from "@/schema/model";
 
@@ -111,7 +111,8 @@ export class ModelImpl<
 export type AnyModelImpl = ModelImpl<any, any, any, any, any, any>;
 
 export type ModelOptions = {
-    readonly tableOptions: __TableOptions<any, any> | undefined;
+    readonly sharedTable: boolean;
+    readonly tableOptions: __TableOptions<any, any, any> | undefined;
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
     readonly idGenerator: __IdGenerator<any> | undefined;
 };
@@ -120,20 +121,29 @@ export class ModelContextImpl<
     TIdKey extends string, 
     TCtor extends __Ctor, 
     TSuperModel extends AnyModel | never,
-    TModifier extends __ModifierType
-> implements __ModelContext<TIdKey, TCtor, TSuperModel, TModifier> {
+    TModifier extends __ModifierType,
+    TInheritanceType extends __InheritanceType
+> implements __ModelContext<TIdKey, TCtor, TSuperModel, TModifier, TInheritanceType> {
 
-    protected _tableOptions: __TableOptions<TSuperModel, TModifier> | undefined = undefined;
+    protected readonly _sharedTable: boolean;
+
+    protected _tableOptions: __TableOptions<TSuperModel, TModifier, TInheritanceType> | undefined = undefined;
 
     protected readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
 
     private readonly _uniqueKeySet = new Set<string>();
+
+    constructor(
+        inheritanceType: __InheritanceType
+    ) {
+        this._sharedTable = inheritanceType === "SHARED_TABLE";
+    }
     
     __type(): { modelContext: TCtor | true } {
         return { modelContext: true };
     }
 
-    table(options: __TableOptions<TSuperModel, TModifier>): this {
+    table(options: __TableOptions<TSuperModel, TModifier, TInheritanceType>): this {
         this._tableOptions = options;
         return this;
     }
@@ -159,7 +169,8 @@ export class ModelContextImpl<
 
     toModelOptions(): ModelOptions {
         return {
-            tableOptions: this._tableOptions as __TableOptions<any, any>,
+            sharedTable: this._sharedTable,
+            tableOptions: this._tableOptions as __TableOptions<any, any, any>,
             uniqueConstraints: this._uniqueConstraints,
             idGenerator: undefined
         };
@@ -170,10 +181,14 @@ export class RootModelContextImpl<
     TIdKey extends string, 
     TCtor extends __Ctor,
     TModifier extends __ModifierType
-> extends ModelContextImpl<TIdKey, TCtor, never, TModifier> 
+> extends ModelContextImpl<TIdKey, TCtor, never, TModifier, "INDIVIDUAL_TABLE"> 
 implements __RootModelContext<TIdKey, TCtor, TModifier> {
 
     private _idGenerator: __IdGenerator<__CtorMembers<TCtor>[TIdKey]> | undefined = undefined;
+
+    constructor() {
+        super("INDIVIDUAL_TABLE");
+    }
 
     __type(): { modelContext: TCtor | true; rootModelContext: true } {
         return { modelContext: true, rootModelContext: true };
@@ -186,7 +201,8 @@ implements __RootModelContext<TIdKey, TCtor, TModifier> {
 
     override toModelOptions(): ModelOptions {
         return {
-            tableOptions: this._tableOptions as __TableOptions<any, any>,
+            sharedTable: this._sharedTable,
+            tableOptions: this._tableOptions as __TableOptions<any, any, any>,
             uniqueConstraints: this._uniqueConstraints,
             idGenerator: this._idGenerator
         };

@@ -16,6 +16,7 @@ import { ModelContextImpl, ModelImpl, RootModelContextImpl } from "@/impl/model_
 import { 
     __Ctor, 
     __CtorMembers, 
+    __InheritanceType, 
     __InheritedModelCreator, 
     __MakeAllModelMembers, 
     __ModelContext, 
@@ -77,18 +78,20 @@ function modelCreator(): __ModelCreator {
 
     function ext<
         TSuperModel extends AnyModel,
+        TInheritanceType extends __InheritanceType,
         TModifier extends __ModifierType
     >(
         superModel: TSuperModel,
-        modifier: __ModifierType
-    ): __InheritedModelCreator<TSuperModel, any> {
+        inheritanceType: TInheritanceType,
+        modifier: __ModifierType,
+    ): __InheritedModelCreator<TSuperModel, any, any> {
         return <
             TName extends string, 
             TCtor extends __Ctor
         >(
             name: TName,
             ctor: TCtor,
-            configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel, TModifier>) => void
+            configurator?: (ctx: __ModelContext<__ModelIdKey<TSuperModel>, TCtor, TSuperModel, TModifier, any>) => void
         ): Model<
             TName, 
             __ModelIdKey<TSuperModel>, 
@@ -97,7 +100,13 @@ function modelCreator(): __ModelCreator {
             __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>,
             any
         > => {
-            const ctx = new ModelContextImpl<__ModelIdKey<TSuperModel>, TCtor, TSuperModel, TModifier>();
+            const ctx = new ModelContextImpl<
+                __ModelIdKey<TSuperModel>, 
+                TCtor, 
+                TSuperModel, 
+                TModifier, 
+                TInheritanceType
+            >(inheritanceType);
             if (configurator != null) {
                 configurator(ctx);
             }
@@ -136,11 +145,21 @@ function modelCreator(): __ModelCreator {
     (absByNumCreate as any).discriminatedBy = absBy;
     (opCreate as any).discriminatedBy = opBy;
     (opByNumCreate as any).discriminatedBy = opBy;
-    (create as any).extends = (superModel: AnyModel) => ext(superModel, "NONE");
-    (absCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT");
-    (absByNumCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT_BY_NUM");
-    (opCreate as any).extends = (superModel: AnyModel) => ext(superModel, "OPEN");
-    (opByNumCreate as any).extends = (superModel: AnyModel) => ext(superModel, "ABSTRACT_BY_NUM");
+    (create as any).extends = 
+        (superModel: AnyModel, inheritanceType: __InheritanceType | undefined) => 
+            ext(superModel, inheritanceType ?? "INDIVIDUAL_TABLE", "NONE");
+    (absCreate as any).extends = 
+        (superModel: AnyModel, inheritanceType: __InheritanceType | undefined) => 
+            ext(superModel, inheritanceType ?? "INDIVIDUAL_TABLE", "ABSTRACT");
+    (absByNumCreate as any).extends = 
+        (superModel: AnyModel, inheritanceType: __InheritanceType | undefined) => 
+            ext(superModel, inheritanceType ?? "INDIVIDUAL_TABLE", "ABSTRACT_BY_NUM");
+    (opCreate as any).extends = 
+        (superModel: AnyModel, inheritanceType: __InheritanceType | undefined) => 
+            ext(superModel, inheritanceType ?? "INDIVIDUAL_TABLE", "OPEN");
+    (opByNumCreate as any).extends = 
+        (superModel: AnyModel, inheritanceType: __InheritanceType | undefined) => 
+            ext(superModel, inheritanceType ?? "INDIVIDUAL_TABLE", "ABSTRACT_BY_NUM");
     return create as any as __ModelCreator;
 }
 
@@ -160,7 +179,5 @@ export interface Model<
 export type AnyModel = Model<any, any, any, any, any, any>;
 
 export type UserIdGenerator<T> = () => T;
-
-export const TABLE_INHERIT = Symbol("<inherit>");
 
 export const DISCRIMINATOR_VALUE_MODEL_NAME = Symbol("<modelName>");

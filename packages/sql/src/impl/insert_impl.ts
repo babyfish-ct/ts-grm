@@ -34,7 +34,7 @@ import {
     __MutatedReturnKey
 } from "@ts-grm/core";
 import { executeInsert } from "./mutation_executor/execute_insert";
-import { propsOf, returnedPropsOf } from "./utils";
+import { returnedPropsOf } from "./utils";
 import { BaseModelImpl } from "./abstract_base_query_impl";
 import { OnConflictUpdateContextImpl } from "./on_conflict_update_context_impl";
 import { OnConflictEntityUpdateContext } from "@ts-grm/core";
